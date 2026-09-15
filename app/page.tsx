@@ -47,8 +47,9 @@ export default function HomePage() {
     <main style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#1A1A1A", overflowX: "hidden" }}>
       {/* Hero */}
       <section style={{
-        background: `linear-gradient(160deg, ${navy} 0%, ${navyLight} 55%, #0E2A4D 100%)`,
-        color: "#fff", padding: "56px 20px 64px", position: "relative"
+        position: "relative", color: "#fff", padding: "56px 20px 64px", overflow: "hidden",
+        backgroundImage: `linear-gradient(160deg, rgba(11,31,58,0.92) 0%, rgba(11,31,58,0.85) 50%, rgba(14,42,77,0.95) 100%), url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&q=80')`,
+        backgroundSize: "cover", backgroundPosition: "center"
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 2 }}>
           <div style={{
@@ -58,37 +59,36 @@ export default function HomePage() {
           }}>
             Daha Şeffaf · Daha Güvenli · Daha Değerli
           </div>
-          <h1 style={{ fontSize: 34, marginBottom: 14, fontWeight: 800, lineHeight: 1.15, letterSpacing: -0.5 }}>
+          <h1 style={{ fontSize: 34, marginBottom: 14, fontWeight: 800, lineHeight: 1.15, letterSpacing: -0.5, textShadow: "0 2px 20px rgba(0,0,0,0.4)" }}>
             Aracın Dijital<br />Servis Pasaportu
           </h1>
-          <p style={{ fontSize: 16, opacity: 0.85, lineHeight: 1.6, marginBottom: 32 }}>
+          <p style={{ fontSize: 16, opacity: 0.9, lineHeight: 1.6, marginBottom: 32, textShadow: "0 1px 10px rgba(0,0,0,0.3)" }}>
             Bakım, onarım ve kilometre geçmişini tek dijital pasaportta topla.
             Araç satılsa bile teknik geçmiş araçla yaşamaya devam eder.
           </p>
 
-          {/* Mock phone card */}
           <div style={{
-            background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: 20, padding: 20, marginBottom: 32, backdropFilter: "blur(4px)",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.35)"
+            background: "rgba(11,31,58,0.55)", border: "1px solid rgba(255,255,255,0.2)",
+            borderRadius: 20, padding: 20, marginBottom: 32, backdropFilter: "blur(8px)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.45)"
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 18, fontWeight: 700 }}>06 SGD 48</div>
-                <div style={{ fontSize: 12, opacity: 0.6 }}>Audi A3 · 2016</div>
+                <div style={{ fontSize: 18, fontWeight: 700 }}>34 XY 999</div>
+                <div style={{ fontSize: 12, opacity: 0.65 }}>Örnek Araç Pasaportu</div>
               </div>
-              <div style={{ background: "rgba(74,144,217,0.2)", color: accent, fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 999, border: `1px solid ${accent}` }}>
+              <div style={{ background: "rgba(74,144,217,0.25)", color: "#7CB4E8", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 999, border: `1px solid ${accent}` }}>
                 Aktif Pasaport
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, textAlign: "left" }}>
-              <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "10px 12px" }}>
-                <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 2 }}>GÜNCEL KM</div>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>132.000</div>
+              <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 12px" }}>
+                <div style={{ fontSize: 10, opacity: 0.6, marginBottom: 2 }}>GÜNCEL KM</div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>84.200</div>
               </div>
-              <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "10px 12px" }}>
-                <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 2 }}>SONRAKİ BAKIM</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: gold }}>10.000 km</div>
+              <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 12px" }}>
+                <div style={{ fontSize: 10, opacity: 0.6, marginBottom: 2 }}>SONRAKİ BAKIM</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: gold }}>90.000 km</div>
               </div>
             </div>
           </div>
@@ -97,13 +97,13 @@ export default function HomePage() {
             <a href="/panel/kayit" style={{
               padding: "15px 24px", background: `linear-gradient(135deg, ${gold}, #B8892F)`, color: navy,
               borderRadius: 10, textDecoration: "none", fontWeight: 800, fontSize: 15,
-              boxShadow: "0 8px 24px rgba(212,169,74,0.3)"
+              boxShadow: "0 8px 24px rgba(212,169,74,0.35)"
             }}>
               Ücretsiz Başlayın →
             </a>
             <a href="/panel/login" style={{
-              padding: "14px 24px", background: "transparent", color: "#fff",
-              border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 10, textDecoration: "none", fontWeight: 600, fontSize: 15
+              padding: "14px 24px", background: "rgba(255,255,255,0.05)", color: "#fff",
+              border: "1.5px solid rgba(255,255,255,0.35)", borderRadius: 10, textDecoration: "none", fontWeight: 600, fontSize: 15
             }}>
               Giriş Yap
             </a>
@@ -215,4 +215,4 @@ export default function HomePage() {
       </footer>
     </main>
   );
-}
+                            }
