@@ -25,7 +25,7 @@ export default async function PassportByCodePage({ params }: { params: { code: s
     return (
       <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
         <h1 style={{ fontSize: 20 }}>Henüz Eşleştirilmemiş</h1>
-        <p style={{ color: "#666" }}>Bu anahtarlık henüz bir araca bağlanmamış. Servis işletmeniz bu QR kodu araç kaydında eşleştirmelidir.</p>
+        <p style={{ color: "#666" }}>Bu anahtarlık henüz bir araca bağlanmamış.</p>
       </main>
     );
   }
@@ -72,6 +72,10 @@ export default async function PassportByCodePage({ params }: { params: { code: s
 
   return (
     <main style={{ fontFamily: "system-ui, sans-serif", background: "#FAFAF7", minHeight: "100vh" }}>
+      <pre style={{ fontSize: 10, background: "#000", color: "#0f0", padding: 10, overflow: "auto", margin: 0 }}>
+        {JSON.stringify(vehicle, null, 2)}
+      </pre>
+
       <div style={{ background: navy, color: "#fff", padding: "28px 20px" }}>
         <p style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>Yetkili Servis</p>
         <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{tenant?.name}</p>
