@@ -70,9 +70,17 @@ export default function DashboardPage() {
         style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", marginBottom: 16, fontSize: 15 }}
       />
 
-      <a href="/panel/araclar/yeni" style={{ display: "inline-block", padding: "12px 20px", background: "#1E3A5F", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 600, marginBottom: 24 }}>
-        + Yeni Araç Ekle
-      </a>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 24 }}>
+        <a href="/panel/araclar/yeni" style={{ display: "inline-block", padding: "12px 20px", background: "#1E3A5F", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>
+          + Yeni Araç Ekle
+        </a>
+        <a href="/panel/eslestir" style={{ display: "inline-block", padding: "12px 20px", background: "#fff", color: "#1E3A5F", border: "2px solid #1E3A5F", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>
+          Anahtarlık Eşleştir
+        </a>
+        <a href="/panel/qr-uretim" style={{ display: "inline-block", padding: "12px 20px", background: "#fff", color: "#666", border: "1px solid #ccc", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>
+          QR Üret
+        </a>
+      </div>
 
       {filtered.length === 0 && (
         <p style={{ color: "#999", marginTop: 20 }}>Araç bulunamadı.</p>
