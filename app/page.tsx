@@ -1,8 +1,9 @@
 export default function HomePage() {
-  const navy = "#0F2540";
-  const navyLight = "#1E3A5F";
-  const accent = "#3B82C4";
-  const bg = "#F4F1EA";
+  const navy = "#0B1F3A";
+  const navyLight = "#16345C";
+  const accent = "#4A90D9";
+  const accentLight = "#EAF2FB";
+  const gold = "#D4A94A";
 
   const steps = [
     { n: "1", title: "Servis kayıt ekler", desc: "Yetkili servis, yapılan bakım ve parça değişimini sisteme kaydeder." },
@@ -12,100 +13,206 @@ export default function HomePage() {
   ];
 
   const features = [
-    { icon: "🔧", title: "Bakım ve onarım geçmişi" },
-    { icon: "🚗", title: "Kilometre takibi" },
-    { icon: "🔔", title: "Sonraki bakım hatırlatması" },
-    { icon: "📋", title: "Servis doğrulamalı kayıtlar" },
-    { icon: "🔐", title: "KVKK uyumlu veri yönetimi" },
-    { icon: "🔗", title: "Araçla birlikte yaşayan dijital geçmiş" },
+    { title: "Bakım ve onarım geçmişi", desc: "Her işlem tarih ve açıklamasıyla kayıt altında.", icon: "wrench" },
+    { title: "Kilometre takibi", desc: "Güncel km her ziyarette otomatik güncellenir.", icon: "gauge" },
+    { title: "Sonraki bakım hatırlatması", desc: "Km ve tarih eşiğine göre otomatik uyarı.", icon: "bell" },
+    { title: "Servis doğrulamalı kayıtlar", desc: "Sadece yetkili personel kayıt ekleyebilir.", icon: "check" },
+    { title: "KVKK uyumlu veri yönetimi", desc: "Kişisel veriler talep halinde güvenle silinir.", icon: "shield" },
+    { title: "Araçla birlikte yaşayan geçmiş", desc: "Sahiplik değişse de teknik geçmiş kalır.", icon: "link" },
   ];
 
   const audience = [
-    { icon: "🔧", title: "Özel servisler", desc: "Müşteri bağlılığını artırmak isteyen servis işletmeleri." },
-    { icon: "🚙", title: "Araç sahipleri", desc: "Aracının geçmişini düzenli tutmak isteyenler." },
-    { icon: "🛒", title: "İkinci el alıcıları", desc: "Daha güvenli bir satın alma deneyimi isteyenler." },
+    { title: "Özel servisler", desc: "Müşteri bağlılığını artırmak isteyen işletmeler.", icon: "tool" },
+    { title: "Araç sahipleri", desc: "Aracının geçmişini düzenli tutmak isteyenler.", icon: "car" },
+    { title: "İkinci el alıcıları", desc: "Daha güvenli bir satın alma deneyimi isteyenler.", icon: "cart" },
   ];
 
+  const Icon = ({ name, color = "#fff" }: { name: string; color?: string }) => {
+    const s = { width: 22, height: 22, stroke: color, fill: "none", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+    switch (name) {
+      case "wrench": return <svg viewBox="0 0 24 24" style={s}><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4l-6 6a1.5 1.5 0 0 0 2.1 2.1l6-6a4 4 0 0 1 5.4-5.4l-3 3-2-2 3-3Z" /></svg>;
+      case "gauge": return <svg viewBox="0 0 24 24" style={s}><path d="M12 20a8 8 0 1 1 8-8" /><path d="M12 12l4-4" /><circle cx="12" cy="12" r="1" /></svg>;
+      case "bell": return <svg viewBox="0 0 24 24" style={s}><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>;
+      case "check": return <svg viewBox="0 0 24 24" style={s}><path d="M20 6 9 17l-5-5" /></svg>;
+      case "shield": return <svg viewBox="0 0 24 24" style={s}><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3Z" /></svg>;
+      case "link": return <svg viewBox="0 0 24 24" style={s}><path d="M9 15 15 9" /><path d="M14 4h3a4 4 0 0 1 0 8h-2" /><path d="M10 20H7a4 4 0 0 1 0-8h2" /></svg>;
+      case "tool": return <svg viewBox="0 0 24 24" style={s}><path d="M4 20l6-6" /><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4l-6 6a1.5 1.5 0 0 0 2.1 2.1l6-6a4 4 0 0 1 5.4-5.4l-3 3-2-2 3-3Z" /></svg>;
+      case "car": return <svg viewBox="0 0 24 24" style={s}><path d="M4 16v-4l2-5h12l2 5v4" /><path d="M4 16h16" /><circle cx="7.5" cy="17.5" r="1.5" /><circle cx="16.5" cy="17.5" r="1.5" /></svg>;
+      case "cart": return <svg viewBox="0 0 24 24" style={s}><circle cx="9" cy="20" r="1.2" /><circle cx="17" cy="20" r="1.2" /><path d="M3 4h2l2.4 11h9.2L19 8H6.2" /></svg>;
+      default: return null;
+    }
+  };
+
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", color: "#222" }}>
+    <main style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#1A1A1A", overflowX: "hidden" }}>
       {/* Hero */}
-      <section style={{ background: navy, color: "#fff", padding: "64px 20px 56px", textAlign: "center" }}>
-        <p style={{ fontSize: 12, letterSpacing: 2, opacity: 0.7, marginBottom: 12, textTransform: "uppercase" }}>
-          Daha Şeffaf · Daha Güvenli · Daha Değerli
-        </p>
-        <h1 style={{ fontSize: 32, marginBottom: 14, fontWeight: 700, lineHeight: 1.2 }}>Akıllı Servis Anahtarı</h1>
-        <p style={{ fontSize: 16, opacity: 0.9, maxWidth: 480, margin: "0 auto 32px", lineHeight: 1.6 }}>
-          Aracın bakım, onarım ve kilometre geçmişini tek dijital pasaportta toplayan sistem.
-          Araç satılsa bile teknik geçmiş araçla yaşamaya devam eder.
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
-          <a href="/panel/kayit" style={{ padding: "14px 24px", background: "#fff", color: navy, borderRadius: 8, textDecoration: "none", fontWeight: 700, fontSize: 15 }}>
-            Ücretsiz Başlayın
-          </a>
-          <a href="/panel/login" style={{ padding: "14px 24px", background: "transparent", color: "#fff", border: "2px solid rgba(255,255,255,0.5)", borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 15 }}>
-            Giriş Yap
-          </a>
+      <section style={{
+        background: `linear-gradient(160deg, ${navy} 0%, ${navyLight} 55%, #0E2A4D 100%)`,
+        color: "#fff", padding: "56px 20px 64px", position: "relative"
+      }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 2 }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.15)", borderRadius: 999, padding: "6px 14px",
+            fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 20, color: gold, fontWeight: 600
+          }}>
+            Daha Şeffaf · Daha Güvenli · Daha Değerli
+          </div>
+          <h1 style={{ fontSize: 34, marginBottom: 14, fontWeight: 800, lineHeight: 1.15, letterSpacing: -0.5 }}>
+            Aracın Dijital<br />Servis Pasaportu
+          </h1>
+          <p style={{ fontSize: 16, opacity: 0.85, lineHeight: 1.6, marginBottom: 32 }}>
+            Bakım, onarım ve kilometre geçmişini tek dijital pasaportta topla.
+            Araç satılsa bile teknik geçmiş araçla yaşamaya devam eder.
+          </p>
+
+          {/* Mock phone card */}
+          <div style={{
+            background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: 20, padding: 20, marginBottom: 32, backdropFilter: "blur(4px)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.35)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: 18, fontWeight: 700 }}>06 SGD 48</div>
+                <div style={{ fontSize: 12, opacity: 0.6 }}>Audi A3 · 2016</div>
+              </div>
+              <div style={{ background: "rgba(74,144,217,0.2)", color: accent, fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 999, border: `1px solid ${accent}` }}>
+                Aktif Pasaport
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, textAlign: "left" }}>
+              <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "10px 12px" }}>
+                <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 2 }}>GÜNCEL KM</div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>132.000</div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "10px 12px" }}>
+                <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 2 }}>SONRAKİ BAKIM</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: gold }}>10.000 km</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
+            <a href="/panel/kayit" style={{
+              padding: "15px 24px", background: `linear-gradient(135deg, ${gold}, #B8892F)`, color: navy,
+              borderRadius: 10, textDecoration: "none", fontWeight: 800, fontSize: 15,
+              boxShadow: "0 8px 24px rgba(212,169,74,0.3)"
+            }}>
+              Ücretsiz Başlayın →
+            </a>
+            <a href="/panel/login" style={{
+              padding: "14px 24px", background: "transparent", color: "#fff",
+              border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 10, textDecoration: "none", fontWeight: 600, fontSize: 15
+            }}>
+              Giriş Yap
+            </a>
+          </div>
         </div>
       </section>
 
       {/* Nasıl Çalışır */}
-      <section style={{ background: bg, padding: "48px 20px" }}>
-        <h2 style={{ textAlign: "center", fontSize: 22, marginBottom: 6, color: navy }}>Sistem Nasıl Çalışır?</h2>
-        <p style={{ textAlign: "center", fontSize: 13, color: "#888", marginBottom: 32 }}>4 adımda dijital güvence</p>
-        <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 20 }}>
-          {steps.map((s) => (
-            <div key={s.n} style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e5e1d8", textAlign: "center" }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: navyLight, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontWeight: 700 }}>
-                {s.n}
+      <section style={{ background: "#FAFAF7", padding: "56px 20px" }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: accent, fontWeight: 700, marginBottom: 8 }}>
+            4 adımda dijital güvence
+          </div>
+          <h2 style={{ fontSize: 24, color: navy, fontWeight: 800, margin: 0 }}>Sistem Nasıl Çalışır?</h2>
+        </div>
+        <div style={{ maxWidth: 920, margin: "0 auto", position: "relative" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 20 }}>
+            {steps.map((s) => (
+              <div key={s.n} style={{
+                background: "#fff", borderRadius: 16, padding: "26px 18px", textAlign: "center",
+                boxShadow: "0 4px 20px rgba(11,31,58,0.06)", border: "1px solid #EEEAE0"
+              }}>
+                <div style={{
+                  width: 42, height: 42, borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${navy}, ${navyLight})`,
+                  color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto 14px", fontWeight: 800, fontSize: 16
+                }}>
+                  {s.n}
+                </div>
+                <h3 style={{ fontSize: 15, marginBottom: 8, color: navy, fontWeight: 700 }}>{s.title}</h3>
+                <p style={{ fontSize: 13, color: "#777", lineHeight: 1.55, margin: 0 }}>{s.desc}</p>
               </div>
-              <h3 style={{ fontSize: 15, marginBottom: 6, color: navy }}>{s.title}</h3>
-              <p style={{ fontSize: 13, color: "#666", lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Temel Özellikler */}
-      <section style={{ padding: "48px 20px" }}>
-        <h2 style={{ textAlign: "center", fontSize: 22, marginBottom: 32, color: navy }}>Temel Özellikler</h2>
-        <div style={{ maxWidth: 720, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+      <section style={{ padding: "56px 20px", background: "#fff" }}>
+        <h2 style={{ textAlign: "center", fontSize: 24, marginBottom: 36, color: navy, fontWeight: 800 }}>
+          Temel Özellikler
+        </h2>
+        <div style={{ maxWidth: 760, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
           {features.map((f) => (
-            <div key={f.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: 14, background: bg, borderRadius: 10 }}>
-              <span style={{ fontSize: 22 }}>{f.icon}</span>
-              <span style={{ fontSize: 14, color: "#333" }}>{f.title}</span>
+            <div key={f.title} style={{
+              display: "flex", gap: 14, padding: 18, background: accentLight, borderRadius: 14, alignItems: "flex-start"
+            }}>
+              <div style={{
+                width: 40, height: 40, minWidth: 40, borderRadius: 10, background: navy,
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>
+                <Icon name={f.icon} color={gold} />
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: navy, marginBottom: 3 }}>{f.title}</div>
+                <div style={{ fontSize: 12.5, color: "#667", lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Kimler İçin */}
-      <section style={{ background: bg, padding: "48px 20px" }}>
-        <h2 style={{ textAlign: "center", fontSize: 22, marginBottom: 32, color: navy }}>Kimler İçin?</h2>
-        <div style={{ maxWidth: 780, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20 }}>
+      <section style={{ background: navy, padding: "56px 20px" }}>
+        <h2 style={{ textAlign: "center", fontSize: 24, marginBottom: 36, color: "#fff", fontWeight: 800 }}>
+          Kimler İçin?
+        </h2>
+        <div style={{ maxWidth: 800, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 20 }}>
           {audience.map((a) => (
-            <div key={a.title} style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #e5e1d8", textAlign: "center" }}>
-              <div style={{ fontSize: 30, marginBottom: 10 }}>{a.icon}</div>
-              <h3 style={{ fontSize: 16, marginBottom: 8, color: navy }}>{a.title}</h3>
-              <p style={{ fontSize: 13, color: "#666", lineHeight: 1.5, margin: 0 }}>{a.desc}</p>
+            <div key={a.title} style={{
+              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 16, padding: 26, textAlign: "center"
+            }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: "50%", background: "rgba(212,169,74,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px"
+              }}>
+                <Icon name={a.icon} color={gold} />
+              </div>
+              <h3 style={{ fontSize: 16, marginBottom: 8, color: "#fff", fontWeight: 700 }}>{a.title}</h3>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: 0 }}>{a.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* CTA */}
-      <section style={{ padding: "56px 20px", textAlign: "center", background: navy, color: "#fff" }}>
-        <h2 style={{ fontSize: 22, marginBottom: 10 }}>Bugünü kaydet. Yarın satarken güven oluştur.</h2>
-        <p style={{ opacity: 0.85, fontSize: 14, marginBottom: 28, maxWidth: 440, margin: "0 auto 28px" }}>
+      <section style={{
+        padding: "64px 20px", textAlign: "center",
+        background: `linear-gradient(135deg, ${gold}, #B8892F)`
+      }}>
+        <h2 style={{ fontSize: 24, marginBottom: 10, color: navy, fontWeight: 800 }}>
+          Bugünü kaydet. Yarın satarken güven oluştur.
+        </h2>
+        <p style={{ color: "#2A2416", fontSize: 14, marginBottom: 28, maxWidth: 440, margin: "0 auto 28px", opacity: 0.85 }}>
           Akıllı Servis Anahtarı, aracın teknik geçmişini düzenli, taşınabilir ve değerli hale getirir.
         </p>
-        <a href="/panel/kayit" style={{ display: "inline-block", padding: "14px 32px", background: "#fff", color: navy, borderRadius: 8, textDecoration: "none", fontWeight: 700 }}>
+        <a href="/panel/kayit" style={{
+          display: "inline-block", padding: "15px 36px", background: navy, color: "#fff",
+          borderRadius: 10, textDecoration: "none", fontWeight: 800, boxShadow: "0 8px 24px rgba(11,31,58,0.3)"
+        }}>
           Hemen Kaydolun
         </a>
       </section>
 
-      <footer style={{ textAlign: "center", padding: "24px 20px", color: "#999", fontSize: 12 }}>
+      <footer style={{ textAlign: "center", padding: "28px 20px", color: "#999", fontSize: 12, background: "#FAFAF7" }}>
         © 2026 Akıllı Servis Anahtarı — Ankara
       </footer>
     </main>
   );
-     }
+}
