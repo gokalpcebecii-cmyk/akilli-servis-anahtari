@@ -14,30 +14,37 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const count = Math.min(Number(body.count) || 10, 500);
-    const batchLabel = body.batch_label || `Parti ${new Date().toISOString().slice(0, 10)}`;
+    const batchLabel = body.batch_label || "Parti " + new Date().toISOString().slice(0, 10);
 
     const supabase = createServerSupabase();
-    const codes: string[] = [];
+    const codes = [];
 
     for (let i = 0; i < count; i++) {
       let code = randomCode();
       let attempts = 0;
       while (attempts < 5) {
-        const { data: existing } = await supabase.from("qr_keys").select("id").eq("code", code).maybeSingle();
-        if (!existing) break;
+        const existingResult = await supabase.from("qr_keys").select("id").eq("code", code).maybeSingle();
+        if (!existingResult.data) {
+          break;
+        }
         code = randomCode();
-        attempts++;
+        attempts = attempts + 1;
       }
       codes.push(code);
     }
 
-    const rows = codes.map((code) => ({ code, batch_label: batchLabel }));
-    const { data, error } = await supabase.from("qr_keys").insert(rows).select();
+    const rows = codes.map(function (code) {
+      return { code: code, batch_label: batchLabel };
+    });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    const insertResult = await supabase.from("qr_keys").insert(rows).select();
+
+    if (insertResult.error) {
+      return NextResponse.json({ error: insertResult.error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true, codes: data });
+    return NextResponse.json({ ok: true, codes: insertResult.data });
   } catch (e) {
-    return NextResponse.json({ error: "Beklenmeyen hata" },
+    return NextResponse.json({ error: "Beklenmeyen hata" }, { status: 500 });
+  }
+}
