@@ -1,130 +1,308 @@
-import { createServerSupabase } from "@/lib/supabase";
-import { notFound } from "next/navigation";
+"use client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import QRCode from "qrcode";
+import { createBrowserSupabase } from "@/lib/supabase";
 
-export default async function PassportByCodePage({ params }: { params: { code: string } }) {
-  const supabase = createServerSupabase();
+const MAINTENANCE_ITEMS = [
+  { key: "motor_yagi", label: "Motor Yağı" },
+  { key: "yag_filtresi", label: "Yağ Filtresi" },
+  { key: "hava_filtresi", label: "Hava Filtresi" },
+  { key: "polen_filtresi", label: "Polen Filtresi" },
+  { key: "fren_disk_balata", label: "Fren Disk-Balata" },
+  { key: "triger_seti", label: "Triger Seti" },
+  { key: "aku", label: "Akü" },
+  { key: "lastik", label: "Lastik" },
+];
 
-  const { data: qrKey } = await supabase
-    .from("qr_keys")
-    .select("*, vehicles(*, tenants(*), maintenance_records(*))")
-    .eq("code", params.code)
-    .maybeSingle();
+export default function VehicleDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const isNew = params.id === "yeni";
+  const supabase = createBrowserSupabase();
 
-  if (!qrKey) {
-    return (
-      <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20 }}>Geçersiz Kod</h1>
-        <p style={{ color: "#666" }}>Bu QR kod sistemde tanımlı değil.</p>
-      </main>
-    );
-  }
-
-  if (!qrKey.vehicle_id || !qrKey.vehicles) {
-    return (
-      <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20 }}>Henüz Eşleştirilmemiş</h1>
-        <p style={{ color: "#666" }}>Bu anahtarlık henüz bir araca bağlanmamış.</p>
-      </main>
-    );
-  }
-
-  const vehicle = qrKey.vehicles;
-  const tenant = vehicle.tenants;
-  const records = (vehicle.maintenance_records || []).sort(
-    (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  const [vehicle, setVehicle] = useState<any>(
+    isNew ? { plate: "", brand: "", model: "", year: "", current_km: 0, next_service_km: "", next_service_date: "" } : null
   );
+  const [records, setRecords] = useState<any[]>([]);
+  const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [newRecord, setNewRecord] = useState({ description: "", km_at_service: "", cost: "" });
+  const [loading, setLoading] = useState(!isNew);
+  const [savingItem, setSavingItem] = useState<string | null>(null);
 
-  const navy = "#0B1F3A";
-  const gold = "#D4A94A";
+  useEffect(() => {
+    if (isNew) return;
+    async function load() {
+      const { data: v } = await supabase.from("vehicles").select("*").eq("id", params.id).single();
+      setVehicle(v);
+      const { data: r } = await supabase
+        .from("maintenance_records")
+        .select("*")
+        .eq("vehicle_id", params.id)
+        .order("service_date", { ascending: false });
+      setRecords(r ?? []);
 
-  function healthStatus(kmRemaining: number | null, daysRemaining: number | null) {
-    if (kmRemaining === null && daysRemaining === null) return { label: "Bilgi Yok", color: "#999", bg: "#f5f5f5" };
-    if ((kmRemaining !== null && kmRemaining <= 0) || (daysRemaining !== null && daysRemaining <= 0))
-      return { label: "İşlem Zamanı", color: "#c0392b", bg: "#fdecea" };
-    if ((kmRemaining !== null && kmRemaining <= 1000) || (daysRemaining !== null && daysRemaining <= 14))
-      return { label: "Yaklaşıyor", color: "#b8860b", bg: "#fff8e6" };
-    return { label: "Normal", color: "#2E6B4F", bg: "#eaf7ef" };
+      const { data: mi } = await supabase
+        .from("maintenance_items")
+        .select("*")
+        .eq("vehicle_id", params.id);
+      setMaintenanceItems(mi ?? []);
+
+      const publicUrl = `${window.location.origin}/v/${params.id}`;
+      const qr = await QRCode.toDataURL(publicUrl, { width: 220 });
+      setQrDataUrl(qr);
+
+      setLoading(false);
+    }
+    load();
+  }, [params.id]);
+
+  async function handleSaveVehicle() {
+    const { data: session } = await supabase.auth.getSession();
+    const { data: staff } = await supabase
+      .from("staff_users")
+      .select("tenant_id")
+      .eq("id", session.session?.user.id)
+      .single();
+
+    if (isNew) {
+      const { data: created, error } = await supabase
+        .from("vehicles")
+        .insert({ ...vehicle, tenant_id: staff?.tenant_id, year: vehicle.year || null, next_service_km: vehicle.next_service_km || null, next_service_date: vehicle.next_service_date || null })
+        .select()
+        .single();
+      if (!error && created) router.push(`/panel/araclar/${created.id}`);
+    } else {
+      await supabase
+        .from("vehicles")
+        .update({
+          plate: vehicle.plate,
+          brand: vehicle.brand,
+          model: vehicle.model,
+          year: vehicle.year || null,
+          current_km: vehicle.current_km,
+          next_service_km: vehicle.next_service_km || null,
+          next_service_date: vehicle.next_service_date || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", params.id);
+      alert("Kaydedildi.");
+    }
   }
 
-  const today = new Date();
-  function daysUntil(dateStr: string | null) {
-    if (!dateStr) return null;
-    const diff = Math.ceil((new Date(dateStr).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return diff;
-  }
-  function kmUntil(targetKm: number | null) {
-    if (targetKm === null || targetKm === undefined) return null;
-    return targetKm - (vehicle.current_km || 0);
+  async function handleQuickMaintenance(itemKey: string, label: string) {
+    setSavingItem(itemKey);
+    const today = new Date().toISOString().slice(0, 10);
+
+    await supabase.from("maintenance_items").upsert(
+      {
+        vehicle_id: params.id,
+        item_key: itemKey,
+        last_service_date: today,
+        last_service_km: vehicle.current_km,
+      },
+      { onConflict: "vehicle_id,item_key" }
+    );
+
+    const { data: session } = await supabase.auth.getSession();
+    const { data: staff } = await supabase
+      .from("staff_users")
+      .select("tenant_id")
+      .eq("id", session.session?.user.id)
+      .single();
+
+    await supabase.from("maintenance_records").insert({
+      vehicle_id: params.id,
+      tenant_id: staff?.tenant_id,
+      description: label,
+      km_at_service: vehicle.current_km,
+      created_by: session.session?.user.id,
+    });
+
+    const { data: mi } = await supabase
+      .from("maintenance_items")
+      .select("*")
+      .eq("vehicle_id", params.id);
+    setMaintenanceItems(mi ?? []);
+
+    const { data: r } = await supabase
+      .from("maintenance_records")
+      .select("*")
+      .eq("vehicle_id", params.id)
+      .order("service_date", { ascending: false });
+    setRecords(r ?? []);
+
+    setSavingItem(null);
   }
 
-  const items = [
-    { label: "Periyodik Bakım", km: kmUntil(vehicle.next_service_km), date: vehicle.next_service_date },
-    { label: "Akü", km: null, date: vehicle.batarya_degisim_tarihi },
-    { label: "Silecek", km: null, date: vehicle.silecek_degisim_tarihi },
-    { label: "Lastik", km: kmUntil(vehicle.lastik_degisim_km), date: vehicle.lastik_degisim_tarihi },
-    { label: "Fren Balata", km: kmUntil(vehicle.fren_balata_km), date: vehicle.fren_balata_tarihi },
-    { label: "Muayene", km: null, date: vehicle.muayene_tarihi },
-    { label: "Trafik Sigortası", km: null, date: vehicle.trafik_sigortasi_bitis },
-    { label: "Kasko", km: null, date: vehicle.kasko_bitis },
-  ];
+  async function handleAddRecord() {
+    const { data: session } = await supabase.auth.getSession();
+    const { data: staff } = await supabase
+      .from("staff_users")
+      .select("tenant_id")
+      .eq("id", session.session?.user.id)
+      .single();
+
+    await supabase.from("maintenance_records").insert({
+      vehicle_id: params.id,
+      tenant_id: staff?.tenant_id,
+      description: newRecord.description,
+      km_at_service: newRecord.km_at_service ? Number(newRecord.km_at_service) : null,
+      cost: newRecord.cost ? Number(newRecord.cost) : null,
+      created_by: session.session?.user.id,
+    });
+
+    const { data: r } = await supabase
+      .from("maintenance_records")
+      .select("*")
+      .eq("vehicle_id", params.id)
+      .order("service_date", { ascending: false });
+    setRecords(r ?? []);
+    setNewRecord({ description: "", km_at_service: "", cost: "" });
+  }
+
+  if (loading || !vehicle) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
+
+  const inputStyle = { width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc", marginBottom: 10 };
+
+  function getItemStatus(itemKey: string) {
+    const item = maintenanceItems.find((m) => m.item_key === itemKey);
+    if (!item || !item.last_service_date) return null;
+    const isToday = item.last_service_date === new Date().toISOString().slice(0, 10);
+    return { date: item.last_service_date, isToday };
+  }
 
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", background: "#FAFAF7", minHeight: "100vh" }}>
-      <div style={{ background: navy, color: "#fff", padding: "28px 20px" }}>
-        <p style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>Yetkili Servis</p>
-        <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{tenant?.name}</p>
-        <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 16 }}>
-          <div style={{ fontSize: 22, fontWeight: 800 }}>{vehicle.plate}</div>
-          <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 10 }}>{vehicle.brand} {vehicle.model}</div>
-          <div style={{ fontSize: 13 }}>
-            Güncel Km: <b>{vehicle.current_km?.toLocaleString("tr-TR")}</b>
+    <main style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
+      <h1 style={{ fontSize: 20 }}>{isNew ? "Yeni Araç" : vehicle.plate}</h1>
+
+      <section style={{ marginBottom: 24 }}>
+        <label style={{ fontSize: 13 }}>Plaka</label>
+        <input style={inputStyle} value={vehicle.plate} onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value })} />
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 13 }}>Marka</label>
+            <input style={inputStyle} value={vehicle.brand || ""} onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 13 }}>Model</label>
+            <input style={inputStyle} value={vehicle.model || ""} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} />
           </div>
         </div>
-      </div>
 
-      <div style={{ maxWidth: 460, margin: "0 auto", padding: "20px" }}>
-        <h2 style={{ fontSize: 15, color: navy, marginBottom: 12 }}>Araç Sağlık Özeti</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
-          {items.map((it) => {
-            const d = daysUntil(it.date);
-            const status = healthStatus(it.km, d);
-            return (
-              <div key={it.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", border: "1px solid #eee", borderRadius: 10, padding: "10px 14px" }}>
-                <span style={{ fontSize: 13.5, color: "#333" }}>{it.label}</span>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: status.color, background: status.bg, padding: "3px 10px", borderRadius: 999 }}>
-                  {status.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        <label style={{ fontSize: 13 }}>Güncel Kilometre</label>
+        <input type="number" style={inputStyle} value={vehicle.current_km} onChange={(e) => setVehicle({ ...vehicle, current_km: Number(e.target.value) })} />
 
-        <h2 style={{ fontSize: 15, color: navy, marginBottom: 12 }}>Bakım Geçmişi</h2>
-        {records.length === 0 ? (
-          <p style={{ color: "#999", fontSize: 13 }}>Henüz kayıt bulunmuyor.</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
-            {records.map((r: any) => (
-              <div key={r.id} style={{ background: "#fff", border: "1px solid #eee", borderRadius: 10, padding: "10px 14px" }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: "#333" }}>{r.description}</div>
-                <div style={{ fontSize: 11.5, color: "#999" }}>
-                  {new Date(r.created_at).toLocaleDateString("tr-TR")} · {r.km?.toLocaleString("tr-TR")} km
-                </div>
-              </div>
+        <label style={{ fontSize: 13 }}>Sonraki Bakım (km)</label>
+        <input type="number" style={inputStyle} value={vehicle.next_service_km || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_km: Number(e.target.value) })} />
+
+        <label style={{ fontSize: 13 }}>Sonraki Bakım (tarih)</label>
+        <input type="date" style={inputStyle} value={vehicle.next_service_date || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })} />
+
+        <button onClick={handleSaveVehicle} style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}>
+          Kaydet
+        </button>
+      </section>
+
+      {!isNew && (
+        <section style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 15, color: "#888", marginBottom: 10 }}>Hızlı Bakım Ekle</h2>
+          <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>Yapılan bakımı seç, otomatik bugünün tarihi ve güncel km ile kaydedilir.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {MAINTENANCE_ITEMS.map((item) => {
+              const status = getItemStatus(item.key);
+              const isSaving = savingItem === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => handleQuickMaintenance(item.key, item.label)}
+                  disabled={isSaving}
+                  style={{
+                    padding: "14px 10px",
+                    borderRadius: 10,
+                    border: status?.isToday ? "2px solid #2e7d32" : "1px solid #ccc",
+                    background: status?.isToday ? "#e8f5e9" : "#fff",
+                    color: status?.isToday ? "#2e7d32" : "#1E3A5F",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: isSaving ? "wait" : "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <div>{isSaving ? "Kaydediliyor…" : item.label}</div>
+                  {status && (
+                    <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, color: status.isToday ? "#2e7d32" : "#999" }}>
+                      {status.isToday ? "✓ Bugün yapıldı" : `Son: ${new Date(status.date).toLocaleDateString("tr-TR")}`}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {!isNew && qrDataUrl && (
+        <section style={{ marginBottom: 24, textAlign: "center" }}>
+          <h2 style={{ fontSize: 15, color: "#888" }}>Araç QR Kodu</h2>
+          <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 180, height: 180 }} />
+          <p style={{ fontSize: 12, color: "#999" }}>Bu kodu anahtarlığa/NFC etikete işleyin. Bu kod ve araç geçmişi, araç el değiştirse bile aynı kalır.</p>
+        </section>
+      )}
+
+      {!isNew && (
+        <section style={{ marginBottom: 24, textAlign: "center" }}>
+          <a
+            href={`/panel/araclar/${params.id}/devret`}
+            style={{ fontSize: 13, color: "#888", textDecoration: "underline" }}
+          >
+            Bu aracın sahipliğini devret
+          </a>
+        </section>
+      )}
+
+      {!isNew && (
+        <section>
+          <h2 style={{ fontSize: 15, color: "#888" }}>Diğer Bakım Kaydı (serbest metin)</h2>
+          <input
+            placeholder="Yapılan işlem (örn. Yağ değişimi)"
+            style={inputStyle}
+            value={newRecord.description}
+            onChange={(e) => setNewRecord({ ...newRecord, description: e.target.value })}
+          />
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              type="number"
+              placeholder="Km"
+              style={inputStyle}
+              value={newRecord.km_at_service}
+              onChange={(e) => setNewRecord({ ...newRecord, km_at_service: e.target.value })}
+            />
+            <input
+              type="number"
+              placeholder="Ücret (₺)"
+              style={inputStyle}
+              value={newRecord.cost}
+              onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value })}
+            />
+          </div>
+          <button onClick={handleAddRecord} style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer", marginBottom: 20 }}>
+            Kaydı Ekle
+          </button>
+
+          <h2 style={{ fontSize: 15, color: "#888" }}>Geçmiş</h2>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {records.map((r) => (
+              <li key={r.id} style={{ borderBottom: "1px solid #eee", padding: "8px 0", fontSize: 14 }}>
+                {new Date(r.service_date).toLocaleDateString("tr-TR")} — {r.description} {r.km_at_service ? `(${r.km_at_service} km)` : ""}
+              </li>
             ))}
-          </div>
-        )}
-
-        <h2 style={{ fontSize: 15, color: navy, marginBottom: 12 }}>İletişim</h2>
-        <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: 10, padding: "14px" }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: navy, margin: "0 0 4px" }}>{tenant?.phone}</p>
-          <p style={{ fontSize: 12.5, color: "#666", margin: 0 }}>{tenant?.address}</p>
-        </div>
-      </div>
+          </ul>
+        </section>
+      )}
     </main>
   );
 }
