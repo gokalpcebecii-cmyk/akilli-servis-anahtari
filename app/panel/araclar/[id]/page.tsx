@@ -255,7 +255,7 @@ export default function VehicleDetailPage() {
 
       {!isNew && (
         <section style={{ marginBottom: 24, textAlign: "center" }}>
-          
+          <a
             href={`/panel/araclar/${params.id}/devret`}
             style={{ fontSize: 13, color: "#888", textDecoration: "underline" }}
           >
