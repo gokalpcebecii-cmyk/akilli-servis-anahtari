@@ -1,22 +1,47 @@
 import { createServerSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { randomInt } from "crypto";
 
-function randomCode(length = 10) {
+function randomCode(length = 12) {
   const chars = "abcdefghjkmnpqrstuvwxyz23456789";
   let result = "";
   for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
+    result += chars[randomInt(chars.length)];
   }
   return result;
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const authHeader = req.headers.get("authorization");
+
+    const userClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: authHeader ?? "" } } }
+    );
+    const { data: userData } = await userClient.auth.getUser();
+    if (!userData?.user) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
+    const supabase = createServerSupabase();
+
+    const { data: staff } = await supabase
+      .from("staff_users")
+      .select("id, tenant_id")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+
+    if (!staff) {
+      return NextResponse.json({ error: "QR üretimi için yetkili bir servis hesabı gerekli" }, { status: 403 });
+    }
+
     const body = await req.json();
     const count = Math.min(Number(body.count) || 10, 500);
     const batchLabel = body.batch_label || "Parti " + new Date().toISOString().slice(0, 10);
 
-    const supabase = createServerSupabase();
     const codes = [];
 
     for (let i = 0; i < count; i++) {

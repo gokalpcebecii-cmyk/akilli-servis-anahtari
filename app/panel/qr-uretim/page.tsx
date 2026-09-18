@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserSupabase } from "@/lib/supabase";
 import QRCode from "qrcode";
 
 export default function QrUretimPage() {
+  const router = useRouter();
+  const supabase = createBrowserSupabase();
   const [count, setCount] = useState(50);
   const [batchLabel, setBatchLabel] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,15 +17,36 @@ export default function QrUretimPage() {
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
+  useEffect(() => {
+    async function checkSession() {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        router.push("/panel/login");
+      }
+    }
+    checkSession();
+  }, []);
+
   async function handleGenerate() {
     setError("");
     setLoading(true);
     setCodes([]);
     setQrImages({});
 
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) {
+      setError("Oturumunuz sona ermiş, lütfen tekrar giriş yapın.");
+      setLoading(false);
+      router.push("/panel/login");
+      return;
+    }
+
     const res = await fetch("/api/qr-uretim", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.session.access_token}`,
+      },
       body: JSON.stringify({ count, batch_label: batchLabel || undefined }),
     });
     const data = await res.json();

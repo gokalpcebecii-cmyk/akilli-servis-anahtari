@@ -1,5 +1,4 @@
 import { createServerSupabase } from "@/lib/supabase";
-import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,13 +29,15 @@ const ITEM_ORDER = [
 export default async function PassportByCodePage({ params }: { params: { code: string } }) {
   const supabase = createServerSupabase();
 
-  const { data: qrKey } = await supabase
-    .from("qr_keys")
-    .select("*, vehicles(*, tenants(*), maintenance_records(*))")
-    .eq("code", params.code)
-    .maybeSingle();
+  // Tüm qr_keys/vehicles/tenants tablolarını doğrudan okumak yerine, yalnızca
+  // verilen kod geçerliyse (ve iptal edilmemişse) minimum pasaport verisini
+  // döndüren güvenli bir DB fonksiyonu çağrılıyor. Bu sayede bu sayfa,
+  // araçların/kodların toplu listelenmesine hiçbir şekilde aracılık etmiyor.
+  const { data: passport } = await supabase.rpc("get_public_vehicle_passport", {
+    p_code: params.code,
+  });
 
-  if (!qrKey) {
+  if (!passport) {
     return (
       <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
         <h1 style={{ fontSize: 20 }}>Geçersiz Kod</h1>
@@ -45,7 +46,7 @@ export default async function PassportByCodePage({ params }: { params: { code: s
     );
   }
 
-  if (!qrKey.vehicle_id || !qrKey.vehicles) {
+  if (passport.status === "unassigned") {
     return (
       <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
         <h1 style={{ fontSize: 20 }}>Henüz Eşleştirilmemiş</h1>
@@ -54,22 +55,10 @@ export default async function PassportByCodePage({ params }: { params: { code: s
     );
   }
 
-  const vehicle = qrKey.vehicles;
-  const tenant = vehicle.tenants;
-  const records = (vehicle.maintenance_records || []).sort(
-    (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-
-  let maintenanceItems: any[] = [];
-  try {
-    const { data: mi } = await supabase
-      .from("maintenance_items")
-      .select("*")
-      .eq("vehicle_id", vehicle.id);
-    maintenanceItems = mi ?? [];
-  } catch {
-    maintenanceItems = [];
-  }
+  const vehicle = passport.vehicle;
+  const tenant = passport.tenant;
+  const records: any[] = passport.maintenance_records ?? [];
+  const maintenanceItems: any[] = passport.maintenance_items ?? [];
 
   const navy = "#0B1F3A";
 

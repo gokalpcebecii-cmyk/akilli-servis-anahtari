@@ -45,6 +45,9 @@ export async function POST(req: NextRequest) {
     if (!qrKey) {
       return NextResponse.json({ error: "Bu kod sistemde bulunamadı" }, { status: 404 });
     }
+    if (qrKey.revoked_at) {
+      return NextResponse.json({ error: "Bu QR kod iptal edilmiş, tekrar kullanılamaz" }, { status: 400 });
+    }
     if (qrKey.vehicle_id) {
       return NextResponse.json({ error: "Bu QR kod zaten başka bir araca bağlı" }, { status: 400 });
     }
