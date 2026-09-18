@@ -15,3 +15,14 @@ export function createServerSupabase() {
     { auth: { persistSession: false } }
   );
 }
+
+// Servis rolü anahtarı gerektirmeyen, anonim/herkese açık sunucu tarafı
+// okumalar için (ör. /p/[code] pasaportu). Bu istemci RLS'ye tabidir;
+// yalnızca anon rolüne açıkça izin verilen policy/fonksiyonlara erişebilir.
+export function createAnonServerSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } }
+  );
+}

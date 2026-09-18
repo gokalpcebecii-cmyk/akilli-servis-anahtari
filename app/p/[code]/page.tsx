@@ -1,4 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
+import { createAnonServerSupabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -27,12 +27,13 @@ const ITEM_ORDER = [
 ];
 
 export default async function PassportByCodePage({ params }: { params: { code: string } }) {
-  const supabase = createServerSupabase();
-
-  // Tüm qr_keys/vehicles/tenants tablolarını doğrudan okumak yerine, yalnızca
+  // Bu sayfa herkese açık olduğundan service role yerine anon key kullanır;
+  // get_public_vehicle_passport() SECURITY DEFINER fonksiyonu anon rolüne
+  // EXECUTE ile açıktır ve döndürdüğü alanları kendi içinde sınırlar. Tüm
+  // qr_keys/vehicles/tenants tablolarını doğrudan okumak yerine, yalnızca
   // verilen kod geçerliyse (ve iptal edilmemişse) minimum pasaport verisini
-  // döndüren güvenli bir DB fonksiyonu çağrılıyor. Bu sayede bu sayfa,
-  // araçların/kodların toplu listelenmesine hiçbir şekilde aracılık etmiyor.
+  // döndüren bu güvenli DB fonksiyonu çağrılıyor.
+  const supabase = createAnonServerSupabase();
   const { data: passport } = await supabase.rpc("get_public_vehicle_passport", {
     p_code: params.code,
   });
