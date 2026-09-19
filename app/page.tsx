@@ -55,9 +55,29 @@ export default function HomePage() {
           background: `linear-gradient(160deg, ${colors.bg} 0%, ${colors.bgAlt} 55%, ${colors.surfaceDark} 100%)`,
         }}
       >
+        {/* Premium otomotiv atmosferi — üçüncü taraf araç fotoğrafı yerine
+            stilize, jenerik bir araç silüeti (bkz. OtoizLogo mark). */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 400 140"
+          style={{ position: "absolute", left: "50%", bottom: -18, transform: "translateX(-50%)", width: "125%", maxWidth: 620, opacity: 0.16, zIndex: 0 }}
+        >
+          <path
+            d="M20 100 C20 78 34 60 58 57 L110 52 C130 30 168 14 202 14 C236 14 270 28 288 52 L330 57 C356 60 372 78 372 100"
+            stroke={colors.green}
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+          <circle cx="106" cy="101" r="19" stroke={colors.green} strokeWidth="3" fill="none" />
+          <circle cx="288" cy="101" r="19" stroke={colors.green} strokeWidth="3" fill="none" />
+        </svg>
+
         <div style={{ maxWidth: 480, margin: "0 auto", position: "relative", zIndex: 2 }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginBottom: 34 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginBottom: 34 }}>
             <OtoizLogo variant="dark" size={19} mark="primary" />
+            <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginTop: 2 }}>Akıllı Servis Anahtarı</span>
             <span style={{ fontSize: 10.5, letterSpacing: 1.8, textTransform: "uppercase", opacity: 0.5, fontWeight: 600 }}>
               Dijital Araç Servis Pasaportu
             </span>
@@ -459,9 +479,9 @@ function LoginChooserModal({
           >
             <div
               style={{
-                width: 42,
-                height: 42,
-                borderRadius: 10,
+                width: 46,
+                height: 46,
+                borderRadius: "50%",
                 background: "#E6FAEE",
                 display: "flex",
                 alignItems: "center",
@@ -469,7 +489,7 @@ function LoginChooserModal({
                 marginBottom: 14,
               }}
             >
-              <Icon name="car" color={colors.greenDark} size={20} />
+              <Icon name="user" color={colors.greenDark} size={21} />
             </div>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: colors.textDark, margin: "0 0 6px" }}>Bireysel Kullanıcı</h3>
             <p style={{ fontSize: 12.5, color: colors.textMuted, lineHeight: 1.5, margin: "0 0 18px", flexGrow: 1 }}>
@@ -504,9 +524,9 @@ function LoginChooserModal({
           >
             <div
               style={{
-                width: 42,
-                height: 42,
-                borderRadius: 10,
+                width: 46,
+                height: 46,
+                borderRadius: "50%",
                 background: "#E6FAEE",
                 display: "flex",
                 alignItems: "center",
@@ -514,7 +534,7 @@ function LoginChooserModal({
                 marginBottom: 14,
               }}
             >
-              <Icon name="tool" color={colors.greenDark} size={20} />
+              <Icon name="tool" color={colors.greenDark} size={21} />
             </div>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: colors.textDark, margin: "0 0 6px" }}>Servis / İşletme</h3>
             <p style={{ fontSize: 12.5, color: colors.textMuted, lineHeight: 1.5, margin: "0 0 18px", flexGrow: 1 }}>

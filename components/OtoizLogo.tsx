@@ -38,28 +38,33 @@ export function OtoizLogo({
 
   if (mark !== "primary") return wordmark;
 
-  const markWidth = size * 3.6;
-  const markHeight = size * 1.1;
+  const markWidth = size * 5.6;
+  const markHeight = size * 2.05;
 
   return (
-    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: size * 0.22 }}>
+    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: size * 0.18 }}>
       <svg
         width={markWidth}
         height={markHeight}
-        viewBox="0 0 72 22"
+        viewBox="0 0 120 44"
         fill="none"
         aria-hidden="true"
         style={{ display: "block" }}
       >
-        {/* sade tavan/kaput çizgisi — soyut sedan silüeti, üçüncü taraf marka değil */}
+        {/* Sade, tek çizgili spor sedan yan silüeti — soyut/jenerik bir araç
+            ipucu; belirli hiçbir üçüncü taraf marka/logosunu taklit etmez. */}
         <path
-          d="M2 17 C10 17 13 6 24 4 C30 3 42 3 48 4 C59 6 62 17 70 17"
+          d="M6 30 C6 22.5 11 17.5 18.5 16.5 L33 15.5 C40 8.5 50.5 4 61 4 C71.5 4 80 8 85 15.5 L99 16.5 C107 17.3 114 22.5 114 30"
           stroke={colors.green}
-          strokeWidth="1.6"
+          strokeWidth="2.1"
           strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
         />
-        <line x1="6" y1="19.5" x2="66" y2="19.5" stroke={otoColor} strokeOpacity="0.18" strokeWidth="1" strokeLinecap="round" />
+        <path d="M6 30 H26 M96 30 H114" stroke={colors.green} strokeWidth="2.1" strokeLinecap="round" />
+        <circle cx="32" cy="30.5" r="6.5" stroke={otoColor} strokeOpacity="0.55" strokeWidth="2" fill="none" />
+        <circle cx="88" cy="30.5" r="6.5" stroke={otoColor} strokeOpacity="0.55" strokeWidth="2" fill="none" />
+        <line x1="10" y1="37" x2="110" y2="37" stroke={otoColor} strokeOpacity="0.16" strokeWidth="1.4" strokeLinecap="round" />
       </svg>
       {wordmark}
     </span>

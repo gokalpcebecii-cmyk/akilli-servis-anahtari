@@ -130,6 +130,16 @@ export function Icon({
           <path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2v2" />
         </svg>
       );
+    case "handover":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="6" cy="7" r="2.5" />
+          <path d="M2 19c.6-3 2-4.5 4-4.5s3.4 1.5 4 4.5" />
+          <circle cx="18" cy="7" r="2.5" />
+          <path d="M14 19c.6-3 2-4.5 4-4.5s3.4 1.5 4 4.5" />
+          <path d="M9.5 11h5M12.5 8.5 15 11l-2.5 2.5" />
+        </svg>
+      );
     case "swap":
       return (
         <svg viewBox="0 0 24 24" style={s}>

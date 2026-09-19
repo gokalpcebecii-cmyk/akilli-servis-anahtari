@@ -178,29 +178,28 @@ export default function BireyselAraclarPage() {
             {primary && <VehicleHeroCard vehicle={primary} onClick={() => router.push(`/bireysel/araclar/${primary.id}`)} />}
 
             {primary && (
-              <section style={{ marginTop: 18, marginBottom: 20 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {MODULES.map((m) => (
-                    <a
-                      key={m.key}
-                      href={`/bireysel/araclar/${primary.id}#${m.key}`}
-                      className="otoiz-module-card"
-                      style={{
-                        display: "flex", alignItems: "flex-start", gap: 10, background: colors.surfaceLight,
-                        border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: 14,
-                        textDecoration: "none", minHeight: 44,
-                      }}
-                    >
-                      <div style={{ width: 32, height: 32, minWidth: 32, borderRadius: 8, background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Icon name={m.icon} color={colors.greenDark} size={16} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 700, color: colors.textDark, marginBottom: 2 }}>{m.title}</div>
-                        <div style={{ fontSize: 10.5, color: colors.textMuted, lineHeight: 1.4 }}>{m.desc}</div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
+              <section style={{ marginTop: 18, marginBottom: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+                {MODULES.map((m) => (
+                  <a
+                    key={m.key}
+                    href={`/bireysel/araclar/${primary.id}#${m.key}`}
+                    className="otoiz-module-card"
+                    style={{
+                      display: "flex", alignItems: "center", gap: 14, background: colors.surfaceLight,
+                      border: `1px solid ${colors.border}`, borderRadius: radius.lg, padding: "14px 16px",
+                      textDecoration: "none", minHeight: 44, boxShadow: "0 2px 8px rgba(6,20,33,0.04)",
+                    }}
+                  >
+                    <div style={{ width: 44, height: 44, minWidth: 44, borderRadius: "50%", background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Icon name={m.icon} color={colors.greenDark} size={20} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color: colors.textDark, marginBottom: 2 }}>{m.title}</div>
+                      <div style={{ fontSize: 12, color: colors.textMuted, lineHeight: 1.4 }}>{m.desc}</div>
+                    </div>
+                    <Icon name="chevron-right" color={colors.textMuted} size={18} />
+                  </a>
+                ))}
               </section>
             )}
 

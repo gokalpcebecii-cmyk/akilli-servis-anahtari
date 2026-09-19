@@ -99,20 +99,50 @@ export default async function PassportByCodePage({ params }: { params: { code: s
     return { label: "Normal", kind: "success" };
   }
 
+  const hasVerifiedRecord = records.some((r: any) => r.tenant_id);
+  const lastServiceDate = records.reduce((latest: string | null, r: any) => {
+    const d = r.service_date || r.created_at;
+    return !latest || (d && d > latest) ? d : latest;
+  }, null as string | null);
+
   return (
     <main style={{ fontFamily: font, background: colors.surfaceSoft, minHeight: "100vh" }}>
-      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, color: colors.textLight, padding: "24px 20px 28px" }}>
+      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, color: colors.textLight, padding: "22px 20px 40px", textAlign: "center" }}>
         <div style={{ maxWidth: 460, margin: "0 auto" }}>
-          <div style={{ marginBottom: 16 }}>
-            <OtoizLogo variant="dark" size={14} mark="primary" />
+          <OtoizLogo variant="dark" size={15} mark="primary" />
+          <p style={{ fontSize: 11.5, opacity: 0.6, marginTop: 6, letterSpacing: 0.3 }}>Aracınızın Dijital Servis Pasaportu</p>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 460, margin: "-24px auto 0", padding: "0 20px" }}>
+        <div style={{ ...cardStyle, boxShadow: "0 14px 34px rgba(6,20,33,0.14)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 21, fontWeight: 800, color: colors.textDark }}>{vehicle.plate}</div>
+              <div style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
+                {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+              {hasVerifiedRecord && (
+                <span style={{ display: "flex", alignItems: "center", gap: 4, ...badgeStyle("success"), whiteSpace: "nowrap" }}>
+                  <Icon name="shield-check" color={colors.greenDark} size={11} strokeWidth={2.5} />
+                  Servis Doğrulamalı
+                </span>
+              )}
+              <span style={badgeStyle("success")}>Aktif</span>
+            </div>
           </div>
-          <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 4 }}>Yetkili Servis</p>
-          <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{tenant?.name}</p>
-          <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: radius.lg, padding: 16 }}>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{vehicle.plate}</div>
-            <div style={{ fontSize: 13, opacity: 0.65, marginBottom: 10 }}>{vehicle.brand} {vehicle.model}</div>
-            <div style={{ fontSize: 13 }}>
-              Güncel Km: <b>{vehicle.current_km?.toLocaleString("tr-TR")}</b>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KM</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: colors.textDark }}>{vehicle.current_km?.toLocaleString("tr-TR") ?? "—"}</div>
+            </div>
+            <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
+              <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>SON SERVİS</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: colors.textDark }}>
+                {lastServiceDate ? new Date(lastServiceDate).toLocaleDateString("tr-TR") : "—"}
+              </div>
             </div>
           </div>
         </div>
@@ -158,9 +188,10 @@ export default async function PassportByCodePage({ params }: { params: { code: s
           </div>
         )}
 
-        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>İletişim</h2>
+        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Yetkili Servis</h2>
         <div style={cardStyle}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, margin: "0 0 4px" }}>{tenant?.phone}</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, margin: "0 0 4px" }}>{tenant?.name}</p>
+          <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 2px" }}>{tenant?.phone}</p>
           <p style={{ fontSize: 12.5, color: colors.textMuted, margin: 0 }}>{tenant?.address}</p>
         </div>
       </div>

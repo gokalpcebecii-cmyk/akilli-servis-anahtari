@@ -7,10 +7,10 @@ import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonSty
 import { Icon } from "@/components/Icon";
 
 const STEPS = [
-  { n: 1, title: "Aracı Devret", desc: "Devri başlatın, aracın erişimi hesabınızdan kaldırılır." },
-  { n: 2, title: "Güvenli bağlantı oluşturuldu", desc: "Yalnızca paylaştığınız kişi kullanabilecek, süreli bir bağlantı." },
-  { n: 3, title: "Yeni sahibiniz bağlantıyı kabul eder", desc: "OTOİZ hesabıyla giriş yapıp bağlantıyı açtığında devir tamamlanır." },
-  { n: 4, title: "Teknik geçmiş araçla devam eder", desc: "Bakım kayıtları ve QR/NFC kodu değişmeden korunur." },
+  { n: 1, title: "Devir Detaylarını Gir", desc: "Devri başlatın, aracın erişimi hesabınızdan kaldırılır." },
+  { n: 2, title: "Güvenli Bağlantı Oluştur", desc: "Yalnızca paylaştığınız kişi kullanabilecek, süreli bir bağlantı." },
+  { n: 3, title: "Alıcı Kabul Eder", desc: "OTOİZ hesabıyla giriş yapıp bağlantıyı açtığında devir tamamlanır." },
+  { n: 4, title: "Teknik Geçmiş Devam Eder", desc: "Bakım kayıtları ve QR/NFC kodu değişmeden korunur." },
 ];
 
 export default function BireyselDevretPage() {
@@ -112,8 +112,11 @@ export default function BireyselDevretPage() {
   return (
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "32px 20px" }}>
-        <h1 style={{ fontSize: 21, marginBottom: 4, color: colors.textDark, fontWeight: 800 }}>Aracı Devret / Elden Çıkar</h1>
-        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 24 }}>
+        <div style={{ width: 56, height: 56, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <Icon name="handover" color={colors.greenDark} size={28} />
+        </div>
+        <h1 style={{ fontSize: 21, marginBottom: 4, color: colors.textDark, fontWeight: 800, textAlign: "center" }}>Aracı Devret / Elden Çıkar</h1>
+        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 24, textAlign: "center" }}>
           <strong style={{ color: colors.textDark }}>{vehicle.plate}</strong> — {vehicle.brand} {vehicle.model}
         </p>
 

@@ -257,19 +257,27 @@ export default function VehicleDetailPage() {
   return (
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 40 }}>
       <div style={{ background: colors.surfaceDark, padding: "16px 18px" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <OtoizLogo variant="dark" size={12} />
-            <h1 style={{ fontSize: 22, fontWeight: 800, margin: "6px 0 0", color: colors.textLight }}>{isNew ? "Yeni Araç" : vehicle.plate}</h1>
+        <div style={{ maxWidth: 560, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <a href="/panel/dashboard" aria-label="Geri" style={{ color: colors.textLight, textDecoration: "none", fontSize: 18, padding: 4 }}>
+              ←
+            </a>
+            {!isNew && (
+              <button
+                onClick={() => setEditingVehicle((v) => !v)}
+                style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", borderRadius: radius.sm }}
+              >
+                {editingVehicle ? "Kapat" : "Araç bilgilerini düzenle"}
+              </button>
+            )}
           </div>
-          {!isNew && (
-            <button
-              onClick={() => setEditingVehicle((v) => !v)}
-              style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", borderRadius: radius.sm }}
-            >
-              {editingVehicle ? "Kapat" : "Araç bilgilerini düzenle"}
-            </button>
-          )}
+          <div style={{ marginTop: 6 }}>
+            <OtoizLogo variant="dark" size={11} />
+          </div>
+          <h1 style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 0", color: colors.textLight }}>
+            {isNew ? "Yeni Araç" : "Hızlı Bakım Kaydı"}
+          </h1>
+          {!isNew && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>{vehicle.plate}</div>}
         </div>
       </div>
 
