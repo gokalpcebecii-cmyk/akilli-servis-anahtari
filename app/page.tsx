@@ -58,105 +58,18 @@ export default function HomePage() {
     { title: "Daha Özgür", desc: "Tüm araç bilgileriniz tek uygulamada.", icon: "check" },
   ];
 
-  // Referansın alt "ürün vitrini" şeridi — gerçek ekranların sadeleştirilmiş,
-  // gerçek HTML/CSS ile üretilmiş önizlemeleri (screenshot gömme değil).
-  const showcaseScreens: { label: string; dark?: boolean; body: React.ReactNode }[] = [
-    {
-      label: "Landing", dark: true,
-      body: (
-        <>
-          <div style={{ width: "70%", height: 6, borderRadius: 3, background: "rgba(255,255,255,0.85)", marginBottom: 5 }} />
-          <div style={{ width: "55%", height: 6, borderRadius: 3, background: "rgba(255,255,255,0.5)", marginBottom: 14 }} />
-          <div style={{ width: "80%", height: 16, borderRadius: 999, background: colors.green }} />
-        </>
-      ),
-    },
-    {
-      label: "Giriş Seçimi", dark: true,
-      body: (
-        <>
-          <div style={{ width: "88%", height: 34, borderRadius: 8, background: colors.surfaceLight, marginBottom: 8 }} />
-          <div style={{ width: "88%", height: 34, borderRadius: 8, background: colors.surfaceLight }} />
-        </>
-      ),
-    },
-    {
-      label: "Bireysel Giriş",
-      body: (
-        <>
-          <div style={{ width: "85%", height: 8, borderRadius: 3, background: colors.neutralSoft, marginBottom: 6 }} />
-          <div style={{ width: "85%", height: 8, borderRadius: 3, background: colors.neutralSoft, marginBottom: 14 }} />
-          <div style={{ width: "85%", height: 14, borderRadius: 999, background: colors.green }} />
-        </>
-      ),
-    },
-    {
-      label: "Bireysel Ana Ekran",
-      body: (
-        <>
-          <div style={{ width: "88%", height: 26, borderRadius: 8, background: colors.surfaceDark, marginBottom: 8 }} />
-          {[0, 1, 2].map((i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, width: "88%", height: 12, borderRadius: 4, background: colors.neutralSoft, marginBottom: 5, padding: "0 4px" }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: colors.green }} />
-            </div>
-          ))}
-        </>
-      ),
-    },
-    {
-      label: "Servis Hızlı Bakım",
-      body: (
-        <>
-          <div style={{ width: "85%", height: 12, borderRadius: 4, border: `1.5px solid ${colors.green}`, marginBottom: 8 }} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3, width: "85%", marginBottom: 8 }}>
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} style={{ height: 10, borderRadius: 3, background: colors.neutralSoft }} />
-            ))}
-          </div>
-          <div style={{ width: "85%", height: 12, borderRadius: 999, background: colors.green }} />
-        </>
-      ),
-    },
-    {
-      label: "Araç Detay / Pasaport",
-      body: (
-        <>
-          <div style={{ display: "flex", gap: 3, width: "85%", marginBottom: 8 }}>
-            {[0, 1, 2].map((i) => (
-              <div key={i} style={{ flex: 1, height: 9, borderRadius: 3, background: i === 0 ? colors.green : colors.neutralSoft }} />
-            ))}
-          </div>
-          <div style={{ width: "85%", height: 30, borderRadius: 8, background: colors.neutralSoft }} />
-        </>
-      ),
-    },
-    {
-      label: "Araç Devret",
-      body: (
-        <>
-          {[0, 1, 2].map((i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, width: "85%", marginBottom: 6 }}>
-              <div style={{ width: 12, height: 12, minWidth: 12, borderRadius: "50%", background: colors.greenSoft, border: `1px solid ${colors.green}` }} />
-              <div style={{ flex: 1, height: 6, borderRadius: 3, background: colors.neutralSoft }} />
-            </div>
-          ))}
-        </>
-      ),
-    },
-    {
-      label: "Public Pasaport",
-      body: (
-        <>
-          <div style={{ width: "70%", height: 12, borderRadius: 999, background: colors.greenSoft, border: `1px solid ${colors.green}`, marginBottom: 8 }} />
-          {[0, 1].map((i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, width: "85%", marginBottom: 6 }}>
-              <div style={{ width: 6, height: 6, minWidth: 6, borderRadius: "50%", background: colors.green }} />
-              <div style={{ flex: 1, height: 6, borderRadius: 3, background: colors.neutralSoft }} />
-            </div>
-          ))}
-        </>
-      ),
-    },
+  // Referansın alt "ürün vitrini" şeridi — Playwright fixture ile üretilen
+  // GERÇEK çalışan UI screenshot'ları (bkz. public/showcase/, kaynak:
+  // e2e/pixel-reference-screenshots.spec.ts). Şematik/temsili kart yok.
+  const showcaseScreens: { label: string; src: string }[] = [
+    { label: "Landing", src: "/showcase/01-landing.webp" },
+    { label: "Giriş Seçimi", src: "/showcase/02-giris-secimi.webp" },
+    { label: "Bireysel Giriş", src: "/showcase/03-bireysel-giris.webp" },
+    { label: "Bireysel Ana Ekran", src: "/showcase/04-bireysel-ana-ekran.webp" },
+    { label: "Servis Hızlı Bakım", src: "/showcase/05-servis-hizli-bakim.webp" },
+    { label: "Araç Detay / Pasaport", src: "/showcase/06-arac-detay.webp" },
+    { label: "Araç Devret", src: "/showcase/07-arac-devret.webp" },
+    { label: "Public Pasaport", src: "/showcase/08-public-pasaport.webp" },
   ];
 
   return (
@@ -248,48 +161,20 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* TELEFON ÖNİZLEME — app ekranı hissi */}
+            {/* TELEFON — gerçek smartphone-frame mockup, içinde gerçek
+                Bireysel Ana Ekran screenshot'ı (Playwright fixture çıktısı,
+                bkz. public/showcase/04-bireysel-ana-ekran.webp). Hero'nun
+                ana objelerinden biri: arka plan fotoğrafına karşı öne
+                çıkması için yeşil-tonlu bir glow üzerine oturuyor. */}
             <div className="otoiz-hero-phone">
-              <div
-                style={{
-                  maxWidth: 300, margin: "0 auto", background: `linear-gradient(180deg, ${colors.surfaceDark}, ${colors.bg})`,
-                  borderRadius: 34, padding: "14px 12px 20px", border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "0 30px 60px rgba(0,0,0,0.4)",
-                }}
-              >
-                <div style={{ width: 46, height: 5, borderRadius: 999, background: "rgba(255,255,255,0.2)", margin: "0 auto 14px" }} />
-                <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 18, textAlign: "left" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700 }}>34 XY 999</div>
-                      <div style={{ fontSize: 11, opacity: 0.55 }}>Örnek Araç Pasaportu</div>
-                    </div>
-                    <div style={{ background: "rgba(54,232,109,0.14)", color: colors.green, fontSize: 10.5, fontWeight: 700, padding: "4px 9px", borderRadius: 999, border: "1px solid rgba(54,232,109,0.4)" }}>
-                      Aktif
-                    </div>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-                    <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "9px 11px" }}>
-                      <div style={{ fontSize: 9.5, opacity: 0.55, marginBottom: 2 }}>GÜNCEL KM</div>
-                      <div style={{ fontSize: 14, fontWeight: 700 }}>84.200</div>
-                    </div>
-                    <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "9px 11px" }}>
-                      <div style={{ fontSize: 9.5, opacity: 0.55, marginBottom: 2 }}>SONRAKİ BAKIM</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: colors.green }}>90.000 km</div>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {["Servis Geçmişi", "QR / NFC Yönetimi"].map((label) => (
-                      <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "7px 10px" }}>
-                        <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(54,232,109,0.16)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Icon name={label.startsWith("Servis") ? "history" : "qr"} color={colors.green} size={10} />
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85 }}>{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <div className="otoiz-hero-phone-glow" aria-hidden="true" />
+              <PhoneFrame
+                src="/showcase/04-bireysel-ana-ekran.webp"
+                alt="OTOİZ Bireysel Ana Ekran — gerçek uygulama görünümü"
+                width={230}
+                className="otoiz-hero-phone-frame"
+                priority
+              />
             </div>
 
             {/* SAĞ KOLON — referansın kompozisyonundaki gibi fayda listesi +
@@ -315,17 +200,19 @@ export default function HomePage() {
                 ))}
               </div>
 
-              {/* Referanstaki premium "imza" hissi — el yazısı stilinde slogan */}
-              <div className="otoiz-hero-signature" style={{ maxWidth: 260 }}>
+              {/* Referanstaki premium "imza" hissi — el yazısı stilinde kısa
+                  slogan, sağ fayda kolonunun bir parçası gibi ince bir üst
+                  ayraçla bağlanıyor; "font demo" değil, imza gibi kompakt. */}
+              <div className="otoiz-hero-signature" style={{ maxWidth: 250, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
                 <div
                   style={{
-                    fontFamily: "'Caveat', cursive", fontSize: 34, fontWeight: 600, color: colors.textLight,
-                    lineHeight: 1.15, opacity: 0.92,
+                    fontFamily: "'Caveat', cursive", fontSize: 26, fontWeight: 600, color: colors.textLight,
+                    lineHeight: 1.2,
                   }}
                 >
-                  Aracınızın İzi<br />Hep Sizinle.
+                  Aracınızın İzi{" "}
+                  <span style={{ borderBottom: `2px solid ${colors.green}`, paddingBottom: 1 }}>Hep Sizinle.</span>
                 </div>
-                <div className="otoiz-accent-line" style={{ marginTop: 10 }} />
               </div>
             </div>
           </div>
@@ -342,37 +229,42 @@ export default function HomePage() {
               Tek anahtar, sekiz ekran
             </div>
           </div>
-          <div className="otoiz-showcase-strip" style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 8, justifyContent: "center" }}>
+          <div className="otoiz-showcase-strip" style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8, justifyContent: "center" }}>
             {showcaseScreens.map((s) => (
-              <ScreenPreviewCard key={s.label} label={s.label} dark={s.dark}>
-                {s.body}
-              </ScreenPreviewCard>
+              <div key={s.label} style={{ minWidth: 132, width: 132 }}>
+                <PhoneFrame src={s.src} alt={`OTOİZ ${s.label} — gerçek uygulama görünümü`} width={132} />
+                <div style={{ textAlign: "center", fontSize: 10.5, fontWeight: 600, color: "rgba(255,255,255,0.6)", marginTop: 10, lineHeight: 1.3 }}>
+                  {s.label}
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Nasıl Çalışır */}
-      <section className="otoiz-hero-pattern" style={{ background: colors.surfaceSoft, padding: "48px 20px 56px" }}>
-        <div className="otoiz-section-divider" style={{ marginBottom: 36 }} />
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: colors.greenDark, fontWeight: 700, marginBottom: 8 }}>
+      {/* Nasıl Çalışır — koyu lacivert shell + premium off-white kartlar;
+          düz beyaz "SaaS" blok hissi yerine landing'in geri kalanıyla aynı
+          koyu/yeşil marka dilinin devamı. */}
+      <section className="otoiz-hero-pattern" style={{ background: `linear-gradient(180deg, ${colors.surfaceDark}, ${colors.bg})`, padding: "48px 20px 56px", position: "relative", overflow: "hidden" }}>
+        <div className="otoiz-reflection" aria-hidden="true" />
+        <div className="otoiz-accent-line" style={{ margin: "0 auto 36px" }} />
+        <div style={{ textAlign: "center", marginBottom: 40, position: "relative" }}>
+          <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: colors.green, fontWeight: 700, marginBottom: 8 }}>
             4 adımda dijital güvence
           </div>
-          <h2 style={{ fontSize: 24, color: colors.textDark, fontWeight: 800, margin: 0 }}>Sistem Nasıl Çalışır?</h2>
+          <h2 style={{ fontSize: 24, color: colors.textLight, fontWeight: 800, margin: 0 }}>Sistem Nasıl Çalışır?</h2>
         </div>
-        <div style={{ maxWidth: 920, margin: "0 auto" }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", position: "relative" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 20 }}>
             {steps.map((s) => (
               <div
                 key={s.n}
                 style={{
-                  background: colors.surfaceLight,
+                  background: colors.surfaceSoft,
                   borderRadius: 16,
                   padding: "26px 18px",
                   textAlign: "center",
-                  boxShadow: "0 4px 20px rgba(6,20,33,0.05)",
-                  border: `1px solid ${colors.border}`,
+                  boxShadow: "0 14px 32px rgba(2,8,15,0.35)",
                 }}
               >
                 <div
@@ -400,17 +292,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Temel Özellikler */}
-      <section style={{ padding: "48px 20px 56px", background: colors.surfaceLight }}>
-        <div className="otoiz-section-divider" style={{ marginBottom: 36 }} />
-        <h2 style={{ textAlign: "center", fontSize: 24, marginBottom: 36, color: colors.textDark, fontWeight: 800 }}>
+      {/* Temel Özellikler — aynı koyu shell devam ediyor (Nasıl Çalışır'dan
+          sert bir kesim yerine kesintisiz koyu zemin). */}
+      <section className="otoiz-hero-pattern" style={{ padding: "48px 20px 56px", background: colors.bg, position: "relative", overflow: "hidden" }}>
+        <div className="otoiz-reflection" aria-hidden="true" />
+        <div className="otoiz-accent-line" style={{ margin: "0 auto 36px" }} />
+        <h2 style={{ textAlign: "center", fontSize: 24, marginBottom: 36, color: colors.textLight, fontWeight: 800, position: "relative" }}>
           Temel Özellikler
         </h2>
-        <div style={{ maxWidth: 760, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+        <div style={{ maxWidth: 760, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, position: "relative" }}>
           {features.map((f) => (
             <div
               key={f.title}
-              style={{ display: "flex", gap: 14, padding: 18, background: colors.surfaceSoft, borderRadius: 14, alignItems: "flex-start" }}
+              style={{ display: "flex", gap: 14, padding: 18, background: colors.surfaceSoft, borderRadius: 14, alignItems: "flex-start", boxShadow: "0 14px 32px rgba(2,8,15,0.35)" }}
             >
               <div
                 style={{
@@ -519,26 +413,44 @@ export default function HomePage() {
   );
 }
 
-// Vitrin şeridindeki tek bir mini ekran kartı — küçük telefon çerçevesi
-// hissi veren, gerçek HTML/CSS ile üretilmiş sadeleştirilmiş önizleme.
-function ScreenPreviewCard({ label, dark, children }: { label: string; dark?: boolean; children: React.ReactNode }) {
+// Gerçek smartphone-frame mockup — bezel + notch + içinde gerçek uygulama
+// screenshot'ı. Hero'da büyük boyutta (referansın merkez telefon objesi),
+// vitrin şeridinde küçük boyutta yeniden kullanılıyor. Ekran görüntüsü
+// 390×844 (mobil viewport) oranında üretildiği için genişlik verilince
+// yükseklik orantılı hesaplanır — kırpma/gerilme olmaz.
+function PhoneFrame({
+  src, alt, width, className, priority,
+}: { src: string; alt: string; width: number; className?: string; priority?: boolean }) {
+  // Tüm ölçüler % / aspect-ratio ile — bir CSS media query outer genişliği
+  // değiştirdiğinde bezel/notch/ekran orantılı olarak otomatik yeniden
+  // ölçeklenir (JS'de sabit px hesaplanmıyor).
   return (
-    <div style={{ minWidth: 118, width: 118 }}>
-      <div
-        style={{
-          borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.14)",
-          boxShadow: "0 10px 24px rgba(0,0,0,0.35)", background: dark ? colors.bg : colors.surfaceLight,
-        }}
-      >
-        <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "8px 8px 6px", display: "flex", justifyContent: "center" }}>
-          <OtoizLogo variant="dark" size={44} />
-        </div>
-        <div style={{ padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", minHeight: 108 }}>
-          {children}
-        </div>
-      </div>
-      <div style={{ textAlign: "center", fontSize: 10.5, fontWeight: 600, color: "rgba(255,255,255,0.6)", marginTop: 8, lineHeight: 1.3 }}>
-        {label}
+    <div
+      className={className}
+      style={{
+        width, borderRadius: "15%", padding: "4.5%",
+        background: "linear-gradient(160deg, #0c1620, #030a12)",
+        border: "1px solid rgba(255,255,255,0.16)",
+        boxShadow: "0 26px 54px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ position: "relative", width: "100%", aspectRatio: "390 / 844", borderRadius: "11%", overflow: "hidden", background: colors.bg }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
+          loading={priority ? "eager" : "lazy"}
+          style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute", top: "2.5%", left: "50%", transform: "translateX(-50%)",
+            width: "30%", height: "4.2%", borderRadius: 999,
+            background: "#030a12",
+          }}
+        />
       </div>
     </div>
   );
