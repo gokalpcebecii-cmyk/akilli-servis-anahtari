@@ -129,7 +129,15 @@ export default function HomePage() {
             kendi inline logo bloğuyla değişmeden devam ediyor. */}
         <div className="otoiz-hero-topbar">
           <div className="otoiz-hero-topbar-inner">
-            <OtoizLogo variant="dark" size={150} mark="primary" />
+            {/* Logo + etiket referansta TEK blok: wordmark + altında "Akıllı
+                Servis Anahtarı" / "Dijital Araç Servis Pasaportu" iki satır. */}
+            <div className="otoiz-hero-topbar-brand">
+              <OtoizLogo variant="dark" size={220} mark="primary" />
+              <div className="otoiz-hero-topbar-tagline">
+                <span className="otoiz-hero-topbar-tagline-main">Akıllı Servis Anahtarı</span>
+                <span className="otoiz-hero-topbar-tagline-sub">Dijital Araç Servis Pasaportu</span>
+              </div>
+            </div>
             <nav className="otoiz-hero-nav" aria-label="Ana navigasyon">
               {navLinks.map((l) => (
                 <a
@@ -172,7 +180,16 @@ export default function HomePage() {
                     3 satırlık kırılımı kullanıyor (ayrı span, CSS ile
                     breakpoint'e göre gösterilip gizleniyor). */}
                 <span className="otoiz-hero-headline-mobile">Bu otomobil için premium<br />dijital servis pasaportu.</span>
-                <span className="otoiz-hero-headline-desktop">Bu otomobil için<br />premium dijital<br />servis pasaportu.</span>
+                {/* Bu turun talimatı: "'servis pasaportu.' yeşil vurgu
+                    taşımalı" — yalnızca desktop varyantında, mobil
+                    değişmedi. */}
+                <span className="otoiz-hero-headline-desktop">
+                  Bu otomobil için
+                  <br />
+                  premium dijital
+                  <br />
+                  <span style={{ color: colors.green }}>servis pasaportu.</span>
+                </span>
               </h1>
               <p style={{ fontSize: 15.5, opacity: 0.85, lineHeight: 1.6, marginBottom: 26, maxWidth: 380, textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
                 Bakım, kilometre ve servis kayıtlarınızı güvenle saklayın — aracınızın tüm geçmişi tek ekranda.
@@ -273,7 +290,7 @@ export default function HomePage() {
                 altında premium "imza" sloganı. Yalnızca desktop'ta görünür
                 (bkz. .otoiz-hero-benefits-col / .otoiz-hero-signature). */}
             <div className="otoiz-hero-benefits-col">
-              <div className="otoiz-hero-benefits-desktop" style={{ flexDirection: "column", gap: 16, textAlign: "left", marginBottom: 34, maxWidth: 300 }}>
+              <div className="otoiz-hero-benefits-desktop" style={{ flexDirection: "column", gap: 30, textAlign: "left", marginBottom: 34, maxWidth: 300 }}>
                 {valueProps.map((v) => (
                   <div key={v.title} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                     <div
@@ -292,19 +309,25 @@ export default function HomePage() {
                 ))}
               </div>
 
-              {/* Referanstaki premium "imza" hissi — el yazısı stilinde kısa
-                  slogan, sağ fayda kolonunun bir parçası gibi ince bir üst
-                  ayraçla bağlanıyor; "font demo" değil, imza gibi kompakt. */}
-              <div className="otoiz-hero-signature" style={{ maxWidth: 250, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+              {/* Referanstaki premium "imza" hissi — el yazısı stilinde,
+                  sağ kolonun ALTINA sabitlenmiş (bkz. .otoiz-hero-signature
+                  margin-top:auto), sağa hizalı, altında yeşil bir "swoosh"
+                  çizgisiyle. Caveat artık self-hosted (bkz. globals.css
+                  @font-face) — Google Fonts CDN'e runtime bağımlılığı yok. */}
+              <div className="otoiz-hero-signature" style={{ maxWidth: 260, textAlign: "right" }}>
                 <div
                   style={{
-                    fontFamily: "'Caveat', cursive", fontSize: 26, fontWeight: 600, color: colors.textLight,
-                    lineHeight: 1.2,
+                    fontFamily: "'Caveat', cursive", fontSize: 34, fontWeight: 600, color: colors.textLight,
+                    lineHeight: 1.15, textShadow: "0 2px 10px rgba(0,0,0,0.4)",
                   }}
                 >
-                  Aracınızın İzi{" "}
-                  <span style={{ borderBottom: `2px solid ${colors.green}`, paddingBottom: 1 }}>Hep Sizinle.</span>
+                  Aracınızın İzi
+                  <br />
+                  Hep Sizinle.
                 </div>
+                <svg width="132" height="18" viewBox="0 0 132 18" fill="none" style={{ marginTop: 2, marginLeft: "auto" }} aria-hidden="true">
+                  <path d="M4 10C34 2 72 2 102 8C112 10 120 9 128 4" stroke={colors.green} strokeWidth="3" strokeLinecap="round" />
+                </svg>
               </div>
             </div>
           </div>
