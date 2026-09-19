@@ -68,7 +68,7 @@ function BireyselGirisForm() {
           ← Ana sayfaya dön
         </a>
         <div style={{ position: "relative", maxWidth: 360, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={22} mark="primary" />
+          <OtoizLogo variant="dark" size={190} mark="primary" />
           <div className="otoiz-accent-line" style={{ margin: "12px 0 16px" }} />
           <h1 style={{ fontSize: 23, marginTop: 0, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Bireysel Giriş</h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>

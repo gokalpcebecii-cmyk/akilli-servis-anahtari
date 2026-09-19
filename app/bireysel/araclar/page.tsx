@@ -101,7 +101,7 @@ export default function BireyselAraclarPage() {
         <div className="otoiz-reflection" aria-hidden="true" />
         <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <OtoizLogo variant="dark" size={20} />
+            <OtoizLogo variant="dark" size={130} />
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button
                 onClick={() => router.push("/bireysel/bildirimler")}

@@ -213,6 +213,10 @@ a:focus-visible {
     flex-direction: column;
     align-items: flex-start;
   }
+  .otoiz-landing-logo {
+    width: 340px !important;
+    height: auto !important;
+  }
   .otoiz-hero-benefits-mobile {
     display: none !important;
   }

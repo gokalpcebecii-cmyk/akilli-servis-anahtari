@@ -372,7 +372,7 @@ export default function BireyselVehicleDetailPage() {
           </a>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12 }}>
             <div>
-              <OtoizLogo variant="dark" size={16} />
+              <OtoizLogo variant="dark" size={120} />
               <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.textLight, margin: "8px 0 0" }}>
                 {isNew ? "Yeni Araç" : vehicle.plate}
               </h1>

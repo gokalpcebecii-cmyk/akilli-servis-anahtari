@@ -114,7 +114,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
       >
         <div className="otoiz-reflection" aria-hidden="true" />
         <div style={{ position: "relative", maxWidth: 460, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={20} mark="primary" />
+          <OtoizLogo variant="dark" size={170} mark="primary" />
           <div className="otoiz-accent-line" style={{ margin: "10px auto 0" }} />
           <p style={{ fontSize: 11.5, opacity: 0.6, marginTop: 10, letterSpacing: 0.3 }}>Aracınızın Dijital Servis Pasaportu</p>
         </div>

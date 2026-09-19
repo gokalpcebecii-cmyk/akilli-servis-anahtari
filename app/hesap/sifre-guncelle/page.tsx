@@ -110,7 +110,7 @@ export default function SifreGuncellePage() {
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
       <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
         <div style={{ maxWidth: 360, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={17} mark="primary" />
+          <OtoizLogo variant="dark" size={190} mark="primary" />
           <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Yeni Şifre Belirle</h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, margin: 0 }}>Hesabınız için yeni bir şifre girin.</p>
         </div>

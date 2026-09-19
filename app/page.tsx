@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { colors, font } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
 export default function HomePage() {
-  const [modalOpen, setModalOpen] = useState(false);
-  const triggerRef = useRef<HTMLElement | null>(null);
+  const router = useRouter();
 
-  function openModal(e: React.MouseEvent<HTMLElement>) {
-    triggerRef.current = e.currentTarget;
-    setModalOpen(true);
+  // "Giriş Yap"/"Ücretsiz Başlayın" artık modal/bottom-sheet açmıyor —
+  // referanstaki gibi tam ekran giriş türü seçim sayfasına yönlendiriyor.
+  function goToGirisSecimi() {
+    router.push("/giris");
   }
 
   // Desktop hero (referans marketing kompozisyonunun sol kolonu): 4 madde, ikon+başlık+açıklama.
@@ -78,7 +78,7 @@ export default function HomePage() {
             {/* METİN + CTA */}
             <div className="otoiz-hero-text">
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginBottom: 30 }}>
-                <OtoizLogo variant="dark" size={34} mark="primary" />
+                <OtoizLogo variant="dark" size={232} mark="primary" className="otoiz-landing-logo" />
                 <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginTop: 2 }}>Akıllı Servis Anahtarı</span>
                 <span style={{ fontSize: 10.5, letterSpacing: 1.8, textTransform: "uppercase", opacity: 0.5, fontWeight: 600 }}>
                   Dijital Araç Servis Pasaportu
@@ -140,7 +140,7 @@ export default function HomePage() {
 
               <div className="otoiz-hero-cta-col" style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
                 <button
-                  onClick={openModal}
+                  onClick={goToGirisSecimi}
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                     padding: "15px 24px", background: colors.green, color: colors.textDark, borderRadius: 999, border: "none",
@@ -151,7 +151,7 @@ export default function HomePage() {
                   <Icon name="chevron-right" color={colors.textDark} size={16} />
                 </button>
                 <button
-                  onClick={openModal}
+                  onClick={goToGirisSecimi}
                   style={{ padding: "14px 24px", background: "rgba(6,20,33,0.35)", color: colors.textLight, border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 999, fontWeight: 600, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48 }}
                 >
                   Giriş Yap
@@ -331,7 +331,7 @@ export default function HomePage() {
           OTOİZ, aracınızın teknik geçmişini düzenli, taşınabilir ve değerli hale getirir.
         </p>
         <button
-          onClick={openModal}
+          onClick={goToGirisSecimi}
           style={{
             display: "inline-block",
             padding: "15px 36px",
@@ -353,244 +353,6 @@ export default function HomePage() {
       <footer style={{ textAlign: "center", padding: "28px 20px", color: colors.textMuted, fontSize: 12, background: colors.surfaceSoft }}>
         © 2026 OTOİZ — Ankara
       </footer>
-
-      <LoginChooserModal open={modalOpen} onClose={() => setModalOpen(false)} triggerRef={triggerRef} />
     </main>
-  );
-}
-
-function LoginChooserModal({
-  open,
-  onClose,
-  triggerRef,
-}: {
-  open: boolean;
-  onClose: () => void;
-  triggerRef: React.MutableRefObject<HTMLElement | null>;
-}) {
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const focusTimer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (e.key === "Tab" && dialogRef.current) {
-        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusable.length === 0) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
-      window.clearTimeout(focusTimer);
-      triggerRef.current?.focus();
-    };
-  }, [open, onClose, triggerRef]);
-
-  if (!open) return null;
-
-  return (
-    <div
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        background: "rgba(6,20,33,0.66)",
-        backdropFilter: "blur(3px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-      className="otoiz-modal-backdrop"
-    >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="login-chooser-title"
-        aria-describedby="login-chooser-subtitle"
-        className="otoiz-modal-card"
-        style={{
-          background: colors.surfaceLight,
-          width: "100%",
-          maxWidth: 560,
-          borderRadius: 20,
-          padding: 0,
-          overflow: "hidden",
-          boxShadow: "0 30px 80px rgba(6,20,33,0.45)",
-          position: "relative",
-        }}
-      >
-        <button
-          ref={closeButtonRef}
-          onClick={onClose}
-          aria-label="Kapat"
-          className="otoiz-modal-close"
-          style={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            width: 36,
-            height: 36,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(255,255,255,0.12)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            borderRadius: "50%",
-            cursor: "pointer",
-            zIndex: 2,
-          }}
-        >
-          <Icon name="close" color={colors.textLight} size={16} />
-        </button>
-
-        {/* Koyu otomotiv görsel bandı — beyaz form kartının "generic auth
-            ekranı" hissini kırar; premium decor sistemiyle tutarlı. */}
-        <div
-          className="otoiz-glass-surface otoiz-hero-pattern"
-          style={{
-            position: "relative", overflow: "hidden",
-            background: `linear-gradient(135deg, ${colors.bg} 0%, ${colors.bgAlt} 55%, ${colors.surfaceDark} 100%)`,
-            padding: "30px 32px 22px", textAlign: "center",
-          }}
-        >
-          <div className="otoiz-reflection" aria-hidden="true" />
-          <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "center", marginBottom: 4 }}>
-            <OtoizLogo variant="dark" size={24} mark="primary" />
-          </div>
-          <div className="otoiz-accent-line" style={{ margin: "12px auto 0" }} />
-        </div>
-
-        <div style={{ padding: "24px 32px", paddingBottom: "calc(32px + env(safe-area-inset-bottom))" }}>
-          <div style={{ textAlign: "center", marginBottom: 28 }}>
-            <h2 id="login-chooser-title" style={{ fontSize: 21, fontWeight: 800, color: colors.textDark, margin: "0 0 6px" }}>
-              Nasıl devam etmek istersiniz?
-            </h2>
-            <p id="login-chooser-subtitle" style={{ fontSize: 13.5, color: colors.textMuted, margin: 0 }}>
-              Size uygun giriş türünü seçin.
-            </p>
-          </div>
-
-          <div className="otoiz-modal-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <div
-            className="otoiz-choice-card"
-            style={{ border: `1.5px solid ${colors.border}`, borderRadius: 14, padding: "22px 18px", display: "flex", flexDirection: "column" }}
-          >
-            <div
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: "50%",
-                background: "#E6FAEE",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 14,
-              }}
-            >
-              <Icon name="user" color={colors.greenDark} size={21} />
-            </div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: colors.textDark, margin: "0 0 6px" }}>Bireysel Kullanıcı</h3>
-            <p style={{ fontSize: 12.5, color: colors.textMuted, lineHeight: 1.5, margin: "0 0 18px", flexGrow: 1 }}>
-              Kendi aracınızı yönetin, geçmişini görüntüleyin ve QR/NFC işlemlerini kontrol edin.
-            </p>
-            <a
-              href="/bireysel/giris"
-              style={{
-                display: "block",
-                textAlign: "center",
-                padding: "12px 14px",
-                background: colors.green,
-                color: colors.textDark,
-                borderRadius: 9,
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: 13.5,
-                marginBottom: 10,
-                minHeight: 44,
-              }}
-            >
-              Bireysel Giriş
-            </a>
-            <a href="/bireysel/kayit" style={{ textAlign: "center", fontSize: 12, color: colors.textMuted, textDecoration: "underline" }}>
-              Kayıt Ol
-            </a>
-          </div>
-
-          <div
-            className="otoiz-choice-card"
-            style={{ border: `1.5px solid ${colors.border}`, borderRadius: 14, padding: "22px 18px", display: "flex", flexDirection: "column" }}
-          >
-            <div
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: "50%",
-                background: "#E6FAEE",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 14,
-              }}
-            >
-              <Icon name="tool" color={colors.greenDark} size={21} />
-            </div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: colors.textDark, margin: "0 0 6px" }}>Servis / İşletme</h3>
-            <p style={{ fontSize: 12.5, color: colors.textMuted, lineHeight: 1.5, margin: "0 0 18px", flexGrow: 1 }}>
-              Araç kaydı oluşturun, hızlı bakım girişi yapın ve müşterilerinizi yönetin.
-            </p>
-            <a
-              href="/panel/login"
-              style={{
-                display: "block",
-                textAlign: "center",
-                padding: "12px 14px",
-                background: colors.surfaceDark,
-                color: colors.textLight,
-                borderRadius: 9,
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: 13.5,
-                marginBottom: 10,
-                minHeight: 44,
-              }}
-            >
-              Kurumsal Giriş
-            </a>
-            <a href="/panel/kayit" style={{ textAlign: "center", fontSize: 12, color: colors.textMuted, textDecoration: "underline" }}>
-              İşletme hesabı oluştur
-            </a>
-          </div>
-        </div>
-        </div>
-      </div>
-    </div>
   );
 }
