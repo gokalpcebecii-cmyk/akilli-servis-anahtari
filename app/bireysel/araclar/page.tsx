@@ -95,34 +95,34 @@ export default function BireyselAraclarPage() {
         style={{
           position: "relative", overflow: "hidden",
           background: `linear-gradient(160deg, ${colors.bg} 0%, ${colors.bgAlt} 55%, ${colors.surfaceDark} 100%)`,
-          padding: "22px 18px 36px", boxShadow: "0 18px 30px -14px rgba(6,20,33,0.45)",
+          padding: "22px 14px 36px", boxShadow: "0 18px 30px -14px rgba(6,20,33,0.45)",
         }}
       >
         <div className="otoiz-reflection" aria-hidden="true" />
         <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <OtoizLogo variant="dark" size={130} />
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <OtoizLogo variant="dark" size={255} />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 onClick={() => router.push("/bireysel/bildirimler")}
                 aria-label="Bildirimler"
                 style={{
-                  position: "relative", width: 38, height: 38, borderRadius: "50%",
+                  position: "relative", width: 34, height: 34, borderRadius: "50%",
                   background: "rgba(255,255,255,0.08)", border: "none", display: "flex",
                   alignItems: "center", justifyContent: "center", cursor: "pointer",
                 }}
               >
-                <Icon name="bell" color={colors.textLight} size={17} />
+                <Icon name="bell" color={colors.textLight} size={16} />
                 {pendingTransfers.length > 0 && (
-                  <span style={{ position: "absolute", top: 6, right: 7, width: 7, height: 7, borderRadius: "50%", background: colors.green }} />
+                  <span style={{ position: "absolute", top: 5, right: 6, width: 7, height: 7, borderRadius: "50%", background: colors.green }} />
                 )}
               </button>
               <button
                 onClick={() => router.push("/bireysel/profil")}
                 aria-label="Profil"
                 style={{
-                  width: 38, height: 38, borderRadius: "50%", background: colors.green, border: "none",
-                  color: colors.textDark, fontWeight: 800, fontSize: 14, cursor: "pointer",
+                  width: 34, height: 34, borderRadius: "50%", background: colors.green, border: "none",
+                  color: colors.textDark, fontWeight: 800, fontSize: 13, cursor: "pointer",
                 }}
               >
                 {firstName ? firstName[0].toUpperCase() : "?"}

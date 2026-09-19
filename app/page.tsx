@@ -78,7 +78,7 @@ export default function HomePage() {
             {/* METİN + CTA */}
             <div className="otoiz-hero-text">
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginBottom: 30 }}>
-                <OtoizLogo variant="dark" size={232} mark="primary" className="otoiz-landing-logo" />
+                <OtoizLogo variant="dark" size={352} mark="primary" className="otoiz-landing-logo" />
                 <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginTop: 2 }}>Akıllı Servis Anahtarı</span>
                 <span style={{ fontSize: 10.5, letterSpacing: 1.8, textTransform: "uppercase", opacity: 0.5, fontWeight: 600 }}>
                   Dijital Araç Servis Pasaportu

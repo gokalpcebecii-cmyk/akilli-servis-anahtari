@@ -273,7 +273,7 @@ export default function VehicleDetailPage() {
             )}
           </div>
           <div style={{ marginTop: 6 }}>
-            <OtoizLogo variant="dark" size={115} />
+            <OtoizLogo variant="dark" size={155} />
           </div>
           <h1 style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 0", color: colors.textLight }}>
             {isNew ? "Yeni Araç" : "Hızlı Bakım Kaydı"}

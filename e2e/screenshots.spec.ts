@@ -12,17 +12,15 @@ test.describe("QA görsel doğrulama ekran görüntüleri", () => {
 
   test("Login chooser desktop", async ({ page }, testInfo) => {
     if (testInfo.project.name !== "desktop-chromium") test.skip();
-    await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
-    await page.getByRole("dialog").waitFor();
+    await page.goto("/giris");
+    await page.getByRole("heading", { name: "Nasıl devam etmek istersiniz?" }).waitFor();
     await page.screenshot({ path: path.join(outDir, "02-login-chooser-desktop.png") });
   });
 
   test("Login chooser mobile 390px", async ({ page }, testInfo) => {
     if (testInfo.project.name !== "mobile-390") test.skip();
-    await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
-    await page.getByRole("dialog").waitFor();
+    await page.goto("/giris");
+    await page.getByRole("heading", { name: "Nasıl devam etmek istersiniz?" }).waitFor();
     await page.screenshot({ path: path.join(outDir, "03-login-chooser-mobile-390.png") });
   });
 
