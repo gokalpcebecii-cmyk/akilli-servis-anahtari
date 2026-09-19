@@ -1,15 +1,51 @@
-/* OTOİZ — yalnızca inline stille ifade edilemeyen kurallar (medya sorguları,
-   :hover, :focus-visible). Proje genelinde inline style tercih ediliyor;
-   bu dosya bilinçli olarak minimal tutuluyor. */
+/* OTOİZ — Final Visual System. Renk token'ları burada tanımlanır; JS
+   tarafında aynı değerler lib/theme.ts içinde tutulur. Bu dosya yalnızca
+   inline stille ifade edilemeyen kuralları içerir (medya sorguları,
+   :hover, :focus-visible, keyframes). */
+
+:root {
+  --otoiz-bg: #061421;
+  --otoiz-bg-alt: #081b2a;
+  --otoiz-surface-dark: #0c2032;
+  --otoiz-surface-light: #ffffff;
+  --otoiz-surface-soft: #f4f7f9;
+  --otoiz-text-dark: #102033;
+  --otoiz-text-light: #ffffff;
+  --otoiz-text-muted: #6e7b88;
+  --otoiz-green: #36e86d;
+  --otoiz-green-dark: #16b94e;
+  --otoiz-border: #e1e7ec;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--otoiz-surface-soft);
+}
 
 .otoiz-modal-backdrop a:focus-visible,
-.otoiz-modal-backdrop button:focus-visible {
-  outline: 2.5px solid #d4a94a;
+.otoiz-modal-backdrop button:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2.5px solid var(--otoiz-green-dark);
   outline-offset: 2px;
 }
 
 .otoiz-modal-close:hover {
-  background: #ece7db;
+  background: var(--otoiz-surface-soft);
+}
+
+.otoiz-choice-card:hover {
+  border-color: var(--otoiz-green-dark) !important;
+  box-shadow: 0 8px 24px rgba(16, 32, 51, 0.08);
+}
+
+.otoiz-module-card:hover {
+  border-color: var(--otoiz-green-dark) !important;
+  background: var(--otoiz-surface-soft);
 }
 
 /* İçerik viewport'tan uzun olduğunda kart kendi içinde kaydırılsın; arka
@@ -26,6 +62,15 @@
   }
   to {
     transform: translateY(0);
+  }
+}
+
+@keyframes otoiz-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -50,4 +95,15 @@
   .otoiz-modal-cards {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Alt navigasyon sabitken sayfa içeriğinin son öğesi çubuğun altında
+   kalmasın diye gövdeye pay bırakılır (bkz. BottomNav bileşeni). */
+.otoiz-has-bottom-nav {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+.otoiz-hero-pattern {
+  background-image: radial-gradient(circle at 18% 20%, rgba(54, 232, 109, 0.12), transparent 38%),
+    radial-gradient(circle at 82% 0%, rgba(54, 232, 109, 0.08), transparent 45%);
 }

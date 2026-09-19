@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
 
 export default function EslestirPage() {
   const router = useRouter();
@@ -68,18 +69,15 @@ export default function EslestirPage() {
     setCode("");
   }
 
-  const inputStyle = { width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", marginBottom: 14, fontSize: 15 };
-  const labelStyle = { fontSize: 13, color: "#555", display: "block", marginBottom: 4 };
-
   return (
-    <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
+    <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: font, color: colors.textDark }}>
       <h1 style={{ fontSize: 22, marginBottom: 4 }}>Anahtarlık Eşleştir</h1>
-      <p style={{ color: "#666", fontSize: 14, marginBottom: 24 }}>
+      <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 24 }}>
         Müşteriye verilecek fiziksel QR anahtarlığı/sticker'ı, sisteme kayıtlı bir araçla eşleştirin.
       </p>
 
       <label style={labelStyle}>Araç Seç</label>
-      <select style={inputStyle} value={selectedVehicle} onChange={(e) => setSelectedVehicle(e.target.value)}>
+      <select style={{ ...inputStyle, marginBottom: 14 }} value={selectedVehicle} onChange={(e) => setSelectedVehicle(e.target.value)}>
         <option value="">-- Araç seçin --</option>
         {vehicles.map((v) => (
           <option key={v.id} value={v.id}>
@@ -90,19 +88,19 @@ export default function EslestirPage() {
 
       <label style={labelStyle}>QR Kodu</label>
       <input
-        style={inputStyle}
+        style={{ ...inputStyle, marginBottom: 6 }}
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="Anahtarlık üzerindeki kodu girin"
       />
-      <p style={{ fontSize: 12, color: "#999", marginTop: -10, marginBottom: 14 }}>
+      <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 14 }}>
         Kodu QR'ın altındaki yazıdan okuyabilir veya kamerayla QR'ı okutup adres çubuğundaki kodu kopyalayabilirsiniz.
       </p>
 
-      {error && <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      {message && <p style={{ color: "#2E6B4F", fontSize: 13, marginBottom: 12 }}>{message}</p>}
+      {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>{error}</p>}
+      {message && <p style={{ color: colors.greenDark, fontSize: 13, marginBottom: 12, fontWeight: 600 }}>{message}</p>}
 
-      <button onClick={handleEslestir} disabled={loading} style={{ width: "100%", padding: 12, background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}>
+      <button onClick={handleEslestir} disabled={loading} style={primaryButtonStyle(loading)}>
         {loading ? "Eşleştiriliyor..." : "Eşleştir"}
       </button>
     </main>

@@ -4,8 +4,8 @@
   "description": "Dijital araç servis kaydı ve müşteri sadakat sistemi",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1E3A5F",
-  "theme_color": "#1E3A5F",
+  "background_color": "#0C2032",
+  "theme_color": "#0C2032",
   "orientation": "portrait",
   "icons": [
     {

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, inputStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
+import { OtoizLogo } from "@/components/OtoizLogo";
+import { Icon } from "@/components/Icon";
 
 export default function SifreGuncellePage() {
   const [ready, setReady] = useState(false);
@@ -65,20 +68,23 @@ export default function SifreGuncellePage() {
     setDone(true);
   }
 
-  const inputStyle = { width: "100%", padding: 10, marginBottom: 14, borderRadius: 8, border: "1px solid #ccc", fontSize: 16 };
-
   if (done) {
     return (
-      <main style={{ maxWidth: 380, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20, color: "#2E6B4F" }}>✓ Şifreniz Güncellendi</h1>
-        <p style={{ color: "#666", marginBottom: 20 }}>Yeni şifrenizle giriş yapabilirsiniz.</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 240, margin: "0 auto" }}>
-          <a href="/bireysel/giris" style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>
-            Bireysel Giriş
-          </a>
-          <a href="/panel/login" style={{ padding: "10px 16px", border: "1px solid #ccc", color: "#333", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>
-            Kurumsal Giriş
-          </a>
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 380, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+            <Icon name="check" color={colors.greenDark} size={24} />
+          </div>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Şifreniz Güncellendi</h1>
+          <p style={{ color: colors.textMuted, marginBottom: 20 }}>Yeni şifrenizle giriş yapabilirsiniz.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 240, margin: "0 auto" }}>
+            <a href="/bireysel/giris" style={{ ...primaryButtonStyle(false), textDecoration: "none", display: "block", textAlign: "center" }}>
+              Bireysel Giriş
+            </a>
+            <a href="/panel/login" style={{ ...secondaryButtonStyle(), textDecoration: "none", display: "block", textAlign: "center" }}>
+              Kurumsal Giriş
+            </a>
+          </div>
         </div>
       </main>
     );
@@ -86,70 +92,67 @@ export default function SifreGuncellePage() {
 
   if (invalidLink) {
     return (
-      <main style={{ maxWidth: 380, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20 }}>Bağlantı Geçersiz veya Süresi Dolmuş</h1>
-        <p style={{ color: "#666", marginBottom: 20 }}>Lütfen yeni bir şifre sıfırlama bağlantısı isteyin.</p>
-        <a href="/hesap/sifremi-unuttum" style={{ color: "#1E3A5F", fontWeight: 600 }}>Tekrar Dene</a>
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 380, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bağlantı Geçersiz veya Süresi Dolmuş</h1>
+          <p style={{ color: colors.textMuted, marginBottom: 20 }}>Lütfen yeni bir şifre sıfırlama bağlantısı isteyin.</p>
+          <a href="/hesap/sifremi-unuttum" style={{ color: colors.greenDark, fontWeight: 700 }}>Tekrar Dene</a>
+        </div>
       </main>
     );
   }
 
   if (!ready) {
-    return <main style={{ padding: 24, textAlign: "center", color: "#999" }}>Doğrulanıyor…</main>;
+    return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Doğrulanıyor…</main>;
   }
 
   return (
-    <main style={{ maxWidth: 360, margin: "60px auto", padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, color: "#0B1F3A", marginBottom: 16 }}>
-        OTO<span style={{ color: "#D4A94A" }}>İZ</span>
+    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
+        <div style={{ maxWidth: 360, margin: "0 auto" }}>
+          <OtoizLogo variant="dark" size={17} />
+          <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Yeni Şifre Belirle</h1>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, margin: 0 }}>Hesabınız için yeni bir şifre girin.</p>
+        </div>
       </div>
-      <h1 style={{ fontSize: 22, marginBottom: 4 }}>Yeni Şifre Belirle</h1>
-      <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>Hesabınız için yeni bir şifre girin.</p>
 
-      <form onSubmit={handleSubmit} noValidate>
-        <label htmlFor="new-password" style={{ display: "block", fontSize: 13, marginBottom: 4 }}>Yeni Şifre</label>
-        <input
-          id="new-password"
-          type="password"
-          autoComplete="new-password"
-          minLength={6}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={inputStyle}
-        />
+      <div style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
+        <form onSubmit={handleSubmit} noValidate style={{ background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}>
+          <label htmlFor="new-password" style={{ display: "block", fontSize: 13, fontWeight: 600, color: colors.textMuted, marginBottom: 6 }}>Yeni Şifre</label>
+          <input
+            id="new-password"
+            type="password"
+            autoComplete="new-password"
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{ ...inputStyle, marginBottom: 14 }}
+          />
 
-        <label htmlFor="confirm-password" style={{ display: "block", fontSize: 13, marginBottom: 4 }}>Yeni Şifre (Tekrar)</label>
-        <input
-          id="confirm-password"
-          type="password"
-          autoComplete="new-password"
-          minLength={6}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          style={inputStyle}
-        />
+          <label htmlFor="confirm-password" style={{ display: "block", fontSize: 13, fontWeight: 600, color: colors.textMuted, marginBottom: 6 }}>Yeni Şifre (Tekrar)</label>
+          <input
+            id="confirm-password"
+            type="password"
+            autoComplete="new-password"
+            minLength={6}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            style={{ ...inputStyle, marginBottom: 14 }}
+          />
 
-        {error && (
-          <p role="alert" style={{ color: "#c0392b", fontSize: 13, marginBottom: 12 }}>
-            {error}
-          </p>
-        )}
+          {error && (
+            <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>
+              {error}
+            </p>
+          )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          aria-busy={loading}
-          style={{
-            width: "100%", padding: 12, borderRadius: 8, border: "none",
-            background: loading ? "#5c7186" : "#1E3A5F", color: "#fff", fontWeight: 600,
-            cursor: loading ? "wait" : "pointer", fontSize: 15,
-          }}
-        >
-          {loading ? "Kaydediliyor…" : "Şifreyi Güncelle"}
-        </button>
-      </form>
+          <button type="submit" disabled={loading} aria-busy={loading} style={primaryButtonStyle(loading)}>
+            {loading ? "Kaydediliyor…" : "Şifreyi Güncelle"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

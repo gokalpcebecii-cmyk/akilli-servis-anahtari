@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { OtoizLogo } from "@/components/OtoizLogo";
+import { Icon } from "@/components/Icon";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -34,60 +37,66 @@ export default function SignupPage() {
     setTimeout(() => router.push("/panel/login"), 2000);
   }
 
-  const inputStyle = { width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", marginBottom: 14, fontSize: 15 };
-  const labelStyle = { fontSize: 13, color: "#555", display: "block", marginBottom: 4 };
-
   if (success) {
     return (
-      <main style={{ maxWidth: 420, margin: "60px auto", padding: "0 16px", fontFamily: "system-ui, sans-serif", textAlign: "center" as const }}>
-        <h1 style={{ fontSize: 20 }}>Hesabınız oluşturuldu</h1>
-        <p style={{ color: "#666" }}>Giriş sayfasına yönlendiriliyorsunuz...</p>
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 380, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+            <Icon name="check" color={colors.greenDark} size={24} />
+          </div>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Hesabınız oluşturuldu</h1>
+          <p style={{ color: colors.textMuted }}>Giriş sayfasına yönlendiriliyorsunuz...</p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: "40px auto", padding: "0 16px", fontFamily: "system-ui, sans-serif" }}>
-      <a href="/" style={{ display: "inline-block", marginBottom: 16, fontSize: 13, color: "#888", textDecoration: "none" }}>
-        ← Ana sayfaya dön
-      </a>
-      <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, color: "#0B1F3A", marginBottom: 16 }}>
-        OTO<span style={{ color: "#D4A94A" }}>İZ</span>
+    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
+        <a href="/" style={{ display: "inline-block", marginBottom: 24, fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
+          ← Ana sayfaya dön
+        </a>
+        <div style={{ maxWidth: 380, margin: "0 auto" }}>
+          <OtoizLogo variant="dark" size={17} />
+          <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>İşletme Kaydı</h1>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>
+            OTOİZ'e ücretsiz katılın, dijital araç servis pasaportuna hemen başlayın.
+          </p>
+        </div>
       </div>
-      <h1 style={{ fontSize: 22, marginBottom: 4 }}>İşletme Kaydı</h1>
-      <p style={{ color: "#666", fontSize: 14, marginBottom: 24 }}>
-        OTOİZ'e ücretsiz katılın, dijital araç servis pasaportuna hemen başlayın.
-      </p>
 
-      <form onSubmit={handleSubmit}>
-        <label style={labelStyle}>İşletme Adı *</label>
-        <input style={inputStyle} required value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} placeholder="Örn: Yılmaz Oto Servis" />
+      <div style={{ maxWidth: 380, margin: "-24px auto 0", padding: "0 20px 40px" }}>
+        <form onSubmit={handleSubmit} style={{ background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}>
+          <label style={labelStyle}>İşletme Adı *</label>
+          <input style={{ ...inputStyle, marginBottom: 14 }} required value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} placeholder="Örn: Yılmaz Oto Servis" />
 
-        <label style={labelStyle}>E-posta *</label>
-        <input style={inputStyle} required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="ornek@mail.com" />
+          <label style={labelStyle}>E-posta *</label>
+          <input style={{ ...inputStyle, marginBottom: 14 }} required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="ornek@mail.com" />
 
-        <label style={labelStyle}>Şifre *</label>
-        <input style={inputStyle} required type="password" minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="En az 6 karakter" />
+          <label style={labelStyle}>Şifre *</label>
+          <input style={{ ...inputStyle, marginBottom: 14 }} required type="password" minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="En az 6 karakter" />
 
-        <label style={labelStyle}>Telefon</label>
-        <input style={inputStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0312 000 00 00" />
+          <label style={labelStyle}>Telefon</label>
+          <input style={{ ...inputStyle, marginBottom: 14 }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0312 000 00 00" />
 
-        <label style={labelStyle}>Adres</label>
-        <input style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Şehir, ilçe" />
+          <label style={labelStyle}>Adres</label>
+          <input style={{ ...inputStyle, marginBottom: 14 }} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Şehir, ilçe" />
 
-        {error && <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 12 }}>{error}</p>}
+          {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>{error}</p>}
 
-        <button type="submit" disabled={loading} style={{ width: "100%", padding: 12, background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}>
-          {loading ? "Oluşturuluyor..." : "Hesap Oluştur"}
-        </button>
-      </form>
+          <button type="submit" disabled={loading} style={primaryButtonStyle(loading)}>
+            {loading ? "Oluşturuluyor..." : "Hesap Oluştur"}
+          </button>
+        </form>
 
-      <p style={{ textAlign: "center", marginTop: 16, fontSize: 13 }}>
-        Zaten hesabınız var mı? <a href="/panel/login" style={{ color: "#1E3A5F" }}>Giriş yapın</a>
-      </p>
-      <p style={{ textAlign: "center", marginTop: 8, fontSize: 12.5 }}>
-        <a href="/bireysel/kayit" style={{ color: "#999" }}>Bireysel araç sahibi misiniz?</a>
-      </p>
+        <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: colors.textDark }}>
+          Zaten hesabınız var mı? <a href="/panel/login" style={{ color: colors.greenDark, fontWeight: 600 }}>Giriş yapın</a>
+        </p>
+        <p style={{ textAlign: "center", marginTop: 8, fontSize: 12.5 }}>
+          <a href="/bireysel/kayit" style={{ color: colors.textMuted }}>Bireysel araç sahibi misiniz?</a>
+        </p>
+      </div>
     </main>
   );
 }

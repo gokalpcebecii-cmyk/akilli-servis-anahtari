@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, dangerOutlineButtonStyle, badgeStyle, cardStyle } from "@/lib/theme";
+import { Icon } from "@/components/Icon";
+import { OtoizLogo } from "@/components/OtoizLogo";
 
 const MAINTENANCE_ITEMS = [
   { key: "motor_yagi", label: "Motor Yağı" },
@@ -49,10 +52,14 @@ export default function BireyselVehicleDetailPage() {
   const [qrRevokedAt, setQrRevokedAt] = useState<string | null>(null);
   const [qrBusy, setQrBusy] = useState(false);
   const [newRecord, setNewRecord] = useState({ description: "", km_at_service: "", cost: "" });
+  const [notesDraft, setNotesDraft] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [savingItem, setSavingItem] = useState<string | null>(null);
   const [savingInterval, setSavingInterval] = useState<string | null>(null);
+  const [editingVehicle, setEditingVehicle] = useState(isNew);
 
   useEffect(() => {
     async function init() {
@@ -71,6 +78,7 @@ export default function BireyselVehicleDetailPage() {
         return;
       }
       setVehicle(v);
+      setNotesDraft(v.notes || "");
 
       const { data: r } = await supabase
         .from("maintenance_records")
@@ -94,6 +102,12 @@ export default function BireyselVehicleDetailPage() {
       await loadQr(params.id as string);
 
       setLoading(false);
+
+      if (window.location.hash) {
+        window.setTimeout(() => {
+          document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
+      }
     }
     init();
   }, [params.id]);
@@ -192,8 +206,17 @@ export default function BireyselVehicleDetailPage() {
         })
         .eq("id", params.id);
       setSaving(false);
-      alert("Kaydedildi.");
+      setEditingVehicle(false);
     }
+  }
+
+  async function handleSaveNotes() {
+    setSavingNotes(true);
+    await supabase.from("vehicles").update({ notes: notesDraft, updated_at: new Date().toISOString() }).eq("id", params.id);
+    setVehicle((prev: any) => ({ ...prev, notes: notesDraft }));
+    setSavingNotes(false);
+    setNotesSaved(true);
+    window.setTimeout(() => setNotesSaved(false), 2500);
   }
 
   async function handleQuickMaintenance(itemKey: string, label: string) {
@@ -263,18 +286,14 @@ export default function BireyselVehicleDetailPage() {
     setNewRecord({ description: "", km_at_service: "", cost: "" });
   }
 
-  if (loading || !vehicle) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
-
-  const inputStyle = { width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc", marginBottom: 10 };
+  if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
 
   function getUpcomingStatus(itemKey: string) {
     const item = maintenanceItems.find((m) => m.item_key === itemKey);
     if (!item || !item.last_service_date) return null;
-
     let overdue = false;
     let upcoming = false;
     let hasInterval = false;
-
     if (item.interval_km && item.last_service_km != null) {
       hasInterval = true;
       const kmSince = (vehicle.current_km || 0) - item.last_service_km;
@@ -282,20 +301,10 @@ export default function BireyselVehicleDetailPage() {
       if (kmRemaining <= 0) overdue = true;
       else if (kmRemaining <= 1000) upcoming = true;
     }
-
-    if (item.interval_months) {
-      hasInterval = true;
-      const dueDate = new Date(item.last_service_date);
-      dueDate.setMonth(dueDate.getMonth() + item.interval_months);
-      const daysRemaining = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      if (daysRemaining <= 0) overdue = true;
-      else if (daysRemaining <= 30) upcoming = true;
-    }
-
     if (!hasInterval) return null;
-    if (overdue) return { label: "İşlem Zamanı", color: "#c0392b", bg: "#fdecea" };
-    if (upcoming) return { label: "Yaklaşıyor", color: "#b8860b", bg: "#fff8e6" };
-    return { label: "Normal", color: "#2E6B4F", bg: "#eaf7ef" };
+    if (overdue) return { label: "İşlem Zamanı", kind: "danger" as const };
+    if (upcoming) return { label: "Yaklaşıyor", kind: "warning" as const };
+    return { label: "Normal", kind: "success" as const };
   }
 
   function getItemStatus(itemKey: string) {
@@ -305,247 +314,340 @@ export default function BireyselVehicleDetailPage() {
     return { date: item.last_service_date, isToday };
   }
 
+  // "Kilometre Kayıtları": ayrı bir tablo eklemeden, km bilgisi taşıyan
+  // mevcut bakım kayıtlarından türetilen kronolojik bir km listesi.
+  const kmTimeline = records.filter((r) => r.km_at_service != null);
+
   return (
-    <main style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
-      <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 1, color: "#0B1F3A", marginBottom: 8 }}>
-        OTO<span style={{ color: "#D4A94A" }}>İZ</span>
-      </div>
-      <h1 style={{ fontSize: 20 }}>{isNew ? "Yeni Araç" : vehicle.plate}</h1>
-
-      <section style={{ marginBottom: 24 }}>
-        <label style={{ fontSize: 13 }}>Plaka</label>
-        <input style={inputStyle} value={vehicle.plate} onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value })} />
-
-        <div style={{ display: "flex", gap: 8 }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 13 }}>Marka</label>
-            <input style={inputStyle} value={vehicle.brand || ""} onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 13 }}>Model</label>
-            <input style={inputStyle} value={vehicle.model || ""} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} />
+    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 60 }}>
+      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "20px 18px 26px" }}>
+        <div style={{ maxWidth: 560, margin: "0 auto" }}>
+          <a href="/bireysel/araclar" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
+            ← Araçlarım
+          </a>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12 }}>
+            <div>
+              <OtoizLogo variant="dark" size={13} />
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.textLight, margin: "8px 0 0" }}>
+                {isNew ? "Yeni Araç" : vehicle.plate}
+              </h1>
+              {!isNew && (
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
+                  {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
+                </div>
+              )}
+            </div>
+            {!isNew && (
+              <button
+                onClick={() => setEditingVehicle((v) => !v)}
+                style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", borderRadius: radius.sm }}
+              >
+                {editingVehicle ? "Kapat" : "Düzenle"}
+              </button>
+            )}
           </div>
         </div>
+      </div>
 
-        <label style={{ fontSize: 13 }}>Model Yılı</label>
-        <input type="number" style={inputStyle} value={vehicle.year || ""} onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })} />
-
-        <label style={{ fontSize: 13 }}>Güncel Kilometre</label>
-        <input type="number" style={inputStyle} value={vehicle.current_km} onChange={(e) => setVehicle({ ...vehicle, current_km: Number(e.target.value) })} />
-
-        <label style={{ fontSize: 13 }}>Sonraki Bakım (km)</label>
-        <input type="number" style={inputStyle} value={vehicle.next_service_km || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_km: Number(e.target.value) })} />
-
-        <label style={{ fontSize: 13 }}>Sonraki Bakım (tarih)</label>
-        <input type="date" style={inputStyle} value={vehicle.next_service_date || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })} />
-
-        <label style={{ fontSize: 13 }}>Notlar</label>
-        <input style={inputStyle} value={vehicle.notes || ""} onChange={(e) => setVehicle({ ...vehicle, notes: e.target.value })} placeholder="Örn: muayene tarihi, sigorta notu vb." />
-
-        <button onClick={handleSaveVehicle} disabled={saving} style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}>
-          {saving ? "Kaydediliyor…" : "Kaydet"}
-        </button>
-      </section>
-
-      {!isNew && (
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 15, color: "#888", marginBottom: 10 }}>Bakım Durumu Özeti</h2>
-          {(vehicle.next_service_km || vehicle.next_service_date) && (
-            <div style={{ background: "#F4F1EA", borderRadius: 10, padding: "10px 14px", marginBottom: 10, fontSize: 13, color: "#1E3A5F" }}>
-              Sonraki bakım:
-              {vehicle.next_service_km ? ` ${Number(vehicle.next_service_km).toLocaleString("tr-TR")} km` : ""}
-              {vehicle.next_service_km && vehicle.next_service_date ? " · " : ""}
-              {vehicle.next_service_date ? new Date(vehicle.next_service_date).toLocaleDateString("tr-TR") : ""}
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 18 }}>
+        {(isNew || editingVehicle) && (
+          <section style={cardStyle}>
+            <label style={labelStyle}>Plaka</label>
+            <input style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.plate} onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value })} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Marka</label>
+                <input style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.brand || ""} onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Model</label>
+                <input style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.model || ""} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} />
+              </div>
             </div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {[...MAINTENANCE_ITEMS, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM.key) ? [LEGACY_ITEM] : [])].map((item) => {
-              const s = getUpcomingStatus(item.key);
-              if (!s) return null;
-              return (
-                <div key={item.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", border: "1px solid #eee", borderRadius: 8, padding: "8px 12px" }}>
-                  <span style={{ fontSize: 13, color: "#333" }}>{item.label}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: s.color, background: s.bg, padding: "3px 10px", borderRadius: 999 }}>{s.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+            <label style={labelStyle}>Model Yılı</label>
+            <input type="number" style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.year || ""} onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })} />
+            <label style={labelStyle}>Güncel Kilometre</label>
+            <input type="number" style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.current_km} onChange={(e) => setVehicle({ ...vehicle, current_km: Number(e.target.value) })} />
+            <label style={labelStyle}>Sonraki Bakım (km)</label>
+            <input type="number" style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.next_service_km || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_km: Number(e.target.value) })} />
+            <label style={labelStyle}>Sonraki Bakım (tarih)</label>
+            <input type="date" style={{ ...inputStyle, marginBottom: 16 }} value={vehicle.next_service_date || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })} />
+            <button onClick={handleSaveVehicle} disabled={saving} style={primaryButtonStyle(saving)}>
+              {saving ? "Kaydediliyor…" : isNew ? "Aracı Oluştur" : "Kaydet"}
+            </button>
+          </section>
+        )}
 
-      {!isNew && (
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 15, color: "#888", marginBottom: 10 }}>Hızlı Bakım Ekle</h2>
-          <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>
-            Kendin yaptıysan ya da başka bir yerde yaptırdıysan butona bas — otomatik bugünün tarihi ve güncel km ile kaydedilir.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {MAINTENANCE_ITEMS.map((item) => {
-              const status = getItemStatus(item.key);
-              const isSaving = savingItem === item.key;
-              const isSavingInterval = savingInterval === item.key;
-              const currentValue = intervalInputs[item.key] ?? "";
-              return (
-                <div
-                  key={item.key}
-                  style={{
-                    padding: "12px 14px",
-                    borderRadius: 10,
-                    border: status?.isToday ? "2px solid #2e7d32" : "1px solid #ccc",
-                    background: status?.isToday ? "#e8f5e9" : "#fff",
-                  }}
-                >
-                  <button
-                    onClick={() => handleQuickMaintenance(item.key, item.label)}
-                    disabled={isSaving}
-                    style={{
-                      width: "100%", textAlign: "left", background: "none", border: "none",
-                      cursor: isSaving ? "wait" : "pointer",
-                      color: status?.isToday ? "#2e7d32" : "#1E3A5F", fontWeight: 600, fontSize: 13, padding: 0, marginBottom: 8,
-                    }}
-                  >
-                    <div>{isSaving ? "Kaydediliyor…" : item.label}</div>
-                    {status && (
-                      <div style={{ fontSize: 11, fontWeight: 400, marginTop: 2, color: status.isToday ? "#2e7d32" : "#999" }}>
-                        {status.isToday ? "✓ Bugün yapıldı" : `Son: ${new Date(status.date).toLocaleDateString("tr-TR")}`}
+        {!isNew && (
+          <>
+            <section id="parca" style={cardStyle}>
+              <SectionHeader icon="wrench" title="Bakım Durumu Özeti" />
+              {(vehicle.next_service_km || vehicle.next_service_date) && (
+                <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 14px", marginBottom: 12, fontSize: 13, color: colors.textDark }}>
+                  Sonraki bakım:
+                  {vehicle.next_service_km ? ` ${Number(vehicle.next_service_km).toLocaleString("tr-TR")} km` : ""}
+                  {vehicle.next_service_km && vehicle.next_service_date ? " · " : ""}
+                  {vehicle.next_service_date ? new Date(vehicle.next_service_date).toLocaleDateString("tr-TR") : ""}
+                </div>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
+                {[...MAINTENANCE_ITEMS, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM.key) ? [LEGACY_ITEM] : [])].map((item) => {
+                  const s = getUpcomingStatus(item.key);
+                  if (!s) return null;
+                  return (
+                    <div key={item.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: colors.surfaceSoft, borderRadius: radius.sm, padding: "8px 12px" }}>
+                      <span style={{ fontSize: 13, color: colors.textDark }}>{item.label}</span>
+                      <span style={badgeStyle(s.kind)}>{s.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Parça Değişimleri — Hızlı Ekle</h3>
+              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 14 }}>
+                Kendin yaptıysan ya da başka bir yerde yaptırdıysan butona bas — otomatik bugünün tarihi ve güncel km ile kaydedilir.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {MAINTENANCE_ITEMS.map((item) => {
+                  const status = getItemStatus(item.key);
+                  const isSaving = savingItem === item.key;
+                  const isSavingInterval = savingInterval === item.key;
+                  const currentValue = intervalInputs[item.key] ?? "";
+                  return (
+                    <div
+                      key={item.key}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: radius.sm,
+                        border: status?.isToday ? `2px solid ${colors.greenDark}` : `1px solid ${colors.border}`,
+                        background: status?.isToday ? colors.greenSoft : colors.surfaceLight,
+                      }}
+                    >
+                      <button
+                        onClick={() => handleQuickMaintenance(item.key, item.label)}
+                        disabled={isSaving}
+                        style={{
+                          width: "100%", textAlign: "left", background: "none", border: "none", minHeight: 32,
+                          cursor: isSaving ? "wait" : "pointer",
+                          color: status?.isToday ? colors.greenDark : colors.textDark, fontWeight: 700, fontSize: 13.5, padding: 0, marginBottom: 8,
+                        }}
+                      >
+                        <div>{isSaving ? "Kaydediliyor…" : item.label}</div>
+                        {status && (
+                          <div style={{ fontSize: 11, fontWeight: 400, marginTop: 2, color: status.isToday ? colors.greenDark : colors.textMuted }}>
+                            {status.isToday ? "✓ Bugün yapıldı" : `Son: ${new Date(status.date).toLocaleDateString("tr-TR")}`}
+                          </div>
+                        )}
+                      </button>
+
+                      <div style={{ fontSize: 10.5, color: colors.textMuted, marginBottom: 4 }}>Periyot (km)</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+                        {PRESET_KM_OPTIONS.map((preset) => {
+                          const isActive = currentValue === String(preset);
+                          return (
+                            <button
+                              key={preset}
+                              onClick={() => handlePresetClick(item.key, preset)}
+                              disabled={isSavingInterval}
+                              style={{
+                                padding: "5px 11px", borderRadius: radius.pill,
+                                border: isActive ? `1.5px solid ${colors.greenDark}` : `1px solid ${colors.border}`,
+                                background: isActive ? colors.greenDark : colors.surfaceLight,
+                                color: isActive ? colors.textLight : colors.textMuted,
+                                fontSize: 11, fontWeight: 600, cursor: isSavingInterval ? "wait" : "pointer", minHeight: 28,
+                              }}
+                            >
+                              {preset.toLocaleString("tr-TR")}
+                            </button>
+                          );
+                        })}
                       </div>
-                    )}
-                  </button>
+                      <input
+                        type="number"
+                        placeholder="veya kendi sayını yaz"
+                        value={currentValue}
+                        onChange={(e) => handleIntervalInputChange(item.key, e.target.value)}
+                        onBlur={() => handleIntervalBlur(item.key)}
+                        disabled={isSavingInterval}
+                        style={{ ...inputStyle, padding: "7px 9px", fontSize: 12 }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
 
-                  <div style={{ fontSize: 10, color: "#999", marginBottom: 4 }}>Periyot (km)</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
-                    {PRESET_KM_OPTIONS.map((preset) => {
-                      const isActive = currentValue === String(preset);
-                      return (
-                        <button
-                          key={preset}
-                          onClick={() => handlePresetClick(item.key, preset)}
-                          disabled={isSavingInterval}
-                          style={{
-                            padding: "4px 10px", borderRadius: 999,
-                            border: isActive ? "1.5px solid #1E3A5F" : "1px solid #ccc",
-                            background: isActive ? "#1E3A5F" : "#fff",
-                            color: isActive ? "#fff" : "#555",
-                            fontSize: 11, fontWeight: 600, cursor: isSavingInterval ? "wait" : "pointer",
-                          }}
-                        >
-                          {preset.toLocaleString("tr-TR")}
-                        </button>
-                      );
-                    })}
+            <section id="kilometre" style={cardStyle}>
+              <SectionHeader icon="gauge" title="Kilometre Kayıtları" />
+              <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "14px", marginBottom: 14, textAlign: "center" }}>
+                <div style={{ fontSize: 10.5, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KİLOMETRE</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: colors.textDark }}>
+                  {vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"} km
+                </div>
+              </div>
+              {kmTimeline.length === 0 ? (
+                <p style={{ fontSize: 13, color: colors.textMuted }}>Henüz km bilgisi içeren bir kayıt yok.</p>
+              ) : (
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                  {kmTimeline.slice(0, 8).map((r) => (
+                    <li key={r.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "6px 0", borderBottom: `1px solid ${colors.border}` }}>
+                      <span style={{ color: colors.textMuted }}>{new Date(r.service_date).toLocaleDateString("tr-TR")}</span>
+                      <span style={{ fontWeight: 700, color: colors.textDark }}>{Number(r.km_at_service).toLocaleString("tr-TR")} km</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section id="muayene" style={cardStyle}>
+              <SectionHeader icon="clipboard" title="Muayene Bilgileri" />
+              {(vehicle.muayene_tarihi || vehicle.trafik_sigortasi_bitis || vehicle.kasko_bitis) ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+                  {vehicle.muayene_tarihi && (
+                    <InfoRow label="Muayene Tarihi" value={new Date(vehicle.muayene_tarihi).toLocaleDateString("tr-TR")} />
+                  )}
+                  {vehicle.trafik_sigortasi_bitis && (
+                    <InfoRow label="Trafik Sigortası Bitiş" value={new Date(vehicle.trafik_sigortasi_bitis).toLocaleDateString("tr-TR")} />
+                  )}
+                  {vehicle.kasko_bitis && (
+                    <InfoRow label="Kasko Bitiş" value={new Date(vehicle.kasko_bitis).toLocaleDateString("tr-TR")} />
+                  )}
+                </div>
+              ) : (
+                <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 12 }}>
+                  Muayene/sigorta tarihleriniz henüz servis kaydına girilmemiş. Yetkili servisiniz bu bilgileri ekleyebilir.
+                </p>
+              )}
+              <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 12 }}>
+                Ek not eklemek isterseniz (örn. poliçe numarası) aşağıya serbest metin olarak yazabilirsiniz.
+              </p>
+              <textarea
+                value={notesDraft}
+                onChange={(e) => setNotesDraft(e.target.value)}
+                placeholder="Örn: Muayene tarihi 05.2027, kasko poliçe no ..."
+                rows={3}
+                style={{ ...inputStyle, marginBottom: 10, resize: "vertical", fontFamily: font }}
+              />
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <button onClick={handleSaveNotes} disabled={savingNotes} style={{ ...primaryButtonStyle(savingNotes), width: "auto", padding: "10px 20px" }}>
+                  {savingNotes ? "Kaydediliyor…" : "Kaydet"}
+                </button>
+                {notesSaved && <span style={{ fontSize: 12.5, color: colors.greenDark, fontWeight: 700 }}>✓ Kaydedildi</span>}
+              </div>
+            </section>
+
+            <section id="qr" style={{ ...cardStyle, textAlign: "center" }}>
+              <SectionHeader icon="qr" title="QR / NFC Yönetimi" center />
+              {qrRevokedAt ? (
+                <>
+                  <div style={{ padding: "12px 0" }}>
+                    <span style={badgeStyle("danger")}>İptal Edildi</span>
                   </div>
-                  <input
-                    type="number"
-                    placeholder="veya kendi sayını yaz"
-                    value={currentValue}
-                    onChange={(e) => handleIntervalInputChange(item.key, e.target.value)}
-                    onBlur={() => handleIntervalBlur(item.key)}
-                    disabled={isSavingInterval}
-                    style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid #ccc", fontSize: 12 }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                  <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 14 }}>
+                    Bu kod artık geçersiz ve tekrar kullanılamaz. Aracın için yeni bir kod oluşturabilirsin.
+                  </p>
+                  <button onClick={handleIssueNewQr} disabled={qrBusy} style={{ ...primaryButtonStyle(qrBusy), width: "auto", padding: "10px 22px" }}>
+                    {qrBusy ? "Oluşturuluyor…" : "Yeni Kod Ata / Yenile"}
+                  </button>
+                </>
+              ) : (
+                qrDataUrl && (
+                  <>
+                    <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 170, height: 170, borderRadius: radius.md }} />
+                    <div style={{ margin: "10px 0" }}>
+                      <span style={badgeStyle("success")}>Aktif</span>
+                    </div>
+                    <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 14 }}>
+                      Bu kodu anahtarlığa/NFC etikete işleyebilirsin. Aracını satarsan bu pasaport ve teknik geçmiş araçla kalır.
+                    </p>
+                    <button onClick={handleRevokeQr} disabled={qrBusy} style={dangerOutlineButtonStyle(qrBusy)}>
+                      {qrBusy ? "İşleniyor…" : "Kodu İptal Et"}
+                    </button>
+                  </>
+                )
+              )}
+            </section>
 
-      {!isNew && qrDataUrl && (
-        <section style={{ marginBottom: 24, textAlign: "center" }}>
-          <h2 style={{ fontSize: 15, color: "#888" }}>Araç QR / NFC Kodu</h2>
-          {qrRevokedAt ? (
-            <>
-              <div style={{ padding: "20px 0" }}>
-                <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: "#fdecea", color: "#c0392b" }}>
-                  İptal Edildi
-                </span>
-              </div>
-              <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>
-                Bu kod artık geçersiz ve tekrar kullanılamaz. Aracın için yeni bir kod oluşturabilirsin.
+            <section id="devir" style={{ ...cardStyle, textAlign: "center" }}>
+              <SectionHeader icon="swap" title="Sahiplik Devri" center />
+              <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 14, lineHeight: 1.6 }}>
+                Aracınızı sattığınızda teknik geçmişi koruyarak yeni sahibine güvenle devredin.
+                Kişisel bilgileriniz yeni sahibine aktarılmaz.
               </p>
-              <button
-                onClick={handleIssueNewQr}
-                disabled={qrBusy}
-                style={{ padding: "10px 20px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: qrBusy ? "wait" : "pointer" }}
+              <a
+                href={`/bireysel/araclar/${params.id}/devret`}
+                style={{ display: "inline-block", padding: "11px 22px", background: colors.surfaceSoft, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, fontSize: 13.5, minHeight: 44 }}
               >
-                {qrBusy ? "Oluşturuluyor…" : "Yeni Kod Oluştur"}
-              </button>
-            </>
-          ) : (
-            <>
-              <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 180, height: 180 }} />
-              <div style={{ margin: "8px 0" }}>
-                <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: "#eaf7ef", color: "#2E6B4F" }}>
-                  Aktif
-                </span>
+                Aracı Devret / Elden Çıkar
+              </a>
+            </section>
+
+            <section id="servis-gecmisi" style={cardStyle}>
+              <SectionHeader icon="history" title="Servis Geçmişi" />
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Diğer Bakım Kaydı (serbest not)</h3>
+              <input
+                placeholder="Yapılan işlem (örn. Genel bakım, lastik rotasyonu)"
+                style={{ ...inputStyle, marginBottom: 8 }}
+                value={newRecord.description}
+                onChange={(e) => setNewRecord({ ...newRecord, description: e.target.value })}
+              />
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <input
+                  type="number" placeholder="Km" style={inputStyle}
+                  value={newRecord.km_at_service}
+                  onChange={(e) => setNewRecord({ ...newRecord, km_at_service: e.target.value })}
+                />
+                <input
+                  type="number" placeholder="Ücret (₺)" style={inputStyle}
+                  value={newRecord.cost}
+                  onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value })}
+                />
               </div>
-              <p style={{ fontSize: 12, color: "#999", marginBottom: 10 }}>
-                Bu kodu anahtarlığa/NFC etikete işleyebilirsin. Aracını satarsan bu pasaport ve teknik geçmiş araçla kalır.
-              </p>
-              <button
-                onClick={handleRevokeQr}
-                disabled={qrBusy}
-                style={{ padding: "8px 16px", background: "#fff", border: "1px solid #c0392b", color: "#c0392b", borderRadius: 8, fontWeight: 600, fontSize: 13, cursor: qrBusy ? "wait" : "pointer" }}
-              >
-                {qrBusy ? "İşleniyor…" : "Kodu İptal Et"}
+              <button onClick={handleAddRecord} style={{ ...primaryButtonStyle(false), width: "auto", padding: "10px 20px", marginBottom: 20 }}>
+                Kaydı Ekle
               </button>
-            </>
-          )}
-        </section>
-      )}
 
-      {!isNew && (
-        <section style={{ marginBottom: 24, textAlign: "center" }}>
-          <a href={`/bireysel/araclar/${params.id}/devret`} style={{ fontSize: 13, color: "#888", textDecoration: "underline" }}>
-            Aracı Devret / Elden Çıkar
-          </a>
-        </section>
-      )}
-
-      {!isNew && (
-        <section>
-          <h2 style={{ fontSize: 15, color: "#888" }}>Diğer Bakım Kaydı (serbest not)</h2>
-          <input
-            placeholder="Yapılan işlem (örn. Genel bakım, lastik rotasyonu)"
-            style={inputStyle}
-            value={newRecord.description}
-            onChange={(e) => setNewRecord({ ...newRecord, description: e.target.value })}
-          />
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              type="number" placeholder="Km" style={inputStyle}
-              value={newRecord.km_at_service}
-              onChange={(e) => setNewRecord({ ...newRecord, km_at_service: e.target.value })}
-            />
-            <input
-              type="number" placeholder="Ücret (₺)" style={inputStyle}
-              value={newRecord.cost}
-              onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value })}
-            />
-          </div>
-          <button onClick={handleAddRecord} style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer", marginBottom: 20 }}>
-            Kaydı Ekle
-          </button>
-
-          <h2 style={{ fontSize: 15, color: "#888" }}>Geçmiş</h2>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            {records.map((r) => (
-              <li key={r.id} style={{ borderBottom: "1px solid #eee", padding: "8px 0", fontSize: 14 }}>
-                <div>
-                  {new Date(r.service_date).toLocaleDateString("tr-TR")} — {r.description} {r.km_at_service ? `(${r.km_at_service} km)` : ""}
-                </div>
-                <span style={{
-                  fontSize: 10.5, fontWeight: 600, padding: "2px 8px", borderRadius: 999,
-                  background: r.tenant_id ? "#eaf7ef" : "#f0f0f0",
-                  color: r.tenant_id ? "#2E6B4F" : "#666",
-                }}>
-                  {r.tenant_id ? "Servis Doğrulamalı Kayıt" : "Araç Sahibi Kaydı"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Geçmiş</h3>
+              {records.length === 0 ? (
+                <p style={{ fontSize: 13, color: colors.textMuted }}>Henüz kayıt yok.</p>
+              ) : (
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {records.map((r) => (
+                    <li key={r.id} style={{ borderBottom: `1px solid ${colors.border}`, padding: "10px 0", fontSize: 13.5 }}>
+                      <div style={{ color: colors.textDark, marginBottom: 4 }}>
+                        {new Date(r.service_date).toLocaleDateString("tr-TR")} — {r.description} {r.km_at_service ? `(${r.km_at_service} km)` : ""}
+                      </div>
+                      <span style={badgeStyle(r.tenant_id ? "success" : "neutral")}>
+                        {r.tenant_id ? "Servis Doğrulamalı Kayıt" : "Araç Sahibi Kaydı"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
+      </div>
     </main>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: colors.surfaceSoft, borderRadius: radius.sm, padding: "8px 12px" }}>
+      <span style={{ fontSize: 12.5, color: colors.textMuted }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: colors.textDark }}>{value}</span>
+    </div>
+  );
+}
+
+function SectionHeader({ icon, title, center = false }: { icon: string; title: string; center?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: center ? "center" : "flex-start", gap: 10, marginBottom: 14 }}>
+      <div style={{ width: 30, height: 30, borderRadius: 8, background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon name={icon} color={colors.greenDark} size={15} />
+      </div>
+      <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.textDark, margin: 0 }}>{title}</h2>
+    </div>
   );
 }

@@ -3,6 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
+import { Icon } from "@/components/Icon";
+
+const STEPS = [
+  { n: 1, title: "Aracı Devret", desc: "Devri başlatın, aracın erişimi hesabınızdan kaldırılır." },
+  { n: 2, title: "Güvenli bağlantı oluşturuldu", desc: "Yalnızca paylaştığınız kişi kullanabilecek, süreli bir bağlantı." },
+  { n: 3, title: "Yeni sahibiniz bağlantıyı kabul eder", desc: "OTOİZ hesabıyla giriş yapıp bağlantıyı açtığında devir tamamlanır." },
+  { n: 4, title: "Teknik geçmiş araçla devam eder", desc: "Bakım kayıtları ve QR/NFC kodu değişmeden korunur." },
+];
 
 export default function BireyselDevretPage() {
   const params = useParams();
@@ -60,78 +69,86 @@ export default function BireyselDevretPage() {
     }
   }
 
-  if (loading || !vehicle) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
+  if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
 
   if (result) {
     return (
-      <main style={{ maxWidth: 460, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
-        <h1 style={{ fontSize: 20, marginBottom: 8 }}>Devir Başlatıldı</h1>
-        <p style={{ color: "#666", fontSize: 14, marginBottom: 16 }}>
-          <strong>{vehicle.plate}</strong> artık hesabınızda görünmüyor ve bu bağlantıyı kabul eden kişiye geçecek.
-          Aşağıdaki bağlantıyı yalnızca aracı devrettiğiniz kişiyle paylaşın.
-        </p>
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+        <div style={{ maxWidth: 440, margin: "0 auto", padding: "40px 20px" }}>
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+              <Icon name="check" color={colors.greenDark} size={24} />
+            </div>
+            <h1 style={{ fontSize: 20, marginBottom: 6, color: colors.textDark, fontWeight: 800 }}>Devir Başlatıldı</h1>
+            <p style={{ color: colors.textMuted, fontSize: 13.5, lineHeight: 1.6 }}>
+              <strong>{vehicle.plate}</strong> artık hesabınızda görünmüyor. Aşağıdaki bağlantıyı yalnızca aracı devrettiğiniz kişiyle paylaşın.
+            </p>
+          </div>
 
-        <div style={{ background: "#f5f5f5", borderRadius: 10, padding: 14, marginBottom: 12, wordBreak: "break-all", fontSize: 13, fontFamily: "monospace" }}>
-          {shareUrl}
+          <div style={{ ...cardStyle, wordBreak: "break-all", fontSize: 13, fontFamily: "monospace", marginBottom: 14, background: colors.surfaceSoft }}>
+            {shareUrl}
+          </div>
+
+          <button onClick={handleCopy} style={{ ...primaryButtonStyle(false), marginBottom: 14 }}>
+            {copied ? "Kopyalandı ✓" : "Bağlantıyı Kopyala"}
+          </button>
+
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: colors.greenSoft, borderRadius: radius.md, padding: 14, marginBottom: 20 }}>
+            <Icon name="shield-check" color={colors.greenDark} size={16} strokeWidth={2.5} />
+            <p style={{ fontSize: 12.5, color: colors.textDark, margin: 0, lineHeight: 1.6 }}>
+              Kişisel bilgileriniz yeni sahibine aktarılmaz. Bağlantı 7 gün geçerlidir; karşı taraf henüz kabul etmediyse
+              araç listenizden "Bekleyen Devirler" bölümünden iptal edebilirsiniz.
+            </p>
+          </div>
+
+          <button onClick={() => router.push("/bireysel/araclar")} style={secondaryButtonStyle()}>
+            Araçlarıma Dön
+          </button>
         </div>
-
-        <button
-          onClick={handleCopy}
-          style={{ width: "100%", padding: 12, background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer", marginBottom: 12 }}
-        >
-          {copied ? "Kopyalandı ✓" : "Bağlantıyı Kopyala"}
-        </button>
-
-        <p style={{ fontSize: 12, color: "#999", marginBottom: 20 }}>
-          Bağlantı 7 gün geçerlidir. Yeni sahip OTOİZ hesabıyla giriş yapıp bu bağlantıyı açtığında devir tamamlanır.
-          Karşı taraf henüz kabul etmediyse araç listenizden "Bekleyen Devirler" bölümünden iptal edebilirsiniz.
-        </p>
-
-        <button
-          onClick={() => router.push("/bireysel/araclar")}
-          style={{ width: "100%", padding: 12, background: "#eee", color: "#333", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}
-        >
-          Araçlarıma Dön
-        </button>
       </main>
     );
   }
 
   return (
-    <main style={{ maxWidth: 460, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
-      <h1 style={{ fontSize: 20, marginBottom: 8 }}>Aracı Devret / Elden Çıkar</h1>
-      <p style={{ color: "#666", fontSize: 14, marginBottom: 16 }}>
-        <strong>{vehicle.plate}</strong> — {vehicle.brand} {vehicle.model}
-      </p>
+    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <div style={{ maxWidth: 460, margin: "0 auto", padding: "32px 20px" }}>
+        <h1 style={{ fontSize: 21, marginBottom: 4, color: colors.textDark, fontWeight: 800 }}>Aracı Devret / Elden Çıkar</h1>
+        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 24 }}>
+          <strong style={{ color: colors.textDark }}>{vehicle.plate}</strong> — {vehicle.brand} {vehicle.model}
+        </p>
 
-      <div style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 10, padding: 14, marginBottom: 20, fontSize: 13, color: "#7a5c10" }}>
-        <p style={{ margin: "0 0 8px", fontWeight: 700 }}>Bu işlem ne yapar?</p>
-        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
-          <li>Aracın erişimi hemen hesabınızdan kaldırılır.</li>
-          <li>Bakım geçmişi ve QR/NFC kodu aynı araçla kalır, silinmez.</li>
-          <li>Aracınız, yeni sahip paylaştığınız bağlantıyı OTOİZ hesabıyla açıp kabul edene kadar "beklemede" kalır.</li>
-          <li>Kimse otomatik/rastgele bu aracın yeni sahibi yapılmaz.</li>
-          <li>Kabul edilmeden önce istediğiniz zaman iptal edip aracı geri alabilirsiniz.</li>
-        </ul>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 24 }}>
+          {STEPS.map((s) => (
+            <div key={s.n} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{ width: 30, height: 30, minWidth: 30, borderRadius: "50%", background: colors.surfaceDark, color: colors.green, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13 }}>
+                {s.n}
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark }}>{s.title}</div>
+                <div style={{ fontSize: 12.5, color: colors.textMuted, lineHeight: 1.5 }}>{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background: colors.greenSoft, borderRadius: radius.md, padding: 14, marginBottom: 22, display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <Icon name="shield-check" color={colors.greenDark} size={16} strokeWidth={2.5} />
+          <p style={{ fontSize: 12.5, color: colors.textDark, margin: 0, lineHeight: 1.6 }}>
+            Kişisel bilgileriniz yeni sahibine aktarılmaz. İstediğiniz zaman, kabul edilmeden önce iptal edip aracı geri alabilirsiniz.
+          </p>
+        </div>
+
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: colors.textMuted, marginBottom: 20 }}>
+          <input type="checkbox" checked={confirming} onChange={(e) => setConfirming(e.target.checked)} style={{ marginTop: 3 }} />
+          Bu aracın erişimini hesabımdan kaldırmak istediğimi onaylıyorum.
+        </label>
+
+        {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>{error}</p>}
+
+        <button onClick={handleStart} disabled={!confirming || starting} style={primaryButtonStyle(!confirming || starting)}>
+          {starting ? "Başlatılıyor…" : "Devri Başlat"}
+        </button>
       </div>
-
-      <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "#555", marginBottom: 20 }}>
-        <input type="checkbox" checked={confirming} onChange={(e) => setConfirming(e.target.checked)} style={{ marginTop: 3 }} />
-        Bu aracın erişimini hesabımdan kaldırmak istediğimi onaylıyorum.
-      </label>
-
-      {error && <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-
-      <button
-        onClick={handleStart}
-        disabled={!confirming || starting}
-        style={{
-          width: "100%", padding: 14, background: confirming ? "#c0392b" : "#ccc", color: "#fff", border: "none",
-          borderRadius: 8, fontWeight: 700, cursor: confirming && !starting ? "pointer" : "not-allowed", fontSize: 15,
-        }}
-      >
-        {starting ? "Başlatılıyor…" : "Devri Başlat"}
-      </button>
     </main>
   );
 }

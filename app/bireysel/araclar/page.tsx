@@ -3,6 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, radius } from "@/lib/theme";
+import { Icon } from "@/components/Icon";
+import { OtoizLogo } from "@/components/OtoizLogo";
+import { BottomNav } from "@/components/BottomNav";
+
+const MODULES = [
+  { key: "servis-gecmisi", title: "Servis Geçmişi", desc: "Yapılan tüm bakım ve onarım kayıtları.", icon: "history" },
+  { key: "kilometre", title: "Kilometre Kayıtları", desc: "Güncel km ve geçmiş okumalar.", icon: "gauge" },
+  { key: "parca", title: "Parça Değişimleri", desc: "Yağ, filtre, balata, lastik ve daha fazlası.", icon: "wrench" },
+  { key: "muayene", title: "Muayene Bilgileri", desc: "Muayene ve sigorta notlarınız.", icon: "clipboard" },
+  { key: "qr", title: "QR / NFC Yönetimi", desc: "Aktif kodu görün, iptal edin veya yenileyin.", icon: "qr" },
+  { key: "devir", title: "Sahiplik Devri", desc: "Aracı güvenle yeni sahibine devredin.", icon: "swap" },
+];
 
 export default function BireyselAraclarPage() {
   const router = useRouter();
@@ -12,6 +25,7 @@ export default function BireyselAraclarPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
 
   async function loadPendingTransfers() {
     const { data } = await supabase.rpc("list_my_pending_outgoing_transfers");
@@ -25,6 +39,7 @@ export default function BireyselAraclarPage() {
         router.push("/bireysel/giris");
         return;
       }
+      setEmail(session.session.user.email ?? null);
 
       const { data: vehicleList } = await supabase
         .from("vehicles")
@@ -64,79 +79,206 @@ export default function BireyselAraclarPage() {
     router.push("/bireysel/giris");
   }
 
-  const filtered = vehicles.filter((v) =>
-    v.plate?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = search ? vehicles.filter((v) => v.plate?.toLowerCase().includes(search.toLowerCase())) : vehicles;
+  const primary = filtered[0];
+  const rest = filtered.slice(1);
+  const firstName = email ? email.split("@")[0] : "";
 
-  if (loading) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
+  if (loading) {
+    return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
+  }
 
   return (
-    <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 1, color: "#0B1F3A" }}>
-            OTO<span style={{ color: "#D4A94A" }}>İZ</span>
+    <main className="otoiz-has-bottom-nav" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "22px 18px 28px" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+            <OtoizLogo variant="dark" size={16} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                onClick={() => router.push("/bireysel/bildirimler")}
+                aria-label="Bildirimler"
+                style={{
+                  position: "relative", width: 38, height: 38, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.08)", border: "none", display: "flex",
+                  alignItems: "center", justifyContent: "center", cursor: "pointer",
+                }}
+              >
+                <Icon name="bell" color={colors.textLight} size={17} />
+                {pendingTransfers.length > 0 && (
+                  <span style={{ position: "absolute", top: 6, right: 7, width: 7, height: 7, borderRadius: "50%", background: colors.green }} />
+                )}
+              </button>
+              <button
+                onClick={() => router.push("/bireysel/profil")}
+                aria-label="Profil"
+                style={{
+                  width: 38, height: 38, borderRadius: "50%", background: colors.green, border: "none",
+                  color: colors.textDark, fontWeight: 800, fontSize: 14, cursor: "pointer",
+                }}
+              >
+                {firstName ? firstName[0].toUpperCase() : "?"}
+              </button>
+            </div>
           </div>
-          <h1 style={{ fontSize: 20, margin: "4px 0 0" }}>Araçlarım</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: colors.textLight, margin: "0 0 4px" }}>Merhaba{firstName ? `, ${firstName}` : ""}</h1>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", margin: 0 }}>Aracınızın tüm geçmişi tek ekranda.</p>
         </div>
-        <button onClick={handleLogout} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 13, padding: 0 }}>
+      </div>
+
+      <div style={{ maxWidth: 480, margin: "-14px auto 0", padding: "0 16px 24px" }}>
+        {vehicles.length > 1 && (
+          <input
+            placeholder="Plaka ile ara..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "100%", padding: "12px 14px", borderRadius: radius.md, border: `1px solid ${colors.border}`,
+              marginBottom: 16, fontSize: 15, fontFamily: font, background: colors.surfaceLight,
+              boxShadow: "0 8px 24px rgba(6,20,33,0.1)",
+            }}
+          />
+        )}
+
+        {pendingTransfers.length > 0 && (
+          <section style={{ marginBottom: 20 }}>
+            <h2 style={{ fontSize: 13, color: colors.textMuted, marginBottom: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>
+              Bekleyen Devirler
+            </h2>
+            {pendingTransfers.map((t) => (
+              <div key={t.transfer_token} style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 12, padding: 14, marginBottom: 10 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#7a5c10" }}>{t.plate}</div>
+                <div style={{ fontSize: 12, color: "#7a5c10", marginBottom: 10 }}>
+                  {t.brand} {t.model} — yeni sahibin kabul etmesi bekleniyor
+                </div>
+                <button
+                  onClick={() => handleCancelTransfer(t.transfer_token)}
+                  disabled={cancelling === t.transfer_token}
+                  style={{ fontSize: 12, padding: "8px 14px", background: "#fff", border: "1px solid #E8C468", borderRadius: 8, color: "#7a5c10", fontWeight: 600, cursor: "pointer", minHeight: 36 }}
+                >
+                  {cancelling === t.transfer_token ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {vehicles.length === 0 ? (
+          <div style={{ background: colors.surfaceLight, borderRadius: radius.lg, padding: "40px 20px", textAlign: "center", boxShadow: "0 8px 24px rgba(6,20,33,0.08)" }}>
+            <p style={{ color: colors.textMuted, marginBottom: 18, fontSize: 14 }}>Henüz araç eklemediniz.</p>
+            <a
+              href="/bireysel/araclar/yeni"
+              style={{ display: "inline-block", padding: "12px 22px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, minHeight: 44 }}
+            >
+              + Yeni Araç Ekle
+            </a>
+          </div>
+        ) : (
+          <>
+            {primary && <VehicleHeroCard vehicle={primary} onClick={() => router.push(`/bireysel/araclar/${primary.id}`)} />}
+
+            {primary && (
+              <section style={{ marginTop: 18, marginBottom: 20 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {MODULES.map((m) => (
+                    <a
+                      key={m.key}
+                      href={`/bireysel/araclar/${primary.id}#${m.key}`}
+                      className="otoiz-module-card"
+                      style={{
+                        display: "flex", alignItems: "flex-start", gap: 10, background: colors.surfaceLight,
+                        border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: 14,
+                        textDecoration: "none", minHeight: 44,
+                      }}
+                    >
+                      <div style={{ width: 32, height: 32, minWidth: 32, borderRadius: 8, background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon name={m.icon} color={colors.greenDark} size={16} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: colors.textDark, marginBottom: 2 }}>{m.title}</div>
+                        <div style={{ fontSize: 10.5, color: colors.textMuted, lineHeight: 1.4 }}>{m.desc}</div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <a
+              href="/bireysel/araclar/yeni"
+              style={{ display: "block", textAlign: "center", padding: "13px 20px", background: colors.surfaceLight, color: colors.textDark, border: `1.5px solid ${colors.border}`, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, marginBottom: 20, minHeight: 44 }}
+            >
+              + Yeni Araç Ekle
+            </a>
+
+            {rest.length > 0 && (
+              <section>
+                <h2 style={{ fontSize: 13, color: colors.textMuted, marginBottom: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                  Diğer Araçlarım
+                </h2>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {rest.map((v) => (
+                    <li key={v.id} style={{ background: colors.surfaceLight, borderRadius: radius.md, border: `1px solid ${colors.border}`, marginBottom: 8 }}>
+                      <a href={`/bireysel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
+                        <div style={{ fontWeight: 700, fontSize: 15 }}>{v.plate}</div>
+                        <div style={{ color: colors.textMuted, fontSize: 12.5 }}>
+                          {v.brand} {v.model} · {v.current_km?.toLocaleString("tr-TR")} km
+                        </div>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </>
+        )}
+
+        {filtered.length === 0 && vehicles.length > 0 && (
+          <p style={{ color: colors.textMuted, marginTop: 20, textAlign: "center", fontSize: 14 }}>Araç bulunamadı.</p>
+        )}
+
+        <button onClick={handleLogout} style={{ display: "block", margin: "28px auto 0", background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: 13 }}>
           Çıkış yap
         </button>
       </div>
 
-      <input
-        placeholder="Plaka ile ara..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", marginBottom: 16, fontSize: 15 }}
-      />
-
-      <a
-        href="/bireysel/araclar/yeni"
-        style={{ display: "block", textAlign: "center", padding: "12px 20px", background: "#1E3A5F", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 600, marginBottom: 24 }}
-      >
-        + Yeni Araç Ekle
-      </a>
-
-      {pendingTransfers.length > 0 && (
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 14, color: "#888", marginBottom: 10 }}>Bekleyen Devirler</h2>
-          {pendingTransfers.map((t) => (
-            <div key={t.transfer_token} style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: "#7a5c10" }}>{t.plate}</div>
-              <div style={{ fontSize: 12, color: "#7a5c10", marginBottom: 8 }}>
-                {t.brand} {t.model} — yeni sahibin kabul etmesi bekleniyor
-              </div>
-              <button
-                onClick={() => handleCancelTransfer(t.transfer_token)}
-                disabled={cancelling === t.transfer_token}
-                style={{ fontSize: 12, padding: "6px 12px", background: "#fff", border: "1px solid #E8C468", borderRadius: 6, color: "#7a5c10", fontWeight: 600, cursor: "pointer" }}
-              >
-                {cancelling === t.transfer_token ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
-              </button>
-            </div>
-          ))}
-        </section>
-      )}
-
-      {filtered.length === 0 && (
-        <p style={{ color: "#999", marginTop: 20, textAlign: "center" }}>
-          {vehicles.length === 0 ? "Henüz araç eklemediniz." : "Araç bulunamadı."}
-        </p>
-      )}
-
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {filtered.map((v) => (
-          <li key={v.id} style={{ borderBottom: "1px solid #eee", padding: "14px 0" }}>
-            <a href={`/bireysel/araclar/${v.id}`} style={{ textDecoration: "none", color: "#111" }}>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>{v.plate}</div>
-              <div style={{ color: "#666", fontSize: 13 }}>
-                {v.brand} {v.model} · {v.current_km?.toLocaleString("tr-TR")} km
-              </div>
-            </a>
-          </li>
-        ))}
-      </ul>
+      <BottomNav active="home" />
     </main>
+  );
+}
+
+function VehicleHeroCard({ vehicle, onClick }: { vehicle: any; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%", textAlign: "left", background: colors.surfaceDark, borderRadius: radius.xl, padding: 20,
+        border: "none", cursor: "pointer", color: colors.textLight, boxShadow: "0 14px 34px rgba(6,20,33,0.22)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 0.5 }}>{vehicle.plate}</div>
+          <div style={{ fontSize: 13, opacity: 0.65, marginTop: 2 }}>
+            {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
+          </div>
+        </div>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(54,232,109,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="car" color={colors.green} size={19} />
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: "10px 12px" }}>
+          <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>GÜNCEL KM</div>
+          <div style={{ fontSize: 16, fontWeight: 700 }}>{vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"}</div>
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: "10px 12px" }}>
+          <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>SONRAKİ BAKIM</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: colors.green }}>
+            {vehicle.next_service_km ? `${Number(vehicle.next_service_km).toLocaleString("tr-TR")} km` : "—"}
+          </div>
+        </div>
+      </div>
+    </button>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, radius, cardStyle } from "@/lib/theme";
 const { anonymizeCustomerRecord } = require("@/lib/logic");
 
 export default function DataRequestsPage() {
@@ -44,28 +45,28 @@ export default function DataRequestsPage() {
     load();
   }
 
-  if (loading) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
+  if (loading) return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
 
   return (
-    <main style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
+    <main style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px", fontFamily: font, color: colors.textDark }}>
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>Veri Silme Talepleri</h1>
-      <p style={{ color: "#666", fontSize: 14, marginBottom: 20 }}>
+      <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 20 }}>
         KVKK kapsamında bir müşteri kişisel verisinin silinmesini talep ederse buradan işleme alın. Araç ve bakım kayıtları etkilenmez, sadece kişisel bilgiler temizlenir.
       </p>
 
-      {requests.length === 0 && <p style={{ color: "#999" }}>Bekleyen talep yok.</p>}
+      {requests.length === 0 && <p style={{ color: colors.textMuted }}>Bekleyen talep yok.</p>}
 
       <ul style={{ listStyle: "none", padding: 0 }}>
         {requests.map((r) => (
-          <li key={r.id} style={{ border: "1px solid #eee", borderRadius: 8, padding: 14, marginBottom: 10 }}>
+          <li key={r.id} style={{ ...cardStyle, marginBottom: 10 }}>
             <div style={{ fontWeight: 600 }}>{r.customers?.full_name || "İsimsiz kayıt"}</div>
-            <div style={{ fontSize: 13, color: "#666" }}>
+            <div style={{ fontSize: 13, color: colors.textMuted }}>
               Talep: {new Date(r.requested_at).toLocaleDateString("tr-TR")} · Durum: {r.status === "completed" ? "Tamamlandı" : "Bekliyor"}
             </div>
             {r.status !== "completed" && (
               <button
                 onClick={() => handleComplete(r)}
-                style={{ marginTop: 8, padding: "6px 12px", background: "#c0392b", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer" }}
+                style={{ marginTop: 8, padding: "8px 14px", background: colors.danger, color: "#fff", border: "none", borderRadius: radius.sm, fontSize: 13, cursor: "pointer", minHeight: 36 }}
               >
                 Silme İşlemini Tamamla
               </button>
