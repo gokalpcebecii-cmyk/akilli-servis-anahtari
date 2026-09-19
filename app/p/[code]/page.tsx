@@ -9,6 +9,8 @@ const ITEM_DISPLAY: Record<string, { label: string; icon: string }> = {
   yag_filtresi: { label: "Yağ Filtresi", icon: "🧰" },
   hava_filtresi: { label: "Hava Filtresi", icon: "💨" },
   polen_filtresi: { label: "Polen Filtresi", icon: "🌼" },
+  fren_on_balata: { label: "Ön Fren Balatası", icon: "🛑" },
+  fren_arka_balata: { label: "Arka Fren Balatası", icon: "🛑" },
   fren_disk_balata: { label: "Fren Disk-Balata", icon: "🛑" },
   triger_seti: { label: "Triger Seti", icon: "⚙️" },
   aku: { label: "Akü", icon: "🔋" },
@@ -20,11 +22,17 @@ const ITEM_ORDER = [
   "yag_filtresi",
   "hava_filtresi",
   "polen_filtresi",
-  "fren_disk_balata",
+  "fren_on_balata",
+  "fren_arka_balata",
   "triger_seti",
   "aku",
   "lastik",
 ];
+// fren_disk_balata: eski/tek parça fren kaydı, geriye dönük uyumluluk için.
+// Yeni araçlarda hiç kullanılmadığı için yalnızca o araçta gerçekten kaydı
+// varsa listeye eklenir (aksi halde her araçta "Bilgi Yok" satırı olarak
+// büyümesin).
+const LEGACY_ITEM_KEY = "fren_disk_balata";
 
 export default async function PassportByCodePage({ params }: { params: { code: string } }) {
   // Bu sayfa herkese açık olduğundan service role yerine anon key kullanır;
@@ -115,7 +123,7 @@ export default async function PassportByCodePage({ params }: { params: { code: s
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "20px" }}>
         <h2 style={{ fontSize: 15, color: navy, marginBottom: 12 }}>Araç Sağlık Özeti</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
-          {ITEM_ORDER.map((key) => {
+          {[...ITEM_ORDER, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM_KEY) ? [LEGACY_ITEM_KEY] : [])].map((key) => {
             const display = ITEM_DISPLAY[key];
             const status = getItemStatus(key);
             return (

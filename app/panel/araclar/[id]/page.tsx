@@ -5,15 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
 
-const MAINTENANCE_ITEMS = [
+const QUICK_ITEMS = [
   { key: "motor_yagi", label: "Motor Yağı" },
   { key: "yag_filtresi", label: "Yağ Filtresi" },
   { key: "hava_filtresi", label: "Hava Filtresi" },
   { key: "polen_filtresi", label: "Polen Filtresi" },
-  { key: "fren_disk_balata", label: "Fren Disk-Balata" },
-  { key: "triger_seti", label: "Triger Seti" },
-  { key: "aku", label: "Akü" },
+  { key: "fren_on_balata", label: "Ön Fren Balatası" },
+  { key: "fren_arka_balata", label: "Arka Fren Balatası" },
   { key: "lastik", label: "Lastik" },
+  { key: "aku", label: "Akü" },
 ];
 
 const PRESET_KM_OPTIONS = [5000, 10000, 15000, 20000, 30000];
@@ -29,18 +29,35 @@ export default function VehicleDetailPage() {
   );
   const [records, setRecords] = useState<any[]>([]);
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
-  const [intervalInputs, setIntervalInputs] = useState<Record<string, string>>({});
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [newRecord, setNewRecord] = useState({ description: "", km_at_service: "", cost: "" });
+  const [qrCode, setQrCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
-  const [savingItem, setSavingItem] = useState<string | null>(null);
-  const [savingInterval, setSavingInterval] = useState<string | null>(null);
+  const [editingVehicle, setEditingVehicle] = useState(false);
+  const [savingVehicle, setSavingVehicle] = useState(false);
+
+  // Hızlı bakım girişi state'i
+  const [quickKm, setQuickKm] = useState("");
+  const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
+  const [itemIntervals, setItemIntervals] = useState<Record<string, string>>({});
+  const [otherSelected, setOtherSelected] = useState(false);
+  const [otherText, setOtherText] = useState("");
+  const [nextServiceKm, setNextServiceKm] = useState("");
+  const [nextServiceDate, setNextServiceDate] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     if (isNew) return;
     async function load() {
       const { data: v } = await supabase.from("vehicles").select("*").eq("id", params.id).single();
       setVehicle(v);
+      if (v) {
+        setQuickKm(String(v.current_km ?? ""));
+        setNextServiceKm(v.next_service_km ? String(v.next_service_km) : "");
+        setNextServiceDate(v.next_service_date || "");
+      }
+
       const { data: r } = await supabase
         .from("maintenance_records")
         .select("*")
@@ -48,36 +65,53 @@ export default function VehicleDetailPage() {
         .order("service_date", { ascending: false });
       setRecords(r ?? []);
 
-      const { data: mi } = await supabase
-        .from("maintenance_items")
-        .select("*")
-        .eq("vehicle_id", params.id);
+      const { data: mi } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
       setMaintenanceItems(mi ?? []);
 
       const initialIntervals: Record<string, string> = {};
       (mi ?? []).forEach((item: any) => {
-        if (item.interval_km != null) {
-          initialIntervals[item.item_key] = String(item.interval_km);
-        }
+        if (item.interval_km != null) initialIntervals[item.item_key] = String(item.interval_km);
       });
-      setIntervalInputs(initialIntervals);
+      setItemIntervals(initialIntervals);
 
-      const publicUrl = `${window.location.origin}/v/${params.id}`;
-      const qr = await QRCode.toDataURL(publicUrl, { width: 220 });
-      setQrDataUrl(qr);
-
+      await loadQr(params.id as string);
       setLoading(false);
     }
     load();
   }, [params.id]);
 
-  async function handleSaveVehicle() {
+  // Bu araç için geçerli, iptal edilmemiş bir QR/NFC kodu var mı diye bakar.
+  // Eskiden bu sayfa /v/[id] (vehicle_id'yi doğrudan public URL'de kullanan,
+  // hiçbir zaman iptal edilemeyen bir mekanizma) üzerinden QR gösteriyordu —
+  // bu, "QR araç kimliği değildir" kuralını ihlal ediyordu. Artık aynı
+  // bireysel akışta kullanılan, iptal/yenileme desteği olan qr_keys +
+  // /p/[code] sistemini kullanıyor. Not: qr_keys üzerinde servis kullanıcıları
+  // için doğrudan INSERT izni RLS'de bilerek yok (havuzdaki kodlar yalnızca
+  // /api/qr-eslestir üzerinden atanabilir) — bu yüzden burada kod
+  // bulunamazsa staff'ı /panel/eslestir'e yönlendiriyoruz, kendimiz üretmiyoruz.
+  async function loadQr(vehicleId: string) {
+    const { data: qrKey } = await supabase
+      .from("qr_keys")
+      .select("code")
+      .eq("vehicle_id", vehicleId)
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    if (qrKey) {
+      setQrCode(qrKey.code);
+      const publicUrl = `${window.location.origin}/p/${qrKey.code}`;
+      const qr = await QRCode.toDataURL(publicUrl, { width: 200 });
+      setQrDataUrl(qr);
+    } else {
+      setQrCode(null);
+      setQrDataUrl(null);
+    }
+  }
+
+  async function handleSaveVehicleInfo() {
+    setSavingVehicle(true);
     const { data: session } = await supabase.auth.getSession();
-    const { data: staff } = await supabase
-      .from("staff_users")
-      .select("tenant_id")
-      .eq("id", session.session?.user.id)
-      .single();
+    const { data: staff } = await supabase.from("staff_users").select("tenant_id").eq("id", session.session?.user.id).single();
 
     if (isNew) {
       const { data: created, error } = await supabase
@@ -85,6 +119,7 @@ export default function VehicleDetailPage() {
         .insert({ ...vehicle, tenant_id: staff?.tenant_id, year: vehicle.year || null, next_service_km: vehicle.next_service_km || null, next_service_date: vehicle.next_service_date || null })
         .select()
         .single();
+      setSavingVehicle(false);
       if (!error && created) router.push(`/panel/araclar/${created.id}`);
     } else {
       await supabase
@@ -94,276 +129,301 @@ export default function VehicleDetailPage() {
           brand: vehicle.brand,
           model: vehicle.model,
           year: vehicle.year || null,
-          current_km: vehicle.current_km,
-          next_service_km: vehicle.next_service_km || null,
-          next_service_date: vehicle.next_service_date || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", params.id);
-      alert("Kaydedildi.");
+      setSavingVehicle(false);
+      setEditingVehicle(false);
     }
   }
 
-  async function refreshMaintenanceItems() {
-    const { data: mi } = await supabase
-      .from("maintenance_items")
-      .select("*")
-      .eq("vehicle_id", params.id);
-    setMaintenanceItems(mi ?? []);
+  function toggleItem(key: string) {
+    setSelectedItems((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  async function handleQuickMaintenance(itemKey: string, label: string) {
-    setSavingItem(itemKey);
+  const anySelected = Object.values(selectedItems).some(Boolean) || otherSelected;
+  const kmValid = quickKm !== "" && !Number.isNaN(Number(quickKm));
+
+  // Tek dokunuşla seçilen tüm işlemleri TEK seferde, tek "Kaydet" ile
+  // gönderir: bir staff/tenant sorgusu, bir araç güncellemesi, bir toplu
+  // maintenance_items upsert, bir toplu maintenance_records insert.
+  // Hedef: 15-20 saniyelik bakım girişi.
+  async function handleQuickSave() {
+    if (submitting) return;
+    setSubmitError("");
+    setSuccessMessage("");
+
+    if (!kmValid) {
+      setSubmitError("Lütfen geçerli bir kilometre girin.");
+      return;
+    }
+    if (!anySelected) {
+      setSubmitError("En az bir işlem seçin ya da 'Diğer' ile yazın.");
+      return;
+    }
+    if (otherSelected && !otherText.trim()) {
+      setSubmitError("Diğer işlem için kısa bir açıklama yazın.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    const km = Number(quickKm);
     const today = new Date().toISOString().slice(0, 10);
-    const existingInterval = intervalInputs[itemKey];
-    const intervalKm = existingInterval ? Number(existingInterval) : null;
 
-    await supabase.from("maintenance_items").upsert(
-      {
+    const { data: session } = await supabase.auth.getSession();
+    const { data: staff } = await supabase.from("staff_users").select("tenant_id").eq("id", session.session?.user.id).single();
+    const tenantId = staff?.tenant_id;
+    const actorId = session.session?.user.id;
+
+    const selectedKeys = QUICK_ITEMS.filter((it) => selectedItems[it.key]).map((it) => it.key);
+
+    await supabase
+      .from("vehicles")
+      .update({
+        current_km: km,
+        next_service_km: nextServiceKm ? Number(nextServiceKm) : null,
+        next_service_date: nextServiceDate || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", params.id);
+
+    if (selectedKeys.length > 0) {
+      const itemsUpsert = selectedKeys.map((key) => ({
         vehicle_id: params.id,
-        item_key: itemKey,
+        item_key: key,
         last_service_date: today,
-        last_service_km: vehicle.current_km,
-        interval_km: intervalKm,
-      },
-      { onConflict: "vehicle_id,item_key" }
-    );
+        last_service_km: km,
+        interval_km: itemIntervals[key] ? Number(itemIntervals[key]) : null,
+      }));
+      await supabase.from("maintenance_items").upsert(itemsUpsert, { onConflict: "vehicle_id,item_key" });
+    }
 
-    const { data: session } = await supabase.auth.getSession();
-    const { data: staff } = await supabase
-      .from("staff_users")
-      .select("tenant_id")
-      .eq("id", session.session?.user.id)
-      .single();
-
-    await supabase.from("maintenance_records").insert({
-      vehicle_id: params.id,
-      tenant_id: staff?.tenant_id,
-      description: label,
-      km_at_service: vehicle.current_km,
-      created_by: session.session?.user.id,
-    });
-
-    await refreshMaintenanceItems();
-
-    const { data: r } = await supabase
-      .from("maintenance_records")
-      .select("*")
-      .eq("vehicle_id", params.id)
-      .order("service_date", { ascending: false });
-    setRecords(r ?? []);
-
-    setSavingItem(null);
-  }
-
-  function handleIntervalInputChange(itemKey: string, value: string) {
-    setIntervalInputs((prev) => ({ ...prev, [itemKey]: value }));
-  }
-
-  async function saveInterval(itemKey: string, value: string) {
-    const intervalKm = value ? Number(value) : null;
-    setSavingInterval(itemKey);
-
-    await supabase.from("maintenance_items").upsert(
-      {
+    const recordsToInsert = selectedKeys.map((key) => {
+      const label = QUICK_ITEMS.find((it) => it.key === key)?.label ?? key;
+      return {
         vehicle_id: params.id,
-        item_key: itemKey,
-        interval_km: intervalKm,
-      },
-      { onConflict: "vehicle_id,item_key" }
-    );
-
-    await refreshMaintenanceItems();
-    setSavingInterval(null);
-  }
-
-  function handleIntervalBlur(itemKey: string) {
-    saveInterval(itemKey, intervalInputs[itemKey] ?? "");
-  }
-
-  function handlePresetClick(itemKey: string, value: number) {
-    setIntervalInputs((prev) => ({ ...prev, [itemKey]: String(value) }));
-    saveInterval(itemKey, String(value));
-  }
-
-  async function handleAddRecord() {
-    const { data: session } = await supabase.auth.getSession();
-    const { data: staff } = await supabase
-      .from("staff_users")
-      .select("tenant_id")
-      .eq("id", session.session?.user.id)
-      .single();
-
-    await supabase.from("maintenance_records").insert({
-      vehicle_id: params.id,
-      tenant_id: staff?.tenant_id,
-      description: newRecord.description,
-      km_at_service: newRecord.km_at_service ? Number(newRecord.km_at_service) : null,
-      cost: newRecord.cost ? Number(newRecord.cost) : null,
-      created_by: session.session?.user.id,
+        tenant_id: tenantId,
+        description: label,
+        km_at_service: km,
+        created_by: actorId,
+      };
     });
+    if (otherSelected && otherText.trim()) {
+      recordsToInsert.push({
+        vehicle_id: params.id,
+        tenant_id: tenantId,
+        description: otherText.trim(),
+        km_at_service: km,
+        created_by: actorId,
+      });
+    }
+    if (recordsToInsert.length > 0) {
+      await supabase.from("maintenance_records").insert(recordsToInsert);
+    }
 
+    const { data: mi } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
+    setMaintenanceItems(mi ?? []);
     const { data: r } = await supabase
       .from("maintenance_records")
       .select("*")
       .eq("vehicle_id", params.id)
       .order("service_date", { ascending: false });
     setRecords(r ?? []);
-    setNewRecord({ description: "", km_at_service: "", cost: "" });
+    setVehicle((prev: any) => ({ ...prev, current_km: km, next_service_km: nextServiceKm ? Number(nextServiceKm) : null, next_service_date: nextServiceDate || null }));
+
+    setSelectedItems({});
+    setOtherSelected(false);
+    setOtherText("");
+    setSubmitting(false);
+    setSuccessMessage("✓ Kayıt tamamlandı");
+    setTimeout(() => setSuccessMessage(""), 4000);
   }
 
   if (loading || !vehicle) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
 
-  const inputStyle = { width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc", marginBottom: 10 };
-
-  function getItemStatus(itemKey: string) {
-    const item = maintenanceItems.find((m) => m.item_key === itemKey);
-    if (!item || !item.last_service_date) return null;
-    const isToday = item.last_service_date === new Date().toISOString().slice(0, 10);
-    return { date: item.last_service_date, isToday };
-  }
+  const inputStyle = { width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", marginBottom: 10, fontSize: 16 };
+  const chipBase = {
+    padding: "14px 10px",
+    borderRadius: 12,
+    textAlign: "center" as const,
+    fontSize: 13.5,
+    fontWeight: 700,
+    cursor: "pointer",
+    userSelect: "none" as const,
+    border: "2px solid #ddd",
+    background: "#fff",
+    color: "#333",
+  };
 
   return (
-    <main style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
-      <h1 style={{ fontSize: 20 }}>{isNew ? "Yeni Araç" : vehicle.plate}</h1>
+    <main style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 60px", fontFamily: "system-ui, sans-serif" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{isNew ? "Yeni Araç" : vehicle.plate}</h1>
+        {!isNew && (
+          <button
+            onClick={() => setEditingVehicle((v) => !v)}
+            style={{ background: "none", border: "none", color: "#888", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}
+          >
+            {editingVehicle ? "Kapat" : "Araç bilgilerini düzenle"}
+          </button>
+        )}
+      </div>
 
-      <section style={{ marginBottom: 24 }}>
-        <label style={{ fontSize: 13 }}>Plaka</label>
-        <input style={inputStyle} value={vehicle.plate} onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value })} />
-
-        <div style={{ display: "flex", gap: 8 }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 13 }}>Marka</label>
-            <input style={inputStyle} value={vehicle.brand || ""} onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })} />
+      {(isNew || editingVehicle) && (
+        <section style={{ marginBottom: 24, background: "#fafafa", borderRadius: 12, padding: 14 }}>
+          <label style={{ fontSize: 13 }}>Plaka</label>
+          <input style={inputStyle} value={vehicle.plate} onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value })} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 13 }}>Marka</label>
+              <input style={inputStyle} value={vehicle.brand || ""} onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 13 }}>Model</label>
+              <input style={inputStyle} value={vehicle.model || ""} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} />
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 13 }}>Model</label>
-            <input style={inputStyle} value={vehicle.model || ""} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} />
-          </div>
-        </div>
-
-        <label style={{ fontSize: 13 }}>Güncel Kilometre</label>
-        <input type="number" style={inputStyle} value={vehicle.current_km} onChange={(e) => setVehicle({ ...vehicle, current_km: Number(e.target.value) })} />
-
-        <label style={{ fontSize: 13 }}>Sonraki Bakım (km)</label>
-        <input type="number" style={inputStyle} value={vehicle.next_service_km || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_km: Number(e.target.value) })} />
-
-        <label style={{ fontSize: 13 }}>Sonraki Bakım (tarih)</label>
-        <input type="date" style={inputStyle} value={vehicle.next_service_date || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })} />
-
-        <button onClick={handleSaveVehicle} style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}>
-          Kaydet
-        </button>
-      </section>
+          <label style={{ fontSize: 13 }}>Model Yılı</label>
+          <input type="number" style={inputStyle} value={vehicle.year || ""} onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })} />
+          <button
+            onClick={handleSaveVehicleInfo}
+            disabled={savingVehicle}
+            style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}
+          >
+            {savingVehicle ? "Kaydediliyor…" : isNew ? "Aracı Oluştur" : "Bilgileri Kaydet"}
+          </button>
+        </section>
+      )}
 
       {!isNew && (
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 15, color: "#888", marginBottom: 10 }}>Hızlı Bakım Ekle</h2>
-          <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>
-            Bakımı yaptıysan butona bas — otomatik bugünün tarihi ve güncel km ile kaydedilir. Periyot için hazır seçeneklerden birine dokun, ya da kutuya kendi sayını yaz.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {MAINTENANCE_ITEMS.map((item) => {
-              const status = getItemStatus(item.key);
-              const isSaving = savingItem === item.key;
-              const isSavingInterval = savingInterval === item.key;
-              const currentValue = intervalInputs[item.key] ?? "";
+        <section style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 13, color: "#555", fontWeight: 600 }}>Güncel Kilometre</label>
+          <input
+            type="number"
+            inputMode="numeric"
+            autoFocus
+            style={{ ...inputStyle, fontSize: 22, fontWeight: 800, padding: 14, textAlign: "center" }}
+            value={quickKm}
+            onChange={(e) => setQuickKm(e.target.value)}
+            placeholder="Km"
+          />
+
+          <label style={{ fontSize: 13, color: "#555", fontWeight: 600, marginBottom: 8, display: "block" }}>Yapılan İşlemler</label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 10 }}>
+            {QUICK_ITEMS.map((item) => {
+              const active = !!selectedItems[item.key];
               return (
                 <div
                   key={item.key}
+                  onClick={() => toggleItem(item.key)}
                   style={{
-                    padding: "12px 14px",
-                    borderRadius: 10,
-                    border: status?.isToday ? "2px solid #2e7d32" : "1px solid #ccc",
-                    background: status?.isToday ? "#e8f5e9" : "#fff",
+                    ...chipBase,
+                    border: active ? "2px solid #1E3A5F" : chipBase.border,
+                    background: active ? "#1E3A5F" : "#fff",
+                    color: active ? "#fff" : "#333",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
-                    <button
-                      onClick={() => handleQuickMaintenance(item.key, item.label)}
-                      disabled={isSaving}
-                      style={{
-                        flex: 1,
-                        textAlign: "left",
-                        background: "none",
-                        border: "none",
-                        cursor: isSaving ? "wait" : "pointer",
-                        color: status?.isToday ? "#2e7d32" : "#1E3A5F",
-                        fontWeight: 600,
-                        fontSize: 13,
-                        padding: 0,
-                      }}
-                    >
-                      <div>{isSaving ? "Kaydediliyor…" : item.label}</div>
-                      {status && (
-                        <div style={{ fontSize: 11, fontWeight: 400, marginTop: 2, color: status.isToday ? "#2e7d32" : "#999" }}>
-                          {status.isToday ? "✓ Bugün yapıldı" : `Son: ${new Date(status.date).toLocaleDateString("tr-TR")}`}
-                        </div>
-                      )}
-                    </button>
-                  </div>
-
-                  <div style={{ fontSize: 10, color: "#999", marginBottom: 4 }}>Periyot (km)</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
-                    {PRESET_KM_OPTIONS.map((preset) => {
-                      const isActive = currentValue === String(preset);
-                      return (
-                        <button
-                          key={preset}
-                          onClick={() => handlePresetClick(item.key, preset)}
-                          disabled={isSavingInterval}
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: 999,
-                            border: isActive ? "1.5px solid #1E3A5F" : "1px solid #ccc",
-                            background: isActive ? "#1E3A5F" : "#fff",
-                            color: isActive ? "#fff" : "#555",
-                            fontSize: 11,
-                            fontWeight: 600,
-                            cursor: isSavingInterval ? "wait" : "pointer",
-                          }}
-                        >
-                          {preset.toLocaleString("tr-TR")}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <input
-                    type="number"
-                    placeholder="veya kendi sayını yaz"
-                    value={currentValue}
-                    onChange={(e) => handleIntervalInputChange(item.key, e.target.value)}
-                    onBlur={() => handleIntervalBlur(item.key)}
-                    disabled={isSavingInterval}
-                    style={{
-                      width: "100%",
-                      padding: "6px 8px",
-                      borderRadius: 6,
-                      border: "1px solid #ccc",
-                      fontSize: 12,
-                    }}
-                  />
+                  {item.label}
+                  {active && (
+                    <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 8 }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center", marginBottom: 4 }}>
+                        {PRESET_KM_OPTIONS.map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setItemIntervals((prev) => ({ ...prev, [item.key]: String(p) }))}
+                            style={{
+                              fontSize: 10, padding: "2px 6px", borderRadius: 999,
+                              border: itemIntervals[item.key] === String(p) ? "1.5px solid #D4A94A" : "1px solid rgba(255,255,255,0.5)",
+                              background: itemIntervals[item.key] === String(p) ? "#D4A94A" : "transparent",
+                              color: "#fff", cursor: "pointer",
+                            }}
+                          >
+                            {p / 1000}bin
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
+            <div
+              onClick={() => setOtherSelected((v) => !v)}
+              style={{
+                ...chipBase,
+                gridColumn: "span 2",
+                border: otherSelected ? "2px solid #1E3A5F" : chipBase.border,
+                background: otherSelected ? "#1E3A5F" : "#fff",
+                color: otherSelected ? "#fff" : "#333",
+              }}
+            >
+              Diğer
+            </div>
           </div>
+
+          {otherSelected && (
+            <input
+              placeholder="Yapılan işlemi kısaca yazın"
+              style={inputStyle}
+              value={otherText}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setOtherText(e.target.value)}
+            />
+          )}
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 12, color: "#888" }}>Sonraki Bakım (km)</label>
+              <input type="number" inputMode="numeric" style={inputStyle} value={nextServiceKm} onChange={(e) => setNextServiceKm(e.target.value)} placeholder="Opsiyonel" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 12, color: "#888" }}>Sonraki Bakım (tarih)</label>
+              <input type="date" style={inputStyle} value={nextServiceDate} onChange={(e) => setNextServiceDate(e.target.value)} />
+            </div>
+          </div>
+
+          {submitError && <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 10 }}>{submitError}</p>}
+          {successMessage && (
+            <div style={{ background: "#eaf7ef", color: "#2E6B4F", padding: "10px 14px", borderRadius: 8, fontWeight: 700, textAlign: "center", marginBottom: 10 }}>
+              {successMessage}
+            </div>
+          )}
+
+          <button
+            onClick={handleQuickSave}
+            disabled={submitting}
+            style={{
+              width: "100%", padding: 16, background: submitting ? "#8fa3b8" : "#1E3A5F", color: "#fff", border: "none",
+              borderRadius: 10, fontWeight: 800, fontSize: 16, cursor: submitting ? "wait" : "pointer",
+            }}
+          >
+            {submitting ? "Kaydediliyor…" : "KAYDET"}
+          </button>
         </section>
       )}
 
-      {!isNew && qrDataUrl && (
-        <section style={{ marginBottom: 24, textAlign: "center" }}>
-          <h2 style={{ fontSize: 15, color: "#888" }}>Araç QR Kodu</h2>
-          <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 180, height: 180 }} />
-          <p style={{ fontSize: 12, color: "#999" }}>Bu kodu anahtarlığa/NFC etikete işleyin. Bu kod ve araç geçmişi, araç el değiştirse bile aynı kalır.</p>
+      {!isNew && (
+        <section style={{ marginBottom: 20, textAlign: "center" }}>
+          <h2 style={{ fontSize: 14, color: "#888" }}>Araç QR Kodu</h2>
+          {qrDataUrl ? (
+            <>
+              <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 150, height: 150 }} />
+              {qrCode && <p style={{ fontSize: 11, color: "#bbb", fontFamily: "monospace" }}>{qrCode}</p>}
+              <p style={{ fontSize: 12, color: "#999" }}>Bu kodu anahtarlığa/NFC etikete işleyin. Araç el değiştirse bile bu kod ve geçmişi aynı kalır.</p>
+            </>
+          ) : (
+            <p style={{ fontSize: 13, color: "#999" }}>
+              Bu araca henüz bir QR anahtarlık atanmamış.{" "}
+              <a href="/panel/eslestir" style={{ color: "#1E3A5F", fontWeight: 600 }}>Anahtarlık Eşleştir</a> sayfasından atayabilirsiniz.
+            </p>
+          )}
         </section>
       )}
 
       {!isNew && (
         <section style={{ marginBottom: 24, textAlign: "center" }}>
-          <a
-            href={`/panel/araclar/${params.id}/devret`}
-            style={{ fontSize: 13, color: "#888", textDecoration: "underline" }}
-          >
+          <a href={`/panel/araclar/${params.id}/devret`} style={{ fontSize: 13, color: "#888", textDecoration: "underline" }}>
             Bu aracın sahipliğini devret
           </a>
         </section>
@@ -371,38 +431,11 @@ export default function VehicleDetailPage() {
 
       {!isNew && (
         <section>
-          <h2 style={{ fontSize: 15, color: "#888" }}>Diğer Bakım Kaydı (serbest metin)</h2>
-          <input
-            placeholder="Yapılan işlem (örn. Yağ değişimi)"
-            style={inputStyle}
-            value={newRecord.description}
-            onChange={(e) => setNewRecord({ ...newRecord, description: e.target.value })}
-          />
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              type="number"
-              placeholder="Km"
-              style={inputStyle}
-              value={newRecord.km_at_service}
-              onChange={(e) => setNewRecord({ ...newRecord, km_at_service: e.target.value })}
-            />
-            <input
-              type="number"
-              placeholder="Ücret (₺)"
-              style={inputStyle}
-              value={newRecord.cost}
-              onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value })}
-            />
-          </div>
-          <button onClick={handleAddRecord} style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer", marginBottom: 20 }}>
-            Kaydı Ekle
-          </button>
-
           <h2 style={{ fontSize: 15, color: "#888" }}>Geçmiş</h2>
           <ul style={{ listStyle: "none", padding: 0 }}>
             {records.map((r) => (
               <li key={r.id} style={{ borderBottom: "1px solid #eee", padding: "8px 0", fontSize: 14 }}>
-                {new Date(r.service_date).toLocaleDateString("tr-TR")} — {r.description} {r.km_at_service ? `(${r.km_at_service} km)` : ""}
+                {new Date(r.service_date).toLocaleDateString("tr-TR")} — {r.description} {r.km_at_service ? `(${r.km_at_service.toLocaleString("tr-TR")} km)` : ""}
               </li>
             ))}
           </ul>
