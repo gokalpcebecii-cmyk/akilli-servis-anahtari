@@ -78,7 +78,7 @@ export default function HomePage() {
             {/* METİN + CTA */}
             <div className="otoiz-hero-text">
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginBottom: 30 }}>
-                <OtoizLogo variant="dark" size={22} mark="primary" />
+                <OtoizLogo variant="dark" size={34} mark="primary" />
                 <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginTop: 2 }}>Akıllı Servis Anahtarı</span>
                 <span style={{ fontSize: 10.5, letterSpacing: 1.8, textTransform: "uppercase", opacity: 0.5, fontWeight: 600 }}>
                   Dijital Araç Servis Pasaportu
@@ -207,7 +207,8 @@ export default function HomePage() {
       </section>
 
       {/* Nasıl Çalışır */}
-      <section style={{ background: colors.surfaceSoft, padding: "56px 20px" }}>
+      <section className="otoiz-hero-pattern" style={{ background: colors.surfaceSoft, padding: "48px 20px 56px" }}>
+        <div className="otoiz-section-divider" style={{ marginBottom: 36 }} />
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: colors.greenDark, fontWeight: 700, marginBottom: 8 }}>
             4 adımda dijital güvence
@@ -254,7 +255,8 @@ export default function HomePage() {
       </section>
 
       {/* Temel Özellikler */}
-      <section style={{ padding: "56px 20px", background: colors.surfaceLight }}>
+      <section style={{ padding: "48px 20px 56px", background: colors.surfaceLight }}>
+        <div className="otoiz-section-divider" style={{ marginBottom: 36 }} />
         <h2 style={{ textAlign: "center", fontSize: 24, marginBottom: 36, color: colors.textDark, fontWeight: 800 }}>
           Temel Özellikler
         </h2>
@@ -288,7 +290,7 @@ export default function HomePage() {
       </section>
 
       {/* Kimler İçin */}
-      <section style={{ background: colors.bg, padding: "56px 20px" }}>
+      <section className="otoiz-hero-pattern" style={{ background: colors.bg, padding: "56px 20px", position: "relative" }}>
         <h2 style={{ textAlign: "center", fontSize: 24, marginBottom: 36, color: colors.textLight, fontWeight: 800 }}>
           Kimler İçin?
         </h2>
@@ -296,7 +298,8 @@ export default function HomePage() {
           {audience.map((a) => (
             <div
               key={a.title}
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: 26, textAlign: "center" }}
+              className="otoiz-glass-surface"
+              style={{ background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 26, textAlign: "center" }}
             >
               <div
                 style={{
@@ -438,7 +441,8 @@ function LoginChooserModal({
           width: "100%",
           maxWidth: 560,
           borderRadius: 20,
-          padding: "36px 32px 32px",
+          padding: 0,
+          overflow: "hidden",
           boxShadow: "0 30px 80px rgba(6,20,33,0.45)",
           position: "relative",
         }}
@@ -457,28 +461,44 @@ function LoginChooserModal({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: colors.surfaceSoft,
-            border: "none",
+            background: "rgba(255,255,255,0.12)",
+            border: "1px solid rgba(255,255,255,0.18)",
             borderRadius: "50%",
             cursor: "pointer",
+            zIndex: 2,
           }}
         >
-          <Icon name="close" color={colors.textMuted} size={16} />
+          <Icon name="close" color={colors.textLight} size={16} />
         </button>
 
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ marginBottom: 14, display: "flex", justifyContent: "center" }}>
-            <OtoizLogo variant="light" size={15} mark="primary" />
+        {/* Koyu otomotiv görsel bandı — beyaz form kartının "generic auth
+            ekranı" hissini kırar; premium decor sistemiyle tutarlı. */}
+        <div
+          className="otoiz-glass-surface otoiz-hero-pattern"
+          style={{
+            position: "relative", overflow: "hidden",
+            background: `linear-gradient(135deg, ${colors.bg} 0%, ${colors.bgAlt} 55%, ${colors.surfaceDark} 100%)`,
+            padding: "30px 32px 22px", textAlign: "center",
+          }}
+        >
+          <div className="otoiz-reflection" aria-hidden="true" />
+          <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "center", marginBottom: 4 }}>
+            <OtoizLogo variant="dark" size={24} mark="primary" />
           </div>
-          <h2 id="login-chooser-title" style={{ fontSize: 21, fontWeight: 800, color: colors.textDark, margin: "0 0 6px" }}>
-            Nasıl devam etmek istersiniz?
-          </h2>
-          <p id="login-chooser-subtitle" style={{ fontSize: 13.5, color: colors.textMuted, margin: 0 }}>
-            Size uygun giriş türünü seçin.
-          </p>
+          <div className="otoiz-accent-line" style={{ margin: "12px auto 0" }} />
         </div>
 
-        <div className="otoiz-modal-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div style={{ padding: "24px 32px", paddingBottom: "calc(32px + env(safe-area-inset-bottom))" }}>
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <h2 id="login-chooser-title" style={{ fontSize: 21, fontWeight: 800, color: colors.textDark, margin: "0 0 6px" }}>
+              Nasıl devam etmek istersiniz?
+            </h2>
+            <p id="login-chooser-subtitle" style={{ fontSize: 13.5, color: colors.textMuted, margin: 0 }}>
+              Size uygun giriş türünü seçin.
+            </p>
+          </div>
+
+          <div className="otoiz-modal-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div
             className="otoiz-choice-card"
             style={{ border: `1.5px solid ${colors.border}`, borderRadius: 14, padding: "22px 18px", display: "flex", flexDirection: "column" }}
@@ -568,6 +588,7 @@ function LoginChooserModal({
               İşletme hesabı oluştur
             </a>
           </div>
+        </div>
         </div>
       </div>
     </div>

@@ -372,7 +372,7 @@ export default function BireyselVehicleDetailPage() {
           </a>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12 }}>
             <div>
-              <OtoizLogo variant="dark" size={13} />
+              <OtoizLogo variant="dark" size={16} />
               <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.textLight, margin: "8px 0 0" }}>
                 {isNew ? "Yeni Araç" : vehicle.plate}
               </h1>
@@ -656,8 +656,9 @@ export default function BireyselVehicleDetailPage() {
               </div>
             </section>
 
-            <section id="qr" style={{ ...cardStyle, textAlign: "center", display: activeTab === "belgeler" ? "block" : "none" }}>
+            <section id="qr" className="otoiz-hero-pattern" style={{ ...cardStyle, textAlign: "center", display: activeTab === "belgeler" ? "block" : "none" }}>
               <SectionHeader icon="qr" title="QR / NFC Yönetimi" center />
+              <div className="otoiz-accent-line" style={{ margin: "-6px auto 14px" }} />
               {qrRevokedAt ? (
                 <>
                   <div style={{ padding: "12px 0" }}>

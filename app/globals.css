@@ -88,7 +88,6 @@ a:focus-visible {
     width: 100% !important;
     max-height: 82vh !important;
     border-radius: 20px 20px 0 0 !important;
-    padding: 28px 20px calc(24px + env(safe-area-inset-bottom)) !important;
     animation: otoiz-sheet-up 0.24s ease-out;
     margin: 0 !important;
   }
@@ -106,6 +105,42 @@ a:focus-visible {
 .otoiz-hero-pattern {
   background-image: radial-gradient(circle at 18% 20%, rgba(54, 232, 109, 0.12), transparent 38%),
     radial-gradient(circle at 82% 0%, rgba(54, 232, 109, 0.08), transparent 45%);
+}
+
+/* ============ Premium decor sistemi ============
+   Landing, login, dashboard header, public passport ve QR/NFC alanlarında
+   tutarlı kullanılan, tekrar kullanılabilir dekoratif parçalar. Kontrollü —
+   cyberpunk/neon aşırılığı yok, tek yeşil vurgu + hafif metalik yansıma. */
+
+/* Koyu "glass" yüzey — ince kenarlık + üstte hafif iç ışık çizgisi */
+.otoiz-glass-surface {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Yeşil vurgu çizgisi — bölüm/kart başlıklarının altında kısa bir "imza" çizgisi */
+.otoiz-accent-line {
+  width: 44px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--otoiz-green), rgba(54, 232, 109, 0));
+}
+
+/* Yumuşak otomotiv yansıması — diyagonal metalik parlaklık + köşede yeşil parlama */
+.otoiz-reflection {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.05) 46%, transparent 62%),
+    radial-gradient(circle at 82% 0%, rgba(54, 232, 109, 0.16), transparent 55%);
+}
+
+/* Premium bölüm ayracı — düz beyaz sayfalar arasında ince bir "marka nefesi" */
+.otoiz-section-divider {
+  height: 1px;
+  max-width: 220px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, transparent, rgba(54, 232, 109, 0.4), transparent);
 }
 
 /* ============ Landing hero — onaylanan referans görsel kompozisyonu ============
@@ -195,7 +230,14 @@ a:focus-visible {
 
 /* ============ Bireysel ana ekran — desktop dashboard ============
    Üstte tam genişlik araç özet kartı, altta 3 kolonlu modül grid'i —
-   mobil tek-sütun liste basitçe büyütülmüyor. */
+   mobil tek-sütun liste basitçe büyütülmüyor. Koyu header'dan açık içeriğe
+   sert bir kesim yerine yumuşak, dokulu bir geçiş — "beyaz sayfa" hissi
+   yerine koyu shell üzerinde yüzen kartlar. */
+.otoiz-dashboard-shell {
+  background: var(--otoiz-surface-soft);
+  background-image: radial-gradient(circle at 92% 260px, rgba(54, 232, 109, 0.07), transparent 34%);
+}
+
 @media (min-width: 1040px) {
   .otoiz-dashboard-container {
     max-width: 1220px !important;
@@ -203,7 +245,14 @@ a:focus-visible {
   .otoiz-dashboard-modules {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 14px !important;
+    gap: 16px !important;
+  }
+  .otoiz-dashboard-modules .otoiz-module-card {
+    padding: 22px 20px !important;
+  }
+  .otoiz-dashboard-shell {
+    background-image: radial-gradient(circle at 94% 320px, rgba(54, 232, 109, 0.09), transparent 28%),
+      radial-gradient(circle at 3% 520px, rgba(54, 232, 109, 0.05), transparent 26%);
   }
 }
 
@@ -227,4 +276,15 @@ a:focus-visible {
   .otoiz-servis-area-qr { grid-area: qr; }
   .otoiz-servis-area-devret { grid-area: devret; }
   .otoiz-servis-area-gecmis { grid-area: gecmis; }
+
+  /* "Beyaz sayfa" hissi yerine koyu premium workspace — 15-20sn akış ve
+     tüm DOM/mantık birebir aynı kalıyor, yalnızca arka plan/derinlik. */
+  .otoiz-servis-shell {
+    background: linear-gradient(180deg, var(--otoiz-bg) 0%, var(--otoiz-surface-dark) 100%) !important;
+    min-height: 100vh;
+  }
+  .otoiz-servis-header {
+    background: linear-gradient(160deg, var(--otoiz-bg) 0%, var(--otoiz-bg-alt) 55%, var(--otoiz-surface-dark) 100%) !important;
+    padding: 26px 18px 34px !important;
+  }
 }

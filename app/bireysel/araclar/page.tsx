@@ -89,11 +89,19 @@ export default function BireyselAraclarPage() {
   }
 
   return (
-    <main className="otoiz-has-bottom-nav" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
-      <div className="otoiz-hero-pattern" style={{ background: `linear-gradient(160deg, ${colors.bg} 0%, ${colors.bgAlt} 60%, ${colors.surfaceDark} 100%)`, padding: "22px 18px 32px" }}>
-        <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "0 auto" }}>
+    <main className="otoiz-has-bottom-nav otoiz-dashboard-shell" style={{ minHeight: "100vh", fontFamily: font }}>
+      <div
+        className="otoiz-hero-pattern"
+        style={{
+          position: "relative", overflow: "hidden",
+          background: `linear-gradient(160deg, ${colors.bg} 0%, ${colors.bgAlt} 55%, ${colors.surfaceDark} 100%)`,
+          padding: "22px 18px 36px", boxShadow: "0 18px 30px -14px rgba(6,20,33,0.45)",
+        }}
+      >
+        <div className="otoiz-reflection" aria-hidden="true" />
+        <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <OtoizLogo variant="dark" size={17} />
+            <OtoizLogo variant="dark" size={20} />
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button
                 onClick={() => router.push("/bireysel/bildirimler")}
@@ -187,7 +195,7 @@ export default function BireyselAraclarPage() {
                     style={{
                       display: "flex", alignItems: "center", gap: 14, background: colors.surfaceLight,
                       border: `1px solid ${colors.border}`, borderRadius: radius.lg, padding: "16px 18px",
-                      textDecoration: "none", minHeight: 44, boxShadow: "0 3px 12px rgba(6,20,33,0.06)",
+                      textDecoration: "none", minHeight: 44, boxShadow: "0 6px 18px rgba(6,20,33,0.09)",
                     }}
                   >
                     <div style={{ width: 44, height: 44, minWidth: 44, borderRadius: "50%", background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>

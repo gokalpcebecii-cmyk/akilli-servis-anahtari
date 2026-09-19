@@ -108,10 +108,15 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
 
   return (
     <main style={{ fontFamily: font, background: colors.surfaceSoft, minHeight: "100vh" }}>
-      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, color: colors.textLight, padding: "22px 20px 40px", textAlign: "center" }}>
-        <div style={{ maxWidth: 460, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={17} mark="primary" />
-          <p style={{ fontSize: 11.5, opacity: 0.6, marginTop: 6, letterSpacing: 0.3 }}>Aracınızın Dijital Servis Pasaportu</p>
+      <div
+        className="otoiz-hero-pattern"
+        style={{ position: "relative", overflow: "hidden", background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, color: colors.textLight, padding: "24px 20px 42px", textAlign: "center" }}
+      >
+        <div className="otoiz-reflection" aria-hidden="true" />
+        <div style={{ position: "relative", maxWidth: 460, margin: "0 auto" }}>
+          <OtoizLogo variant="dark" size={20} mark="primary" />
+          <div className="otoiz-accent-line" style={{ margin: "10px auto 0" }} />
+          <p style={{ fontSize: 11.5, opacity: 0.6, marginTop: 10, letterSpacing: 0.3 }}>Aracınızın Dijital Servis Pasaportu</p>
         </div>
       </div>
 

@@ -255,9 +255,10 @@ export default function VehicleDetailPage() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 40 }}>
-      <div style={{ background: colors.surfaceDark, padding: "16px 18px" }}>
-        <div className="otoiz-servis-container" style={{ maxWidth: 560, margin: "0 auto" }}>
+    <main className="otoiz-servis-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 40 }}>
+      <div className="otoiz-hero-pattern otoiz-servis-header" style={{ position: "relative", overflow: "hidden", background: colors.surfaceDark, padding: "16px 18px 22px" }}>
+        <div className="otoiz-reflection" aria-hidden="true" />
+        <div className="otoiz-servis-container" style={{ maxWidth: 560, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <a href="/panel/dashboard" aria-label="Geri" style={{ color: colors.textLight, textDecoration: "none", fontSize: 18, padding: 4 }}>
               ←
@@ -272,7 +273,7 @@ export default function VehicleDetailPage() {
             )}
           </div>
           <div style={{ marginTop: 6 }}>
-            <OtoizLogo variant="dark" size={11} />
+            <OtoizLogo variant="dark" size={15} />
           </div>
           <h1 style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 0", color: colors.textLight }}>
             {isNew ? "Yeni Araç" : "Hızlı Bakım Kaydı"}

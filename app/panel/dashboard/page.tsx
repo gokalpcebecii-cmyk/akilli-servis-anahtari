@@ -84,7 +84,7 @@ export default function DashboardPage() {
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
       <div style={{ background: colors.surfaceDark, padding: "18px 18px 20px" }}>
         <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <OtoizLogo variant="dark" size={15} />
+          <OtoizLogo variant="dark" size={19} />
           <div style={{ fontSize: 13 }}>
             <a href="/panel/ayarlar" style={{ color: "rgba(255,255,255,0.65)", marginRight: 16, textDecoration: "none" }}>Ayarlar</a>
             <button onClick={handleLogout} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontSize: 13, padding: 0 }}>Çıkış yap</button>
