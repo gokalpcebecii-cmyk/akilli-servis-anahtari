@@ -94,6 +94,17 @@ export default function HomePage() {
           style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 0 }}
         />
         <div aria-hidden="true" className="otoiz-hero-scrim" style={{ position: "absolute", inset: 0, zIndex: 1 }} />
+        {/* Master hero asset üzerindeki telefonun ekran alanına, gerçek
+            Bireysel Ana Ekran screenshot'ı perspektife uygun şekilde
+            bindiriliyor — görseldeki sahte ekran UI olarak kullanılmıyor.
+            Yalnızca desktop'ta görünür (bkz. .otoiz-hero-master-screen). */}
+        <img
+          aria-hidden="true"
+          className="otoiz-hero-master-screen"
+          src="/showcase/04-bireysel-ana-ekran.webp"
+          alt=""
+          style={{ position: "absolute", zIndex: 1, display: "none", objectFit: "cover" }}
+        />
 
         <div className="otoiz-hero-container" style={{ margin: "0 auto", position: "relative", zIndex: 2 }}>
           <div className="otoiz-hero-grid">
