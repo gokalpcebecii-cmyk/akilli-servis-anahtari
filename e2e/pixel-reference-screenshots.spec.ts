@@ -123,11 +123,26 @@ test.describe("Referans görsel sadakat seti", () => {
     await page.screenshot({ path: path.join(outDir, "07-arac-devret-mobil.png") });
   });
 
-  test("08 Public passport", async ({ page }, ti) => {
+  test("08 Public passport — gerçek verili", async ({ page }, ti) => {
     test.skip(ti.project.name !== "mobile-390", "yalnızca mobil");
-    await page.goto("/p/gecersiz-test-kodu-000");
-    await page.getByRole("heading", { name: "Geçersiz Kod" }).waitFor();
-    await page.screenshot({ path: path.join(outDir, "08-public-passport-mobil.png") });
+    // Public passport hiçbir oturum gerektirmez (herkese açık); yalnızca
+    // get_public_vehicle_passport RPC yanıtı mock'lanıyor. Sayfa artık
+    // PublicPassportView (components/PublicPassportView.tsx) adlı saf sunum
+    // bileşenini render ediyor — gerçek production'da RPC'den gelen veriyle,
+    // burada ise fixture veriyle AYNI bileşen kullanılıyor.
+    await mockSupabaseRest(page, {
+      "rpc/get_public_vehicle_passport": {
+        raw: {
+          status: "active",
+          vehicle: mockVehicle,
+          tenant: { name: "Yılmaz Oto Servis", phone: "0312 000 00 00", address: "Çankaya, Ankara" },
+          maintenance_records: mockRecords,
+          maintenance_items: mockMaintenanceItems,
+        },
+      },
+    });
+    await page.goto("/p/demo-kod-000");
+    await page.getByText("34 ABC 123").first().waitFor();
+    await page.screenshot({ path: path.join(outDir, "08-public-passport-mobil.png"), fullPage: true });
   });
-
 });

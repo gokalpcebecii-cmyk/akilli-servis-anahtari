@@ -90,10 +90,10 @@ export default function BireyselAraclarPage() {
 
   return (
     <main className="otoiz-has-bottom-nav" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
-      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "22px 18px 28px" }}>
-        <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-            <OtoizLogo variant="dark" size={16} />
+      <div className="otoiz-hero-pattern" style={{ background: `linear-gradient(160deg, ${colors.bg} 0%, ${colors.bgAlt} 60%, ${colors.surfaceDark} 100%)`, padding: "22px 18px 32px" }}>
+        <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+            <OtoizLogo variant="dark" size={17} />
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button
                 onClick={() => router.push("/bireysel/bildirimler")}
@@ -126,7 +126,7 @@ export default function BireyselAraclarPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 480, margin: "-14px auto 0", padding: "0 16px 24px" }}>
+      <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "-14px auto 0", padding: "0 16px 24px" }}>
         {vehicles.length > 1 && (
           <input
             placeholder="Plaka ile ara..."
@@ -178,7 +178,7 @@ export default function BireyselAraclarPage() {
             {primary && <VehicleHeroCard vehicle={primary} onClick={() => router.push(`/bireysel/araclar/${primary.id}`)} />}
 
             {primary && (
-              <section style={{ marginTop: 18, marginBottom: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+              <section className="otoiz-dashboard-modules" style={{ marginTop: 18, marginBottom: 20, display: "flex", flexDirection: "column", gap: 10 }}>
                 {MODULES.map((m) => (
                   <a
                     key={m.key}
@@ -186,8 +186,8 @@ export default function BireyselAraclarPage() {
                     className="otoiz-module-card"
                     style={{
                       display: "flex", alignItems: "center", gap: 14, background: colors.surfaceLight,
-                      border: `1px solid ${colors.border}`, borderRadius: radius.lg, padding: "14px 16px",
-                      textDecoration: "none", minHeight: 44, boxShadow: "0 2px 8px rgba(6,20,33,0.04)",
+                      border: `1px solid ${colors.border}`, borderRadius: radius.lg, padding: "16px 18px",
+                      textDecoration: "none", minHeight: 44, boxShadow: "0 3px 12px rgba(6,20,33,0.06)",
                     }}
                   >
                     <div style={{ width: 44, height: 44, minWidth: 44, borderRadius: "50%", background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -250,30 +250,42 @@ function VehicleHeroCard({ vehicle, onClick }: { vehicle: any; onClick: () => vo
   return (
     <button
       onClick={onClick}
+      className="otoiz-hero-pattern"
       style={{
-        width: "100%", textAlign: "left", background: colors.surfaceDark, borderRadius: radius.xl, padding: 20,
-        border: "none", cursor: "pointer", color: colors.textLight, boxShadow: "0 14px 34px rgba(6,20,33,0.22)",
+        width: "100%", textAlign: "left", position: "relative", overflow: "hidden",
+        background: `linear-gradient(160deg, ${colors.surfaceDark}, ${colors.bg})`, borderRadius: radius.xl, padding: 20,
+        border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: colors.textLight, boxShadow: "0 16px 38px rgba(6,20,33,0.28)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+      {/* Araç silüeti — kart içi dekoratif vurgu (bkz. HeroVehicleScene ile aynı dil) */}
+      <svg viewBox="0 0 200 80" aria-hidden="true" style={{ position: "absolute", right: -14, bottom: -10, width: 160, opacity: 0.5, zIndex: 0 }}>
+        <path
+          d="M14 58 C14 46 22 38 34 36 L58 34 C67 20 84 10 100 10 C116 10 132 19 141 34 L162 36 C176 38 186 46 186 58"
+          fill="none" stroke={colors.green} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+        />
+        <circle cx="52" cy="59" r="11" fill="none" stroke={colors.green} strokeWidth="2.2" />
+        <circle cx="150" cy="59" r="11" fill="none" stroke={colors.green} strokeWidth="2.2" />
+      </svg>
+
+      <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 0.5 }}>{vehicle.plate}</div>
+          <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: 0.5 }}>{vehicle.plate}</div>
           <div style={{ fontSize: 13, opacity: 0.65, marginTop: 2 }}>
             {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
           </div>
         </div>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(54,232,109,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name="car" color={colors.green} size={19} />
+        <div style={{ background: "rgba(54,232,109,0.14)", color: colors.green, fontSize: 10.5, fontWeight: 700, padding: "5px 11px", borderRadius: 999, border: "1px solid rgba(54,232,109,0.35)" }}>
+          Aktif Pasaport
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: "10px 12px" }}>
+      <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 12, padding: "11px 13px", backdropFilter: "blur(2px)" }}>
           <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>GÜNCEL KM</div>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>{vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"}</div>
+          <div style={{ fontSize: 17, fontWeight: 700 }}>{vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"}</div>
         </div>
-        <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: "10px 12px" }}>
+        <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 12, padding: "11px 13px", backdropFilter: "blur(2px)" }}>
           <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>SONRAKİ BAKIM</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: colors.green }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: colors.green }}>
             {vehicle.next_service_km ? `${Number(vehicle.next_service_km).toLocaleString("tr-TR")} km` : "—"}
           </div>
         </div>

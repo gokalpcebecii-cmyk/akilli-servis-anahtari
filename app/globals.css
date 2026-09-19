@@ -107,3 +107,83 @@ a:focus-visible {
   background-image: radial-gradient(circle at 18% 20%, rgba(54, 232, 109, 0.12), transparent 38%),
     radial-gradient(circle at 82% 0%, rgba(54, 232, 109, 0.08), transparent 45%);
 }
+
+/* ============ Landing hero — desktop kompozisyonu ============
+   Mobilde tek sütun (metin → görsel sahne → telefon kartı → CTA),
+   desktop'ta üç sütun (branding | araç+anahtarlık | telefon önizleme).
+   Mobil düzen basitçe büyütülmüyor — gerçek üç sütunlu bir kompozisyona
+   geçiyor. */
+.otoiz-hero-container {
+  max-width: 480px;
+}
+.otoiz-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas: "text" "visual" "phone";
+  gap: 8px;
+  text-align: center;
+}
+.otoiz-hero-text { grid-area: text; }
+.otoiz-hero-visual { grid-area: visual; }
+.otoiz-hero-phone { grid-area: phone; }
+
+@media (min-width: 1040px) {
+  .otoiz-hero-container {
+    max-width: 1180px;
+  }
+  .otoiz-hero-grid {
+    grid-template-columns: 1fr 1.05fr 0.85fr;
+    grid-template-areas: "text visual phone";
+    align-items: center;
+    gap: 36px;
+    text-align: left;
+  }
+  .otoiz-hero-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .otoiz-hero-badges-row {
+    justify-content: flex-start !important;
+  }
+  .otoiz-hero-cta-col {
+    align-items: flex-start !important;
+    margin: 0 !important;
+  }
+}
+
+/* ============ Bireysel ana ekran — desktop dashboard ============
+   Üstte tam genişlik araç özet kartı, altta 3 kolonlu modül grid'i —
+   mobil tek-sütun liste basitçe büyütülmüyor. */
+@media (min-width: 1040px) {
+  .otoiz-dashboard-container {
+    max-width: 1220px !important;
+  }
+  .otoiz-dashboard-modules {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+  }
+}
+
+/* ============ Servis hızlı bakım — desktop iki kolon workspace ============
+   Solda araç/plaka özeti (QR + devret + geçmiş), sağda hızlı bakım alanı.
+   Mobil akış (tek sütun, DOM sırası) değişmiyor — yalnızca desktop'ta
+   grid-area ile yeniden yerleşiyor. */
+@media (min-width: 1040px) {
+  .otoiz-servis-container {
+    max-width: 1180px !important;
+  }
+  .otoiz-servis-grid {
+    display: grid !important;
+    grid-template-columns: 380px 1fr !important;
+    grid-template-areas: "edit edit" "qr quick" "devret quick" "gecmis quick" !important;
+    align-items: start !important;
+    gap: 20px !important;
+  }
+  .otoiz-servis-area-edit { grid-area: edit; }
+  .otoiz-servis-area-quick { grid-area: quick; }
+  .otoiz-servis-area-qr { grid-area: qr; }
+  .otoiz-servis-area-devret { grid-area: devret; }
+  .otoiz-servis-area-gecmis { grid-area: gecmis; }
+}

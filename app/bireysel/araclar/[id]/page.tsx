@@ -61,6 +61,11 @@ export default function BireyselVehicleDetailPage() {
   const [savingInterval, setSavingInterval] = useState<string | null>(null);
   const [editingVehicle, setEditingVehicle] = useState(isNew);
   const [activeTab, setActiveTab] = useState<"genel" | "gecmis" | "belgeler">("genel");
+  // Genel Bakış'ın kısa/özet kalması için parça hızlı-ekle formu varsayılan
+  // olarak kapalı — yalnızca ilgili özet satırına (veya #parca hash'ine)
+  // tıklandığında açılır. Business logic/handler'lar değişmedi, yalnızca
+  // görünürlük durumu eklendi.
+  const [showQuickEntry, setShowQuickEntry] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -109,6 +114,7 @@ export default function BireyselVehicleDetailPage() {
         if (hash === "servis-gecmisi") setActiveTab("gecmis");
         else if (hash === "muayene" || hash === "qr") setActiveTab("belgeler");
         else setActiveTab("genel");
+        if (hash === "parca") setShowQuickEntry(true);
         window.setTimeout(() => {
           document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 80);
@@ -351,6 +357,7 @@ export default function BireyselVehicleDetailPage() {
 
   function goToSummaryRow(row: (typeof summaryRows)[number]) {
     setActiveTab(row.tab);
+    if (row.hash === "parca") setShowQuickEntry(true);
     if (row.hash) {
       window.setTimeout(() => document.getElementById(row.hash!)?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
     }
@@ -502,8 +509,20 @@ export default function BireyselVehicleDetailPage() {
                 })}
               </div>
 
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Parça Değişimleri — Hızlı Ekle</h3>
-              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 14 }}>
+              <button
+                onClick={() => setShowQuickEntry((v) => !v)}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+                  background: colors.surfaceSoft, border: "none", borderRadius: radius.sm, padding: "12px 14px",
+                  cursor: "pointer", fontFamily: font, fontSize: 13, fontWeight: 700, color: colors.textDark, minHeight: 44,
+                }}
+              >
+                Parça Değişimleri — Hızlı Ekle
+                <Icon name={showQuickEntry ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={16} />
+              </button>
+              {showQuickEntry && (
+              <>
+              <p style={{ fontSize: 12, color: colors.textMuted, margin: "14px 0" }}>
                 Kendin yaptıysan ya da başka bir yerde yaptırdıysan butona bas — otomatik bugünün tarihi ve güncel km ile kaydedilir.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -574,6 +593,8 @@ export default function BireyselVehicleDetailPage() {
                   );
                 })}
               </div>
+              </>
+              )}
             </section>
 
             <section id="kilometre" style={{ ...cardStyle, display: activeTab === "genel" ? "block" : "none" }}>

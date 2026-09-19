@@ -121,6 +121,18 @@ export function Icon({
           <path d="m9 6 6 6-6 6" />
         </svg>
       );
+    case "chevron-down":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      );
+    case "chevron-up":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="m6 15 6-6 6 6" />
+        </svg>
+      );
     case "qr":
       return (
         <svg viewBox="0 0 24 24" style={s}>

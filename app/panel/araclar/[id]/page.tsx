@@ -257,7 +257,7 @@ export default function VehicleDetailPage() {
   return (
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 40 }}>
       <div style={{ background: colors.surfaceDark, padding: "16px 18px" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
+        <div className="otoiz-servis-container" style={{ maxWidth: 560, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <a href="/panel/dashboard" aria-label="Geri" style={{ color: colors.textLight, textDecoration: "none", fontSize: 18, padding: 4 }}>
               ←
@@ -281,9 +281,9 @@ export default function VehicleDetailPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="otoiz-servis-container otoiz-servis-grid" style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 16 }}>
         {(isNew || editingVehicle) && (
-          <section style={cardStyle}>
+          <section className="otoiz-servis-area-edit" style={cardStyle}>
             <label style={labelStyle}>Plaka</label>
             <input style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.plate} onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value })} />
             <div style={{ display: "flex", gap: 8 }}>
@@ -305,7 +305,7 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section style={cardStyle}>
+          <section className="otoiz-servis-area-quick" style={cardStyle}>
             <label style={{ ...labelStyle, fontSize: 13.5 }}>Güncel Kilometre</label>
             <input
               type="number"
@@ -409,7 +409,7 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section style={{ ...cardStyle, textAlign: "center" }}>
+          <section className="otoiz-servis-area-qr" style={{ ...cardStyle, textAlign: "center" }}>
             <h2 style={{ fontSize: 14, color: colors.textMuted, fontWeight: 700, marginTop: 0 }}>Araç QR Kodu</h2>
             {qrDataUrl ? (
               <>
@@ -427,7 +427,7 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section style={{ textAlign: "center" }}>
+          <section className="otoiz-servis-area-devret" style={{ textAlign: "center" }}>
             <a href={`/panel/araclar/${params.id}/devret`} style={{ fontSize: 13, color: colors.textMuted, textDecoration: "underline" }}>
               Bu aracın sahipliğini devret
             </a>
@@ -435,7 +435,7 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section style={cardStyle}>
+          <section className="otoiz-servis-area-gecmis" style={cardStyle}>
             <h2 style={{ fontSize: 14, color: colors.textMuted, fontWeight: 700, marginTop: 0, marginBottom: 12 }}>Geçmiş</h2>
             {records.length === 0 ? (
               <p style={{ fontSize: 13, color: colors.textMuted }}>Henüz kayıt yok.</p>

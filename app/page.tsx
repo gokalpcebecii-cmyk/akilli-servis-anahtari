@@ -50,151 +50,108 @@ export default function HomePage() {
         style={{
           position: "relative",
           color: colors.textLight,
-          padding: "28px 20px 56px",
+          padding: "32px 20px 48px",
           overflow: "hidden",
           background: `linear-gradient(160deg, ${colors.bg} 0%, ${colors.bgAlt} 55%, ${colors.surfaceDark} 100%)`,
         }}
       >
-        {/* Premium otomotiv atmosferi — üçüncü taraf araç fotoğrafı yerine
-            stilize, jenerik bir araç silüeti (bkz. OtoizLogo mark). */}
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 400 140"
-          style={{ position: "absolute", left: "50%", bottom: -18, transform: "translateX(-50%)", width: "125%", maxWidth: 620, opacity: 0.16, zIndex: 0 }}
-        >
-          <path
-            d="M20 100 C20 78 34 60 58 57 L110 52 C130 30 168 14 202 14 C236 14 270 28 288 52 L330 57 C356 60 372 78 372 100"
-            stroke={colors.green}
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          <circle cx="106" cy="101" r="19" stroke={colors.green} strokeWidth="3" fill="none" />
-          <circle cx="288" cy="101" r="19" stroke={colors.green} strokeWidth="3" fill="none" />
-        </svg>
-
-        <div style={{ maxWidth: 480, margin: "0 auto", position: "relative", zIndex: 2 }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginBottom: 34 }}>
-            <OtoizLogo variant="dark" size={19} mark="primary" />
-            <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginTop: 2 }}>Akıllı Servis Anahtarı</span>
-            <span style={{ fontSize: 10.5, letterSpacing: 1.8, textTransform: "uppercase", opacity: 0.5, fontWeight: 600 }}>
-              Dijital Araç Servis Pasaportu
-            </span>
-          </div>
-
-          <div style={{ textAlign: "center" }}>
-            <h1
-              style={{
-                fontSize: 32,
-                marginBottom: 14,
-                fontWeight: 800,
-                lineHeight: 1.18,
-                letterSpacing: -0.4,
-              }}
-            >
-              Aracınızın tüm geçmişi<br />tek ekranda.
-            </h1>
-            <p style={{ fontSize: 15.5, opacity: 0.75, lineHeight: 1.6, marginBottom: 28, maxWidth: 380, margin: "0 auto 28px" }}>
-              Bakım, kilometre ve servis kayıtlarınızı güvenle saklayın.
-            </p>
-
-            <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap", marginBottom: 36 }}>
-              {valueProps.map((v) => (
-                <div
-                  key={v.title}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 7,
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    borderRadius: 999,
-                    padding: "7px 13px",
-                  }}
-                >
-                  <Icon name={v.icon} color={colors.green} size={14} />
-                  <span style={{ fontSize: 11.5, fontWeight: 600, opacity: 0.9 }}>{v.title}</span>
-                </div>
-              ))}
-            </div>
-
-            <div
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 20,
-                padding: 20,
-                marginBottom: 32,
-                textAlign: "left",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <div>
-                  <div style={{ fontSize: 17, fontWeight: 700 }}>34 XY 999</div>
-                  <div style={{ fontSize: 11.5, opacity: 0.55 }}>Örnek Araç Pasaportu</div>
-                </div>
-                <div
-                  style={{
-                    background: "rgba(54,232,109,0.14)",
-                    color: colors.green,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: "4px 10px",
-                    borderRadius: 999,
-                    border: `1px solid rgba(54,232,109,0.4)`,
-                  }}
-                >
-                  Aktif Pasaport
-                </div>
+        <div className="otoiz-hero-container" style={{ margin: "0 auto", position: "relative", zIndex: 2 }}>
+          <div className="otoiz-hero-grid">
+            {/* METİN + CTA */}
+            <div className="otoiz-hero-text">
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginBottom: 30 }}>
+                <OtoizLogo variant="dark" size={22} mark="primary" />
+                <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginTop: 2 }}>Akıllı Servis Anahtarı</span>
+                <span style={{ fontSize: 10.5, letterSpacing: 1.8, textTransform: "uppercase", opacity: 0.5, fontWeight: 600 }}>
+                  Dijital Araç Servis Pasaportu
+                </span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "10px 12px" }}>
-                  <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>GÜNCEL KM</div>
-                  <div style={{ fontSize: 15, fontWeight: 700 }}>84.200</div>
-                </div>
-                <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "10px 12px" }}>
-                  <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>SONRAKİ BAKIM</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: colors.green }}>90.000 km</div>
-                </div>
+
+              <h1 style={{ fontSize: 32, marginBottom: 14, fontWeight: 800, lineHeight: 1.18, letterSpacing: -0.4 }}>
+                Bu otomobil için premium<br />dijital servis pasaportu.
+              </h1>
+              <p style={{ fontSize: 15.5, opacity: 0.75, lineHeight: 1.6, marginBottom: 26, maxWidth: 380 }}>
+                Bakım, kilometre ve servis kayıtlarınızı güvenle saklayın — aracınızın tüm geçmişi tek ekranda.
+              </p>
+
+              <div className="otoiz-hero-badges-row" style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap", marginBottom: 34 }}>
+                {valueProps.map((v) => (
+                  <div
+                    key={v.title}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.12)", borderRadius: 999, padding: "7px 13px",
+                    }}
+                  >
+                    <Icon name={v.icon} color={colors.green} size={14} />
+                    <span style={{ fontSize: 11.5, fontWeight: 600, opacity: 0.9 }}>{v.title}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="otoiz-hero-cta-col" style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
+                <button
+                  onClick={openModal}
+                  style={{ padding: "15px 24px", background: colors.green, color: colors.textDark, borderRadius: 10, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48 }}
+                >
+                  Ücretsiz Başlayın
+                </button>
+                <button
+                  onClick={openModal}
+                  style={{ padding: "14px 24px", background: "transparent", color: colors.textLight, border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 10, fontWeight: 600, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48 }}
+                >
+                  Giriş Yap
+                </button>
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
-              <button
-                onClick={openModal}
+            {/* GÖRSEL SAHNE — araç silüeti + QR anahtarlık + metalik zemin */}
+            <div className="otoiz-hero-visual">
+              <HeroVehicleScene />
+            </div>
+
+            {/* TELEFON ÖNİZLEME — app ekranı hissi */}
+            <div className="otoiz-hero-phone">
+              <div
                 style={{
-                  padding: "15px 24px",
-                  background: colors.green,
-                  color: colors.textDark,
-                  borderRadius: 10,
-                  border: "none",
-                  fontWeight: 800,
-                  fontSize: 15,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  minHeight: 48,
+                  maxWidth: 300, margin: "0 auto", background: `linear-gradient(180deg, ${colors.surfaceDark}, ${colors.bg})`,
+                  borderRadius: 34, padding: "14px 12px 20px", border: "1px solid rgba(255,255,255,0.12)",
+                  boxShadow: "0 30px 60px rgba(0,0,0,0.4)",
                 }}
               >
-                Ücretsiz Başlayın
-              </button>
-              <button
-                onClick={openModal}
-                style={{
-                  padding: "14px 24px",
-                  background: "transparent",
-                  color: colors.textLight,
-                  border: "1.5px solid rgba(255,255,255,0.3)",
-                  borderRadius: 10,
-                  fontWeight: 600,
-                  fontSize: 15,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  minHeight: 48,
-                }}
-              >
-                Giriş Yap
-              </button>
+                <div style={{ width: 46, height: 5, borderRadius: 999, background: "rgba(255,255,255,0.2)", margin: "0 auto 14px" }} />
+                <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 18, textAlign: "left" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700 }}>34 XY 999</div>
+                      <div style={{ fontSize: 11, opacity: 0.55 }}>Örnek Araç Pasaportu</div>
+                    </div>
+                    <div style={{ background: "rgba(54,232,109,0.14)", color: colors.green, fontSize: 10.5, fontWeight: 700, padding: "4px 9px", borderRadius: 999, border: "1px solid rgba(54,232,109,0.4)" }}>
+                      Aktif
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                    <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "9px 11px" }}>
+                      <div style={{ fontSize: 9.5, opacity: 0.55, marginBottom: 2 }}>GÜNCEL KM</div>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>84.200</div>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "9px 11px" }}>
+                      <div style={{ fontSize: 9.5, opacity: 0.55, marginBottom: 2 }}>SONRAKİ BAKIM</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: colors.green }}>90.000 km</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {["Servis Geçmişi", "QR / NFC Yönetimi"].map((label) => (
+                      <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "7px 10px" }}>
+                        <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(54,232,109,0.16)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Icon name={label.startsWith("Servis") ? "history" : "qr"} color={colors.green} size={10} />
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85 }}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -347,6 +304,82 @@ export default function HomePage() {
 
       <LoginChooserModal open={modalOpen} onClose={() => setModalOpen(false)} triggerRef={triggerRef} />
     </main>
+  );
+}
+
+// Landing hero'nun otomotiv atmosferi: büyük dolgun araç silüeti (yeşil üst
+// ışık vurgulu gradyan), araca "asılı" duran QR anahtarlık (fiziksel ürünün
+// UI dili), yeşil parlama ve altta metalik/parlak zemin + soluk yansıma.
+// Tamamı inline SVG/CSS — üçüncü taraf fotoğraf veya raster asset yok.
+function HeroVehicleScene() {
+  const carPath =
+    "M46 150 C46 118 66 95 98 91 L150 85 C172 52 218 28 262 28 C304 28 344 50 366 85 L406 91 C440 96 460 118 460 150 Z";
+  return (
+    <div style={{ position: "relative", maxWidth: 420, margin: "0 auto", padding: "18px 0 0", pointerEvents: "none" }}>
+      {/* yeşil parlama */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute", left: "50%", top: "38%", transform: "translate(-50%,-50%)",
+          width: "88%", height: 200, borderRadius: "50%",
+          background: "radial-gradient(closest-side, rgba(54,232,109,0.28), rgba(54,232,109,0.08) 60%, transparent 80%)",
+          filter: "blur(6px)", zIndex: 0,
+        }}
+      />
+      <svg viewBox="0 0 506 210" aria-hidden="true" style={{ position: "relative", zIndex: 1, width: "100%", display: "block" }}>
+        <defs>
+          <linearGradient id="otoizCarBody" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3a5a6e" />
+            <stop offset="18%" stopColor="#16324a" />
+            <stop offset="100%" stopColor="#0a1c2c" />
+          </linearGradient>
+          <linearGradient id="otoizCarGlass" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(54,232,109,0.55)" />
+            <stop offset="100%" stopColor="rgba(54,232,109,0.08)" />
+          </linearGradient>
+        </defs>
+
+        {/* gövde */}
+        <path d={carPath} fill="url(#otoizCarBody)" stroke="rgba(54,232,109,0.5)" strokeWidth="1.5" />
+        {/* cam/greenhouse vurgusu */}
+        <path
+          d="M128 88 C150 58 195 38 233 36 C271 38 308 56 328 88 L300 90 C278 74 252 66 230 66 C206 66 180 74 156 90 Z"
+          fill="url(#otoizCarGlass)"
+        />
+        {/* rim ışık çizgisi */}
+        <path d="M98 91 L150 85 C172 52 218 28 262 28 C304 28 344 50 366 85 L406 91" fill="none" stroke={colors.green} strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+        {/* tekerlekler */}
+        <circle cx="140" cy="151" r="30" fill="#050d15" />
+        <circle cx="140" cy="151" r="30" fill="none" stroke="rgba(54,232,109,0.45)" strokeWidth="2.5" />
+        <circle cx="366" cy="151" r="30" fill="#050d15" />
+        <circle cx="366" cy="151" r="30" fill="none" stroke="rgba(54,232,109,0.45)" strokeWidth="2.5" />
+
+        {/* zemin çizgisi + soluk yansıma */}
+        <line x1="20" y1="182" x2="486" y2="182" stroke="rgba(255,255,255,0.14)" strokeWidth="1.5" />
+        <g opacity="0.12" transform="translate(0,364) scale(1,-1)">
+          <path d={carPath} fill="url(#otoizCarBody)" />
+        </g>
+      </svg>
+
+      {/* QR anahtarlık — fiziksel ürün UI dili */}
+      <div
+        style={{
+          position: "absolute", right: "16%", bottom: -6, zIndex: 2,
+          width: 74, background: colors.surfaceDark, borderRadius: 12, border: "1px solid rgba(255,255,255,0.18)",
+          boxShadow: "0 12px 28px rgba(0,0,0,0.45)", padding: "18px 8px 10px", textAlign: "center",
+        }}
+      >
+        <div style={{ position: "absolute", top: -9, left: "50%", transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", border: "3px solid rgba(255,255,255,0.35)", background: "transparent" }} />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2, marginBottom: 8 }}>
+          {[1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0].map((on, i) => (
+            <div key={i} style={{ width: "100%", paddingBottom: "100%", background: on ? colors.green : "rgba(255,255,255,0.15)", borderRadius: 1 }} />
+          ))}
+        </div>
+        <div style={{ fontSize: 7.5, fontWeight: 800, letterSpacing: 0.5, color: "rgba(255,255,255,0.7)" }}>
+          OTO<span style={{ color: colors.green }}>İZ</span>
+        </div>
+      </div>
+    </div>
   );
 }
 

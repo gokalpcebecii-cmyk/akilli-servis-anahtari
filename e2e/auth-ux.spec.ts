@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Homepage", () => {
   test("hero, CTA'lar ve marka doğru render ediliyor", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /tüm geçmişi/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /premium.*dijital servis pasaportu/i })).toBeVisible();
     await expect(page.getByText("OTO", { exact: false }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /Ücretsiz Başlayın/i })).toBeVisible();
     await expect(page.getByRole("button", { name: "Giriş Yap" })).toBeVisible();
