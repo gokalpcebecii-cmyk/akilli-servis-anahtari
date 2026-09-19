@@ -1,16 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { randomInt } from "crypto";
-
-function randomCode(length = 12) {
-  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars[randomInt(chars.length)];
-  }
-  return result;
-}
+const { generateQrCode } = require("@/lib/qrToken");
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,14 +36,14 @@ export async function POST(req: NextRequest) {
     const codes = [];
 
     for (let i = 0; i < count; i++) {
-      let code = randomCode();
+      let code = generateQrCode();
       let attempts = 0;
       while (attempts < 5) {
         const existingResult = await supabase.from("qr_keys").select("id").eq("code", code).maybeSingle();
         if (!existingResult.data) {
           break;
         }
-        code = randomCode();
+        code = generateQrCode();
         attempts = attempts + 1;
       }
       codes.push(code);
