@@ -62,9 +62,22 @@ export default function VehicleDetailPage() {
       });
       setIntervalInputs(initialIntervals);
 
-      const publicUrl = `${window.location.origin}/v/${params.id}`;
-      const qr = await QRCode.toDataURL(publicUrl, { width: 220 });
-      setQrDataUrl(qr);
+      // /v/[id] (vehicle_id'yi doğrudan, iptal edilemeyen bir public URL
+      // kimliği olarak kullanan eski mekanizma) artık kullanılmıyor.
+      // Yalnızca mevcut, iptal edilmemiş bir qr_keys kaydı varsa gösterilir;
+      // servis kullanıcıları qr_keys'e doğrudan INSERT yapamaz (RLS),
+      // atama yalnızca /panel/eslestir üzerinden yapılır.
+      const { data: qrKey } = await supabase
+        .from("qr_keys")
+        .select("code")
+        .eq("vehicle_id", params.id)
+        .is("revoked_at", null)
+        .maybeSingle();
+      if (qrKey) {
+        const publicUrl = `${window.location.origin}/p/${qrKey.code}`;
+        const qr = await QRCode.toDataURL(publicUrl, { width: 220 });
+        setQrDataUrl(qr);
+      }
 
       setLoading(false);
     }
