@@ -37,4 +37,35 @@ test.describe("QA görsel doğrulama ekran görüntüleri", () => {
     await page.goto("/panel/login");
     await page.screenshot({ path: path.join(outDir, "05-business-login.png") });
   });
+
+  test("Homepage mobile", async ({ page }, testInfo) => {
+    if (testInfo.project.name !== "mobile-390") test.skip();
+    await page.goto("/");
+    await page.screenshot({ path: path.join(outDir, "06-homepage-mobile.png") });
+  });
+
+  test("Bireysel kayıt desktop", async ({ page }, testInfo) => {
+    if (testInfo.project.name !== "desktop-chromium") test.skip();
+    await page.goto("/bireysel/kayit");
+    await page.screenshot({ path: path.join(outDir, "07-bireysel-kayit-desktop.png") });
+  });
+
+  test("Panel kayıt desktop", async ({ page }, testInfo) => {
+    if (testInfo.project.name !== "desktop-chromium") test.skip();
+    await page.goto("/panel/kayit");
+    await page.screenshot({ path: path.join(outDir, "08-panel-kayit-desktop.png") });
+  });
+
+  test("Public passport - geçersiz kod", async ({ page }, testInfo) => {
+    if (testInfo.project.name !== "desktop-chromium") test.skip();
+    await page.goto("/p/gecersiz-test-kodu-000");
+    await page.screenshot({ path: path.join(outDir, "09-public-passport-invalid.png") });
+  });
+
+  test("Devret adımları (giriş yapılmamış -> giriş sayfasına döner)", async ({ page }, testInfo) => {
+    if (testInfo.project.name !== "desktop-chromium") test.skip();
+    await page.goto("/bireysel/devir-kabul/gecersiz-token-000");
+    await page.getByRole("heading", { name: "Geçersiz veya Süresi Dolmuş Bağlantı" }).waitFor();
+    await page.screenshot({ path: path.join(outDir, "10-devir-kabul-invalid.png") });
+  });
 });

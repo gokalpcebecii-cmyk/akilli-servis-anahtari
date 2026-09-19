@@ -1,20 +1,23 @@
 import { createAnonServerSupabase } from "@/lib/supabase";
+import { colors, font, radius, badgeStyle, cardStyle } from "@/lib/theme";
+import { OtoizLogo } from "@/components/OtoizLogo";
+import { Icon } from "@/components/Icon";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
 const ITEM_DISPLAY: Record<string, { label: string; icon: string }> = {
-  motor_yagi: { label: "Motor Yağı", icon: "🛢️" },
-  yag_filtresi: { label: "Yağ Filtresi", icon: "🧰" },
-  hava_filtresi: { label: "Hava Filtresi", icon: "💨" },
-  polen_filtresi: { label: "Polen Filtresi", icon: "🌼" },
-  fren_on_balata: { label: "Ön Fren Balatası", icon: "🛑" },
-  fren_arka_balata: { label: "Arka Fren Balatası", icon: "🛑" },
-  fren_disk_balata: { label: "Fren Disk-Balata", icon: "🛑" },
-  triger_seti: { label: "Triger Seti", icon: "⚙️" },
-  aku: { label: "Akü", icon: "🔋" },
-  lastik: { label: "Lastik", icon: "🛞" },
+  motor_yagi: { label: "Motor Yağı", icon: "wrench" },
+  yag_filtresi: { label: "Yağ Filtresi", icon: "wrench" },
+  hava_filtresi: { label: "Hava Filtresi", icon: "wrench" },
+  polen_filtresi: { label: "Polen Filtresi", icon: "wrench" },
+  fren_on_balata: { label: "Ön Fren Balatası", icon: "wrench" },
+  fren_arka_balata: { label: "Arka Fren Balatası", icon: "wrench" },
+  fren_disk_balata: { label: "Fren Disk-Balata", icon: "wrench" },
+  triger_seti: { label: "Triger Seti", icon: "wrench" },
+  aku: { label: "Akü", icon: "wrench" },
+  lastik: { label: "Lastik", icon: "wrench" },
 };
 
 const ITEM_ORDER = [
@@ -48,19 +51,13 @@ export default async function PassportByCodePage({ params }: { params: { code: s
 
   if (!passport) {
     return (
-      <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20 }}>Geçersiz Kod</h1>
-        <p style={{ color: "#666" }}>Bu QR kod sistemde tanımlı değil.</p>
-      </main>
+      <PublicMessage title="Geçersiz Kod" body="Bu QR kod sistemde tanımlı değil." />
     );
   }
 
   if (passport.status === "unassigned") {
     return (
-      <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20 }}>Henüz Eşleştirilmemiş</h1>
-        <p style={{ color: "#666" }}>Bu anahtarlık henüz bir araca bağlanmamış.</p>
-      </main>
+      <PublicMessage title="Henüz Eşleştirilmemiş" body="Bu anahtarlık henüz bir araca bağlanmamış." />
     );
   }
 
@@ -69,12 +66,10 @@ export default async function PassportByCodePage({ params }: { params: { code: s
   const records: any[] = passport.maintenance_records ?? [];
   const maintenanceItems: any[] = passport.maintenance_items ?? [];
 
-  const navy = "#0B1F3A";
-
-  function getItemStatus(itemKey: string) {
+  function getItemStatus(itemKey: string): { label: string; kind: "success" | "warning" | "danger" | "neutral" } {
     const item = maintenanceItems.find((m: any) => m.item_key === itemKey);
     if (!item || !item.last_service_date) {
-      return { label: "Bilgi Yok", color: "#999", bg: "#f5f5f5" };
+      return { label: "Bilgi Yok", kind: "neutral" };
     }
 
     let overdue = false;
@@ -98,70 +93,104 @@ export default async function PassportByCodePage({ params }: { params: { code: s
       else if (daysRemaining <= 30) upcoming = true;
     }
 
-    if (!hasInterval) {
-      return { label: "Yapıldı", color: "#2E6B4F", bg: "#eaf7ef" };
-    }
-    if (overdue) return { label: "İşlem Zamanı", color: "#c0392b", bg: "#fdecea" };
-    if (upcoming) return { label: "Yaklaşıyor", color: "#b8860b", bg: "#fff8e6" };
-    return { label: "Normal", color: "#2E6B4F", bg: "#eaf7ef" };
+    if (!hasInterval) return { label: "Yapıldı", kind: "success" };
+    if (overdue) return { label: "İşlem Zamanı", kind: "danger" };
+    if (upcoming) return { label: "Yaklaşıyor", kind: "warning" };
+    return { label: "Normal", kind: "success" };
   }
 
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", background: "#FAFAF7", minHeight: "100vh" }}>
-      <div style={{ background: navy, color: "#fff", padding: "28px 20px" }}>
-        <p style={{ fontSize: 12, opacity: 0.7, marginBottom: 4 }}>Yetkili Servis</p>
-        <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{tenant?.name}</p>
-        <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 16 }}>
-          <div style={{ fontSize: 22, fontWeight: 800 }}>{vehicle.plate}</div>
-          <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 10 }}>{vehicle.brand} {vehicle.model}</div>
-          <div style={{ fontSize: 13 }}>
-            Güncel Km: <b>{vehicle.current_km?.toLocaleString("tr-TR")}</b>
+    <main style={{ fontFamily: font, background: colors.surfaceSoft, minHeight: "100vh" }}>
+      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, color: colors.textLight, padding: "24px 20px 28px" }}>
+        <div style={{ maxWidth: 460, margin: "0 auto" }}>
+          <div style={{ marginBottom: 16 }}>
+            <OtoizLogo variant="dark" size={14} mark="primary" />
+          </div>
+          <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 4 }}>Yetkili Servis</p>
+          <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{tenant?.name}</p>
+          <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: radius.lg, padding: 16 }}>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>{vehicle.plate}</div>
+            <div style={{ fontSize: 13, opacity: 0.65, marginBottom: 10 }}>{vehicle.brand} {vehicle.model}</div>
+            <div style={{ fontSize: 13 }}>
+              Güncel Km: <b>{vehicle.current_km?.toLocaleString("tr-TR")}</b>
+            </div>
           </div>
         </div>
       </div>
 
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "20px" }}>
-        <h2 style={{ fontSize: 15, color: navy, marginBottom: 12 }}>Araç Sağlık Özeti</h2>
+        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Araç Sağlık Özeti</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
           {[...ITEM_ORDER, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM_KEY) ? [LEGACY_ITEM_KEY] : [])].map((key) => {
             const display = ITEM_DISPLAY[key];
             const status = getItemStatus(key);
             return (
-              <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", border: "1px solid #eee", borderRadius: 10, padding: "10px 14px" }}>
-                <span style={{ fontSize: 13.5, color: "#333" }}>
-                  <span style={{ marginRight: 8 }}>{display.icon}</span>
+              <div key={key} style={{ ...cardStyle, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13.5, color: colors.textDark, display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon name={display.icon} color={colors.textMuted} size={15} />
                   {display.label}
                 </span>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: status.color, background: status.bg, padding: "3px 10px", borderRadius: 999 }}>
-                  {status.label}
-                </span>
+                <span style={badgeStyle(status.kind)}>{status.label}</span>
               </div>
             );
           })}
         </div>
 
-        <h2 style={{ fontSize: 15, color: navy, marginBottom: 12 }}>Bakım Geçmişi</h2>
+        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Bakım Geçmişi</h2>
         {records.length === 0 ? (
-          <p style={{ color: "#999", fontSize: 13 }}>Henüz kayıt bulunmuyor.</p>
+          <p style={{ color: colors.textMuted, fontSize: 13 }}>Henüz kayıt bulunmuyor.</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
             {records.map((r: any) => (
-              <div key={r.id} style={{ background: "#fff", border: "1px solid #eee", borderRadius: 10, padding: "10px 14px" }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: "#333" }}>{r.description}</div>
-                <div style={{ fontSize: 11.5, color: "#999" }}>
-                  {new Date(r.created_at).toLocaleDateString("tr-TR")}
-                  {r.km_at_service != null ? ` · ${r.km_at_service.toLocaleString("tr-TR")} km` : ""}
+              <div key={r.id} style={{ ...cardStyle, padding: "10px 14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: colors.textDark }}>{r.description}</div>
+                    <div style={{ fontSize: 11.5, color: colors.textMuted }}>
+                      {new Date(r.created_at).toLocaleDateString("tr-TR")}
+                      {r.km_at_service != null ? ` · ${r.km_at_service.toLocaleString("tr-TR")} km` : ""}
+                    </div>
+                  </div>
+                  <ProvenanceBadge verified={!!r.tenant_id} />
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        <h2 style={{ fontSize: 15, color: navy, marginBottom: 12 }}>İletişim</h2>
-        <div style={{ background: "#fff", border: "1px solid #eee", borderRadius: 10, padding: "14px" }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: navy, margin: "0 0 4px" }}>{tenant?.phone}</p>
-          <p style={{ fontSize: 12.5, color: "#666", margin: 0 }}>{tenant?.address}</p>
+        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>İletişim</h2>
+        <div style={cardStyle}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, margin: "0 0 4px" }}>{tenant?.phone}</p>
+          <p style={{ fontSize: 12.5, color: colors.textMuted, margin: 0 }}>{tenant?.address}</p>
         </div>
+      </div>
+    </main>
+  );
+}
+
+function ProvenanceBadge({ verified }: { verified: boolean }) {
+  if (verified) {
+    return (
+      <span style={{ display: "flex", alignItems: "center", gap: 4, ...badgeStyle("success"), whiteSpace: "nowrap" }}>
+        <Icon name="shield-check" color={colors.greenDark} size={11} strokeWidth={2.5} />
+        Servis Doğrulamalı
+      </span>
+    );
+  }
+  return (
+    <span style={{ display: "flex", alignItems: "center", gap: 4, ...badgeStyle("neutral"), whiteSpace: "nowrap" }}>
+      <Icon name="user" color={colors.textMuted} size={11} strokeWidth={2.5} />
+      Kullanıcı Kaydı
+    </span>
+  );
+}
+
+function PublicMessage({ title, body }: { title: string; body: string }) {
+  return (
+    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+      <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+        <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>{title}</h1>
+        <p style={{ color: colors.textMuted }}>{body}</p>
       </div>
     </main>
   );

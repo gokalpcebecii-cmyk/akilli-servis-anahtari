@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
+import { OtoizLogo } from "@/components/OtoizLogo";
+import { Icon } from "@/components/Icon";
 
 export default function DevirKabulPage() {
   const params = useParams();
@@ -47,81 +50,81 @@ export default function DevirKabulPage() {
     setDone(data.vehicle_id);
   }
 
-  const inputStyle = { width: "100%", padding: 12, borderRadius: 8, border: "1px solid #ccc", marginBottom: 10, fontSize: 15 };
-
-  if (loading) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
+  if (loading) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
 
   if (done) {
     return (
-      <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20, color: "#2E6B4F" }}>✓ Devir Tamamlandı</h1>
-        <p style={{ color: "#666", marginBottom: 24 }}>Araç artık hesabınıza bağlı. Bakım geçmişi aynen korundu.</p>
-        <button
-          onClick={() => router.push(`/bireysel/araclar/${done}`)}
-          style={{ padding: "12px 24px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}
-        >
-          Aracımı Görüntüle
-        </button>
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+            <Icon name="check" color={colors.greenDark} size={24} />
+          </div>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Devir Tamamlandı</h1>
+          <p style={{ color: colors.textMuted, marginBottom: 24 }}>Araç artık hesabınıza bağlı. Bakım geçmişi aynen korundu.</p>
+          <button onClick={() => router.push(`/bireysel/araclar/${done}`)} style={{ ...primaryButtonStyle(false), width: "auto", padding: "12px 24px" }}>
+            Aracımı Görüntüle
+          </button>
+        </div>
       </main>
     );
   }
 
   if (!preview) {
     return (
-      <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20 }}>Geçersiz veya Süresi Dolmuş Bağlantı</h1>
-        <p style={{ color: "#666" }}>Bu devir bağlantısı artık geçerli değil.</p>
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Geçersiz veya Süresi Dolmuş Bağlantı</h1>
+          <p style={{ color: colors.textMuted }}>Bu devir bağlantısı artık geçerli değil.</p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: "0 auto", padding: "40px 20px", fontFamily: "system-ui, sans-serif" }}>
-      <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 1, color: "#0B1F3A", marginBottom: 20, textAlign: "center" }}>
-        OTO<span style={{ color: "#D4A94A" }}>İZ</span>
-      </div>
-      <h1 style={{ fontSize: 20, marginBottom: 8, textAlign: "center" }}>Araç Devrini Kabul Et</h1>
+    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <div style={{ maxWidth: 420, margin: "0 auto", padding: "40px 20px" }}>
+        <div style={{ marginBottom: 20, textAlign: "center" }}>
+          <OtoizLogo variant="light" size={14} mark="primary" />
+        </div>
+        <h1 style={{ fontSize: 20, marginBottom: 8, textAlign: "center", color: colors.textDark, fontWeight: 800 }}>Araç Devrini Kabul Et</h1>
 
-      <div style={{ background: "#F4F1EA", borderRadius: 12, padding: 16, marginBottom: 20, textAlign: "center" }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: "#1E3A5F" }}>{preview.plate}</div>
-        <div style={{ fontSize: 13, color: "#666" }}>{preview.brand} {preview.model}</div>
-        <div style={{ fontSize: 12, color: "#999", marginTop: 4 }}>Güncel km: {preview.current_km?.toLocaleString("tr-TR")}</div>
-      </div>
+        <div style={{ ...cardStyle, textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: colors.textDark }}>{preview.plate}</div>
+          <div style={{ fontSize: 13, color: colors.textMuted }}>{preview.brand} {preview.model}</div>
+          <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>Güncel km: {preview.current_km?.toLocaleString("tr-TR")}</div>
+        </div>
 
-      {!loggedIn ? (
-        <>
-          <p style={{ fontSize: 13, color: "#666", marginBottom: 16, textAlign: "center" }}>
-            Bu aracı devralmak için önce OTOİZ hesabınızla giriş yapmalı veya hesap oluşturmalısınız.
-            Giriş yaptıktan sonra bu sayfaya geri dönün.
-          </p>
-          <button
-            onClick={() => router.push(`/bireysel/giris?next=/bireysel/devir-kabul/${token}`)}
-            style={{ width: "100%", padding: 12, background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer", marginBottom: 10 }}
-          >
-            Giriş Yap
-          </button>
-          <button
-            onClick={() => router.push(`/bireysel/kayit?next=/bireysel/devir-kabul/${token}`)}
-            style={{ width: "100%", padding: 12, background: "#eee", color: "#333", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}
-          >
-            Hesap Oluştur
-          </button>
-        </>
-      ) : (
-        <>
-          <p style={{ fontSize: 13, color: "#666", marginBottom: 16, textAlign: "center" }}>
-            Bu aracı kabul ettiğinizde, teknik bakım geçmişi korunarak hesabınıza bağlanır.
-          </p>
-          {error && <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 12, textAlign: "center" }}>{error}</p>}
-          <button
-            onClick={handleAccept}
-            disabled={accepting}
-            style={{ width: "100%", padding: 14, background: "#2E6B4F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: accepting ? "wait" : "pointer" }}
-          >
-            {accepting ? "İşleniyor…" : "Devri Kabul Et"}
-          </button>
-        </>
-      )}
+        {!loggedIn ? (
+          <>
+            <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 16, textAlign: "center" }}>
+              Bu aracı devralmak için önce OTOİZ hesabınızla giriş yapmalı veya hesap oluşturmalısınız.
+              Giriş yaptıktan sonra bu sayfaya geri dönün.
+            </p>
+            <button
+              onClick={() => router.push(`/bireysel/giris?next=/bireysel/devir-kabul/${token}`)}
+              style={{ ...primaryButtonStyle(false), marginBottom: 10 }}
+            >
+              Giriş Yap
+            </button>
+            <button
+              onClick={() => router.push(`/bireysel/kayit?next=/bireysel/devir-kabul/${token}`)}
+              style={secondaryButtonStyle()}
+            >
+              Hesap Oluştur
+            </button>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 16, textAlign: "center" }}>
+              Bu aracı kabul ettiğinizde, teknik bakım geçmişi korunarak hesabınıza bağlanır.
+            </p>
+            {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12, textAlign: "center" }}>{error}</p>}
+            <button onClick={handleAccept} disabled={accepting} style={primaryButtonStyle(accepting)}>
+              {accepting ? "İşleniyor…" : "Devri Kabul Et"}
+            </button>
+          </>
+        )}
+      </div>
     </main>
   );
 }

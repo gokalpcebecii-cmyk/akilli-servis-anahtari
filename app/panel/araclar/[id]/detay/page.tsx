@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, inputStyle as themeInputStyle, labelStyle as themeLabelStyle, primaryButtonStyle } from "@/lib/theme";
 
 export default function AracDetayPage() {
   const router = useRouter();
@@ -75,12 +76,12 @@ export default function AracDetayPage() {
     }
   }
 
-  const inputStyle = { width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ccc", marginBottom: 10, fontSize: 15 };
-  const labelStyle = { fontSize: 13, color: "#555", display: "block", marginBottom: 4 };
-  const groupStyle = { marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid #eee" };
-  const groupTitle = { fontSize: 14, fontWeight: 700, color: "#1E3A5F", marginBottom: 10 };
+  const inputStyle = { ...themeInputStyle, marginBottom: 10 };
+  const labelStyle = themeLabelStyle;
+  const groupStyle = { marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${colors.border}` };
+  const groupTitle = { fontSize: 14, fontWeight: 700, color: colors.textDark, marginBottom: 10 };
 
-  if (loading) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
+  if (loading) return <main style={{ padding: 24, textAlign: "center" as const, color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
 
   const items = [
     { key: "motor_yagi", label: "Motor Yağı" },
@@ -92,9 +93,9 @@ export default function AracDetayPage() {
   ];
 
   return (
-    <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
+    <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: font, color: colors.textDark }}>
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>Araç Bakım Bilgileri</h1>
-      <p style={{ color: "#666", fontSize: 13, marginBottom: 20 }}>
+      <p style={{ color: colors.textMuted, fontSize: 13, marginBottom: 20 }}>
         Bu bilgiler müşteri araç sağlık özeti sayfasında görünür.
       </p>
 
@@ -148,11 +149,11 @@ export default function AracDetayPage() {
         <input type="date" style={inputStyle} value={form.kasko_bitis} onChange={(e) => setForm({ ...form, kasko_bitis: e.target.value })} />
       </div>
 
-      {message && <p style={{ fontSize: 13, color: message.startsWith("Hata") ? "#c0392b" : "#2E6B4F", marginBottom: 12 }}>{message}</p>}
+      {message && <p role="alert" style={{ fontSize: 13, color: message.startsWith("Hata") ? colors.danger : colors.greenDark, marginBottom: 12 }}>{message}</p>}
 
-      <button onClick={handleSave} disabled={saving} style={{ width: "100%", padding: 12, background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}>
+      <button onClick={handleSave} disabled={saving} style={primaryButtonStyle(saving)}>
         {saving ? "Kaydediliyor…" : "Kaydet"}
       </button>
     </main>
   );
-                                                                                                           }
+}

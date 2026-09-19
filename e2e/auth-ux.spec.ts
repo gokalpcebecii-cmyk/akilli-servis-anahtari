@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Homepage", () => {
   test("hero, CTA'lar ve marka doğru render ediliyor", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Aracın Dijital/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /tüm geçmişi/i })).toBeVisible();
     await expect(page.getByText("OTO", { exact: false }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: /Ücretsiz Başlayın/i })).toBeVisible();
     await expect(page.getByRole("button", { name: "Giriş Yap" })).toBeVisible();
@@ -40,7 +40,7 @@ test.describe("Giriş seçim modalı", () => {
     const kurumsalLink = page.getByRole("link", { name: "Kurumsal Giriş" });
     await expect(kurumsalLink).toHaveAttribute("href", "/panel/login");
 
-    const bireyselKayit = page.getByRole("link", { name: "Hesabım yok — Kayıt Ol" });
+    const bireyselKayit = page.getByRole("link", { name: "Kayıt Ol" });
     await expect(bireyselKayit).toHaveAttribute("href", "/bireysel/kayit");
 
     const kurumsalKayit = page.getByRole("link", { name: "İşletme hesabı oluştur" });

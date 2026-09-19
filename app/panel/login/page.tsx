@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { OtoizLogo } from "@/components/OtoizLogo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -48,76 +50,75 @@ export default function LoginPage() {
   }
 
   if (checkingSession) {
-    return <main style={{ padding: 24, textAlign: "center", color: "#999" }}>Yükleniyor…</main>;
+    return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
   }
 
   return (
-    <main style={{ maxWidth: 360, margin: "60px auto", padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <a href="/" style={{ display: "inline-block", marginBottom: 20, fontSize: 13, color: "#888", textDecoration: "none" }}>
-        ← Ana sayfaya dön
-      </a>
-      <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, color: "#0B1F3A", marginBottom: 16 }}>
-        OTO<span style={{ color: "#D4A94A" }}>İZ</span>
-      </div>
-      <h1 style={{ fontSize: 22, marginBottom: 4 }}>Servis / İşletme Girişi</h1>
-      <p style={{ color: "#666", marginBottom: 24, fontSize: 14, lineHeight: 1.5 }}>
-        Bu alandan işletmenizin OTOİZ panelinize giriş yapıyorsunuz. Müşteri araçlarını ve servis
-        kayıtlarını buradan yönetebilirsiniz.
-      </p>
-
-      <form onSubmit={handleLogin} noValidate>
-        <label htmlFor="panel-email" style={{ display: "block", fontSize: 13, marginBottom: 4 }}>E-posta</label>
-        <input
-          id="panel-email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ width: "100%", padding: 10, marginBottom: 14, borderRadius: 8, border: "1px solid #ccc", fontSize: 16 }}
-        />
-
-        <label htmlFor="panel-password" style={{ display: "block", fontSize: 13, marginBottom: 4 }}>Şifre</label>
-        <input
-          id="panel-password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ width: "100%", padding: 10, marginBottom: 8, borderRadius: 8, border: "1px solid #ccc", fontSize: 16 }}
-        />
-
-        <div style={{ textAlign: "right", marginBottom: 14 }}>
-          <a href="/hesap/sifremi-unuttum" style={{ fontSize: 12.5, color: "#888" }}>Şifremi unuttum</a>
-        </div>
-
-        {error && (
-          <p role="alert" style={{ color: "#c0392b", fontSize: 13, marginBottom: 12 }}>
-            {error}
+    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
+        <a href="/" style={{ display: "inline-block", marginBottom: 24, fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
+          ← Ana sayfaya dön
+        </a>
+        <div style={{ maxWidth: 360, margin: "0 auto" }}>
+          <OtoizLogo variant="dark" size={17} mark="primary" />
+          <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Servis / İşletme Girişi</h1>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>
+            Bu alandan işletmenizin OTOİZ panelinize giriş yapıyorsunuz. Müşteri araçlarını ve servis
+            kayıtlarını buradan yönetebilirsiniz.
           </p>
-        )}
+        </div>
+      </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          aria-busy={loading}
-          style={{
-            width: "100%", padding: 12, borderRadius: 8, border: "none",
-            background: loading ? "#5c7186" : "#1E3A5F", color: "#fff", fontWeight: 600,
-            cursor: loading ? "wait" : "pointer", fontSize: 15,
-          }}
+      <div style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
+        <form
+          onSubmit={handleLogin}
+          noValidate
+          style={{ background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}
         >
-          {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
-        </button>
-      </form>
+          <label htmlFor="panel-email" style={labelStyle}>E-posta</label>
+          <input
+            id="panel-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{ ...inputStyle, marginBottom: 14 }}
+          />
 
-      <p style={{ textAlign: "center", marginTop: 16, fontSize: 13 }}>
-        İşletme hesabınız yok mu? <a href="/panel/kayit" style={{ color: "#1E3A5F" }}>Kayıt olun</a>
-      </p>
-      <p style={{ textAlign: "center", marginTop: 8, fontSize: 12.5 }}>
-        <a href="/bireysel/giris" style={{ color: "#999" }}>Bireysel araç sahibi misiniz?</a>
-      </p>
+          <label htmlFor="panel-password" style={labelStyle}>Şifre</label>
+          <input
+            id="panel-password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{ ...inputStyle, marginBottom: 8 }}
+          />
+
+          <div style={{ textAlign: "right", marginBottom: 16 }}>
+            <a href="/hesap/sifremi-unuttum" style={{ fontSize: 12.5, color: colors.textMuted }}>Şifremi unuttum</a>
+          </div>
+
+          {error && (
+            <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
+              {error}
+            </p>
+          )}
+
+          <button type="submit" disabled={loading} aria-busy={loading} style={primaryButtonStyle(loading)}>
+            {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
+          </button>
+        </form>
+
+        <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: colors.textDark }}>
+          İşletme hesabınız yok mu? <a href="/panel/kayit" style={{ color: colors.greenDark, fontWeight: 600 }}>Kayıt olun</a>
+        </p>
+        <p style={{ textAlign: "center", marginTop: 8, fontSize: 12.5 }}>
+          <a href="/bireysel/giris" style={{ color: colors.textMuted }}>Bireysel araç sahibi misiniz?</a>
+        </p>
+      </div>
     </main>
   );
 }

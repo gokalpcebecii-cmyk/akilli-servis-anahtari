@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import QRCode from "qrcode";
+import { colors, font, radius, cardStyle } from "@/lib/theme";
 
 export default function QrListePage() {
   const router = useRouter();
@@ -55,12 +56,12 @@ export default function QrListePage() {
     document.body.removeChild(link);
   }
 
-  if (loading) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
+  if (loading) return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
 
   return (
-    <main style={{ maxWidth: 640, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>
+    <main style={{ maxWidth: 640, margin: "0 auto", padding: "24px 16px", fontFamily: font, color: colors.textDark }}>
       <h1 style={{ fontSize: 22, marginBottom: 4 }}>Tüm QR Kodlarım</h1>
-      <p style={{ color: "#666", fontSize: 14, marginBottom: 20 }}>{items.length} adet QR kodu üretilmiş.</p>
+      <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 20 }}>{items.length} adet QR kodu üretilmiş.</p>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         {(["all", "unassigned", "assigned"] as const).map((f) => (
@@ -68,8 +69,8 @@ export default function QrListePage() {
             key={f}
             onClick={() => setFilter(f)}
             style={{
-              padding: "8px 14px", borderRadius: 8, border: "1px solid #ccc", fontSize: 13, cursor: "pointer",
-              background: filter === f ? "#1E3A5F" : "#fff", color: filter === f ? "#fff" : "#333",
+              padding: "8px 14px", borderRadius: radius.sm, border: `1px solid ${colors.border}`, fontSize: 13, cursor: "pointer",
+              background: filter === f ? colors.surfaceDark : colors.surfaceLight, color: filter === f ? colors.textLight : colors.textDark,
             }}
           >
             {f === "all" ? "Tümü" : f === "unassigned" ? "Boş" : "Eşleşmiş"}
@@ -79,15 +80,15 @@ export default function QrListePage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
         {filtered.map((item) => (
-          <div key={item.code} style={{ border: "1px solid #eee", borderRadius: 10, padding: 10, textAlign: "center" }}>
+          <div key={item.code} style={{ ...cardStyle, padding: 10, textAlign: "center" }}>
             {images[item.code] && <img src={images[item.code]} alt={item.code} style={{ width: "100%", borderRadius: 6, marginBottom: 6 }} />}
-            <p style={{ fontSize: 10, color: "#888", wordBreak: "break-all", marginBottom: 4 }}>{item.code}</p>
+            <p style={{ fontSize: 10, color: colors.textMuted, wordBreak: "break-all", marginBottom: 4 }}>{item.code}</p>
             {item.vehicles ? (
-              <p style={{ fontSize: 11, color: "#2E6B4F", fontWeight: 600, marginBottom: 6 }}>{item.vehicles.plate}</p>
+              <p style={{ fontSize: 11, color: colors.greenDark, fontWeight: 600, marginBottom: 6 }}>{item.vehicles.plate}</p>
             ) : (
-              <p style={{ fontSize: 11, color: "#999", marginBottom: 6 }}>Boş</p>
+              <p style={{ fontSize: 11, color: colors.textMuted, marginBottom: 6 }}>Boş</p>
             )}
-            <button onClick={() => downloadOne(item.code)} style={{ fontSize: 11, padding: "5px 10px", background: "#eee", border: "none", borderRadius: 6, cursor: "pointer" }}>
+            <button onClick={() => downloadOne(item.code)} style={{ fontSize: 11, padding: "6px 12px", background: colors.surfaceSoft, border: "none", borderRadius: 6, cursor: "pointer", minHeight: 32 }}>
               İndir
             </button>
           </div>
@@ -95,4 +96,4 @@ export default function QrListePage() {
       </div>
     </main>
   );
-            }
+}
