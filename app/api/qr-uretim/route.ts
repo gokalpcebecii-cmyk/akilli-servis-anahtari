@@ -1,33 +1,59 @@
 import { createServerSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-
-function randomCode(length = 10) {
-  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
-}
+const { generateQrCode } = require("@/lib/qrToken");
 
 export async function POST(req: NextRequest) {
   try {
+    const authHeader = req.headers.get("authorization");
+
+    const userClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: authHeader ?? "" } } }
+    );
+    const { data: userData } = await userClient.auth.getUser();
+    if (!userData?.user) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
+    const supabase = createServerSupabase();
+
+    const { data: staff } = await supabase
+      .from("staff_users")
+      .select("id, tenant_id, role")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+
+    if (!staff) {
+      return NextResponse.json({ error: "QR üretimi için yetkili bir servis hesabı gerekli" }, { status: 403 });
+    }
+
+    // QR üretimi operasyonel/yönetim işlemidir; yalnızca işletme sahibi
+    // (role = owner) çalıştırabilir. Sıradan staff hesapları (role = staff)
+    // kimlik doğrulanmış olsa bile reddedilir.
+    if (staff.role !== "owner") {
+      return NextResponse.json(
+        { error: "QR üretimi yalnızca işletme sahibi (owner) yetkisiyle yapılabilir" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const count = Math.min(Number(body.count) || 10, 500);
     const batchLabel = body.batch_label || "Parti " + new Date().toISOString().slice(0, 10);
 
-    const supabase = createServerSupabase();
     const codes = [];
 
     for (let i = 0; i < count; i++) {
-      let code = randomCode();
+      let code = generateQrCode();
       let attempts = 0;
       while (attempts < 5) {
         const existingResult = await supabase.from("qr_keys").select("id").eq("code", code).maybeSingle();
         if (!existingResult.data) {
           break;
         }
-        code = randomCode();
+        code = generateQrCode();
         attempts = attempts + 1;
       }
       codes.push(code);

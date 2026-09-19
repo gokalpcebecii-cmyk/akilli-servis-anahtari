@@ -31,7 +31,7 @@ export default function OwnershipTransferPage() {
 
     const { data: vehicle } = await supabase
       .from("vehicles")
-      .select("id, customer_id, current_km")
+      .select("id, customer_id, current_km, owner_user_id")
       .eq("id", params.id)
       .single();
 
@@ -50,6 +50,11 @@ export default function OwnershipTransferPage() {
       .select()
       .single();
 
+    // Önceki sahibin uygulama hesabı varsa (owner_user_id) devir kaydına
+    // düşülüyor; yeni sahip için henüz doğrulanmış bir OTOİZ hesabı
+    // bilinmediğinden new_owner_user_id bilerek boş bırakılıyor — rastgele
+    // bir kullanıcıya araç erişimi verilmiyor, hesap eşleşmesi ileride ayrı
+    // bir "devri kabul et" akışıyla yapılmalı.
     await supabase.from("ownership_transfers").insert({
       vehicle_id: params.id,
       tenant_id: staff?.tenant_id,
@@ -58,9 +63,14 @@ export default function OwnershipTransferPage() {
       new_customer_id: createdCustomer?.id,
       km_at_transfer: kmAtTransfer ? Number(kmAtTransfer) : vehicle?.current_km,
       performed_by: session.session?.user.id,
+      previous_owner_user_id: vehicle?.owner_user_id ?? null,
+      new_owner_user_id: null,
     });
 
-    await supabase.from("vehicles").update({ customer_id: createdCustomer?.id }).eq("id", params.id);
+    // Eski sahibin uygulama üzerinden bu araca erişimi hemen kesiliyor.
+    // Teknik geçmiş (maintenance_records/maintenance_items) vehicle_id
+    // üzerinden korunmaya devam ediyor, yalnızca erişim yetkisi kaldırılıyor.
+    await supabase.from("vehicles").update({ customer_id: createdCustomer?.id, owner_user_id: null }).eq("id", params.id);
 
     if (previousCustomer && fieldsToErase.length > 0) {
       await supabase
@@ -69,10 +79,8 @@ export default function OwnershipTransferPage() {
         .eq("id", previousCustomer.id);
     }
 
-    await fetch("/api/audit-log", {
-      method: "POST",
-      body: JSON.stringify({ action: "ownership.transfer", target_table: "vehicles", target_id: params.id }),
-    }).catch(() => {});
+    // Not: bu olay artık istemcinin ayrı bir çağrısına değil, ownership_transfers
+    // insert'ini yakalayan DB tetikleyicisine (log_ownership_transfer) güveniyor.
 
     setSaving(false);
     router.push(`/panel/araclar/${params.id}`);

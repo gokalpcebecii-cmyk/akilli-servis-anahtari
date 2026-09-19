@@ -1,5 +1,4 @@
-import { createServerSupabase } from "@/lib/supabase";
-import { notFound } from "next/navigation";
+import { createAnonServerSupabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -10,6 +9,8 @@ const ITEM_DISPLAY: Record<string, { label: string; icon: string }> = {
   yag_filtresi: { label: "Yağ Filtresi", icon: "🧰" },
   hava_filtresi: { label: "Hava Filtresi", icon: "💨" },
   polen_filtresi: { label: "Polen Filtresi", icon: "🌼" },
+  fren_on_balata: { label: "Ön Fren Balatası", icon: "🛑" },
+  fren_arka_balata: { label: "Arka Fren Balatası", icon: "🛑" },
   fren_disk_balata: { label: "Fren Disk-Balata", icon: "🛑" },
   triger_seti: { label: "Triger Seti", icon: "⚙️" },
   aku: { label: "Akü", icon: "🔋" },
@@ -21,22 +22,31 @@ const ITEM_ORDER = [
   "yag_filtresi",
   "hava_filtresi",
   "polen_filtresi",
-  "fren_disk_balata",
+  "fren_on_balata",
+  "fren_arka_balata",
   "triger_seti",
   "aku",
   "lastik",
 ];
+// fren_disk_balata: eski/tek parça fren kaydı, geriye dönük uyumluluk için.
+// Yeni araçlarda hiç kullanılmadığı için yalnızca o araçta gerçekten kaydı
+// varsa listeye eklenir (aksi halde her araçta "Bilgi Yok" satırı olarak
+// büyümesin).
+const LEGACY_ITEM_KEY = "fren_disk_balata";
 
 export default async function PassportByCodePage({ params }: { params: { code: string } }) {
-  const supabase = createServerSupabase();
+  // Bu sayfa herkese açık olduğundan service role yerine anon key kullanır;
+  // get_public_vehicle_passport() SECURITY DEFINER fonksiyonu anon rolüne
+  // EXECUTE ile açıktır ve döndürdüğü alanları kendi içinde sınırlar. Tüm
+  // qr_keys/vehicles/tenants tablolarını doğrudan okumak yerine, yalnızca
+  // verilen kod geçerliyse (ve iptal edilmemişse) minimum pasaport verisini
+  // döndüren bu güvenli DB fonksiyonu çağrılıyor.
+  const supabase = createAnonServerSupabase();
+  const { data: passport } = await supabase.rpc("get_public_vehicle_passport", {
+    p_code: params.code,
+  });
 
-  const { data: qrKey } = await supabase
-    .from("qr_keys")
-    .select("*, vehicles(*, tenants(*), maintenance_records(*))")
-    .eq("code", params.code)
-    .maybeSingle();
-
-  if (!qrKey) {
+  if (!passport) {
     return (
       <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
         <h1 style={{ fontSize: 20 }}>Geçersiz Kod</h1>
@@ -45,7 +55,7 @@ export default async function PassportByCodePage({ params }: { params: { code: s
     );
   }
 
-  if (!qrKey.vehicle_id || !qrKey.vehicles) {
+  if (passport.status === "unassigned") {
     return (
       <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
         <h1 style={{ fontSize: 20 }}>Henüz Eşleştirilmemiş</h1>
@@ -54,22 +64,10 @@ export default async function PassportByCodePage({ params }: { params: { code: s
     );
   }
 
-  const vehicle = qrKey.vehicles;
-  const tenant = vehicle.tenants;
-  const records = (vehicle.maintenance_records || []).sort(
-    (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-
-  let maintenanceItems: any[] = [];
-  try {
-    const { data: mi } = await supabase
-      .from("maintenance_items")
-      .select("*")
-      .eq("vehicle_id", vehicle.id);
-    maintenanceItems = mi ?? [];
-  } catch {
-    maintenanceItems = [];
-  }
+  const vehicle = passport.vehicle;
+  const tenant = passport.tenant;
+  const records: any[] = passport.maintenance_records ?? [];
+  const maintenanceItems: any[] = passport.maintenance_items ?? [];
 
   const navy = "#0B1F3A";
 
@@ -125,7 +123,7 @@ export default async function PassportByCodePage({ params }: { params: { code: s
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "20px" }}>
         <h2 style={{ fontSize: 15, color: navy, marginBottom: 12 }}>Araç Sağlık Özeti</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
-          {ITEM_ORDER.map((key) => {
+          {[...ITEM_ORDER, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM_KEY) ? [LEGACY_ITEM_KEY] : [])].map((key) => {
             const display = ITEM_DISPLAY[key];
             const status = getItemStatus(key);
             return (

@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 
-export default function BireyselGirisPage() {
+function BireyselGirisForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+  const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : "/bireysel/araclar";
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -24,7 +27,7 @@ export default function BireyselGirisPage() {
       setError("E-posta veya şifre hatalı.");
       return;
     }
-    router.push("/bireysel/araclar");
+    router.push(redirectTo);
   }
 
   return (
@@ -69,5 +72,13 @@ export default function BireyselGirisPage() {
         Hesabınız yok mu? <a href="/bireysel/kayit" style={{ color: "#1E3A5F" }}>Kayıt olun</a>
       </p>
     </main>
+  );
+}
+
+export default function BireyselGirisPage() {
+  return (
+    <Suspense fallback={<main style={{ padding: 24 }}>Yükleniyor…</main>}>
+      <BireyselGirisForm />
+    </Suspense>
   );
 }

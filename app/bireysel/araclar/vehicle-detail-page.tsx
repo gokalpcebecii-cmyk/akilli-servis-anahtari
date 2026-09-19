@@ -18,10 +18,12 @@ const MAINTENANCE_ITEMS = [
 
 const PRESET_KM_OPTIONS = [5000, 10000, 15000, 20000, 30000];
 
-function generateCode(length = 10) {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+function generateCode(length = 12) {
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+  const random = new Uint32Array(length);
+  crypto.getRandomValues(random);
   let out = "";
-  for (let i = 0; i < length; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < length; i++) out += chars[random[i] % chars.length];
   return out;
 }
 
@@ -86,6 +88,7 @@ export default function BireyselVehicleDetailPage() {
         .from("qr_keys")
         .select("code")
         .eq("vehicle_id", params.id)
+        .is("revoked_at", null)
         .maybeSingle();
 
       if (!qrKey) {

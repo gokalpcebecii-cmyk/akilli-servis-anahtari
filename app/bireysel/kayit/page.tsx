@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 
-export default function BireyselKayitPage() {
+function BireyselKayitForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+  const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : "/bireysel/araclar";
   const [form, setForm] = useState({ full_name: "", email: "", password: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -44,7 +47,7 @@ export default function BireyselKayitPage() {
       return;
     }
 
-    router.push("/bireysel/araclar");
+    router.push(redirectTo);
   }
 
   return (
@@ -84,5 +87,13 @@ export default function BireyselKayitPage() {
         <a href="/panel/kayit" style={{ color: "#888" }}>İşletme / Servis misiniz?</a>
       </p>
     </main>
+  );
+}
+
+export default function BireyselKayitPage() {
+  return (
+    <Suspense fallback={<main style={{ padding: 24 }}>Yükleniyor…</main>}>
+      <BireyselKayitForm />
+    </Suspense>
   );
 }

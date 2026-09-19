@@ -8,8 +8,15 @@ export default function BireyselAraclarPage() {
   const router = useRouter();
   const supabase = createBrowserSupabase();
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [pendingTransfers, setPendingTransfers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
+  async function loadPendingTransfers() {
+    const { data } = await supabase.rpc("list_my_pending_outgoing_transfers");
+    setPendingTransfers(data ?? []);
+  }
 
   useEffect(() => {
     async function load() {
@@ -26,10 +33,31 @@ export default function BireyselAraclarPage() {
         .order("created_at", { ascending: false });
 
       setVehicles(vehicleList ?? []);
+      await loadPendingTransfers();
       setLoading(false);
     }
     load();
   }, []);
+
+  async function handleCancelTransfer(token: string) {
+    setCancelling(token);
+    const { error } = await supabase.rpc("cancel_ownership_transfer", { p_token: token });
+    setCancelling(null);
+    if (error) {
+      alert("İptal edilemedi. Sayfayı yenileyip tekrar deneyin.");
+      return;
+    }
+    await loadPendingTransfers();
+    const { data: session } = await supabase.auth.getSession();
+    if (session.session) {
+      const { data: vehicleList } = await supabase
+        .from("vehicles")
+        .select("*")
+        .eq("owner_user_id", session.session.user.id)
+        .order("created_at", { ascending: false });
+      setVehicles(vehicleList ?? []);
+    }
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -69,6 +97,27 @@ export default function BireyselAraclarPage() {
       >
         + Yeni Araç Ekle
       </a>
+
+      {pendingTransfers.length > 0 && (
+        <section style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 14, color: "#888", marginBottom: 10 }}>Bekleyen Devirler</h2>
+          {pendingTransfers.map((t) => (
+            <div key={t.transfer_token} style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 10, padding: 12, marginBottom: 10 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "#7a5c10" }}>{t.plate}</div>
+              <div style={{ fontSize: 12, color: "#7a5c10", marginBottom: 8 }}>
+                {t.brand} {t.model} — yeni sahibin kabul etmesi bekleniyor
+              </div>
+              <button
+                onClick={() => handleCancelTransfer(t.transfer_token)}
+                disabled={cancelling === t.transfer_token}
+                style={{ fontSize: 12, padding: "6px 12px", background: "#fff", border: "1px solid #E8C468", borderRadius: 6, color: "#7a5c10", fontWeight: 600, cursor: "pointer" }}
+              >
+                {cancelling === t.transfer_token ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
+              </button>
+            </div>
+          ))}
+        </section>
+      )}
 
       {filtered.length === 0 && (
         <p style={{ color: "#999", marginTop: 20, textAlign: "center" }}>
