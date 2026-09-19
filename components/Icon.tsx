@@ -121,6 +121,18 @@ export function Icon({
           <path d="m9 6 6 6-6 6" />
         </svg>
       );
+    case "chevron-down":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      );
+    case "chevron-up":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="m6 15 6-6 6 6" />
+        </svg>
+      );
     case "qr":
       return (
         <svg viewBox="0 0 24 24" style={s}>
@@ -128,6 +140,16 @@ export function Icon({
           <rect x="14" y="3" width="7" height="7" rx="1" />
           <rect x="3" y="14" width="7" height="7" rx="1" />
           <path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2v2" />
+        </svg>
+      );
+    case "handover":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="6" cy="7" r="2.5" />
+          <path d="M2 19c.6-3 2-4.5 4-4.5s3.4 1.5 4 4.5" />
+          <circle cx="18" cy="7" r="2.5" />
+          <path d="M14 19c.6-3 2-4.5 4-4.5s3.4 1.5 4 4.5" />
+          <path d="M9.5 11h5M12.5 8.5 15 11l-2.5 2.5" />
         </svg>
       );
     case "swap":
@@ -151,6 +173,34 @@ export function Icon({
           <rect x="6" y="4" width="12" height="17" rx="2" />
           <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
           <path d="M9 11h6M9 15h6" />
+        </svg>
+      );
+    case "clock":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3.5 2" />
+        </svg>
+      );
+    case "smartphone":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <rect x="7" y="2" width="10" height="20" rx="2" />
+          <path d="M11 18h2" />
+        </svg>
+      );
+    case "diamond":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M4 9h16l-8 12L4 9Z" />
+          <path d="M8 4h8l3 5H5l3-5Z" />
+        </svg>
+      );
+    case "play":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M10 8.5v7l6-3.5-6-3.5Z" fill={color} stroke="none" />
         </svg>
       );
     default:

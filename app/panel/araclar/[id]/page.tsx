@@ -255,27 +255,36 @@ export default function VehicleDetailPage() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 40 }}>
-      <div style={{ background: colors.surfaceDark, padding: "16px 18px" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <OtoizLogo variant="dark" size={12} />
-            <h1 style={{ fontSize: 22, fontWeight: 800, margin: "6px 0 0", color: colors.textLight }}>{isNew ? "Yeni Araç" : vehicle.plate}</h1>
+    <main className="otoiz-servis-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 40 }}>
+      <div className="otoiz-hero-pattern otoiz-servis-header" style={{ position: "relative", overflow: "hidden", background: colors.surfaceDark, padding: "16px 18px 22px" }}>
+        <div className="otoiz-reflection" aria-hidden="true" />
+        <div className="otoiz-servis-container" style={{ maxWidth: 560, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <a href="/panel/dashboard" aria-label="Geri" style={{ color: colors.textLight, textDecoration: "none", fontSize: 18, padding: 4 }}>
+              ←
+            </a>
+            {!isNew && (
+              <button
+                onClick={() => setEditingVehicle((v) => !v)}
+                style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", borderRadius: radius.sm }}
+              >
+                {editingVehicle ? "Kapat" : "Araç bilgilerini düzenle"}
+              </button>
+            )}
           </div>
-          {!isNew && (
-            <button
-              onClick={() => setEditingVehicle((v) => !v)}
-              style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", borderRadius: radius.sm }}
-            >
-              {editingVehicle ? "Kapat" : "Araç bilgilerini düzenle"}
-            </button>
-          )}
+          <div style={{ marginTop: 6 }}>
+            <OtoizLogo variant="dark" size={155} />
+          </div>
+          <h1 style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 0", color: colors.textLight }}>
+            {isNew ? "Yeni Araç" : "Hızlı Bakım Kaydı"}
+          </h1>
+          {!isNew && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>{vehicle.plate}</div>}
         </div>
       </div>
 
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="otoiz-servis-container otoiz-servis-grid" style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 16 }}>
         {(isNew || editingVehicle) && (
-          <section style={cardStyle}>
+          <section className="otoiz-servis-area-edit" style={cardStyle}>
             <label style={labelStyle}>Plaka</label>
             <input style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.plate} onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value })} />
             <div style={{ display: "flex", gap: 8 }}>
@@ -297,7 +306,7 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section style={cardStyle}>
+          <section className="otoiz-servis-area-quick" style={cardStyle}>
             <label style={{ ...labelStyle, fontSize: 13.5 }}>Güncel Kilometre</label>
             <input
               type="number"
@@ -401,7 +410,7 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section style={{ ...cardStyle, textAlign: "center" }}>
+          <section className="otoiz-servis-area-qr" style={{ ...cardStyle, textAlign: "center" }}>
             <h2 style={{ fontSize: 14, color: colors.textMuted, fontWeight: 700, marginTop: 0 }}>Araç QR Kodu</h2>
             {qrDataUrl ? (
               <>
@@ -419,7 +428,7 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section style={{ textAlign: "center" }}>
+          <section className="otoiz-servis-area-devret" style={{ textAlign: "center" }}>
             <a href={`/panel/araclar/${params.id}/devret`} style={{ fontSize: 13, color: colors.textMuted, textDecoration: "underline" }}>
               Bu aracın sahipliğini devret
             </a>
@@ -427,7 +436,7 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section style={cardStyle}>
+          <section className="otoiz-servis-area-gecmis" style={cardStyle}>
             <h2 style={{ fontSize: 14, color: colors.textMuted, fontWeight: 700, marginTop: 0, marginBottom: 12 }}>Geçmiş</h2>
             {records.length === 0 ? (
               <p style={{ fontSize: 13, color: colors.textMuted }}>Henüz kayıt yok.</p>

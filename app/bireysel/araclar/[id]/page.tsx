@@ -60,6 +60,12 @@ export default function BireyselVehicleDetailPage() {
   const [savingItem, setSavingItem] = useState<string | null>(null);
   const [savingInterval, setSavingInterval] = useState<string | null>(null);
   const [editingVehicle, setEditingVehicle] = useState(isNew);
+  const [activeTab, setActiveTab] = useState<"genel" | "gecmis" | "belgeler">("genel");
+  // Genel Bakış'ın kısa/özet kalması için parça hızlı-ekle formu varsayılan
+  // olarak kapalı — yalnızca ilgili özet satırına (veya #parca hash'ine)
+  // tıklandığında açılır. Business logic/handler'lar değişmedi, yalnızca
+  // görünürlük durumu eklendi.
+  const [showQuickEntry, setShowQuickEntry] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -103,9 +109,14 @@ export default function BireyselVehicleDetailPage() {
 
       setLoading(false);
 
-      if (window.location.hash) {
+      const hash = window.location.hash.slice(1);
+      if (hash) {
+        if (hash === "servis-gecmisi") setActiveTab("gecmis");
+        else if (hash === "muayene" || hash === "qr") setActiveTab("belgeler");
+        else setActiveTab("genel");
+        if (hash === "parca") setShowQuickEntry(true);
         window.setTimeout(() => {
-          document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 80);
       }
     }
@@ -318,6 +329,40 @@ export default function BireyselVehicleDetailPage() {
   // mevcut bakım kayıtlarından türetilen kronolojik bir km listesi.
   const kmTimeline = records.filter((r) => r.km_at_service != null);
 
+  // Genel Bakış özet satırları — hepsi gerçek, zaten yüklenmiş veriden
+  // türetilir; yeni bir sorgu veya iş mantığı eklenmez.
+  const trackedPartsCount = maintenanceItems.filter((m) => m.last_service_date).length;
+  const nextUpcoming = [...MAINTENANCE_ITEMS, LEGACY_ITEM]
+    .map((item) => ({ item, status: getUpcomingStatus(item.key) }))
+    .find((x) => x.status && (x.status.kind === "danger" || x.status.kind === "warning"));
+  const summaryRows: { icon: string; title: string; meta: string; tab: "genel" | "gecmis" | "belgeler"; hash?: string }[] = [
+    { icon: "history", title: "Servis Geçmişi", meta: `${records.length} kayıt`, tab: "gecmis" },
+    { icon: "wrench", title: "Parça Değişimleri", meta: `${trackedPartsCount} kayıt`, tab: "genel", hash: "parca" },
+    {
+      icon: "clipboard",
+      title: "Muayene Bilgileri",
+      meta: vehicle.muayene_tarihi ? `Son: ${new Date(vehicle.muayene_tarihi).toLocaleDateString("tr-TR")}` : "Bilgi yok",
+      tab: "belgeler",
+    },
+    { icon: "qr", title: "QR / NFC", meta: qrRevokedAt ? "İptal Edildi" : qrCode ? "Aktif" : "—", tab: "belgeler" },
+    { icon: "user", title: "Sahiplik Bilgileri", meta: "1. sahip (Siz)", tab: "genel", hash: "devir" },
+    {
+      icon: "bell",
+      title: "Yaklaşan Bakım",
+      meta: nextUpcoming ? nextUpcoming.status!.label : "Planlı bakım yok",
+      tab: "genel",
+      hash: "parca",
+    },
+  ];
+
+  function goToSummaryRow(row: (typeof summaryRows)[number]) {
+    setActiveTab(row.tab);
+    if (row.hash === "parca") setShowQuickEntry(true);
+    if (row.hash) {
+      window.setTimeout(() => document.getElementById(row.hash!)?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    }
+  }
+
   return (
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 60 }}>
       <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "20px 18px 26px" }}>
@@ -327,7 +372,7 @@ export default function BireyselVehicleDetailPage() {
           </a>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12 }}>
             <div>
-              <OtoizLogo variant="dark" size={13} />
+              <OtoizLogo variant="dark" size={158} />
               <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.textLight, margin: "8px 0 0" }}>
                 {isNew ? "Yeni Araç" : vehicle.plate}
               </h1>
@@ -380,7 +425,68 @@ export default function BireyselVehicleDetailPage() {
 
         {!isNew && (
           <>
-            <section id="parca" style={cardStyle}>
+            <nav style={{ display: "flex", gap: 4, background: colors.surfaceLight, borderRadius: radius.md, padding: 4, border: `1px solid ${colors.border}` }}>
+              {(
+                [
+                  { key: "genel", label: "Genel Bakış" },
+                  { key: "gecmis", label: "Geçmiş" },
+                  { key: "belgeler", label: "Belgeler" },
+                ] as const
+              ).map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveTab(t.key)}
+                  style={{
+                    flex: 1, padding: "10px 8px", borderRadius: radius.sm, border: "none", cursor: "pointer",
+                    fontSize: 13, fontWeight: 700, fontFamily: font, minHeight: 40,
+                    background: activeTab === t.key ? colors.greenDark : "transparent",
+                    color: activeTab === t.key ? colors.textLight : colors.textMuted,
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+
+            {activeTab === "genel" && (
+              <section style={cardStyle}>
+                <SectionHeader icon="clipboard" title="Genel Bakış" />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                  <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
+                    <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KİLOMETRE</div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: colors.textDark }}>
+                      {vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"} km
+                    </div>
+                  </div>
+                  <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
+                    <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>PASAPORT DURUMU</div>
+                    <span style={badgeStyle(qrRevokedAt ? "danger" : "success")}>{qrRevokedAt ? "Pasif" : "Aktif"}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {summaryRows.map((row) => (
+                    <button
+                      key={row.title}
+                      onClick={() => goToSummaryRow(row)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 12, background: "none", border: "none",
+                        borderBottom: `1px solid ${colors.border}`, padding: "12px 2px", cursor: "pointer",
+                        fontFamily: font, textAlign: "left", width: "100%", minHeight: 44,
+                      }}
+                    >
+                      <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "50%", background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Icon name={row.icon} color={colors.greenDark} size={16} />
+                      </div>
+                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: colors.textDark }}>{row.title}</span>
+                      <span style={{ fontSize: 12, color: colors.textMuted }}>{row.meta}</span>
+                      <Icon name="chevron-right" color={colors.textMuted} size={16} />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section id="parca" style={{ ...cardStyle, display: activeTab === "genel" ? "block" : "none" }}>
               <SectionHeader icon="wrench" title="Bakım Durumu Özeti" />
               {(vehicle.next_service_km || vehicle.next_service_date) && (
                 <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 14px", marginBottom: 12, fontSize: 13, color: colors.textDark }}>
@@ -403,8 +509,20 @@ export default function BireyselVehicleDetailPage() {
                 })}
               </div>
 
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Parça Değişimleri — Hızlı Ekle</h3>
-              <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 14 }}>
+              <button
+                onClick={() => setShowQuickEntry((v) => !v)}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+                  background: colors.surfaceSoft, border: "none", borderRadius: radius.sm, padding: "12px 14px",
+                  cursor: "pointer", fontFamily: font, fontSize: 13, fontWeight: 700, color: colors.textDark, minHeight: 44,
+                }}
+              >
+                Parça Değişimleri — Hızlı Ekle
+                <Icon name={showQuickEntry ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={16} />
+              </button>
+              {showQuickEntry && (
+              <>
+              <p style={{ fontSize: 12, color: colors.textMuted, margin: "14px 0" }}>
                 Kendin yaptıysan ya da başka bir yerde yaptırdıysan butona bas — otomatik bugünün tarihi ve güncel km ile kaydedilir.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -475,9 +593,11 @@ export default function BireyselVehicleDetailPage() {
                   );
                 })}
               </div>
+              </>
+              )}
             </section>
 
-            <section id="kilometre" style={cardStyle}>
+            <section id="kilometre" style={{ ...cardStyle, display: activeTab === "genel" ? "block" : "none" }}>
               <SectionHeader icon="gauge" title="Kilometre Kayıtları" />
               <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "14px", marginBottom: 14, textAlign: "center" }}>
                 <div style={{ fontSize: 10.5, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KİLOMETRE</div>
@@ -499,7 +619,7 @@ export default function BireyselVehicleDetailPage() {
               )}
             </section>
 
-            <section id="muayene" style={cardStyle}>
+            <section id="muayene" style={{ ...cardStyle, display: activeTab === "belgeler" ? "block" : "none" }}>
               <SectionHeader icon="clipboard" title="Muayene Bilgileri" />
               {(vehicle.muayene_tarihi || vehicle.trafik_sigortasi_bitis || vehicle.kasko_bitis) ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
@@ -536,8 +656,9 @@ export default function BireyselVehicleDetailPage() {
               </div>
             </section>
 
-            <section id="qr" style={{ ...cardStyle, textAlign: "center" }}>
+            <section id="qr" className="otoiz-hero-pattern" style={{ ...cardStyle, textAlign: "center", display: activeTab === "belgeler" ? "block" : "none" }}>
               <SectionHeader icon="qr" title="QR / NFC Yönetimi" center />
+              <div className="otoiz-accent-line" style={{ margin: "-6px auto 14px" }} />
               {qrRevokedAt ? (
                 <>
                   <div style={{ padding: "12px 0" }}>
@@ -568,7 +689,7 @@ export default function BireyselVehicleDetailPage() {
               )}
             </section>
 
-            <section id="devir" style={{ ...cardStyle, textAlign: "center" }}>
+            <section id="devir" style={{ ...cardStyle, textAlign: "center", display: activeTab === "genel" ? "block" : "none" }}>
               <SectionHeader icon="swap" title="Sahiplik Devri" center />
               <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 14, lineHeight: 1.6 }}>
                 Aracınızı sattığınızda teknik geçmişi koruyarak yeni sahibine güvenle devredin.
@@ -582,7 +703,7 @@ export default function BireyselVehicleDetailPage() {
               </a>
             </section>
 
-            <section id="servis-gecmisi" style={cardStyle}>
+            <section id="servis-gecmisi" style={{ ...cardStyle, display: activeTab === "gecmis" ? "block" : "none" }}>
               <SectionHeader icon="history" title="Servis Geçmişi" />
               <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Diğer Bakım Kaydı (serbest not)</h3>
               <input

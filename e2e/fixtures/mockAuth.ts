@@ -91,7 +91,7 @@ export async function installMockSession(context: BrowserContext, user: MockUser
   ]);
 }
 
-type RestHandler = { single?: unknown; list?: unknown[] };
+type RestHandler = { single?: unknown; list?: unknown[]; raw?: unknown };
 
 // TÜM /rest/v1/* (PostgREST + RPC) isteklerini tarayıcı seviyesinde yakalar
 // ve tabloya göre mock JSON döner. Gerçek Supabase projesine bu testte HİÇ
@@ -110,6 +110,16 @@ export async function mockSupabaseRest(page: Page, handlers: Record<string, Rest
       // eslint-disable-next-line no-console
       console.warn(`[mockSupabaseRest] eşleşmeyen tablo/rpc: ${table} — boş sonuç dönülüyor`);
       await route.fulfill({ status: 200, contentType: "application/json", body: wantsSingle ? "null" : "[]" });
+      return;
+    }
+
+    // "raw": PostgREST, SETOF olmayan (tekil JSON/skaler döndüren) RPC
+    // fonksiyonlarının sonucunu diziye SARMAZ — supabase-js da bu durumda
+    // .single() kullanmadığı için Accept header'ı "vnd.pgrst.object" olmaz.
+    // Bu yüzden get_public_vehicle_passport gibi RPC'ler için wantsSingle/
+    // list ayrımına girmeden doğrudan nesneyi döndürüyoruz.
+    if ("raw" in handler) {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(handler.raw) });
       return;
     }
 

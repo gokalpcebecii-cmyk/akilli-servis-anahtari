@@ -3,10 +3,18 @@ import { test, expect } from "@playwright/test";
 test.describe("Homepage", () => {
   test("hero, CTA'lar ve marka doğru render ediliyor", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /tüm geçmişi/i })).toBeVisible();
-    await expect(page.getByText("OTO", { exact: false }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /Ücretsiz Başlayın/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Giriş Yap" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /premium.*dijital servis pasaportu/i })).toBeVisible();
+    // Not: img[alt="OTOİZ"] logo iki yerde bulunabilir (desktop üst
+    // navigasyon + mobil inline logo bloğu) — yalnızca aktif breakpoint'te
+    // GÖRÜNÜR olan eşleşiyor, ":visible" olmadan .first() DOM sırasındaki
+    // gizli kopyayı yakalayıp yanlış negatif verebilir.
+    await expect(page.locator('img[alt="OTOİZ"]:visible').first()).toBeVisible();
+    // Aynı sebeple: "Ücretsiz Başlayın" / "Giriş Yap" artık desktop üst
+    // navigasyonda VE mobil hero CTA'sında bulunuyor (yalnızca biri
+    // breakpoint'e göre görünür) — :visible filtresi olmadan strict-mode
+    // birden çok eşleşme hatası verir.
+    await expect(page.locator('button:visible', { hasText: /Ücretsiz Başlayın/i }).first()).toBeVisible();
+    await expect(page.locator('button:visible', { hasText: "Giriş Yap" }).first()).toBeVisible();
   });
 
   test("sayfada yatay taşma yok (masaüstü)", async ({ page }) => {
@@ -16,82 +24,43 @@ test.describe("Homepage", () => {
   });
 });
 
-test.describe("Giriş seçim modalı", () => {
-  test("Giriş Yap tıklanınca modal açılır, başlık/alt metin doğru", async ({ page }) => {
+test.describe("Giriş seçimi (tam ekran sayfa)", () => {
+  test("Giriş Yap tıklanınca /giris sayfasına yönlendirir, başlık/alt metin doğru", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Giriş Yap" }).click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-    await expect(page.getByText("Nasıl devam etmek istersiniz?")).toBeVisible();
-    await expect(page.getByText("Size uygun giriş türünü seçin.")).toBeVisible();
+    await expect(page).toHaveURL(/\/giris$/);
+    await expect(page.getByRole("heading", { name: "Nasıl devam etmek istersiniz?" })).toBeVisible();
+    await expect(page.getByText("İhtiyaçlarınıza en uygun seçeneği seçin.")).toBeVisible();
   });
 
-  test("iki kart da doğru CTA ve hedeflere sahip", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
+  test("iki kart da doğru hedeflere sahip", async ({ page }) => {
+    await page.goto("/giris");
 
     await expect(page.getByText("Bireysel Kullanıcı")).toBeVisible();
-    await expect(page.getByText("Servis / İşletme")).toBeVisible();
+    await expect(page.getByText("Servis / Kurumsal")).toBeVisible();
 
-    const bireyselLink = page.getByRole("link", { name: "Bireysel Giriş" });
-    await expect(bireyselLink).toHaveAttribute("href", "/bireysel/giris");
+    const bireyselCard = page.getByRole("link", { name: /Bireysel Kullanıcı/ });
+    await expect(bireyselCard).toHaveAttribute("href", "/bireysel/giris");
 
-    const kurumsalLink = page.getByRole("link", { name: "Kurumsal Giriş" });
-    await expect(kurumsalLink).toHaveAttribute("href", "/panel/login");
-
-    const bireyselKayit = page.getByRole("link", { name: "Kayıt Ol" });
-    await expect(bireyselKayit).toHaveAttribute("href", "/bireysel/kayit");
-
-    const kurumsalKayit = page.getByRole("link", { name: "İşletme hesabı oluştur" });
-    await expect(kurumsalKayit).toHaveAttribute("href", "/panel/kayit");
+    const servisCard = page.getByRole("link", { name: /Servis \/ Kurumsal/ });
+    await expect(servisCard).toHaveAttribute("href", "/panel/login");
   });
 
-  test("Ücretsiz Başlayın da aynı modalı açar", async ({ page }) => {
+  test("Ücretsiz Başlayın da aynı sayfaya yönlendirir", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /Ücretsiz Başlayın/i }).click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page).toHaveURL(/\/giris$/);
   });
 
-  test("X butonu ile kapanır", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await page.getByRole("button", { name: "Kapat" }).click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+  test("geri oku ana sayfaya döner", async ({ page }) => {
+    await page.goto("/giris");
+    await page.getByRole("link", { name: "Geri" }).click();
+    await expect(page).toHaveURL(/\/$/);
   });
 
-  test("ESC ile kapanır ve odak tetikleyiciye döner", async ({ page }) => {
-    await page.goto("/");
-    const trigger = page.getByRole("button", { name: "Giriş Yap" });
-    await trigger.click();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(trigger).toBeFocused();
-  });
-
-  test("dışarı tıklayınca kapanır", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-    // backdrop'un en dışına, kartın kesinlikle dışında bir noktaya tıkla
-    await page.mouse.click(5, 5);
-    await expect(dialog).not.toBeVisible();
-  });
-
-  test("açıldığında ilk odak kapat butonuna gelir", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
-    await expect(page.getByRole("button", { name: "Kapat" })).toBeFocused();
-  });
-
-  test("modal aria-modal ve dialog rolüne sahip", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toHaveAttribute("aria-modal", "true");
+  test("'Daha sonra değiştirilebilir' notu görünür", async ({ page }) => {
+    await page.goto("/giris");
+    await expect(page.getByText("Daha sonra değiştirilebilir.")).toBeVisible();
   });
 });
 
@@ -104,29 +73,22 @@ test.describe("Mobil (390px)", () => {
     expect(overflow).toBe(false);
   });
 
-  test("modal alt sayfa (bottom-sheet) olarak açılır ve taşmaz", async ({ page }) => {
+  test("/giris tam ekran sayfası mobilde taşmadan açılır", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Giriş Yap" }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
+    await expect(page).toHaveURL(/\/giris$/);
+    await expect(page.getByRole("heading", { name: "Nasıl devam etmek istersiniz?" })).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     expect(overflow).toBe(false);
   });
 
-  test("kartlar mobilde tek sütun ve dokunulabilir", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
-    // Bottom-sheet'in 0.24s'lik slide-up animasyonu bitene kadar bekle;
-    // aksi halde boundingBox() geçiş karesinde ölçüm yapıp kararsız sonuç verebilir.
-    await page.waitForTimeout(350);
-    const bireyselLink = page.getByRole("link", { name: "Bireysel Giriş" });
-    await expect(bireyselLink).toBeVisible();
-    await bireyselLink.scrollIntoViewIfNeeded();
-    await expect.poll(async () => (await bireyselLink.boundingBox())?.height ?? 0, {
+  test("kartlar mobilde dokunulabilir", async ({ page }) => {
+    await page.goto("/giris");
+    const bireyselCard = page.getByRole("link", { name: /Bireysel Kullanıcı/ });
+    await expect(bireyselCard).toBeVisible();
+    await expect.poll(async () => (await bireyselCard.boundingBox())?.height ?? 0, {
       timeout: 5000,
-    }).toBeGreaterThanOrEqual(40);
+    }).toBeGreaterThanOrEqual(44);
   });
 });
 

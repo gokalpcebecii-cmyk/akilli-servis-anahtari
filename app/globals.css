@@ -3,6 +3,31 @@
    inline stille ifade edilemeyen kuralları içerir (medya sorguları,
    :hover, :focus-visible, keyframes). */
 
+/* İmza ("Aracınızın İzi Hep Sizinle.") için self-hosted el yazısı font —
+   Google Fonts CDN'e runtime bağımlılığı KALDIRILDI (headless test/prod
+   ortamında ağ erişimi olmadığında sessizce sans-serif'e düşüyordu).
+   Google'ın kendi css2 API'sinden indirilen woff2 dosyaları
+   public/fonts/ altında proje varlığı olarak saklanıyor; latin + latin-ext
+   alt kümeleri Türkçe karakterleri (ı, İ, ş, ğ, ç, ö, ü) tam kapsıyor. */
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/fonts/caveat-600-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/fonts/caveat-600-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --otoiz-bg: #061421;
   --otoiz-bg-alt: #081b2a;
@@ -88,7 +113,6 @@ a:focus-visible {
     width: 100% !important;
     max-height: 82vh !important;
     border-radius: 20px 20px 0 0 !important;
-    padding: 28px 20px calc(24px + env(safe-area-inset-bottom)) !important;
     animation: otoiz-sheet-up 0.24s ease-out;
     margin: 0 !important;
   }
@@ -106,4 +130,496 @@ a:focus-visible {
 .otoiz-hero-pattern {
   background-image: radial-gradient(circle at 18% 20%, rgba(54, 232, 109, 0.12), transparent 38%),
     radial-gradient(circle at 82% 0%, rgba(54, 232, 109, 0.08), transparent 45%);
+}
+
+/* ============ Premium decor sistemi ============
+   Landing, login, dashboard header, public passport ve QR/NFC alanlarında
+   tutarlı kullanılan, tekrar kullanılabilir dekoratif parçalar. Kontrollü —
+   cyberpunk/neon aşırılığı yok, tek yeşil vurgu + hafif metalik yansıma. */
+
+/* Koyu "glass" yüzey — ince kenarlık + üstte hafif iç ışık çizgisi */
+.otoiz-glass-surface {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Yeşil vurgu çizgisi — bölüm/kart başlıklarının altında kısa bir "imza" çizgisi */
+.otoiz-accent-line {
+  width: 44px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--otoiz-green), rgba(54, 232, 109, 0));
+}
+
+/* Yumuşak otomotiv yansıması — diyagonal metalik parlaklık + köşede yeşil parlama */
+.otoiz-reflection {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.05) 46%, transparent 62%),
+    radial-gradient(circle at 82% 0%, rgba(54, 232, 109, 0.16), transparent 55%);
+}
+
+/* Premium bölüm ayracı — düz beyaz sayfalar arasında ince bir "marka nefesi" */
+.otoiz-section-divider {
+  height: 1px;
+  max-width: 220px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, transparent, rgba(54, 232, 109, 0.4), transparent);
+}
+
+/* ============ Landing hero — onaylanan referans görsel kompozisyonu ============
+   Onaylanan OTOİZ referans görseli (araç + anahtarlık fotoğrafı) tam-genişlik
+   arka plan olarak kullanılıyor; gerçek HTML logo/başlık/CTA bir scrim
+   (karartma gradyanı) üzerinde bindiriliyor. Mobilde referansın "LANDING"
+   ekran mockup'ındaki gibi üstte fotoğraf → altta koyu düz zemin geçişi;
+   desktop'ta fotoğraf sağda daha görünür, metin solda koyu zeminde. */
+.otoiz-hero-photo {
+  height: 360px;
+  background-image: url(/marketing/otoiz-hero-car.jpg);
+  background-size: cover;
+  background-position: 50% 30%;
+}
+.otoiz-hero-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(6, 20, 33, 0.25) 0%,
+    rgba(6, 20, 33, 0.55) 55%,
+    #061421 340px,
+    #061421 100%
+  );
+}
+.otoiz-hero-container {
+  max-width: 480px;
+}
+.otoiz-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas: "text" "phone";
+  gap: 8px;
+  text-align: center;
+}
+.otoiz-hero-text { grid-area: text; }
+.otoiz-hero-phone {
+  grid-area: phone;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.otoiz-hero-phone-glow {
+  position: absolute;
+  inset: -10% -30%;
+  background: radial-gradient(closest-side, rgba(54, 232, 109, 0.22), transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+.otoiz-hero-phone-frame {
+  position: relative;
+  z-index: 1;
+}
+.otoiz-hero-benefits-desktop { display: none; }
+.otoiz-hero-benefits-col { display: none; }
+.otoiz-hero-signature { display: none; }
+/* Yeni desktop-only öğeler — mobilde asla render edilmiyor (görsel
+   olarak yok), mobil DOM/akış tamamen değişmeden kalıyor. */
+.otoiz-hero-topbar { display: none; }
+.otoiz-hero-headline-desktop { display: none; }
+.otoiz-hero-cta-desktop { display: none; }
+.otoiz-hero-trust-row { display: none; }
+
+@media (min-width: 1040px) {
+  /* ============ Master hero asset v3 (kullanıcı sağladı, 1536×1024 native) ============
+     Önceki v2 kaynağı (1122×526) yalnızca DAR bir orta şeritte fotoğrafik
+     içerik taşıyordu — sol/sağ kenarlar boş/gökyüzüydü, bu da metni
+     gizlemek için tam-opak "blok" scrim zorunlu kılıyordu ve "sol koyu blok
+     + dar şerit + sağ koyu blok" görünümüne yol açıyordu (önceki tur bunu
+     backdrop-filter:blur() ile çözmeye çalıştı, headless Chromium'da görsel
+     olarak uygulanmadığı kanıtlandı). v3 kaynağı KENARDAN KENARA gerçek
+     fotoğrafik içerik taşıyor (bina cephesi solda, şehir silüeti sağda —
+     piksel örneklemesiyle doğrulandı: x=0 ve x=1535'te düz renk değil,
+     gerçek foto verisi var). Bu yüzden artık scrim'i "iki büyük blok"
+     yerine yalnızca gerçek metin bölgelerinin üzerine oturan KÜÇÜK,
+     yumuşak-kenarlı elips yamalar olarak uyguluyoruz (bkz. .otoiz-hero-scrim
+     altında) — aralardaki boşluklarda fotoğraf (bina, araç, ıslak zemin
+     yansımaları) tamamen görünür kalıyor, gerçek "tek sahne" hissi bu
+     sağlıyor, blok değil.
+     Section aynı aspect-ratio'ya (1536/1024) kilitleniyor — background-
+     size:cover HİÇBİR KIRPMA yapmadan tam oturuyor, bu da telefon ekranı
+     overlay'inin % tabanlı konumlandırmasının piksel piksel doğru olmasını
+     sağlıyor. */
+  .otoiz-hero-photo {
+    bottom: 0;
+    height: auto;
+    background-image: url(/marketing/otoiz-master-hero-v3.webp);
+    background-size: cover;
+    background-position: 50% 50%;
+    filter: saturate(0.97) brightness(0.98);
+  }
+  .otoiz-hero-scrim {
+    /* Elips denemesi (bkz. git geçmişi) BÜYÜK dikdörtgen bölgelerde (sol
+       metin bloğu, sağ fayda listesi) köşe sızıntısı üretti — bir elips
+       kendi sınırlayıcı dikdörtgeninin köşelerine doğal olarak ulaşamaz;
+       köşeyi kaplayacak kadar büyütülünce de gereksiz alan kaplıyordu.
+       Bunun yerine her bölge, ölçülen sınırlarına dolgu paylı TAM
+       DİKDÖRTGEN bir düz-renk katman olarak uygulanıyor (linear-gradient
+       solid + açık background-size/position, köşe sızıntısı yok, önceki
+       turlarda kanıtlanmış teknik). Katmanlar KÜÇÜK ve gerçek metin
+       bölgelerine SIKI oturuyor — aralarındaki TÜM alanlarda (araç,
+       anahtarlık, telefon, bina, zemin yansımaları) fotoğraf tamamen
+       dokunulmamış görünüyor; "tek sahne" hissini bu sağlıyor. */
+    background-image:
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99));
+    background-repeat: no-repeat;
+    /* logo, nav, header-cta, sol-metin, güven-şeridi, faydalar, imza */
+    background-size: 25.5% 21%, 51% 12%, 32% 12%, 48% 51.5%, 48% 18%, 26% 60%, 26% 24%;
+    background-position:
+      2.01% 1.27%,
+      44.9% 2.27%,
+      98.53% 1.14%,
+      0% 39.18%,
+      0% 96.34%,
+      100% 40%,
+      100% 94.74%;
+    /* backdrop-filter:blur() bu headless Chromium'da GÖRSEL OLARAK
+       uygulanmıyordu (önceki turda ölçülüp kanıtlandı) — ama filter:blur()
+       FARKLI bir özellik (kendi elemanının render'ını bulanıklaştırır,
+       ARKASINDAKİ içeriği örneklemez) ve izole test sayfasıyla piksel piksel
+       DOĞRU render ettiği doğrulandı. Bu, sert dikdörtgen kenarları
+       "kesik yama" hissi vermeden yumuşatıyor — asıl "tek sahne" hissini
+       veren şey bu: küçük yamalar + yumuşak kenarlar. */
+    filter: blur(17px);
+  }
+  .otoiz-hero-master-screen {
+    /* Fotoğraftaki telefonun gerçek ekran alanı (bezel hariç) — 1536×1024
+       v3 kaynağına göre ölçüldü: sol 985px/üst 300px/sağ 1160px/alt 790px. */
+    display: block !important;
+    left: 64.13%;
+    top: 29.3%;
+    width: 11.39%;
+    height: 47.85%;
+    border-radius: 7% / 2.8%;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+  .otoiz-hero-section {
+    aspect-ratio: 1536 / 1024;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  /* Üst navigasyon şeridi — referanstaki literal header. Section'ın
+     normal-flow ilk çocuğu; sahne fotoğrafı/scrim zaten mutlak
+     konumlandırılmış olduğu için arkasında kesintisiz devam ediyor.
+     Referansta logo+etiket bloğu, nav ve CTA butonları YALNIZCA wordmark
+     satırıyla hizalanıyor; etiket satırları (Akıllı Servis Anahtarı /
+     Dijital Araç Servis Pasaportu) altta ayrıca sarkıyor — bu yüzden
+     align-items:flex-start + nav/cta'ya küçük bir top-margin. */
+  .otoiz-hero-topbar {
+    display: block;
+    position: relative;
+    z-index: 3;
+    padding: 26px 8px 0;
+  }
+  .otoiz-hero-topbar-inner {
+    max-width: 1480px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .otoiz-hero-topbar-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .otoiz-hero-topbar-tagline {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding-left: 3px;
+  }
+  .otoiz-hero-topbar-tagline-main {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.88);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  }
+  .otoiz-hero-topbar-tagline-sub {
+    font-size: 9.5px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  }
+  .otoiz-hero-nav {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    flex: 1;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  .otoiz-hero-nav-link {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+  .otoiz-hero-nav-link-active {
+    color: #fff;
+    border-bottom-color: var(--otoiz-green);
+  }
+  .otoiz-hero-topbar-cta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .otoiz-hero-topbar-login {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 8px 2px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+  .otoiz-hero-topbar-start {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--otoiz-green);
+    color: var(--otoiz-text-dark);
+    border: none;
+    border-radius: 999px;
+    padding: 11px 19px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .otoiz-hero-container {
+    max-width: 1480px;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+  }
+  .otoiz-hero-grid {
+    /* Sol kolon (560px) referanstaki gövde metni + dikey istiflenmiş CTA
+       çifti + tek satır güven şeridini rahatça sığdırıyor; sağ kolon
+       (300px) fayda listesine nefes payı veriyor. Orta 1fr hiçbir gerçek
+       metin taşımıyor — yalnızca arka plan fotoğrafındaki araç/anahtarlık/
+       telefon (+ üzerindeki gerçek ekran overlay'i) görünüyor. */
+    grid-template-columns: 560px 1fr 300px;
+    grid-template-areas: "text phone benefits";
+    align-items: stretch;
+    gap: 0;
+    text-align: left;
+    width: 100%;
+  }
+  /* Telefon artık ayrı bir PhoneFrame mockup'ı değil — master hero asset'in
+     KENDİ fotoğrafik telefonu + üzerine bindirilen gerçek ekran screenshot'ı
+     (.otoiz-hero-master-screen) kullanılıyor. Eski mockup grid'de yer
+     kaplamasın diye gizleniyor. */
+  .otoiz-hero-phone {
+    display: none !important;
+  }
+  .otoiz-hero-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    height: 100%;
+    padding: 4px 0 40px;
+  }
+  /* Desktop'ta büyük inline logo bloğu artık üst navigasyonda logo+etiket
+     olduğu için gizleniyor — mobilde değişmedi (.otoiz-hero-inline-logo
+     temel kuralı yok, varsayılan olarak görünür kalıyor). */
+  .otoiz-hero-inline-logo {
+    display: none !important;
+  }
+  .otoiz-hero-headline-mobile {
+    display: none;
+  }
+  .otoiz-hero-headline-desktop {
+    display: inline;
+  }
+  .otoiz-hero-headline {
+    font-size: 46px !important;
+    line-height: 1.13 !important;
+    margin-bottom: 18px !important;
+  }
+  .otoiz-hero-benefits-mobile {
+    display: none !important;
+  }
+  .otoiz-hero-benefits-col {
+    grid-area: benefits;
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    padding: 4px 0 40px;
+  }
+  .otoiz-hero-benefits-desktop {
+    display: flex !important;
+  }
+  .otoiz-hero-signature {
+    display: block !important;
+  }
+  .otoiz-hero-dots {
+    display: none !important;
+  }
+  .otoiz-hero-cta-mobile {
+    display: none !important;
+  }
+  /* Referansta CTA'lar YAN YANA değil, ALT ALTA: dolu yeşil "Hemen Başla"
+     üstte, altında ince çizgi "▶ Nasıl Çalışır?" metin linki. */
+  .otoiz-hero-cta-desktop {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 30px;
+  }
+  .otoiz-hero-cta-primary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--otoiz-green);
+    color: var(--otoiz-text-dark);
+    border: none;
+    border-radius: 999px;
+    padding: 17px 30px;
+    font-weight: 800;
+    font-size: 16px;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    box-shadow: 0 12px 26px rgba(54, 232, 109, 0.24);
+  }
+  .otoiz-hero-cta-secondary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14.5px;
+    white-space: nowrap;
+  }
+  .otoiz-hero-cta-secondary-icon {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 20, 33, 0.25);
+  }
+  /* margin-top:auto → flex-column içinde tüm kalan boşluğu üstten alıp
+     kendini (ve yalnızca kendini) sütunun en altına iter — referanstaki
+     CTA/güven-şeridi arasındaki büyük boşluğu, JSX'i gruplamaya gerek
+     kalmadan üretir. */
+  .otoiz-hero-trust-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: auto;
+  }
+  .otoiz-hero-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    padding-right: 14px;
+    border-right: 1px solid rgba(255, 255, 255, 0.22);
+    white-space: nowrap;
+  }
+  .otoiz-hero-trust-item:last-child {
+    padding-right: 0;
+    border-right: none;
+  }
+  .otoiz-hero-signature {
+    margin-top: auto;
+  }
+}
+
+/* ============ Bireysel ana ekran — desktop dashboard ============
+   Üstte tam genişlik araç özet kartı, altta 3 kolonlu modül grid'i —
+   mobil tek-sütun liste basitçe büyütülmüyor. Koyu header'dan açık içeriğe
+   sert bir kesim yerine yumuşak, dokulu bir geçiş — "beyaz sayfa" hissi
+   yerine koyu shell üzerinde yüzen kartlar. */
+.otoiz-dashboard-shell {
+  background: var(--otoiz-surface-soft);
+  background-image: radial-gradient(circle at 92% 260px, rgba(54, 232, 109, 0.07), transparent 34%);
+}
+
+@media (min-width: 1040px) {
+  .otoiz-dashboard-container {
+    max-width: 1220px !important;
+  }
+  .otoiz-dashboard-modules {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px !important;
+  }
+  .otoiz-dashboard-modules .otoiz-module-card {
+    padding: 22px 20px !important;
+  }
+  .otoiz-dashboard-shell {
+    background-image: radial-gradient(circle at 94% 320px, rgba(54, 232, 109, 0.09), transparent 28%),
+      radial-gradient(circle at 3% 520px, rgba(54, 232, 109, 0.05), transparent 26%);
+  }
+}
+
+/* ============ Servis hızlı bakım — desktop iki kolon workspace ============
+   Solda araç/plaka özeti (QR + devret + geçmiş), sağda hızlı bakım alanı.
+   Mobil akış (tek sütun, DOM sırası) değişmiyor — yalnızca desktop'ta
+   grid-area ile yeniden yerleşiyor. */
+@media (min-width: 1040px) {
+  .otoiz-servis-container {
+    max-width: 1180px !important;
+  }
+  .otoiz-servis-grid {
+    display: grid !important;
+    grid-template-columns: 380px 1fr !important;
+    grid-template-areas: "edit edit" "qr quick" "devret quick" "gecmis quick" !important;
+    align-items: start !important;
+    gap: 20px !important;
+  }
+  .otoiz-servis-area-edit { grid-area: edit; }
+  .otoiz-servis-area-quick { grid-area: quick; }
+  .otoiz-servis-area-qr { grid-area: qr; }
+  .otoiz-servis-area-devret { grid-area: devret; }
+  .otoiz-servis-area-gecmis { grid-area: gecmis; }
+
+  /* "Beyaz sayfa" hissi yerine koyu premium workspace — 15-20sn akış ve
+     tüm DOM/mantık birebir aynı kalıyor, yalnızca arka plan/derinlik. */
+  .otoiz-servis-shell {
+    background: linear-gradient(180deg, var(--otoiz-bg) 0%, var(--otoiz-surface-dark) 100%) !important;
+    min-height: 100vh;
+  }
+  .otoiz-servis-header {
+    background: linear-gradient(160deg, var(--otoiz-bg) 0%, var(--otoiz-bg-alt) 55%, var(--otoiz-surface-dark) 100%) !important;
+    padding: 26px 18px 34px !important;
+  }
 }

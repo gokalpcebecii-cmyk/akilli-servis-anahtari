@@ -58,7 +58,7 @@ export default function SignupPage() {
           ← Ana sayfaya dön
         </a>
         <div style={{ maxWidth: 380, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={17} mark="primary" />
+          <OtoizLogo variant="dark" size={190} mark="primary" />
           <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>İşletme Kaydı</h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>
             OTOİZ'e ücretsiz katılın, dijital araç servis pasaportuna hemen başlayın.
