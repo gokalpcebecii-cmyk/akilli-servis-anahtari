@@ -21,3 +21,10 @@
 next-env.d.ts
 
 npm-debug.log*
+
+# playwright / e2e QA artifacts (regenerable, not build output)
+/test-results/
+/playwright-report/
+/qa-screenshots/
+/blob-report/
+/playwright/.cache/

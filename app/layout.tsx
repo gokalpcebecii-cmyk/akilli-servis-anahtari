@@ -1,11 +1,13 @@
+import "./globals.css";
+
 export const metadata = {
-  title: "Akıllı Servis Anahtarı",
+  title: "OTOİZ — Dijital Araç Servis Pasaportu",
   description: "Dijital araç servis kaydı ve müşteri sadakat sistemi",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Servis Anahtarı",
+    title: "OTOİZ",
   },
   icons: {
     icon: "/icon-192.png",

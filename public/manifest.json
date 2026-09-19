@@ -1,6 +1,6 @@
 {
-  "name": "Akıllı Servis Anahtarı",
-  "short_name": "Servis Anahtarı",
+  "name": "OTOİZ — Dijital Araç Servis Pasaportu",
+  "short_name": "OTOİZ",
   "description": "Dijital araç servis kaydı ve müşteri sadakat sistemi",
   "start_url": "/",
   "display": "standalone",
