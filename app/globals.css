@@ -152,6 +152,7 @@ a:focus-visible {
 .otoiz-hero-photo {
   height: 360px;
   background-image: url(/marketing/otoiz-hero-car.jpg);
+  background-size: cover;
   background-position: 50% 30%;
 }
 .otoiz-hero-scrim {
@@ -199,18 +200,36 @@ a:focus-visible {
   .otoiz-hero-photo {
     bottom: 0;
     height: auto;
-    background-image: url(/marketing/otoiz-hero-scene.jpg);
-    background-position: 58% 34%;
+    /* v4 crop: aynı onaylı referans fotoğrafından (145,225)-(850,560) —
+       metin/rozet bloklarından tamamen kaçınan, ama önceki dar kırpımlardan
+       (v1/v2) çok daha geniş (705×335) bir alan. Geniş kaynak "cover" için
+       çok daha az büyütme gerektiriyor (~2.26x vs ~3.3-4x), bu da
+       anahtarlığı aşırı zoom'lamadan araç:anahtarlık oranını referansa
+       yakın tutuyor. Sağ kenardaki referans fotoğrafının kendi (sahte)
+       telefon silueti, üzerine bindirilen GERÇEK PhoneFrame bileşeni
+       tarafından örtülüyor. */
+    background-image: url(/marketing/otoiz-hero-scene-v4.jpg);
+    background-size: 1750px auto;
+    background-position: 120px 28%;
     filter: saturate(0.94) brightness(0.92);
   }
   .otoiz-hero-scrim {
-    background: linear-gradient(
-      100deg,
-      rgba(6, 20, 33, 0.97) 0%,
-      rgba(6, 20, 33, 0.9) 32%,
-      rgba(6, 20, 33, 0.58) 56%,
-      rgba(6, 20, 33, 0.68) 100%
-    );
+    /* Solda araç (grille/far) artık net görünmesi için scrim hafifletildi
+       — metin kendi opak beyaz rengi + gölgesiyle zaten okunaklı, koyu
+       scrim'e ihtiyaç duymuyor. Sağda ise referans fotoğrafının kendi
+       (sahte) telefon ekranı gerçek benefit kolonu metniyle çakışmasın
+       diye belirgin şekilde koyulaştırılıyor. */
+    background:
+      radial-gradient(480px 420px at 94% 16%, rgba(6, 20, 33, 0.9), transparent 68%),
+      linear-gradient(
+        100deg,
+        rgba(6, 20, 33, 0.62) 0%,
+        rgba(6, 20, 33, 0.48) 26%,
+        rgba(6, 20, 33, 0.36) 46%,
+        rgba(6, 20, 33, 0.42) 62%,
+        rgba(6, 20, 33, 0.86) 82%,
+        rgba(6, 20, 33, 0.97) 100%
+      );
   }
   .otoiz-hero-section {
     min-height: 640px;
@@ -226,6 +245,13 @@ a:focus-visible {
     align-items: center;
     gap: 22px;
     text-align: left;
+  }
+  .otoiz-hero-phone {
+    /* Telefon kendi track'inin merkezinde değil, sağına yaslanıyor —
+       referanstaki gibi araç ile overlap edip anahtarlığın yanında/
+       arkasında doğal bir derinlik oluşturuyor. Boyut değişmedi. */
+    justify-content: flex-end !important;
+    padding-right: 6px;
   }
   .otoiz-hero-phone-frame {
     width: 330px !important;
