@@ -128,16 +128,31 @@ export default function HomePage() {
                 ))}
               </div>
 
+              {/* Referansın onboarding-carousel nokta göstergesi — yalnızca mobilde, dekoratif */}
+              <div className="otoiz-hero-dots" style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 18 }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    style={{ width: i === 0 ? 16 : 6, height: 6, borderRadius: 999, background: i === 0 ? colors.green : "rgba(255,255,255,0.25)" }}
+                  />
+                ))}
+              </div>
+
               <div className="otoiz-hero-cta-col" style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
                 <button
                   onClick={openModal}
-                  style={{ padding: "15px 24px", background: colors.green, color: colors.textDark, borderRadius: 10, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48 }}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    padding: "15px 24px", background: colors.green, color: colors.textDark, borderRadius: 999, border: "none",
+                    fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48,
+                  }}
                 >
                   Ücretsiz Başlayın
+                  <Icon name="chevron-right" color={colors.textDark} size={16} />
                 </button>
                 <button
                   onClick={openModal}
-                  style={{ padding: "14px 24px", background: "rgba(6,20,33,0.35)", color: colors.textLight, border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 10, fontWeight: 600, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48 }}
+                  style={{ padding: "14px 24px", background: "rgba(6,20,33,0.35)", color: colors.textLight, border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 999, fontWeight: 600, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48 }}
                 >
                   Giriş Yap
                 </button>

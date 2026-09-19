@@ -184,6 +184,9 @@ a:focus-visible {
   .otoiz-hero-benefits-desktop {
     display: flex !important;
   }
+  .otoiz-hero-dots {
+    display: none !important;
+  }
   .otoiz-hero-cta-col {
     align-items: flex-start !important;
     margin: 0 !important;
