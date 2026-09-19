@@ -1,0 +1,53 @@
+/* OTOİZ — yalnızca inline stille ifade edilemeyen kurallar (medya sorguları,
+   :hover, :focus-visible). Proje genelinde inline style tercih ediliyor;
+   bu dosya bilinçli olarak minimal tutuluyor. */
+
+.otoiz-modal-backdrop a:focus-visible,
+.otoiz-modal-backdrop button:focus-visible {
+  outline: 2.5px solid #d4a94a;
+  outline-offset: 2px;
+}
+
+.otoiz-modal-close:hover {
+  background: #ece7db;
+}
+
+/* İçerik viewport'tan uzun olduğunda kart kendi içinde kaydırılsın; arka
+   plan (body) her zaman kilitli kalır. */
+.otoiz-modal-card {
+  max-height: 85vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@keyframes otoiz-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Bottom-sheet: kartı flex hizalamaya bırakmak yerine doğrudan ekranın
+     altına sabitliyoruz — içerik uzun olsa bile üst kenar asla viewport
+     dışına taşmaz, kart kendi içinde kayar. */
+  .otoiz-modal-card {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 82vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 28px 20px calc(24px + env(safe-area-inset-bottom)) !important;
+    animation: otoiz-sheet-up 0.24s ease-out;
+    margin: 0 !important;
+  }
+  .otoiz-modal-cards {
+    grid-template-columns: 1fr !important;
+  }
+}

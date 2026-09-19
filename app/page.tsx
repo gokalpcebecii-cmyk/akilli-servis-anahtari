@@ -1,9 +1,21 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
 export default function HomePage() {
   const navy = "#0B1F3A";
   const navyLight = "#16345C";
   const accent = "#4A90D9";
   const accentLight = "#EAF2FB";
   const gold = "#D4A94A";
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  function openModal(e: React.MouseEvent<HTMLElement>) {
+    triggerRef.current = e.currentTarget;
+    setModalOpen(true);
+  }
 
   const steps = [
     { n: "1", title: "Servis kayıt ekler", desc: "Yetkili servis, yapılan bakım ve parça değişimini sisteme kaydeder." },
@@ -27,8 +39,8 @@ export default function HomePage() {
     { title: "İkinci el alıcıları", desc: "Daha güvenli bir satın alma deneyimi isteyenler.", icon: "cart" },
   ];
 
-  const Icon = ({ name, color = "#fff" }: { name: string; color?: string }) => {
-    const s = { width: 22, height: 22, stroke: color, fill: "none", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const Icon = ({ name, color = "#fff", size = 22 }: { name: string; color?: string; size?: number }) => {
+    const s = { width: size, height: size, stroke: color, fill: "none", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
     switch (name) {
       case "wrench": return <svg viewBox="0 0 24 24" style={s}><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4l-6 6a1.5 1.5 0 0 0 2.1 2.1l6-6a4 4 0 0 1 5.4-5.4l-3 3-2-2 3-3Z" /></svg>;
       case "gauge": return <svg viewBox="0 0 24 24" style={s}><path d="M12 20a8 8 0 1 1 8-8" /><path d="M12 12l4-4" /><circle cx="12" cy="12" r="1" /></svg>;
@@ -39,6 +51,7 @@ export default function HomePage() {
       case "tool": return <svg viewBox="0 0 24 24" style={s}><path d="M4 20l6-6" /><path d="M14.7 6.3a4 4 0 1 1-5.4 5.4l-6 6a1.5 1.5 0 0 0 2.1 2.1l6-6a4 4 0 0 1 5.4-5.4l-3 3-2-2 3-3Z" /></svg>;
       case "car": return <svg viewBox="0 0 24 24" style={s}><path d="M4 16v-4l2-5h12l2 5v4" /><path d="M4 16h16" /><circle cx="7.5" cy="17.5" r="1.5" /><circle cx="16.5" cy="17.5" r="1.5" /></svg>;
       case "cart": return <svg viewBox="0 0 24 24" style={s}><circle cx="9" cy="20" r="1.2" /><circle cx="17" cy="20" r="1.2" /><path d="M3 4h2l2.4 11h9.2L19 8H6.2" /></svg>;
+      case "close": return <svg viewBox="0 0 24 24" style={s}><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg>;
       default: return null;
     }
   };
@@ -94,19 +107,26 @@ export default function HomePage() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
-            <a href="/panel/kayit" style={{
-              padding: "15px 24px", background: `linear-gradient(135deg, ${gold}, #B8892F)`, color: navy,
-              borderRadius: 10, textDecoration: "none", fontWeight: 800, fontSize: 15,
-              boxShadow: "0 8px 24px rgba(212,169,74,0.35)"
-            }}>
+            <button
+              onClick={openModal}
+              style={{
+                padding: "15px 24px", background: `linear-gradient(135deg, ${gold}, #B8892F)`, color: navy,
+                borderRadius: 10, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer",
+                boxShadow: "0 8px 24px rgba(212,169,74,0.35)", fontFamily: "inherit"
+              }}
+            >
               Ücretsiz Başlayın →
-            </a>
-            <a href="/panel/login" style={{
-              padding: "14px 24px", background: "rgba(255,255,255,0.05)", color: "#fff",
-              border: "1.5px solid rgba(255,255,255,0.35)", borderRadius: 10, textDecoration: "none", fontWeight: 600, fontSize: 15
-            }}>
+            </button>
+            <button
+              onClick={openModal}
+              style={{
+                padding: "14px 24px", background: "rgba(255,255,255,0.05)", color: "#fff",
+                border: "1.5px solid rgba(255,255,255,0.35)", borderRadius: 10, fontWeight: 600, fontSize: 15,
+                cursor: "pointer", fontFamily: "inherit"
+              }}
+            >
               Giriş Yap
-            </a>
+            </button>
           </div>
         </div>
       </section>
@@ -200,19 +220,194 @@ export default function HomePage() {
           Bugünü kaydet. Yarın satarken güven oluştur.
         </h2>
         <p style={{ color: "#2A2416", fontSize: 14, marginBottom: 28, maxWidth: 440, margin: "0 auto 28px", opacity: 0.85 }}>
-          Akıllı Servis Anahtarı, aracın teknik geçmişini düzenli, taşınabilir ve değerli hale getirir.
+          OTOİZ, aracın teknik geçmişini düzenli, taşınabilir ve değerli hale getirir.
         </p>
-        <a href="/panel/kayit" style={{
-          display: "inline-block", padding: "15px 36px", background: navy, color: "#fff",
-          borderRadius: 10, textDecoration: "none", fontWeight: 800, boxShadow: "0 8px 24px rgba(11,31,58,0.3)"
-        }}>
+        <button
+          onClick={openModal}
+          style={{
+            display: "inline-block", padding: "15px 36px", background: navy, color: "#fff",
+            borderRadius: 10, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer",
+            boxShadow: "0 8px 24px rgba(11,31,58,0.3)", fontFamily: "inherit"
+          }}
+        >
           Hemen Kaydolun
-        </a>
+        </button>
       </section>
 
       <footer style={{ textAlign: "center", padding: "28px 20px", color: "#999", fontSize: 12, background: "#FAFAF7" }}>
-        © 2026 Akıllı Servis Anahtarı — Ankara
+        © 2026 OTOİZ — Ankara
       </footer>
+
+      <LoginChooserModal open={modalOpen} onClose={() => setModalOpen(false)} triggerRef={triggerRef} Icon={Icon} />
     </main>
   );
-                            }
+}
+
+function LoginChooserModal({
+  open,
+  onClose,
+  triggerRef,
+  Icon,
+}: {
+  open: boolean;
+  onClose: () => void;
+  triggerRef: React.MutableRefObject<HTMLElement | null>;
+  Icon: (props: { name: string; color?: string; size?: number }) => JSX.Element | null;
+}) {
+  const navy = "#0B1F3A";
+  const gold = "#D4A94A";
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusTimer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      window.clearTimeout(focusTimer);
+      triggerRef.current?.focus();
+    };
+  }, [open, onClose, triggerRef]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(6,14,28,0.62)", backdropFilter: "blur(3px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+      className="otoiz-modal-backdrop"
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="login-chooser-title"
+        aria-describedby="login-chooser-subtitle"
+        className="otoiz-modal-card"
+        style={{
+          background: "#fff",
+          width: "100%",
+          maxWidth: 560,
+          borderRadius: 20,
+          padding: "36px 32px 32px",
+          boxShadow: "0 30px 80px rgba(6,14,28,0.45)",
+          position: "relative",
+        }}
+      >
+        <button
+          ref={closeButtonRef}
+          onClick={onClose}
+          aria-label="Kapat"
+          className="otoiz-modal-close"
+          style={{
+            position: "absolute", top: 16, right: 16, width: 36, height: 36,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "#F4F1EA", border: "none", borderRadius: "50%", cursor: "pointer",
+          }}
+        >
+          <Icon name="close" color="#555" size={16} />
+        </button>
+
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 1, color: navy, marginBottom: 14 }}>
+            OTO<span style={{ color: gold }}>İZ</span>
+          </div>
+          <h2 id="login-chooser-title" style={{ fontSize: 21, fontWeight: 800, color: navy, margin: "0 0 6px" }}>
+            Nasıl devam etmek istersiniz?
+          </h2>
+          <p id="login-chooser-subtitle" style={{ fontSize: 13.5, color: "#666", margin: 0 }}>
+            Size uygun giriş türünü seçin.
+          </p>
+        </div>
+
+        <div className="otoiz-modal-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ border: "1.5px solid #EEEAE0", borderRadius: 14, padding: "22px 18px", display: "flex", flexDirection: "column" }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 10, background: navy,
+              display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14,
+            }}>
+              <Icon name="car" color={gold} size={20} />
+            </div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: navy, margin: "0 0 6px" }}>Bireysel Kullanıcı</h3>
+            <p style={{ fontSize: 12.5, color: "#667", lineHeight: 1.5, margin: "0 0 18px", flexGrow: 1 }}>
+              Kendi aracınızı, bakım geçmişinizi ve dijital araç pasaportunuzu yönetin.
+            </p>
+            <a
+              href="/bireysel/giris"
+              style={{
+                display: "block", textAlign: "center", padding: "12px 14px", background: navy, color: "#fff",
+                borderRadius: 9, textDecoration: "none", fontWeight: 700, fontSize: 13.5, marginBottom: 10,
+              }}
+            >
+              Bireysel Giriş
+            </a>
+            <a href="/bireysel/kayit" style={{ textAlign: "center", fontSize: 12, color: "#888", textDecoration: "underline" }}>
+              Hesabım yok — Kayıt Ol
+            </a>
+          </div>
+
+          <div style={{ border: "1.5px solid #EEEAE0", borderRadius: 14, padding: "22px 18px", display: "flex", flexDirection: "column" }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 10, background: navy,
+              display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14,
+            }}>
+              <Icon name="tool" color={gold} size={20} />
+            </div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: navy, margin: "0 0 6px" }}>Servis / İşletme</h3>
+            <p style={{ fontSize: 12.5, color: "#667", lineHeight: 1.5, margin: "0 0 18px", flexGrow: 1 }}>
+              Müşteri araçlarını, servis kayıtlarını ve bakım süreçlerini yönetin.
+            </p>
+            <a
+              href="/panel/login"
+              style={{
+                display: "block", textAlign: "center", padding: "12px 14px",
+                background: `linear-gradient(135deg, ${gold}, #B8892F)`, color: navy,
+                borderRadius: 9, textDecoration: "none", fontWeight: 700, fontSize: 13.5, marginBottom: 10,
+              }}
+            >
+              Kurumsal Giriş
+            </a>
+            <a href="/panel/kayit" style={{ textAlign: "center", fontSize: 12, color: "#888", textDecoration: "underline" }}>
+              İşletme hesabı oluştur
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

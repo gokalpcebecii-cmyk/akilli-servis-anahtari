@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [notStaffAccount, setNotStaffAccount] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -26,6 +27,7 @@ export default function DashboardPage() {
         .single();
 
       if (staffError || !staff?.tenant_id) {
+        setNotStaffAccount(true);
         setLoading(false);
         return;
       }
@@ -51,7 +53,30 @@ export default function DashboardPage() {
     v.plate?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <main style={{ padding: 24 }}>Yükleniyor…</main>;
+  if (loading) return <main style={{ padding: 24, textAlign: "center", color: "#999" }}>Yükleniyor…</main>;
+
+  if (notStaffAccount) {
+    return (
+      <main style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
+        <h1 style={{ fontSize: 20 }}>Bu Hesap Bir İşletme Hesabı Değil</h1>
+        <p style={{ color: "#666", lineHeight: 1.6, marginBottom: 20 }}>
+          Giriş yaptığınız hesap herhangi bir servis/işletmeye bağlı değil. Bireysel araç sahibiyseniz
+          bireysel giriş sayfasını kullanın; işletme hesabınız yoksa yeni bir tane oluşturabilirsiniz.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 260, margin: "0 auto" }}>
+          <a href="/bireysel/giris" style={{ padding: "10px 16px", background: "#1E3A5F", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>
+            Bireysel Girişe Geç
+          </a>
+          <a href="/panel/kayit" style={{ padding: "10px 16px", border: "1px solid #ccc", color: "#333", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>
+            İşletme Hesabı Oluştur
+          </a>
+          <button onClick={handleLogout} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 13, marginTop: 6 }}>
+            Çıkış yap
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: "system-ui, sans-serif" }}>

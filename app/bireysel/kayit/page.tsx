@@ -18,6 +18,7 @@ function BireyselKayitForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setError("");
     setLoading(true);
 
@@ -52,6 +53,9 @@ function BireyselKayitForm() {
 
   return (
     <main style={{ maxWidth: 420, margin: "40px auto", padding: "0 16px", fontFamily: "system-ui, sans-serif" }}>
+      <a href="/" style={{ display: "inline-block", marginBottom: 16, fontSize: 13, color: "#888", textDecoration: "none" }}>
+        ← Ana sayfaya dön
+      </a>
       <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, color: "#0B1F3A", marginBottom: 16 }}>
         OTO<span style={{ color: "#D4A94A" }}>İZ</span>
       </div>
