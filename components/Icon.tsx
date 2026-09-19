@@ -175,6 +175,34 @@ export function Icon({
           <path d="M9 11h6M9 15h6" />
         </svg>
       );
+    case "clock":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3.5 2" />
+        </svg>
+      );
+    case "smartphone":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <rect x="7" y="2" width="10" height="20" rx="2" />
+          <path d="M11 18h2" />
+        </svg>
+      );
+    case "diamond":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M4 9h16l-8 12L4 9Z" />
+          <path d="M8 4h8l3 5H5l3-5Z" />
+        </svg>
+      );
+    case "play":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M10 8.5v7l6-3.5-6-3.5Z" fill={color} stroke="none" />
+        </svg>
+      );
     default:
       return null;
   }

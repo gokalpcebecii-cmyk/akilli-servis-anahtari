@@ -4,9 +4,17 @@ test.describe("Homepage", () => {
   test("hero, CTA'lar ve marka doğru render ediliyor", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: /premium.*dijital servis pasaportu/i })).toBeVisible();
-    await expect(page.getByText("OTO", { exact: false }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /Ücretsiz Başlayın/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Giriş Yap" })).toBeVisible();
+    // Not: img[alt="OTOİZ"] logo iki yerde bulunabilir (desktop üst
+    // navigasyon + mobil inline logo bloğu) — yalnızca aktif breakpoint'te
+    // GÖRÜNÜR olan eşleşiyor, ":visible" olmadan .first() DOM sırasındaki
+    // gizli kopyayı yakalayıp yanlış negatif verebilir.
+    await expect(page.locator('img[alt="OTOİZ"]:visible').first()).toBeVisible();
+    // Aynı sebeple: "Ücretsiz Başlayın" / "Giriş Yap" artık desktop üst
+    // navigasyonda VE mobil hero CTA'sında bulunuyor (yalnızca biri
+    // breakpoint'e göre görünür) — :visible filtresi olmadan strict-mode
+    // birden çok eşleşme hatası verir.
+    await expect(page.locator('button:visible', { hasText: /Ücretsiz Başlayın/i }).first()).toBeVisible();
+    await expect(page.locator('button:visible', { hasText: "Giriş Yap" }).first()).toBeVisible();
   });
 
   test("sayfada yatay taşma yok (masaüstü)", async ({ page }) => {

@@ -27,6 +27,24 @@ export default function HomePage() {
     { title: "Daha Yüksek Araç Değeri", icon: "gauge" },
     { title: "Her Zaman Erişilebilir", icon: "qr" },
   ];
+  // Desktop hero'nun alt "güven şeridi" — referanstaki birebir 4 madde.
+  // Mobildeki mobileValueProps'tan bağımsız, yalnızca desktop'ta görünür.
+  const trustRow = [
+    { title: "Güvenli", icon: "shield" },
+    { title: "Kolay", icon: "smartphone" },
+    { title: "Zaman Kazandırır", icon: "clock" },
+    { title: "Değer Katar", icon: "diamond" },
+  ];
+  // Desktop hero header/nav — yalnızca görsel; gerçek route/işlevi olmayan
+  // öğeler (Hizmetler/Kurumsal/İletişim) sayfa başına dönen inert link.
+  const navLinks = [
+    { label: "Ana Sayfa", href: "/", active: true },
+    { label: "Nasıl Çalışır?", href: "#nasil-calisir", active: false },
+    { label: "Hizmetler", href: "#", active: false },
+    { label: "Kurumsal", href: "#", active: false },
+    { label: "Bireysel", href: "/giris", active: false },
+    { label: "İletişim", href: "#", active: false },
+  ];
 
   const steps = [
     { n: "1", title: "Servis kayıt ekler", desc: "Yetkili servis, yapılan bakım ve parça değişimini sisteme kaydeder." },
@@ -106,11 +124,42 @@ export default function HomePage() {
           style={{ position: "absolute", zIndex: 1, display: "none", objectFit: "cover" }}
         />
 
+        {/* Üst navigasyon şeridi — yalnızca desktop'ta görünür (referanstaki
+            literal header). Mobilde bu alan render edilmiyor, mobil hero
+            kendi inline logo bloğuyla değişmeden devam ediyor. */}
+        <div className="otoiz-hero-topbar">
+          <div className="otoiz-hero-topbar-inner">
+            <OtoizLogo variant="dark" size={150} mark="primary" />
+            <nav className="otoiz-hero-nav" aria-label="Ana navigasyon">
+              {navLinks.map((l) => (
+                <a
+                  key={l.label}
+                  href={l.href}
+                  className={`otoiz-hero-nav-link${l.active ? " otoiz-hero-nav-link-active" : ""}`}
+                >
+                  {l.label}
+                </a>
+              ))}
+            </nav>
+            <div className="otoiz-hero-topbar-cta">
+              <button onClick={goToGirisSecimi} className="otoiz-hero-topbar-login">
+                Giriş Yap
+              </button>
+              <button onClick={goToGirisSecimi} className="otoiz-hero-topbar-start">
+                Ücretsiz Başlayın
+                <Icon name="chevron-right" color={colors.textDark} size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="otoiz-hero-container" style={{ margin: "0 auto", position: "relative", zIndex: 2 }}>
           <div className="otoiz-hero-grid">
             {/* METİN + CTA */}
             <div className="otoiz-hero-text">
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginBottom: 30 }}>
+              {/* Mobilde tam logo bloğu (değişmedi); desktop'ta artık üst
+                  navigasyon şeridinde küçük logo var, bu blok gizleniyor. */}
+              <div className="otoiz-hero-inline-logo" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginBottom: 30 }}>
                 <OtoizLogo variant="dark" size={352} mark="primary" className="otoiz-landing-logo" />
                 <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginTop: 2 }}>Akıllı Servis Anahtarı</span>
                 <span style={{ fontSize: 10.5, letterSpacing: 1.8, textTransform: "uppercase", opacity: 0.5, fontWeight: 600 }}>
@@ -119,7 +168,11 @@ export default function HomePage() {
               </div>
 
               <h1 className="otoiz-hero-headline" style={{ fontSize: 32, marginBottom: 14, fontWeight: 800, lineHeight: 1.18, letterSpacing: -0.4, textShadow: "0 2px 10px rgba(0,0,0,0.55)" }}>
-                Bu otomobil için premium<br />dijital servis pasaportu.
+                {/* Mobil kırılımı değişmedi; desktop referanstaki birebir
+                    3 satırlık kırılımı kullanıyor (ayrı span, CSS ile
+                    breakpoint'e göre gösterilip gizleniyor). */}
+                <span className="otoiz-hero-headline-mobile">Bu otomobil için premium<br />dijital servis pasaportu.</span>
+                <span className="otoiz-hero-headline-desktop">Bu otomobil için<br />premium dijital<br />servis pasaportu.</span>
               </h1>
               <p style={{ fontSize: 15.5, opacity: 0.85, lineHeight: 1.6, marginBottom: 26, maxWidth: 380, textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
                 Bakım, kilometre ve servis kayıtlarınızı güvenle saklayın — aracınızın tüm geçmişi tek ekranda.
@@ -151,7 +204,8 @@ export default function HomePage() {
                 ))}
               </div>
 
-              <div className="otoiz-hero-cta-col" style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
+              {/* Mobil CTA'lar değişmedi. */}
+              <div className="otoiz-hero-cta-col otoiz-hero-cta-mobile" style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
                 <button
                   onClick={goToGirisSecimi}
                   style={{
@@ -169,6 +223,33 @@ export default function HomePage() {
                 >
                   Giriş Yap
                 </button>
+              </div>
+
+              {/* Desktop CTA'lar — referanstaki birebir metin/hiyerarşi:
+                  birincil "Hemen Başla →" (yeşil dolu pill), ikincil
+                  "▶ Nasıl Çalışır?" (dairesel play ikon + düz metin,
+                  sayfa içi #nasil-calisir bölümüne kaydırıyor). */}
+              <div className="otoiz-hero-cta-desktop">
+                <button onClick={goToGirisSecimi} className="otoiz-hero-cta-primary">
+                  Hemen Başla
+                  <Icon name="chevron-right" color={colors.textDark} size={16} />
+                </button>
+                <a href="#nasil-calisir" className="otoiz-hero-cta-secondary">
+                  <span className="otoiz-hero-cta-secondary-icon">
+                    <Icon name="play" color={colors.textLight} size={13} />
+                  </span>
+                  Nasıl Çalışır?
+                </a>
+              </div>
+
+              {/* Desktop güven şeridi — referanstaki birebir 4 madde. */}
+              <div className="otoiz-hero-trust-row">
+                {trustRow.map((t) => (
+                  <div key={t.title} className="otoiz-hero-trust-item">
+                    <Icon name={t.icon} color={colors.green} size={20} />
+                    <span>{t.title}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -256,7 +337,7 @@ export default function HomePage() {
       {/* Nasıl Çalışır — koyu lacivert shell + premium off-white kartlar;
           düz beyaz "SaaS" blok hissi yerine landing'in geri kalanıyla aynı
           koyu/yeşil marka dilinin devamı. */}
-      <section className="otoiz-hero-pattern" style={{ background: `linear-gradient(180deg, ${colors.surfaceDark}, ${colors.bg})`, padding: "48px 20px 56px", position: "relative", overflow: "hidden" }}>
+      <section id="nasil-calisir" className="otoiz-hero-pattern" style={{ background: `linear-gradient(180deg, ${colors.surfaceDark}, ${colors.bg})`, padding: "48px 20px 56px", position: "relative", overflow: "hidden", scrollMarginTop: 24 }}>
         <div className="otoiz-reflection" aria-hidden="true" />
         <div className="otoiz-accent-line" style={{ margin: "0 auto 36px" }} />
         <div style={{ textAlign: "center", marginBottom: 40, position: "relative" }}>
