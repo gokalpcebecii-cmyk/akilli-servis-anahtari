@@ -24,6 +24,13 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr">
+      <head>
+        {/* Referanstaki "imza" hissi için tek, hafif script font — yalnızca
+            desktop landing'in premium slogan alanında kullanılıyor. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet" />
+      </head>
       <body>{children}</body>
     </html>
   );

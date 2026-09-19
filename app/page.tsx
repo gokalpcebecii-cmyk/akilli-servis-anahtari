@@ -50,6 +50,115 @@ export default function HomePage() {
     { title: "İkinci el alıcıları", desc: "Daha güvenli bir satın alma deneyimi isteyenler.", icon: "cart" },
   ];
 
+  // Referansın alt bölümündeki 4 kısa fayda kartı (CTA'nın hemen üstünde).
+  const finalBenefits = [
+    { title: "Daha Güvenli", desc: "Kayıtlar kaybolmaz, daima sizinle.", icon: "shield" },
+    { title: "Daha Yüksek Değer", desc: "Düzenli bakım, yüksek ikinci el değeri.", icon: "gauge" },
+    { title: "Daha Sürdürülebilir", desc: "Bakımlı araç, daha temiz yarınlar.", icon: "link" },
+    { title: "Daha Özgür", desc: "Tüm araç bilgileriniz tek uygulamada.", icon: "check" },
+  ];
+
+  // Referansın alt "ürün vitrini" şeridi — gerçek ekranların sadeleştirilmiş,
+  // gerçek HTML/CSS ile üretilmiş önizlemeleri (screenshot gömme değil).
+  const showcaseScreens: { label: string; dark?: boolean; body: React.ReactNode }[] = [
+    {
+      label: "Landing", dark: true,
+      body: (
+        <>
+          <div style={{ width: "70%", height: 6, borderRadius: 3, background: "rgba(255,255,255,0.85)", marginBottom: 5 }} />
+          <div style={{ width: "55%", height: 6, borderRadius: 3, background: "rgba(255,255,255,0.5)", marginBottom: 14 }} />
+          <div style={{ width: "80%", height: 16, borderRadius: 999, background: colors.green }} />
+        </>
+      ),
+    },
+    {
+      label: "Giriş Seçimi", dark: true,
+      body: (
+        <>
+          <div style={{ width: "88%", height: 34, borderRadius: 8, background: colors.surfaceLight, marginBottom: 8 }} />
+          <div style={{ width: "88%", height: 34, borderRadius: 8, background: colors.surfaceLight }} />
+        </>
+      ),
+    },
+    {
+      label: "Bireysel Giriş",
+      body: (
+        <>
+          <div style={{ width: "85%", height: 8, borderRadius: 3, background: colors.neutralSoft, marginBottom: 6 }} />
+          <div style={{ width: "85%", height: 8, borderRadius: 3, background: colors.neutralSoft, marginBottom: 14 }} />
+          <div style={{ width: "85%", height: 14, borderRadius: 999, background: colors.green }} />
+        </>
+      ),
+    },
+    {
+      label: "Bireysel Ana Ekran",
+      body: (
+        <>
+          <div style={{ width: "88%", height: 26, borderRadius: 8, background: colors.surfaceDark, marginBottom: 8 }} />
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, width: "88%", height: 12, borderRadius: 4, background: colors.neutralSoft, marginBottom: 5, padding: "0 4px" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: colors.green }} />
+            </div>
+          ))}
+        </>
+      ),
+    },
+    {
+      label: "Servis Hızlı Bakım",
+      body: (
+        <>
+          <div style={{ width: "85%", height: 12, borderRadius: 4, border: `1.5px solid ${colors.green}`, marginBottom: 8 }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3, width: "85%", marginBottom: 8 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} style={{ height: 10, borderRadius: 3, background: colors.neutralSoft }} />
+            ))}
+          </div>
+          <div style={{ width: "85%", height: 12, borderRadius: 999, background: colors.green }} />
+        </>
+      ),
+    },
+    {
+      label: "Araç Detay / Pasaport",
+      body: (
+        <>
+          <div style={{ display: "flex", gap: 3, width: "85%", marginBottom: 8 }}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{ flex: 1, height: 9, borderRadius: 3, background: i === 0 ? colors.green : colors.neutralSoft }} />
+            ))}
+          </div>
+          <div style={{ width: "85%", height: 30, borderRadius: 8, background: colors.neutralSoft }} />
+        </>
+      ),
+    },
+    {
+      label: "Araç Devret",
+      body: (
+        <>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, width: "85%", marginBottom: 6 }}>
+              <div style={{ width: 12, height: 12, minWidth: 12, borderRadius: "50%", background: colors.greenSoft, border: `1px solid ${colors.green}` }} />
+              <div style={{ flex: 1, height: 6, borderRadius: 3, background: colors.neutralSoft }} />
+            </div>
+          ))}
+        </>
+      ),
+    },
+    {
+      label: "Public Pasaport",
+      body: (
+        <>
+          <div style={{ width: "70%", height: 12, borderRadius: 999, background: colors.greenSoft, border: `1px solid ${colors.green}`, marginBottom: 8 }} />
+          {[0, 1].map((i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, width: "85%", marginBottom: 6 }}>
+              <div style={{ width: 6, height: 6, minWidth: 6, borderRadius: "50%", background: colors.green }} />
+              <div style={{ flex: 1, height: 6, borderRadius: 3, background: colors.neutralSoft }} />
+            </div>
+          ))}
+        </>
+      ),
+    },
+  ];
+
   return (
     <main style={{ fontFamily: font, color: colors.textDark, overflowX: "hidden", background: colors.surfaceLight }}>
       {/* Hero — onaylanan OTOİZ referans görselinin (araç + anahtarlık fotoğrafı)
@@ -104,26 +213,6 @@ export default function HomePage() {
                   >
                     <Icon name={v.icon} color={colors.green} size={20} />
                     <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.85, marginTop: 6, lineHeight: 1.3 }}>{v.title}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop: referansın geniş kompozisyonundaki dikey ikon+başlık+açıklama listesi */}
-              <div className="otoiz-hero-benefits-desktop" style={{ flexDirection: "column", gap: 16, textAlign: "left", marginBottom: 34, maxWidth: 340 }}>
-                {valueProps.map((v) => (
-                  <div key={v.title} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <div
-                      style={{
-                        width: 38, height: 38, minWidth: 38, borderRadius: "50%", background: "rgba(255,255,255,0.06)",
-                        border: "1px solid rgba(255,255,255,0.14)", display: "flex", alignItems: "center", justifyContent: "center",
-                      }}
-                    >
-                      <Icon name={v.icon} color={colors.green} size={17} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: colors.textLight, marginBottom: 1 }}>{v.title}</div>
-                      <div style={{ fontSize: 12.5, opacity: 0.6 }}>{v.desc}</div>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -202,6 +291,63 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
+            {/* SAĞ KOLON — referansın kompozisyonundaki gibi fayda listesi +
+                altında premium "imza" sloganı. Yalnızca desktop'ta görünür
+                (bkz. .otoiz-hero-benefits-col / .otoiz-hero-signature). */}
+            <div className="otoiz-hero-benefits-col">
+              <div className="otoiz-hero-benefits-desktop" style={{ flexDirection: "column", gap: 16, textAlign: "left", marginBottom: 34, maxWidth: 300 }}>
+                {valueProps.map((v) => (
+                  <div key={v.title} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <div
+                      style={{
+                        width: 38, height: 38, minWidth: 38, borderRadius: "50%", background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.14)", display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >
+                      <Icon name={v.icon} color={colors.green} size={17} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: colors.textLight, marginBottom: 1 }}>{v.title}</div>
+                      <div style={{ fontSize: 12.5, opacity: 0.6 }}>{v.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Referanstaki premium "imza" hissi — el yazısı stilinde slogan */}
+              <div className="otoiz-hero-signature" style={{ maxWidth: 260 }}>
+                <div
+                  style={{
+                    fontFamily: "'Caveat', cursive", fontSize: 34, fontWeight: 600, color: colors.textLight,
+                    lineHeight: 1.15, opacity: 0.92,
+                  }}
+                >
+                  Aracınızın İzi<br />Hep Sizinle.
+                </div>
+                <div className="otoiz-accent-line" style={{ marginTop: 10 }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Ürün vitrini — referanstaki 8 ekranlık yatay şerit. Gerçek
+          screenshot/resim gömülmüyor; her kart gerçek HTML/CSS ile üretilmiş
+          sadeleştirilmiş bir önizleme. */}
+      <section style={{ background: colors.bg, padding: "36px 20px 44px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: colors.green, fontWeight: 700, opacity: 0.85 }}>
+              Tek anahtar, sekiz ekran
+            </div>
+          </div>
+          <div className="otoiz-showcase-strip" style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 8, justifyContent: "center" }}>
+            {showcaseScreens.map((s) => (
+              <ScreenPreviewCard key={s.label} label={s.label} dark={s.dark}>
+                {s.body}
+              </ScreenPreviewCard>
+            ))}
           </div>
         </div>
       </section>
@@ -322,37 +468,78 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section style={{ padding: "64px 20px", textAlign: "center", background: colors.green }}>
-        <h2 style={{ fontSize: 24, marginBottom: 10, color: colors.textDark, fontWeight: 800 }}>
-          Bugünü kaydet. Yarın satarken güven oluştur.
-        </h2>
-        <p style={{ color: colors.textDark, fontSize: 14, marginBottom: 28, maxWidth: 440, margin: "0 auto 28px", opacity: 0.75 }}>
-          OTOİZ, aracınızın teknik geçmişini düzenli, taşınabilir ve değerli hale getirir.
-        </p>
-        <button
-          onClick={goToGirisSecimi}
-          style={{
-            display: "inline-block",
-            padding: "15px 36px",
-            background: colors.textDark,
-            color: colors.textLight,
-            borderRadius: 10,
-            border: "none",
-            fontWeight: 800,
-            fontSize: 15,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            minHeight: 48,
-          }}
-        >
-          Hemen Kaydolun
-        </button>
+      {/* CTA — referanstaki koyu zeminli 4 fayda kartı + güçlü yeşil CTA */}
+      <section className="otoiz-hero-pattern" style={{ padding: "56px 20px 64px", background: `linear-gradient(180deg, ${colors.bg}, ${colors.surfaceDark})`, position: "relative" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto 44px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
+          {finalBenefits.map((b) => (
+            <div key={b.title} className="otoiz-glass-surface" style={{ background: "rgba(255,255,255,0.05)", borderRadius: 14, padding: "18px 16px", textAlign: "center" }}>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(54,232,109,0.14)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
+                <Icon name={b.icon} color={colors.green} size={18} />
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: colors.textLight, marginBottom: 4 }}>{b.title}</div>
+              <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.55)", lineHeight: 1.4 }}>{b.desc}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ fontSize: 26, marginBottom: 10, color: colors.textLight, fontWeight: 800 }}>
+            Bugünü kaydet. Yarın satarken güven oluştur.
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 30, maxWidth: 440, margin: "0 auto 30px" }}>
+            OTOİZ, aracınızın teknik geçmişini düzenli, taşınabilir ve değerli hale getirir.
+          </p>
+          <button
+            onClick={goToGirisSecimi}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "17px 40px",
+              background: colors.green,
+              color: colors.textDark,
+              borderRadius: 999,
+              border: "none",
+              fontWeight: 800,
+              fontSize: 16,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              minHeight: 52,
+              boxShadow: "0 16px 34px rgba(54,232,109,0.3)",
+            }}
+          >
+            Hemen Kaydolun
+            <Icon name="chevron-right" color={colors.textDark} size={18} />
+          </button>
+        </div>
       </section>
 
       <footer style={{ textAlign: "center", padding: "28px 20px", color: colors.textMuted, fontSize: 12, background: colors.surfaceSoft }}>
         © 2026 OTOİZ — Ankara
       </footer>
     </main>
+  );
+}
+
+// Vitrin şeridindeki tek bir mini ekran kartı — küçük telefon çerçevesi
+// hissi veren, gerçek HTML/CSS ile üretilmiş sadeleştirilmiş önizleme.
+function ScreenPreviewCard({ label, dark, children }: { label: string; dark?: boolean; children: React.ReactNode }) {
+  return (
+    <div style={{ minWidth: 118, width: 118 }}>
+      <div
+        style={{
+          borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,0.14)",
+          boxShadow: "0 10px 24px rgba(0,0,0,0.35)", background: dark ? colors.bg : colors.surfaceLight,
+        }}
+      >
+        <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "8px 8px 6px", display: "flex", justifyContent: "center" }}>
+          <OtoizLogo variant="dark" size={44} />
+        </div>
+        <div style={{ padding: "12px 10px", display: "flex", flexDirection: "column", alignItems: "center", minHeight: 108 }}>
+          {children}
+        </div>
+      </div>
+      <div style={{ textAlign: "center", fontSize: 10.5, fontWeight: 600, color: "rgba(255,255,255,0.6)", marginTop: 8, lineHeight: 1.3 }}>
+        {label}
+      </div>
+    </div>
   );
 }
