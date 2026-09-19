@@ -65,6 +65,7 @@ test.describe("QA görsel doğrulama ekran görüntüleri", () => {
   test("Devret adımları (giriş yapılmamış -> giriş sayfasına döner)", async ({ page }, testInfo) => {
     if (testInfo.project.name !== "desktop-chromium") test.skip();
     await page.goto("/bireysel/devir-kabul/gecersiz-token-000");
+    await page.getByRole("heading", { name: "Geçersiz veya Süresi Dolmuş Bağlantı" }).waitFor();
     await page.screenshot({ path: path.join(outDir, "10-devir-kabul-invalid.png") });
   });
 });

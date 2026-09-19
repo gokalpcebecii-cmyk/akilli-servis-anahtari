@@ -84,7 +84,7 @@ export default function DevirKabulPage() {
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
       <div style={{ maxWidth: 420, margin: "0 auto", padding: "40px 20px" }}>
         <div style={{ marginBottom: 20, textAlign: "center" }}>
-          <OtoizLogo variant="light" size={14} />
+          <OtoizLogo variant="light" size={14} mark="primary" />
         </div>
         <h1 style={{ fontSize: 20, marginBottom: 8, textAlign: "center", color: colors.textDark, fontWeight: 800 }}>Araç Devrini Kabul Et</h1>
 

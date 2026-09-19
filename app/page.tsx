@@ -56,8 +56,11 @@ export default function HomePage() {
         }}
       >
         <div style={{ maxWidth: 480, margin: "0 auto", position: "relative", zIndex: 2 }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 34 }}>
-            <OtoizLogo variant="dark" size={19} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginBottom: 34 }}>
+            <OtoizLogo variant="dark" size={19} mark="primary" />
+            <span style={{ fontSize: 10.5, letterSpacing: 1.8, textTransform: "uppercase", opacity: 0.5, fontWeight: 600 }}>
+              Dijital Araç Servis Pasaportu
+            </span>
           </div>
 
           <div style={{ textAlign: "center" }}>
@@ -439,7 +442,7 @@ function LoginChooserModal({
 
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ marginBottom: 14, display: "flex", justifyContent: "center" }}>
-            <OtoizLogo variant="light" size={15} />
+            <OtoizLogo variant="light" size={15} mark="primary" />
           </div>
           <h2 id="login-chooser-title" style={{ fontSize: 21, fontWeight: 800, color: colors.textDark, margin: "0 0 6px" }}>
             Nasıl devam etmek istersiniz?

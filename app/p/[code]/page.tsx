@@ -104,7 +104,7 @@ export default async function PassportByCodePage({ params }: { params: { code: s
       <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, color: colors.textLight, padding: "24px 20px 28px" }}>
         <div style={{ maxWidth: 460, margin: "0 auto" }}>
           <div style={{ marginBottom: 16 }}>
-            <OtoizLogo variant="dark" size={14} />
+            <OtoizLogo variant="dark" size={14} mark="primary" />
           </div>
           <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 4 }}>Yetkili Servis</p>
           <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>{tenant?.name}</p>

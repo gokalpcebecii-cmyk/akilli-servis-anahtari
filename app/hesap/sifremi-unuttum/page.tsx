@@ -54,7 +54,7 @@ export default function SifremiUnuttumPage() {
           ← Ana sayfaya dön
         </a>
         <div style={{ maxWidth: 360, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={17} />
+          <OtoizLogo variant="dark" size={17} mark="primary" />
           <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Şifremi Unuttum</h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>
             Hesabınıza kayıtlı e-posta adresini girin, size şifre sıfırlama bağlantısı gönderelim. Bu
