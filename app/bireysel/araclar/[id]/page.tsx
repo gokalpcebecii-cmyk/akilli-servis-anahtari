@@ -25,6 +25,14 @@ const LEGACY_ITEM = { key: "fren_disk_balata", label: "Fren Disk-Balata" };
 
 const PRESET_KM_OPTIONS = [5000, 10000, 15000, 20000, 30000];
 
+// Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
+// temizlenir (örn. "052430" yazılamaz). Negatif değer zaten mümkün değil
+// çünkü "-" karakteri rakam olmadığı için süzülüyor.
+function sanitizeKmInput(raw: string) {
+  const digitsOnly = raw.replace(/[^0-9]/g, "");
+  return digitsOnly.replace(/^0+(?=\d)/, "");
+}
+
 function generateCode(length = 12) {
   const chars = "abcdefghjkmnpqrstuvwxyz23456789";
   const random = new Uint32Array(length);
@@ -42,7 +50,7 @@ export default function BireyselVehicleDetailPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [vehicle, setVehicle] = useState<any>(
-    isNew ? { plate: "", brand: "", model: "", year: "", current_km: 0, next_service_km: "", next_service_date: "", notes: "" } : null
+    isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "", notes: "" } : null
   );
   const [records, setRecords] = useState<any[]>([]);
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
@@ -180,6 +188,16 @@ export default function BireyselVehicleDetailPage() {
   }
 
   async function handleSaveVehicle() {
+    // Güncel kilometre boş/geçersiz bırakılamaz — "052430" tarzı gizli
+    // dize state'i artık integer'a burada, submit anında parse ediliyor.
+    const parsedCurrentKm = parseInt(vehicle.current_km, 10);
+    if (vehicle.current_km === "" || Number.isNaN(parsedCurrentKm) || parsedCurrentKm < 0) {
+      alert("Lütfen geçerli bir güncel kilometre girin.");
+      return;
+    }
+    const parsedNextServiceKm =
+      vehicle.next_service_km === "" || vehicle.next_service_km == null ? null : parseInt(vehicle.next_service_km, 10);
+
     setSaving(true);
     if (isNew) {
       const { data: created, error } = await supabase
@@ -189,8 +207,8 @@ export default function BireyselVehicleDetailPage() {
           brand: vehicle.brand,
           model: vehicle.model,
           year: vehicle.year || null,
-          current_km: vehicle.current_km,
-          next_service_km: vehicle.next_service_km || null,
+          current_km: parsedCurrentKm,
+          next_service_km: parsedNextServiceKm,
           next_service_date: vehicle.next_service_date || null,
           notes: vehicle.notes || null,
           owner_user_id: userId,
@@ -209,8 +227,8 @@ export default function BireyselVehicleDetailPage() {
           brand: vehicle.brand,
           model: vehicle.model,
           year: vehicle.year || null,
-          current_km: vehicle.current_km,
-          next_service_km: vehicle.next_service_km || null,
+          current_km: parsedCurrentKm,
+          next_service_km: parsedNextServiceKm,
           next_service_date: vehicle.next_service_date || null,
           notes: vehicle.notes || null,
           updated_at: new Date().toISOString(),
@@ -298,6 +316,9 @@ export default function BireyselVehicleDetailPage() {
   }
 
   if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
+
+  // "Sonraki bakım" için geçmiş tarih seçilemesin diye native date input'un min'i.
+  const todayIso = new Date().toISOString().slice(0, 10);
 
   function getUpcomingStatus(itemKey: string) {
     const item = maintenanceItems.find((m) => m.item_key === itemKey);
@@ -412,11 +433,33 @@ export default function BireyselVehicleDetailPage() {
             <label style={labelStyle}>Model Yılı</label>
             <input type="number" style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.year || ""} onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })} />
             <label style={labelStyle}>Güncel Kilometre</label>
-            <input type="number" style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.current_km} onChange={(e) => setVehicle({ ...vehicle, current_km: Number(e.target.value) })} />
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Örn. 52430"
+              style={{ ...inputStyle, marginBottom: 10 }}
+              value={vehicle.current_km}
+              onChange={(e) => setVehicle({ ...vehicle, current_km: sanitizeKmInput(e.target.value) })}
+            />
             <label style={labelStyle}>Sonraki Bakım (km)</label>
-            <input type="number" style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.next_service_km || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_km: Number(e.target.value) })} />
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Opsiyonel"
+              style={{ ...inputStyle, marginBottom: 10 }}
+              value={vehicle.next_service_km || ""}
+              onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
+            />
             <label style={labelStyle}>Sonraki Bakım (tarih)</label>
-            <input type="date" style={{ ...inputStyle, marginBottom: 16 }} value={vehicle.next_service_date || ""} onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })} />
+            <input
+              type="date"
+              min={todayIso}
+              style={{ ...inputStyle, marginBottom: 16 }}
+              value={vehicle.next_service_date || ""}
+              onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })}
+            />
             <button onClick={handleSaveVehicle} disabled={saving} style={primaryButtonStyle(saving)}>
               {saving ? "Kaydediliyor…" : isNew ? "Aracı Oluştur" : "Kaydet"}
             </button>
