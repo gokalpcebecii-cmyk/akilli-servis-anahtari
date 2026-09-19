@@ -21,12 +21,22 @@ export async function POST(req: NextRequest) {
 
     const { data: staff } = await supabase
       .from("staff_users")
-      .select("id, tenant_id")
+      .select("id, tenant_id, role")
       .eq("id", userData.user.id)
       .maybeSingle();
 
     if (!staff) {
       return NextResponse.json({ error: "QR üretimi için yetkili bir servis hesabı gerekli" }, { status: 403 });
+    }
+
+    // QR üretimi operasyonel/yönetim işlemidir; yalnızca işletme sahibi
+    // (role = owner) çalıştırabilir. Sıradan staff hesapları (role = staff)
+    // kimlik doğrulanmış olsa bile reddedilir.
+    if (staff.role !== "owner") {
+      return NextResponse.json(
+        { error: "QR üretimi yalnızca işletme sahibi (owner) yetkisiyle yapılabilir" },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();
