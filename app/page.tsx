@@ -107,7 +107,7 @@ export default function HomePage() {
                 </span>
               </div>
 
-              <h1 style={{ fontSize: 32, marginBottom: 14, fontWeight: 800, lineHeight: 1.18, letterSpacing: -0.4 }}>
+              <h1 className="otoiz-hero-headline" style={{ fontSize: 32, marginBottom: 14, fontWeight: 800, lineHeight: 1.18, letterSpacing: -0.4 }}>
                 Bu otomobil için premium<br />dijital servis pasaportu.
               </h1>
               <p style={{ fontSize: 15.5, opacity: 0.85, lineHeight: 1.6, marginBottom: 26, maxWidth: 380, textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>

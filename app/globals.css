@@ -200,7 +200,7 @@ a:focus-visible {
     bottom: 0;
     height: auto;
     background-image: url(/marketing/otoiz-hero-scene.jpg);
-    background-position: 72% 38%;
+    background-position: 58% 34%;
     filter: saturate(0.94) brightness(0.92);
   }
   .otoiz-hero-scrim {
@@ -221,14 +221,14 @@ a:focus-visible {
     max-width: 1280px;
   }
   .otoiz-hero-grid {
-    grid-template-columns: 0.82fr 0.86fr 0.64fr;
+    grid-template-columns: 0.95fr 0.78fr 0.6fr;
     grid-template-areas: "text phone benefits";
     align-items: center;
-    gap: 26px;
+    gap: 22px;
     text-align: left;
   }
   .otoiz-hero-phone-frame {
-    width: 300px !important;
+    width: 330px !important;
   }
   .otoiz-hero-text {
     display: flex;
@@ -236,9 +236,14 @@ a:focus-visible {
     align-items: flex-start;
   }
   .otoiz-landing-logo {
-    width: 380px !important;
+    width: 430px !important;
     height: auto !important;
     filter: drop-shadow(0 6px 28px rgba(0, 0, 0, 0.55));
+  }
+  .otoiz-hero-headline {
+    font-size: 26px !important;
+    line-height: 1.12 !important;
+    margin-bottom: 12px !important;
   }
   .otoiz-hero-benefits-mobile {
     display: none !important;
