@@ -257,15 +257,18 @@ function VehicleHeroCard({ vehicle, onClick }: { vehicle: any; onClick: () => vo
         border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: colors.textLight, boxShadow: "0 16px 38px rgba(6,20,33,0.28)",
       }}
     >
-      {/* Araç silüeti — kart içi dekoratif vurgu (bkz. HeroVehicleScene ile aynı dil) */}
-      <svg viewBox="0 0 200 80" aria-hidden="true" style={{ position: "absolute", right: -14, bottom: -10, width: 160, opacity: 0.5, zIndex: 0 }}>
-        <path
-          d="M14 58 C14 46 22 38 34 36 L58 34 C67 20 84 10 100 10 C116 10 132 19 141 34 L162 36 C176 38 186 46 186 58"
-          fill="none" stroke={colors.green} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
-        />
-        <circle cx="52" cy="59" r="11" fill="none" stroke={colors.green} strokeWidth="2.2" />
-        <circle cx="150" cy="59" r="11" fill="none" stroke={colors.green} strokeWidth="2.2" />
-      </svg>
+      {/* Onaylanan OTOİZ referans fotoğrafı — kart içi görsel araç vurgusu */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute", inset: 0, zIndex: 0,
+          backgroundImage: "url(/marketing/otoiz-hero-car.jpg)",
+          backgroundSize: "cover", backgroundPosition: "70% 40%",
+          opacity: 0.4,
+          WebkitMaskImage: "linear-gradient(105deg, transparent 0%, transparent 30%, black 62%, black 100%)",
+          maskImage: "linear-gradient(105deg, transparent 0%, transparent 30%, black 62%, black 100%)",
+        }}
+      />
 
       <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
         <div>

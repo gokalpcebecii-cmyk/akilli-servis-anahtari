@@ -108,32 +108,67 @@ a:focus-visible {
     radial-gradient(circle at 82% 0%, rgba(54, 232, 109, 0.08), transparent 45%);
 }
 
-/* ============ Landing hero — desktop kompozisyonu ============
-   Mobilde tek sütun (metin → görsel sahne → telefon kartı → CTA),
-   desktop'ta üç sütun (branding | araç+anahtarlık | telefon önizleme).
-   Mobil düzen basitçe büyütülmüyor — gerçek üç sütunlu bir kompozisyona
-   geçiyor. */
+/* ============ Landing hero — onaylanan referans görsel kompozisyonu ============
+   Onaylanan OTOİZ referans görseli (araç + anahtarlık fotoğrafı) tam-genişlik
+   arka plan olarak kullanılıyor; gerçek HTML logo/başlık/CTA bir scrim
+   (karartma gradyanı) üzerinde bindiriliyor. Mobilde referansın "LANDING"
+   ekran mockup'ındaki gibi üstte fotoğraf → altta koyu düz zemin geçişi;
+   desktop'ta fotoğraf sağda daha görünür, metin solda koyu zeminde. */
+.otoiz-hero-photo {
+  height: 360px;
+  background-image: url(/marketing/otoiz-hero-car.jpg);
+  background-position: 50% 30%;
+}
+.otoiz-hero-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(6, 20, 33, 0.25) 0%,
+    rgba(6, 20, 33, 0.55) 55%,
+    #061421 340px,
+    #061421 100%
+  );
+}
 .otoiz-hero-container {
   max-width: 480px;
 }
 .otoiz-hero-grid {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-areas: "text" "visual" "phone";
+  grid-template-areas: "text" "phone";
   gap: 8px;
   text-align: center;
 }
 .otoiz-hero-text { grid-area: text; }
-.otoiz-hero-visual { grid-area: visual; }
 .otoiz-hero-phone { grid-area: phone; }
+.otoiz-hero-benefits-desktop { display: none; }
 
 @media (min-width: 1040px) {
+  .otoiz-hero-photo {
+    bottom: 0;
+    height: auto;
+    background-image: url(/marketing/otoiz-hero-scene.jpg);
+    background-position: 72% 38%;
+  }
+  .otoiz-hero-scrim {
+    background: linear-gradient(
+      100deg,
+      rgba(6, 20, 33, 0.97) 0%,
+      rgba(6, 20, 33, 0.88) 34%,
+      rgba(6, 20, 33, 0.45) 58%,
+      rgba(6, 20, 33, 0.6) 100%
+    );
+  }
+  .otoiz-hero-section {
+    min-height: 640px;
+    display: flex;
+    align-items: center;
+  }
   .otoiz-hero-container {
     max-width: 1180px;
   }
   .otoiz-hero-grid {
-    grid-template-columns: 1fr 1.05fr 0.85fr;
-    grid-template-areas: "text visual phone";
+    grid-template-columns: 1.2fr 0.85fr;
+    grid-template-areas: "text phone";
     align-items: center;
     gap: 36px;
     text-align: left;
@@ -143,8 +178,11 @@ a:focus-visible {
     flex-direction: column;
     align-items: flex-start;
   }
-  .otoiz-hero-badges-row {
-    justify-content: flex-start !important;
+  .otoiz-hero-benefits-mobile {
+    display: none !important;
+  }
+  .otoiz-hero-benefits-desktop {
+    display: flex !important;
   }
   .otoiz-hero-cta-col {
     align-items: flex-start !important;
