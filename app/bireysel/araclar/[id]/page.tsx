@@ -10,11 +10,15 @@ const MAINTENANCE_ITEMS = [
   { key: "yag_filtresi", label: "Yağ Filtresi" },
   { key: "hava_filtresi", label: "Hava Filtresi" },
   { key: "polen_filtresi", label: "Polen Filtresi" },
-  { key: "fren_disk_balata", label: "Fren Disk-Balata" },
+  { key: "fren_on_balata", label: "Ön Fren Balatası" },
+  { key: "fren_arka_balata", label: "Arka Fren Balatası" },
   { key: "triger_seti", label: "Triger Seti" },
   { key: "aku", label: "Akü" },
   { key: "lastik", label: "Lastik" },
 ];
+// Eski/tek parça fren kaydı: geriye dönük uyumluluk için yalnızca gerçekten
+// kayıtlı olduğu araçlarda gösterilir, yeni kayıtlar için sunulmaz.
+const LEGACY_ITEM = { key: "fren_disk_balata", label: "Fren Disk-Balata" };
 
 const PRESET_KM_OPTIONS = [5000, 10000, 15000, 20000, 30000];
 
@@ -41,6 +45,9 @@ export default function BireyselVehicleDetailPage() {
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
   const [intervalInputs, setIntervalInputs] = useState<Record<string, string>>({});
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [qrRevokedAt, setQrRevokedAt] = useState<string | null>(null);
+  const [qrBusy, setQrBusy] = useState(false);
   const [newRecord, setNewRecord] = useState({ description: "", km_at_service: "", cost: "" });
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -84,33 +91,54 @@ export default function BireyselVehicleDetailPage() {
       });
       setIntervalInputs(initialIntervals);
 
-      let { data: qrKey } = await supabase
-        .from("qr_keys")
-        .select("code")
-        .eq("vehicle_id", params.id)
-        .is("revoked_at", null)
-        .maybeSingle();
-
-      if (!qrKey) {
-        const code = generateCode();
-        const { data: created } = await supabase
-          .from("qr_keys")
-          .insert({ code, vehicle_id: params.id, assigned_at: new Date().toISOString() })
-          .select("code")
-          .single();
-        qrKey = created;
-      }
-
-      if (qrKey) {
-        const publicUrl = `${window.location.origin}/p/${qrKey.code}`;
-        const qr = await QRCode.toDataURL(publicUrl, { width: 220 });
-        setQrDataUrl(qr);
-      }
+      await loadQr(params.id as string);
 
       setLoading(false);
     }
     init();
   }, [params.id]);
+
+  async function loadQr(vehicleId: string) {
+    let { data: qrKey } = await supabase
+      .from("qr_keys")
+      .select("code, revoked_at")
+      .eq("vehicle_id", vehicleId)
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    if (!qrKey) {
+      const code = generateCode();
+      const { data: created } = await supabase
+        .from("qr_keys")
+        .insert({ code, vehicle_id: vehicleId, assigned_at: new Date().toISOString() })
+        .select("code, revoked_at")
+        .single();
+      qrKey = created;
+    }
+
+    if (qrKey) {
+      setQrCode(qrKey.code);
+      setQrRevokedAt(qrKey.revoked_at);
+      const publicUrl = `${window.location.origin}/p/${qrKey.code}`;
+      const qr = await QRCode.toDataURL(publicUrl, { width: 220 });
+      setQrDataUrl(qr);
+    }
+  }
+
+  async function handleRevokeQr() {
+    if (!qrCode) return;
+    if (!confirm("Bu QR/NFC kodunu iptal etmek istediğinize emin misiniz? İptal edilen kod bir daha kullanılamaz.")) return;
+    setQrBusy(true);
+    await supabase.from("qr_keys").update({ revoked_at: new Date().toISOString() }).eq("code", qrCode);
+    await loadQr(params.id as string);
+    setQrBusy(false);
+  }
+
+  async function handleIssueNewQr() {
+    setQrBusy(true);
+    await loadQr(params.id as string);
+    setQrBusy(false);
+  }
 
   async function refreshMaintenanceItems() {
     const { data: mi } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
@@ -239,6 +267,37 @@ export default function BireyselVehicleDetailPage() {
 
   const inputStyle = { width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc", marginBottom: 10 };
 
+  function getUpcomingStatus(itemKey: string) {
+    const item = maintenanceItems.find((m) => m.item_key === itemKey);
+    if (!item || !item.last_service_date) return null;
+
+    let overdue = false;
+    let upcoming = false;
+    let hasInterval = false;
+
+    if (item.interval_km && item.last_service_km != null) {
+      hasInterval = true;
+      const kmSince = (vehicle.current_km || 0) - item.last_service_km;
+      const kmRemaining = item.interval_km - kmSince;
+      if (kmRemaining <= 0) overdue = true;
+      else if (kmRemaining <= 1000) upcoming = true;
+    }
+
+    if (item.interval_months) {
+      hasInterval = true;
+      const dueDate = new Date(item.last_service_date);
+      dueDate.setMonth(dueDate.getMonth() + item.interval_months);
+      const daysRemaining = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      if (daysRemaining <= 0) overdue = true;
+      else if (daysRemaining <= 30) upcoming = true;
+    }
+
+    if (!hasInterval) return null;
+    if (overdue) return { label: "İşlem Zamanı", color: "#c0392b", bg: "#fdecea" };
+    if (upcoming) return { label: "Yaklaşıyor", color: "#b8860b", bg: "#fff8e6" };
+    return { label: "Normal", color: "#2E6B4F", bg: "#eaf7ef" };
+  }
+
   function getItemStatus(itemKey: string) {
     const item = maintenanceItems.find((m) => m.item_key === itemKey);
     if (!item || !item.last_service_date) return null;
@@ -287,6 +346,32 @@ export default function BireyselVehicleDetailPage() {
           {saving ? "Kaydediliyor…" : "Kaydet"}
         </button>
       </section>
+
+      {!isNew && (
+        <section style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 15, color: "#888", marginBottom: 10 }}>Bakım Durumu Özeti</h2>
+          {(vehicle.next_service_km || vehicle.next_service_date) && (
+            <div style={{ background: "#F4F1EA", borderRadius: 10, padding: "10px 14px", marginBottom: 10, fontSize: 13, color: "#1E3A5F" }}>
+              Sonraki bakım:
+              {vehicle.next_service_km ? ` ${Number(vehicle.next_service_km).toLocaleString("tr-TR")} km` : ""}
+              {vehicle.next_service_km && vehicle.next_service_date ? " · " : ""}
+              {vehicle.next_service_date ? new Date(vehicle.next_service_date).toLocaleDateString("tr-TR") : ""}
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {[...MAINTENANCE_ITEMS, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM.key) ? [LEGACY_ITEM] : [])].map((item) => {
+              const s = getUpcomingStatus(item.key);
+              if (!s) return null;
+              return (
+                <div key={item.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", border: "1px solid #eee", borderRadius: 8, padding: "8px 12px" }}>
+                  <span style={{ fontSize: 13, color: "#333" }}>{item.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: s.color, background: s.bg, padding: "3px 10px", borderRadius: 999 }}>{s.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {!isNew && (
         <section style={{ marginBottom: 24 }}>
@@ -367,9 +452,53 @@ export default function BireyselVehicleDetailPage() {
 
       {!isNew && qrDataUrl && (
         <section style={{ marginBottom: 24, textAlign: "center" }}>
-          <h2 style={{ fontSize: 15, color: "#888" }}>Araç QR Kodu</h2>
-          <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 180, height: 180 }} />
-          <p style={{ fontSize: 12, color: "#999" }}>Bu kodu anahtarlığa/NFC etikete işleyebilirsin. Aracını satarsan bu pasaport ve teknik geçmiş araçla kalır.</p>
+          <h2 style={{ fontSize: 15, color: "#888" }}>Araç QR / NFC Kodu</h2>
+          {qrRevokedAt ? (
+            <>
+              <div style={{ padding: "20px 0" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: "#fdecea", color: "#c0392b" }}>
+                  İptal Edildi
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>
+                Bu kod artık geçersiz ve tekrar kullanılamaz. Aracın için yeni bir kod oluşturabilirsin.
+              </p>
+              <button
+                onClick={handleIssueNewQr}
+                disabled={qrBusy}
+                style={{ padding: "10px 20px", background: "#1E3A5F", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: qrBusy ? "wait" : "pointer" }}
+              >
+                {qrBusy ? "Oluşturuluyor…" : "Yeni Kod Oluştur"}
+              </button>
+            </>
+          ) : (
+            <>
+              <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 180, height: 180 }} />
+              <div style={{ margin: "8px 0" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: "#eaf7ef", color: "#2E6B4F" }}>
+                  Aktif
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: "#999", marginBottom: 10 }}>
+                Bu kodu anahtarlığa/NFC etikete işleyebilirsin. Aracını satarsan bu pasaport ve teknik geçmiş araçla kalır.
+              </p>
+              <button
+                onClick={handleRevokeQr}
+                disabled={qrBusy}
+                style={{ padding: "8px 16px", background: "#fff", border: "1px solid #c0392b", color: "#c0392b", borderRadius: 8, fontWeight: 600, fontSize: 13, cursor: qrBusy ? "wait" : "pointer" }}
+              >
+                {qrBusy ? "İşleniyor…" : "Kodu İptal Et"}
+              </button>
+            </>
+          )}
+        </section>
+      )}
+
+      {!isNew && (
+        <section style={{ marginBottom: 24, textAlign: "center" }}>
+          <a href={`/bireysel/araclar/${params.id}/devret`} style={{ fontSize: 13, color: "#888", textDecoration: "underline" }}>
+            Aracı Devret / Elden Çıkar
+          </a>
         </section>
       )}
 
