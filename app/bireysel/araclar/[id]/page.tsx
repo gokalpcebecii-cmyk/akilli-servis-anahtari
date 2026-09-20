@@ -1,12 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, dangerOutlineButtonStyle, badgeStyle, cardStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
+
+const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, describeMaintenancePlan } = require("@/lib/logic");
+
+// Yeni araç akışındaki otomatik bakım planı seçenekleri (PILOT FIX 03 madde B).
+const PLAN_OPTIONS: { key: string; label: string }[] = [
+  { key: "default", label: "+10.000 km / 12 ay" },
+  { key: "extended_km", label: "+15.000 km / 12 ay" },
+  { key: "extended_months", label: "+10.000 km / 6 ay" },
+  { key: "custom", label: "Özel" },
+  { key: "later", label: "Bakım planını sonra belirle" },
+];
 
 const MAINTENANCE_ITEMS = [
   { key: "motor_yagi", label: "Motor Yağı" },
@@ -24,6 +35,26 @@ const MAINTENANCE_ITEMS = [
 const LEGACY_ITEM = { key: "fren_disk_balata", label: "Fren Disk-Balata" };
 
 const PRESET_KM_OPTIONS = [5000, 10000, 15000, 20000, 30000];
+
+// PILOT FIX 03 (bölüm D): "en sık" 6 işlem — varsayılan kompakt görünümde
+// tek dokunuşla eklenebilir. Kalan 3 madde + periyot ayarları "Tüm işlemler"
+// açılımında.
+const TOP_QUICK_ITEMS = MAINTENANCE_ITEMS.slice(0, 6);
+
+// Bir işlem daha önce hiç periyot almadıysa tek dokunuşla eklemede
+// kullanılacak makul varsayılan (madde D: "varsayılan periyotla tek
+// dokunuşla ekleme").
+const DEFAULT_ITEM_INTERVALS: Record<string, number> = {
+  motor_yagi: 10000,
+  yag_filtresi: 10000,
+  hava_filtresi: 15000,
+  polen_filtresi: 15000,
+  fren_on_balata: 20000,
+  fren_arka_balata: 20000,
+  triger_seti: 60000,
+  aku: 30000,
+  lastik: 40000,
+};
 
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
 // temizlenir (örn. "052430" yazılamaz). Negatif değer zaten mümkün değil
@@ -59,21 +90,40 @@ export default function BireyselVehicleDetailPage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [qrRevokedAt, setQrRevokedAt] = useState<string | null>(null);
   const [qrBusy, setQrBusy] = useState(false);
+  // PILOT FIX 03 (bölüm F): büyük taranabilir QR artık varsayılan açık
+  // görünmüyor — "QR'ı Göster" açık eylemiyle ortaya çıkıyor.
+  const [qrRevealed, setQrRevealed] = useState(false);
   const [newRecord, setNewRecord] = useState({ description: "", km_at_service: "", cost: "" });
+  const [recordError, setRecordError] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [savingItem, setSavingItem] = useState<string | null>(null);
+  // PILOT FIX 03 (madde A5): hızlı bireysel parça kaydından sonra 5-10 sn
+  // "Geri al" penceresi — yanlışlıkla eklenen kaydı geri almak için.
+  const [quickUndo, setQuickUndo] = useState<{ recordId: string; itemKey: string; label: string; previousItem: any | null } | null>(null);
+  const undoTimerRef = useRef<number | null>(null);
   const [savingInterval, setSavingInterval] = useState<string | null>(null);
   const [editingVehicle, setEditingVehicle] = useState(isNew);
+  // PILOT FIX 03: alan bazlı form hataları + çift-submit koruması.
+  // fieldErrors state React re-render'ı bekler; savingRef senkron olduğu
+  // için hızlı çift tıklama/Enter+click ile bile ikinci çağrı ilk render
+  // tamamlanmadan da engellenir.
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const savingRef = useRef(false);
+  const [planType, setPlanType] = useState<"default" | "extended_km" | "extended_months" | "custom" | "later">("default");
   const [activeTab, setActiveTab] = useState<"genel" | "gecmis" | "belgeler">("genel");
   // Genel Bakış'ın kısa/özet kalması için parça hızlı-ekle formu varsayılan
   // olarak kapalı — yalnızca ilgili özet satırına (veya #parca hash'ine)
   // tıklandığında açılır. Business logic/handler'lar değişmedi, yalnızca
   // görünürlük durumu eklendi.
   const [showQuickEntry, setShowQuickEntry] = useState(false);
+  // PILOT FIX 03 (bölüm D): varsayılan görünümde arama + en sık 6 işlem
+  // kompakt tek-dokunuş düğmesi; tüm liste + periyot ayarları ayrı açılım.
+  const [quickSearch, setQuickSearch] = useState("");
+  const [showAllQuickItems, setShowAllQuickItems] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -93,6 +143,9 @@ export default function BireyselVehicleDetailPage() {
       }
       setVehicle(v);
       setNotesDraft(v.notes || "");
+      // Serbest bakım kaydı km alanı, aracın güncel kilometresinden
+      // otomatik dolar ve düzenlenebilir kalır (madde D).
+      if (v?.current_km != null) setNewRecord((prev) => ({ ...prev, km_at_service: String(v.current_km) }));
 
       const { data: r } = await supabase
         .from("maintenance_records")
@@ -187,53 +240,106 @@ export default function BireyselVehicleDetailPage() {
     setRecords(r ?? []);
   }
 
-  async function handleSaveVehicle() {
-    // Güncel kilometre boş/geçersiz bırakılamaz — "052430" tarzı gizli
-    // dize state'i artık integer'a burada, submit anında parse ediliyor.
-    const parsedCurrentKm = parseInt(vehicle.current_km, 10);
-    if (vehicle.current_km === "" || Number.isNaN(parsedCurrentKm) || parsedCurrentKm < 0) {
-      alert("Lütfen geçerli bir güncel kilometre girin.");
-      return;
+  function focusFirstError(errors: Record<string, string>) {
+    const order = ["plate", "brand", "model", "year", "current_km", "next_service_km"];
+    const firstKey = order.find((k) => errors[k]);
+    if (firstKey) {
+      window.setTimeout(() => {
+        document.querySelector<HTMLElement>(`[data-field="${firstKey}"]`)?.focus();
+      }, 0);
     }
-    const parsedNextServiceKm =
-      vehicle.next_service_km === "" || vehicle.next_service_km == null ? null : parseInt(vehicle.next_service_km, 10);
+  }
 
+  async function handleSaveVehicle() {
+    // Çift tıklama / Enter+click / yavaş ağda tek mantıksal kayıt (madde A5).
+    // ref senkron olduğu için setSaving(true)'nin re-render'ını beklemeden
+    // aynı anda gelen ikinci çağrıyı da engeller.
+    if (savingRef.current) return;
+
+    const { valid, errors, normalized } = validateVehicleInput({
+      plate: vehicle.plate,
+      brand: vehicle.brand,
+      model: vehicle.model,
+      year: vehicle.year,
+      current_km: vehicle.current_km,
+    });
+
+    // Özel plan seçiliyse sonraki km, güncel km'den büyük olmalı (madde A4).
+    const customNextKmProvided = planType === "custom" && vehicle.next_service_km !== "" && vehicle.next_service_km != null;
+    if (customNextKmProvided && !isValidNextServiceKm(normalized.current_km, Number(vehicle.next_service_km))) {
+      errors.next_service_km = "Sonraki bakım kilometresi, güncel kilometreden büyük olmalı.";
+    }
+
+    if (!valid || Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      focusFirstError(errors);
+      return; // Geçersiz istekte hiçbir yan etki (araç/QR/audit) oluşmaz.
+    }
+    setFieldErrors({});
+
+    const plan = computeMaintenancePlan({
+      currentKm: normalized.current_km,
+      planType,
+      customNextKm: vehicle.next_service_km,
+      customNextDate: vehicle.next_service_date,
+    });
+
+    savingRef.current = true;
     setSaving(true);
+
     if (isNew) {
-      const { data: created, error } = await supabase
-        .from("vehicles")
-        .insert({
-          plate: vehicle.plate,
-          brand: vehicle.brand,
-          model: vehicle.model,
-          year: vehicle.year || null,
-          current_km: parsedCurrentKm,
-          next_service_km: parsedNextServiceKm,
-          next_service_date: vehicle.next_service_date || null,
-          notes: vehicle.notes || null,
-          owner_user_id: userId,
-          tenant_id: null,
-        })
-        .select()
-        .single();
-      setSaving(false);
-      if (!error && created) router.push(`/bireysel/araclar/${created.id}`);
-      else alert(error?.message || "Kaydedilemedi.");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      let json: any = {};
+      try {
+        const res = await fetch("/api/vehicles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            plate: vehicle.plate,
+            brand: vehicle.brand,
+            model: vehicle.model,
+            year: vehicle.year,
+            current_km: vehicle.current_km,
+            next_service_km: plan.nextServiceKm,
+            next_service_date: plan.nextServiceDate,
+          }),
+        });
+        json = await res.json();
+        if (!res.ok) {
+          savingRef.current = false;
+          setSaving(false);
+          if (json.errors) {
+            setFieldErrors(json.errors);
+            focusFirstError(json.errors);
+          } else {
+            alert(json.error || "Kaydedilemedi.");
+          }
+          return;
+        }
+      } catch {
+        savingRef.current = false;
+        setSaving(false);
+        alert("Bağlantı hatası. Lütfen tekrar deneyin.");
+        return;
+      }
+      router.push(`/bireysel/araclar/${json.vehicle.id}`);
     } else {
       await supabase
         .from("vehicles")
         .update({
-          plate: vehicle.plate,
-          brand: vehicle.brand,
-          model: vehicle.model,
-          year: vehicle.year || null,
-          current_km: parsedCurrentKm,
-          next_service_km: parsedNextServiceKm,
-          next_service_date: vehicle.next_service_date || null,
+          plate: normalized.plate,
+          brand: normalized.brand,
+          model: normalized.model,
+          year: normalized.year,
+          current_km: normalized.current_km,
+          next_service_km: plan.nextServiceKm,
+          next_service_date: plan.nextServiceDate,
           notes: vehicle.notes || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", params.id);
+      savingRef.current = false;
       setSaving(false);
       setEditingVehicle(false);
     }
@@ -252,7 +358,9 @@ export default function BireyselVehicleDetailPage() {
     setSavingItem(itemKey);
     const today = new Date().toISOString().slice(0, 10);
     const existingInterval = intervalInputs[itemKey];
-    const intervalKm = existingInterval ? Number(existingInterval) : null;
+    // Kullanıcı hiç periyot seçmediyse makul varsayılan otomatik atanır.
+    const intervalKm = existingInterval ? Number(existingInterval) : DEFAULT_ITEM_INTERVALS[itemKey] ?? null;
+    const previousItem = maintenanceItems.find((m: any) => m.item_key === itemKey) ?? null;
 
     await supabase.from("maintenance_items").upsert(
       {
@@ -265,17 +373,52 @@ export default function BireyselVehicleDetailPage() {
       { onConflict: "vehicle_id,item_key" }
     );
 
-    await supabase.from("maintenance_records").insert({
-      vehicle_id: params.id,
-      tenant_id: null,
-      description: label,
-      km_at_service: vehicle.current_km,
-      created_by: userId,
-    });
+    const { data: insertedRecord } = await supabase
+      .from("maintenance_records")
+      .insert({
+        vehicle_id: params.id,
+        tenant_id: null,
+        description: label,
+        km_at_service: vehicle.current_km,
+        created_by: userId,
+      })
+      .select()
+      .single();
 
     await refreshMaintenanceItems();
     await refreshRecords();
     setSavingItem(null);
+
+    if (insertedRecord) {
+      if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
+      setQuickUndo({ recordId: insertedRecord.id, itemKey, label, previousItem });
+      undoTimerRef.current = window.setTimeout(() => setQuickUndo(null), 8000);
+    }
+  }
+
+  async function handleUndoQuickMaintenance() {
+    if (!quickUndo) return;
+    const { recordId, itemKey, previousItem } = quickUndo;
+    if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
+    setQuickUndo(null);
+
+    await supabase.from("maintenance_records").delete().eq("id", recordId);
+    if (previousItem) {
+      await supabase.from("maintenance_items").upsert(
+        {
+          vehicle_id: params.id,
+          item_key: itemKey,
+          last_service_date: previousItem.last_service_date,
+          last_service_km: previousItem.last_service_km,
+          interval_km: previousItem.interval_km,
+        },
+        { onConflict: "vehicle_id,item_key" }
+      );
+    } else {
+      await supabase.from("maintenance_items").delete().eq("vehicle_id", params.id).eq("item_key", itemKey);
+    }
+    await refreshMaintenanceItems();
+    await refreshRecords();
   }
 
   function handleIntervalInputChange(itemKey: string, value: string) {
@@ -302,17 +445,36 @@ export default function BireyselVehicleDetailPage() {
   }
 
   async function handleAddRecord() {
-    if (!newRecord.description) return;
+    // PILOT FIX 03 (bölüm D): boş formda sessiz başarısızlık yerine
+    // alan bazlı hata.
+    if (!newRecord.description.trim()) {
+      setRecordError("Lütfen ne yapıldığını kısaca yazın.");
+      return;
+    }
+    setRecordError("");
+
+    const enteredKm = newRecord.km_at_service ? Number(newRecord.km_at_service) : null;
+
     await supabase.from("maintenance_records").insert({
       vehicle_id: params.id,
       tenant_id: null,
-      description: newRecord.description,
-      km_at_service: newRecord.km_at_service ? Number(newRecord.km_at_service) : null,
+      description: newRecord.description.trim(),
+      km_at_service: enteredKm,
       cost: newRecord.cost ? Number(newRecord.cost) : null,
       created_by: userId,
     });
+
+    // Daha yüksek km kaydı aracın güncel kilometresini yükseltebilir;
+    // geçmişe dönük daha düşük bir kayıt güncel km'yi ASLA düşürmez.
+    const raisedKm = enteredKm != null && enteredKm > (vehicle.current_km ?? 0);
+    if (raisedKm) {
+      await supabase.from("vehicles").update({ current_km: enteredKm, updated_at: new Date().toISOString() }).eq("id", params.id);
+      setVehicle((prev: any) => ({ ...prev, current_km: enteredKm }));
+    }
+
     await refreshRecords();
-    setNewRecord({ description: "", km_at_service: "", cost: "" });
+    const nextKm = raisedKm ? enteredKm : vehicle.current_km;
+    setNewRecord({ description: "", km_at_service: nextKm != null ? String(nextKm) : "", cost: "" });
   }
 
   if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
@@ -370,7 +532,15 @@ export default function BireyselVehicleDetailPage() {
     {
       icon: "bell",
       title: "Yaklaşan Bakım",
-      meta: nextUpcoming ? nextUpcoming.status!.label : "Planlı bakım yok",
+      // PILOT FIX 03 (madde A4): parça bazlı acil durum varsa o öncelikli;
+      // yoksa aracın KENDİ sonraki bakım planı (next_service_km/_date)
+      // burada da dikkate alınır — aksi halde bu satır "Planlı bakım yok"
+      // derken hemen altında "Sonraki bakım: 62.430 km" görünebiliyordu
+      // (aynı ekranda birbirini yalanlayan iki farklı sinyal, canlı testte
+      // bulunan hata). Artık ikisi de describeMaintenancePlan/tek kaynaktan.
+      meta: nextUpcoming
+        ? nextUpcoming.status!.label
+        : describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).label,
       tab: "genel",
       hash: "parca",
     },
@@ -387,7 +557,7 @@ export default function BireyselVehicleDetailPage() {
   return (
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 60 }}>
       <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "20px 18px 26px" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
+        <div className="otoiz-vehicle-shell" style={{ maxWidth: 560, margin: "0 auto" }}>
           <a href="/bireysel/araclar" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
             ← Araçlarım
           </a>
@@ -415,51 +585,190 @@ export default function BireyselVehicleDetailPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 18 }}>
+      <div className="otoiz-vehicle-shell" style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 18 }}>
         {(isNew || editingVehicle) && (
           <section style={cardStyle}>
             <label style={labelStyle}>Plaka</label>
-            <input style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.plate} onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value })} />
+            <input
+              data-field="plate"
+              aria-describedby={fieldErrors.plate ? "err-plate" : undefined}
+              aria-invalid={!!fieldErrors.plate}
+              style={{ ...inputStyle, marginBottom: fieldErrors.plate ? 4 : 10, borderColor: fieldErrors.plate ? colors.danger : colors.border }}
+              value={vehicle.plate}
+              onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value.toUpperCase() })}
+            />
+            {fieldErrors.plate && (
+              <p id="err-plate" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                {fieldErrors.plate}
+              </p>
+            )}
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Marka</label>
-                <input style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.brand || ""} onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })} />
+                <input
+                  data-field="brand"
+                  aria-describedby={fieldErrors.brand ? "err-brand" : undefined}
+                  aria-invalid={!!fieldErrors.brand}
+                  style={{ ...inputStyle, marginBottom: fieldErrors.brand ? 4 : 10, borderColor: fieldErrors.brand ? colors.danger : colors.border }}
+                  value={vehicle.brand || ""}
+                  onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })}
+                />
+                {fieldErrors.brand && (
+                  <p id="err-brand" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                    {fieldErrors.brand}
+                  </p>
+                )}
               </div>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Model</label>
-                <input style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.model || ""} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} />
+                <input
+                  data-field="model"
+                  aria-describedby={fieldErrors.model ? "err-model" : undefined}
+                  aria-invalid={!!fieldErrors.model}
+                  style={{ ...inputStyle, marginBottom: fieldErrors.model ? 4 : 10, borderColor: fieldErrors.model ? colors.danger : colors.border }}
+                  value={vehicle.model || ""}
+                  onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })}
+                />
+                {fieldErrors.model && (
+                  <p id="err-model" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                    {fieldErrors.model}
+                  </p>
+                )}
               </div>
             </div>
-            <label style={labelStyle}>Model Yılı</label>
-            <input type="number" style={{ ...inputStyle, marginBottom: 10 }} value={vehicle.year || ""} onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })} />
-            <label style={labelStyle}>Güncel Kilometre</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              placeholder="Örn. 52430"
-              style={{ ...inputStyle, marginBottom: 10 }}
-              value={vehicle.current_km}
-              onChange={(e) => setVehicle({ ...vehicle, current_km: sanitizeKmInput(e.target.value) })}
-            />
-            <label style={labelStyle}>Sonraki Bakım (km)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              placeholder="Opsiyonel"
-              style={{ ...inputStyle, marginBottom: 10 }}
-              value={vehicle.next_service_km || ""}
-              onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
-            />
-            <label style={labelStyle}>Sonraki Bakım (tarih)</label>
-            <input
-              type="date"
-              min={todayIso}
-              style={{ ...inputStyle, marginBottom: 16 }}
-              value={vehicle.next_service_date || ""}
-              onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })}
-            />
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Model Yılı</label>
+                <input
+                  data-field="year"
+                  type="number"
+                  aria-describedby={fieldErrors.year ? "err-year" : undefined}
+                  aria-invalid={!!fieldErrors.year}
+                  style={{ ...inputStyle, marginBottom: fieldErrors.year ? 4 : 10, borderColor: fieldErrors.year ? colors.danger : colors.border }}
+                  value={vehicle.year || ""}
+                  onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })}
+                />
+                {fieldErrors.year && (
+                  <p id="err-year" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                    {fieldErrors.year}
+                  </p>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Güncel Kilometre</label>
+                <input
+                  data-field="current_km"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="Örn. 52430"
+                  aria-describedby={fieldErrors.current_km ? "err-current_km" : undefined}
+                  aria-invalid={!!fieldErrors.current_km}
+                  style={{ ...inputStyle, marginBottom: fieldErrors.current_km ? 4 : 10, borderColor: fieldErrors.current_km ? colors.danger : colors.border }}
+                  value={vehicle.current_km}
+                  onChange={(e) => setVehicle({ ...vehicle, current_km: sanitizeKmInput(e.target.value) })}
+                />
+                {fieldErrors.current_km && (
+                  <p id="err-current_km" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                    {fieldErrors.current_km}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {isNew ? (
+              // PILOT FIX 03 madde B: yeni araç akışında bakım planı elle
+              // km/tarih yazılarak değil, otomatik seçenek çipleriyle
+              // belirlenir — normal senaryoda klavye hiç açılmaz.
+              <>
+                <label style={labelStyle}>Bakım Planı</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                  {PLAN_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setPlanType(opt.key as typeof planType)}
+                      aria-pressed={planType === opt.key}
+                      style={{
+                        padding: "9px 14px",
+                        borderRadius: radius.pill,
+                        border: planType === opt.key ? `1.5px solid ${colors.greenDark}` : `1px solid ${colors.border}`,
+                        background: planType === opt.key ? colors.greenSoft : colors.surfaceLight,
+                        color: planType === opt.key ? colors.greenDark : colors.textDark,
+                        fontSize: 12.5,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        minHeight: 44,
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {planType !== "custom" && planType !== "later" && vehicle.current_km !== "" && !Number.isNaN(Number(vehicle.current_km)) && (
+                  <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 14px" }}>
+                    {Number(vehicle.current_km).toLocaleString("tr-TR")} km → Sonraki bakım{" "}
+                    {(() => {
+                      const plan = computeMaintenancePlan({ currentKm: Number(vehicle.current_km), planType });
+                      return `${plan.nextServiceKm!.toLocaleString("tr-TR")} km • ${new Date(plan.nextServiceDate!).toLocaleDateString("tr-TR")}`;
+                    })()}
+                  </p>
+                )}
+                {planType === "later" && <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 14px" }}>Bakım planı sonra belirlenecek.</p>}
+                {planType === "custom" && (
+                  <>
+                    <label style={labelStyle}>Sonraki Bakım (km)</label>
+                    <input
+                      data-field="next_service_km"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="Opsiyonel"
+                      aria-describedby={fieldErrors.next_service_km ? "err-next-km" : undefined}
+                      aria-invalid={!!fieldErrors.next_service_km}
+                      style={{ ...inputStyle, marginBottom: fieldErrors.next_service_km ? 4 : 10, borderColor: fieldErrors.next_service_km ? colors.danger : colors.border }}
+                      value={vehicle.next_service_km || ""}
+                      onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
+                    />
+                    {fieldErrors.next_service_km && (
+                      <p id="err-next-km" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                        {fieldErrors.next_service_km}
+                      </p>
+                    )}
+                    <label style={labelStyle}>Sonraki Bakım (tarih)</label>
+                    <input
+                      type="date"
+                      min={todayIso}
+                      style={{ ...inputStyle, marginBottom: 16 }}
+                      value={vehicle.next_service_date || ""}
+                      onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })}
+                    />
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <label style={labelStyle}>Sonraki Bakım (km)</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="Opsiyonel"
+                  style={{ ...inputStyle, marginBottom: 10 }}
+                  value={vehicle.next_service_km || ""}
+                  onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
+                />
+                <label style={labelStyle}>Sonraki Bakım (tarih)</label>
+                <input
+                  type="date"
+                  min={todayIso}
+                  style={{ ...inputStyle, marginBottom: 16 }}
+                  value={vehicle.next_service_date || ""}
+                  onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })}
+                />
+              </>
+            )}
+
             <button onClick={handleSaveVehicle} disabled={saving} style={primaryButtonStyle(saving)}>
               {saving ? "Kaydediliyor…" : isNew ? "Aracı Oluştur" : "Kaydet"}
             </button>
@@ -531,12 +840,13 @@ export default function BireyselVehicleDetailPage() {
 
             <section id="parca" style={{ ...cardStyle, display: activeTab === "genel" ? "block" : "none" }}>
               <SectionHeader icon="wrench" title="Bakım Durumu Özeti" />
-              {(vehicle.next_service_km || vehicle.next_service_date) && (
+              {/* describeMaintenancePlan: tek kaynak — bu satırla üstteki
+                  "Yaklaşan Bakım" özet satırı hiçbir zaman birbirini
+                  yalanlamaz (bkz. madde A4 yorum notu). */}
+              {describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).hasPlan && (
                 <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 14px", marginBottom: 12, fontSize: 13, color: colors.textDark }}>
-                  Sonraki bakım:
-                  {vehicle.next_service_km ? ` ${Number(vehicle.next_service_km).toLocaleString("tr-TR")} km` : ""}
-                  {vehicle.next_service_km && vehicle.next_service_date ? " · " : ""}
-                  {vehicle.next_service_date ? new Date(vehicle.next_service_date).toLocaleDateString("tr-TR") : ""}
+                  Sonraki bakım:{" "}
+                  {describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).label}
                 </div>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
@@ -563,13 +873,79 @@ export default function BireyselVehicleDetailPage() {
                 Parça Değişimleri — Hızlı Ekle
                 <Icon name={showQuickEntry ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={16} />
               </button>
+
+              {quickUndo && (
+                <div
+                  role="status"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                    background: colors.greenSoft, borderRadius: radius.sm, padding: "10px 14px", marginTop: 10,
+                  }}
+                >
+                  <span style={{ fontSize: 12.5, color: colors.greenDark, fontWeight: 700 }}>✓ {quickUndo.label} eklendi</span>
+                  <button
+                    type="button"
+                    onClick={handleUndoQuickMaintenance}
+                    style={{ background: "none", border: "none", color: colors.greenDark, fontWeight: 800, fontSize: 12.5, textDecoration: "underline", cursor: "pointer", minHeight: 32 }}
+                  >
+                    Geri al
+                  </button>
+                </div>
+              )}
+
               {showQuickEntry && (
               <>
               <p style={{ fontSize: 12, color: colors.textMuted, margin: "14px 0" }}>
-                Kendin yaptıysan ya da başka bir yerde yaptırdıysan butona bas — otomatik bugünün tarihi ve güncel km ile kaydedilir.
+                Kendin yaptıysan ya da başka bir yerde yaptırdıysan butona bas — otomatik bugünün tarihi, güncel km ve varsayılan periyotla kaydedilir.
               </p>
+
+              {/* PILOT FIX 03 (bölüm D): dokuz büyük kart yerine — arama +
+                  en sık 6 işlem kompakt tek-dokunuş düğmesi ilk görünümde. */}
+              <input
+                type="search"
+                placeholder="İşlem ara (örn. lastik)"
+                value={quickSearch}
+                onChange={(e) => setQuickSearch(e.target.value)}
+                style={{ ...inputStyle, marginBottom: 10 }}
+              />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                {(quickSearch ? MAINTENANCE_ITEMS : TOP_QUICK_ITEMS)
+                  .filter((item) => item.label.toLocaleLowerCase("tr-TR").includes(quickSearch.toLocaleLowerCase("tr-TR")))
+                  .map((item) => {
+                    const status = getItemStatus(item.key);
+                    const isSaving = savingItem === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => handleQuickMaintenance(item.key, item.label)}
+                        disabled={isSaving}
+                        style={{
+                          padding: "10px 14px", borderRadius: radius.pill, minHeight: 44,
+                          border: status?.isToday ? `1.5px solid ${colors.greenDark}` : `1px solid ${colors.border}`,
+                          background: status?.isToday ? colors.greenSoft : colors.surfaceLight,
+                          color: status?.isToday ? colors.greenDark : colors.textDark,
+                          fontWeight: 700, fontSize: 13, cursor: isSaving ? "wait" : "pointer", fontFamily: "inherit",
+                        }}
+                      >
+                        {isSaving ? "Kaydediliyor…" : item.label}
+                        {status?.isToday && " ✓"}
+                      </button>
+                    );
+                  })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAllQuickItems((v) => !v)}
+                style={{ background: "none", border: "none", color: colors.greenDark, fontWeight: 700, fontSize: 12.5, padding: "4px 0", cursor: "pointer", marginBottom: showAllQuickItems ? 10 : 4 }}
+              >
+                {showAllQuickItems ? "Tüm işlemler ve periyot ayarları ▲" : "Tüm işlemler ve periyot ayarları ▾"}
+              </button>
+
+              {showAllQuickItems && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {MAINTENANCE_ITEMS.map((item) => {
+                {MAINTENANCE_ITEMS.filter((item) => item.label.toLocaleLowerCase("tr-TR").includes(quickSearch.toLocaleLowerCase("tr-TR"))).map((item) => {
                   const status = getItemStatus(item.key);
                   const isSaving = savingItem === item.key;
                   const isSavingInterval = savingInterval === item.key;
@@ -636,6 +1012,7 @@ export default function BireyselVehicleDetailPage() {
                   );
                 })}
               </div>
+              )}
               </>
               )}
             </section>
@@ -717,16 +1094,38 @@ export default function BireyselVehicleDetailPage() {
               ) : (
                 qrDataUrl && (
                   <>
-                    <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 170, height: 170, borderRadius: radius.md }} />
+                    {qrRevealed ? (
+                      <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 170, height: 170, borderRadius: radius.md }} />
+                    ) : (
+                      <div
+                        style={{
+                          width: 170, height: 170, margin: "0 auto", borderRadius: radius.md, background: colors.surfaceSoft,
+                          border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center",
+                        }}
+                        aria-hidden="true"
+                      >
+                        <Icon name="qr" color={colors.textMuted} size={44} />
+                      </div>
+                    )}
                     <div style={{ margin: "10px 0" }}>
-                      <span style={badgeStyle("success")}>Aktif</span>
+                      <span style={badgeStyle("success")}>QR Atandı • Aktif</span>
                     </div>
                     <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 14 }}>
                       Bu kodu anahtarlığa/NFC etikete işleyebilirsin. Aracını satarsan bu pasaport ve teknik geçmiş araçla kalır.
                     </p>
-                    <button onClick={handleRevokeQr} disabled={qrBusy} style={dangerOutlineButtonStyle(qrBusy)}>
-                      {qrBusy ? "İşleniyor…" : "Kodu İptal Et"}
-                    </button>
+                    {!qrRevealed && (
+                      <button
+                        onClick={() => setQrRevealed(true)}
+                        style={{ ...primaryButtonStyle(false), width: "auto", padding: "10px 22px", marginBottom: 10 }}
+                      >
+                        QR'ı Göster
+                      </button>
+                    )}
+                    <div>
+                      <button onClick={handleRevokeQr} disabled={qrBusy} style={dangerOutlineButtonStyle(qrBusy)}>
+                        {qrBusy ? "İşleniyor…" : "Kodu İptal Et"}
+                      </button>
+                    </div>
                   </>
                 )
               )}
@@ -751,15 +1150,25 @@ export default function BireyselVehicleDetailPage() {
               <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Diğer Bakım Kaydı (serbest not)</h3>
               <input
                 placeholder="Yapılan işlem (örn. Genel bakım, lastik rotasyonu)"
-                style={{ ...inputStyle, marginBottom: 8 }}
+                aria-invalid={!!recordError}
+                aria-describedby={recordError ? "record-desc-err" : undefined}
+                style={{ ...inputStyle, marginBottom: recordError ? 4 : 8, borderColor: recordError ? colors.danger : colors.border }}
                 value={newRecord.description}
-                onChange={(e) => setNewRecord({ ...newRecord, description: e.target.value })}
+                onChange={(e) => {
+                  setNewRecord({ ...newRecord, description: e.target.value });
+                  if (recordError) setRecordError("");
+                }}
               />
+              {recordError && (
+                <p id="record-desc-err" role="alert" style={{ color: colors.danger, fontSize: 12, margin: "0 0 8px" }}>
+                  {recordError}
+                </p>
+              )}
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <input
-                  type="number" placeholder="Km" style={inputStyle}
+                  type="text" inputMode="numeric" pattern="[0-9]*" placeholder="Km" style={inputStyle}
                   value={newRecord.km_at_service}
-                  onChange={(e) => setNewRecord({ ...newRecord, km_at_service: e.target.value })}
+                  onChange={(e) => setNewRecord({ ...newRecord, km_at_service: sanitizeKmInput(e.target.value) })}
                 />
                 <input
                   type="number" placeholder="Ücret (₺)" style={inputStyle}
@@ -767,7 +1176,11 @@ export default function BireyselVehicleDetailPage() {
                   onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value })}
                 />
               </div>
-              <button onClick={handleAddRecord} style={{ ...primaryButtonStyle(false), width: "auto", padding: "10px 20px", marginBottom: 20 }}>
+              <button
+                onClick={handleAddRecord}
+                disabled={!newRecord.description.trim()}
+                style={{ ...primaryButtonStyle(!newRecord.description.trim()), width: "auto", padding: "10px 20px", marginBottom: 20 }}
+              >
                 Kaydı Ekle
               </button>
 

@@ -8,6 +8,8 @@ import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { BottomNav } from "@/components/BottomNav";
 
+const { plateSearchKey, describeMaintenancePlan } = require("@/lib/logic");
+
 const MODULES = [
   { key: "servis-gecmisi", title: "Servis Geçmişi", desc: "Yapılan tüm bakım ve onarım kayıtları.", icon: "history" },
   { key: "kilometre", title: "Kilometre Kayıtları", desc: "Güncel km ve geçmiş okumalar.", icon: "gauge" },
@@ -79,7 +81,7 @@ export default function BireyselAraclarPage() {
     router.push("/bireysel/giris");
   }
 
-  const filtered = search ? vehicles.filter((v) => v.plate?.toLowerCase().includes(search.toLowerCase())) : vehicles;
+  const filtered = search ? vehicles.filter((v) => plateSearchKey(v.plate).includes(plateSearchKey(search))) : vehicles;
   const primary = filtered[0];
   const rest = filtered.slice(1);
   const firstName = email ? email.split("@")[0] : "";
@@ -297,7 +299,7 @@ function VehicleHeroCard({ vehicle, onClick }: { vehicle: any; onClick: () => vo
         <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 12, padding: "11px 13px", backdropFilter: "blur(2px)" }}>
           <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>SONRAKİ BAKIM</div>
           <div style={{ fontSize: 17, fontWeight: 700, color: colors.green }}>
-            {vehicle.next_service_km ? `${Number(vehicle.next_service_km).toLocaleString("tr-TR")} km` : "—"}
+            {describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).label}
           </div>
         </div>
       </div>

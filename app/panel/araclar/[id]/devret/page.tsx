@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, primaryButtonStyle } from "@/lib/theme";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { prepareOwnershipTransfer } = require("@/lib/logic");
 
 export default function OwnershipTransferPage() {
@@ -15,6 +16,28 @@ export default function OwnershipTransferPage() {
   const [kmAtTransfer, setKmAtTransfer] = useState("");
   const [confirmErase, setConfirmErase] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // PILOT FIX 03 (madde A7): geri alınamaz kişisel veri etkisine rağmen
+  // bu akış onay kutusu işaretlenmeden erişilebilirdi — canlı testte
+  // bulunan pilot-engelleyici gizlilik riski. Kalıcı, güvenli sürüm
+  // (etki özeti + alıcı doğrulaması + yeniden kimlik doğrulama + audit)
+  // ayrı bir teknik görev; o tamamlanana kadar bu route erişilemez.
+  // Veri modeli/mantık DEĞİŞMEDİ — yalnızca UX erişimi kapatıldı.
+  if (!PILOT_FLAGS.ownershipTransferSelfService) {
+    return (
+      <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: font, color: colors.textDark, textAlign: "center" }}>
+        <h1 style={{ fontSize: 20 }}>Bu Özellik Şu An Kullanılamıyor</h1>
+        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+          Araç sahipliği devri, pilot süresi boyunca yalnızca kontrollü destek süreciyle yürütülüyor —
+          geri alınamaz kişisel veri etkisi taşıdığı için ek güvenlik adımları tamamlanana kadar
+          buradan doğrudan yapılamıyor. Bir devir gerekiyorsa lütfen OTOİZ destek ekibiyle iletişime geçin.
+        </p>
+        <a href={`/panel/araclar/${params.id}`} style={{ color: colors.greenDark, fontWeight: 700, fontSize: 13.5 }}>
+          ← Araç detayına dön
+        </a>
+      </main>
+    );
+  }
 
   async function handleTransfer() {
     if (!confirmErase) {

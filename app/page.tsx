@@ -35,15 +35,16 @@ export default function HomePage() {
     { title: "Zaman Kazandırır", icon: "clock" },
     { title: "Değer Katar", icon: "diamond" },
   ];
-  // Desktop hero header/nav — yalnızca görsel; gerçek route/işlevi olmayan
-  // öğeler (Hizmetler/Kurumsal/İletişim) sayfa başına dönen inert link.
+  // PILOT FIX 03 (bölüm E — Landing navigasyonu): "Hizmetler"/"Kurumsal"/
+  // "İletişim" için sayfada karşılığı olan bir bölüm/rota yok — href="#"
+  // ölü bağlantı olarak kalacağına menüden tamamen kaldırıldı (bölüm hazır
+  // olduğunda geri eklenip gerçek bir hedefe bağlanabilir). "Bireysel"
+  // aslında giriş TÜRÜ seçim ekranına gidiyor (doğrudan bireysel girişe
+  // değil) — etiket bunu doğru yansıtacak şekilde güncellendi.
   const navLinks = [
     { label: "Ana Sayfa", href: "/", active: true },
     { label: "Nasıl Çalışır?", href: "#nasil-calisir", active: false },
-    { label: "Hizmetler", href: "#", active: false },
-    { label: "Kurumsal", href: "#", active: false },
-    { label: "Bireysel", href: "/giris", active: false },
-    { label: "İletişim", href: "#", active: false },
+    { label: "Giriş Türü Seç", href: "/giris", active: false },
   ];
 
   const steps = [
@@ -53,12 +54,18 @@ export default function HomePage() {
     { n: "4", title: "Araç satıldığında devredilir", desc: "Teknik geçmiş korunur, kişisel bilgiler devredilmez." },
   ];
 
+  // PILOT FIX 03 (bölüm E — Landing içerik doğruluğu): 3 madde gerçek
+  // davranışla uyumlu hale getirildi — (1) araç sahibi de kendi kaydını
+  // ekleyebiliyor, yalnızca servis kaydı "yetkili personel doğrulamalı"
+  // değil; (2) hatırlatma altyapısı gerçek ama kesin/garanti bir "otomatik
+  // uyarı" iddiası pilot için abartılı; (3) "KVKK uyumlu" kanıtlanmamış bir
+  // hukuki/teknik kesinlik iddiası, pilot diline çekildi.
   const features = [
     { title: "Bakım ve onarım geçmişi", desc: "Her işlem tarih ve açıklamasıyla kayıt altında.", icon: "wrench" },
     { title: "Kilometre takibi", desc: "Güncel km her ziyarette otomatik güncellenir.", icon: "gauge" },
-    { title: "Sonraki bakım hatırlatması", desc: "Km ve tarih eşiğine göre otomatik uyarı.", icon: "bell" },
-    { title: "Servis doğrulamalı kayıtlar", desc: "Sadece yetkili personel kayıt ekleyebilir.", icon: "check" },
-    { title: "KVKK uyumlu veri yönetimi", desc: "Kişisel veriler talep halinde güvenle silinir.", icon: "shield" },
+    { title: "Sonraki bakım hatırlatması", desc: "Km ve tarih eşiğine göre hatırlatma alt yapısı.", icon: "bell" },
+    { title: "Servis kaydı doğrulaması", desc: "Servis kayıtlarını yalnızca yetkili servis ekler; araç sahibi kendi kaydını da tutabilir.", icon: "check" },
+    { title: "Kişisel veri kontrolü", desc: "Kişisel veriler talep halinde silinir.", icon: "shield" },
     { title: "Araçla birlikte yaşayan geçmiş", desc: "Sahiplik değişse de teknik geçmiş kalır.", icon: "link" },
   ];
 

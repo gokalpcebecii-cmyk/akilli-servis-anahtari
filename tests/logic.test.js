@@ -7,6 +7,12 @@ const {
   shouldSendReminder,
   prepareOwnershipTransfer,
   anonymizeCustomerRecord,
+  normalizePlate,
+  plateSearchKey,
+  validateVehicleInput,
+  computeMaintenancePlan,
+  isValidNextServiceKm,
+  describeMaintenancePlan,
 } = require("../lib/logic");
 
 const { generateQrCode, QR_CODE_ALPHABET } = require("../lib/qrToken");
@@ -150,4 +156,116 @@ test("generateQrCode: aynı girdilerle deterministik OLMAYAN (rastgele) sonuç �
   const a = generateQrCode(16);
   const b = generateQrCode(16);
   assert.notEqual(a, b);
+});
+
+// ---------------------------------------------------------------------
+// PILOT FIX 03 — plaka normalizasyonu, araç doğrulama, bakım planı
+// ---------------------------------------------------------------------
+
+test("normalizePlate: aynı plakanın üç ayraç varyasyonu birebir aynı kanonik forma iner", () => {
+  const a = normalizePlate("06otoiz01");
+  const b = normalizePlate("06 OTOIZ 01");
+  const c = normalizePlate("06-otoiz-01");
+  assert.equal(a, "06 OTOIZ 01");
+  assert.equal(a, b);
+  assert.equal(b, c);
+});
+
+test("normalizePlate: baştaki/sondaki boşlukları temizler", () => {
+  assert.equal(normalizePlate("  34 abc 123  "), "34 ABC 123");
+});
+
+test("plateSearchKey: ayraçtan bağımsız arama anahtarı üretir", () => {
+  assert.equal(plateSearchKey("06 OTOIZ 01"), plateSearchKey("06otoiz01"));
+  assert.equal(plateSearchKey("06-otoiz-01"), "06OTOIZ01");
+});
+
+test("validateVehicleInput: tamamen boş form tüm zorunlu alanlarda hata döner, valid=false", () => {
+  const result = validateVehicleInput({ plate: "", brand: "", model: "", year: "", current_km: "" });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.plate);
+  assert.ok(result.errors.brand);
+  assert.ok(result.errors.model);
+  assert.ok(result.errors.year);
+  assert.ok(result.errors.current_km);
+});
+
+test("validateVehicleInput: yalnızca boşluk içeren alanlar dolu sayılmaz", () => {
+  const result = validateVehicleInput({ plate: "   ", brand: "   ", model: "   ", year: 2020, current_km: 100 });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.plate);
+  assert.ok(result.errors.brand);
+  assert.ok(result.errors.model);
+});
+
+test("validateVehicleInput: makul olmayan model yılı reddedilir", () => {
+  const tooOld = validateVehicleInput({ plate: "34 ABC 1", brand: "X", model: "Y", year: 1900, current_km: 0 });
+  assert.equal(tooOld.valid, false);
+  assert.ok(tooOld.errors.year);
+
+  const tooFuture = validateVehicleInput({ plate: "34 ABC 1", brand: "X", model: "Y", year: new Date().getFullYear() + 5, current_km: 0 });
+  assert.equal(tooFuture.valid, false);
+  assert.ok(tooFuture.errors.year);
+});
+
+test("validateVehicleInput: negatif kilometre reddedilir", () => {
+  const result = validateVehicleInput({ plate: "34 ABC 1", brand: "X", model: "Y", year: 2020, current_km: -5 });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.current_km);
+});
+
+test("validateVehicleInput: geçerli girdi valid=true döner ve normalize edilmiş değerleri taşır", () => {
+  const result = validateVehicleInput({ plate: "06otoiz01", brand: " Toyota ", model: " Corolla ", year: "2020", current_km: "52430" });
+  assert.equal(result.valid, true);
+  assert.equal(Object.keys(result.errors).length, 0);
+  assert.equal(result.normalized.plate, "06 OTOIZ 01");
+  assert.equal(result.normalized.brand, "Toyota");
+  assert.equal(result.normalized.model, "Corolla");
+  assert.equal(result.normalized.year, 2020);
+  assert.equal(result.normalized.current_km, 52430);
+});
+
+test("computeMaintenancePlan: varsayılan plan güncel km + 10.000 / +12 ay üretir", () => {
+  const plan = computeMaintenancePlan({ currentKm: 132000, planType: "default", today: "2026-09-19" });
+  assert.equal(plan.nextServiceKm, 142000);
+  assert.equal(plan.nextServiceDate, "2027-09-19");
+});
+
+test("computeMaintenancePlan: +15.000/12 ay ve +10.000/6 ay alternatifleri doğru hesaplanır", () => {
+  const extendedKm = computeMaintenancePlan({ currentKm: 52430, planType: "extended_km", today: "2026-09-19" });
+  assert.equal(extendedKm.nextServiceKm, 67430);
+  assert.equal(extendedKm.nextServiceDate, "2027-09-19");
+
+  const extendedMonths = computeMaintenancePlan({ currentKm: 52430, planType: "extended_months", today: "2026-09-19" });
+  assert.equal(extendedMonths.nextServiceKm, 62430);
+  assert.equal(extendedMonths.nextServiceDate, "2027-03-19");
+});
+
+test("computeMaintenancePlan: 'sonra belirle' km/tarihi null bırakır", () => {
+  const plan = computeMaintenancePlan({ currentKm: 52430, planType: "later" });
+  assert.equal(plan.nextServiceKm, null);
+  assert.equal(plan.nextServiceDate, null);
+});
+
+test("computeMaintenancePlan: özel plan verilen değerleri aynen kullanır", () => {
+  const plan = computeMaintenancePlan({ currentKm: 52430, planType: "custom", customNextKm: "70000", customNextDate: "2027-01-01" });
+  assert.equal(plan.nextServiceKm, 70000);
+  assert.equal(plan.nextServiceDate, "2027-01-01");
+});
+
+test("isValidNextServiceKm: mevcut km'den küçük/eşit mutlak sonraki km reddedilir", () => {
+  assert.equal(isValidNextServiceKm(132000, 10000), false);
+  assert.equal(isValidNextServiceKm(132000, 132000), false);
+  assert.equal(isValidNextServiceKm(132000, 142000), true);
+  assert.equal(isValidNextServiceKm(132000, null), true);
+});
+
+test("describeMaintenancePlan: km veya tarih varsa 'Planlanmadı' göstermez", () => {
+  const onlyKm = describeMaintenancePlan({ nextServiceKm: 62430, nextServiceDate: null });
+  assert.equal(onlyKm.hasPlan, true);
+  assert.equal(onlyKm.label, "62.430 km");
+
+  const none = describeMaintenancePlan({ nextServiceKm: null, nextServiceDate: null });
+  assert.equal(none.hasPlan, false);
+  assert.equal(none.label, "Planlanmadı");
 });

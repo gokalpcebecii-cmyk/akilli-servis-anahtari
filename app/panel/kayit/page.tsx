@@ -52,12 +52,12 @@ export default function SignupPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
-      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
+    <main className="otoiz-auth-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <div className="otoiz-auth-hero" style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
         <a href="/" style={{ display: "inline-block", marginBottom: 24, fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
           ← Ana sayfaya dön
         </a>
-        <div style={{ maxWidth: 380, margin: "0 auto" }}>
+        <div className="otoiz-auth-hero-inner" style={{ maxWidth: 380, margin: "0 auto" }}>
           <OtoizLogo variant="dark" size={190} mark="primary" />
           <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>İşletme Kaydı</h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>
@@ -66,7 +66,7 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 380, margin: "-24px auto 0", padding: "0 20px 40px" }}>
+      <div className="otoiz-auth-form-wrap" style={{ maxWidth: 380, margin: "-24px auto 0", padding: "0 20px 40px" }}>
         <form onSubmit={handleSubmit} style={{ background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}>
           <label style={labelStyle}>İşletme Adı *</label>
           <input style={{ ...inputStyle, marginBottom: 14 }} required value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} placeholder="Örn: Yılmaz Oto Servis" />

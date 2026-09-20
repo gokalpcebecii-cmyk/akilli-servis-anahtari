@@ -623,3 +623,58 @@ a:focus-visible {
     padding: 26px 18px 34px !important;
   }
 }
+
+/* PILOT FIX 03 (bölüm E): giriş/kayıt sayfaları — mobilde üstte marka
+   bandı + altta kart (değişmiyor), masaüstünde (≥1024px) yan yana iki
+   sütun: solda marka/anlatım, sağda form — boş beyaz alan yerine dengeli
+   bir masaüstü kompozisyon. DOM sırası ve mantık aynı kalıyor. */
+@media (min-width: 1024px) {
+  .otoiz-auth-shell {
+    display: flex !important;
+    min-height: 100vh;
+  }
+  .otoiz-auth-hero {
+    flex: 1 1 50% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 48px !important;
+  }
+  .otoiz-auth-hero-inner {
+    max-width: 420px !important;
+    margin: 0 !important;
+  }
+  .otoiz-auth-form-wrap {
+    flex: 1 1 50% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    max-width: 480px !important;
+    padding: 48px !important;
+  }
+  .otoiz-auth-form-wrap form {
+    width: 100%;
+  }
+}
+
+/* PILOT FIX 03 (bölüm E): bireysel araç formu/detayı — mobilde tek sütun
+   (değişmiyor), masaüstünde (≥1024px) 560px yerine 720px genişlikte,
+   dengeli bir okuma sütunu (uç-uca beyaz alan yerine). */
+@media (min-width: 1024px) {
+  .otoiz-vehicle-shell {
+    max-width: 720px !important;
+  }
+}
+
+/* PILOT FIX 03 (bölüm E): mobil alt navigasyon (BottomNav) masaüstünde
+   yer kaplamasın diye ≥1024px'te gizleniyor; içerik alt boşluğu da
+   birlikte kaldırılıyor (bkz. .otoiz-has-bottom-nav, BottomNav bileşeni). */
+@media (min-width: 1024px) {
+  .otoiz-bottom-nav {
+    display: none !important;
+  }
+  .otoiz-has-bottom-nav {
+    padding-bottom: 0 !important;
+  }
+}

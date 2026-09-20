@@ -34,7 +34,10 @@ export default function EslestirPage() {
         .eq("tenant_id", staff?.tenant_id)
         .order("plate");
 
-      setVehicles(vehicleList ?? []);
+      // PILOT FIX 03 (bölüm F): geçerli plakası olmayan (boş/eksik araç
+      // oluşturma denemesinden kalmış) araçlar eşleştirme listesinde
+      // görünmesin.
+      setVehicles((vehicleList ?? []).filter((v: any) => v.plate && v.plate.trim()));
     }
     load();
   }, []);
@@ -92,9 +95,14 @@ export default function EslestirPage() {
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="Anahtarlık üzerindeki kodu girin"
+        autoComplete="off"
       />
+      {/* PILOT FIX 03 (bölüm F): "adres çubuğundan URL kopyalama" talimatı
+          kaldırıldı — kamera ile tarama bu pilot sürümünde henüz mevcut
+          değil (ayrı teknik görev, bkz. final rapor); yanlış yönlendirici
+          bir talimat vermek yerine tek, gerçek çalışan yol açıkça anlatılıyor. */}
       <p style={{ fontSize: 12, color: colors.textMuted, marginBottom: 14 }}>
-        Kodu QR'ın altındaki yazıdan okuyabilir veya kamerayla QR'ı okutup adres çubuğundaki kodu kopyalayabilirsiniz.
+        Kodu, QR anahtarlığın/sticker'ın üzerinde basılı kısa koddan (harf ve rakamlardan oluşan kod) okuyup buraya yazın.
       </p>
 
       {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>{error}</p>}

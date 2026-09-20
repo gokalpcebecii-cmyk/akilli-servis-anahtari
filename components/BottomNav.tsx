@@ -4,22 +4,23 @@ import { usePathname, useRouter } from "next/navigation";
 import { colors, font } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 
+// PILOT FIX 03 (bölüm E): "Ana Sayfa" ve "Araçlarım" aynı gerçek ekrana
+// (araç listesi/karşılama) gidiyordu ve iki AYRI aktif öğe olarak
+// gösteriliyordu — canlı testte bulunan bilgi mimarisi tutarsızlığı.
+// Tek karar: tek öğe, ekranın gerçek içeriğini yansıtan "Araçlarım" adıyla.
 const ITEMS = [
-  { key: "home", label: "Ana Sayfa", href: "/bireysel/araclar", icon: "home" },
-  { key: "vehicles", label: "Araçlarım", href: "/bireysel/araclar", icon: "car" },
+  { key: "home", label: "Araçlarım", href: "/bireysel/araclar", icon: "car" },
   { key: "notifications", label: "Bildirimler", href: "/bireysel/bildirimler", icon: "bell" },
   { key: "profile", label: "Profil", href: "/bireysel/profil", icon: "user" },
 ];
 
-// Not: "Ana Sayfa" ve "Araçlarım" bu üründe aynı gerçek ekrana (araç
-// listesi/karşılama) gider — uygulamada bu iki kavram için ayrı ayrı
-// backend/veri modeli yok, bu yüzden yapay bir ikinci sayfa üretilmedi.
-export function BottomNav({ active }: { active: "home" | "vehicles" | "notifications" | "profile" }) {
+export function BottomNav({ active }: { active: "home" | "notifications" | "profile" }) {
   const router = useRouter();
   return (
     <nav
       role="navigation"
       aria-label="Alt gezinme"
+      className="otoiz-bottom-nav"
       style={{
         position: "fixed",
         left: 0,

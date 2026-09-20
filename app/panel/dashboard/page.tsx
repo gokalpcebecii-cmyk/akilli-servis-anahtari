@@ -6,6 +6,8 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, secondaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
+const { plateSearchKey, describeMaintenancePlan } = require("@/lib/logic");
+
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createBrowserSupabase();
@@ -51,9 +53,10 @@ export default function DashboardPage() {
     router.push("/panel/login");
   }
 
-  const filtered = vehicles.filter((v) =>
-    v.plate?.toLowerCase().includes(search.toLowerCase())
-  );
+  // PILOT FIX 03 (madde A2): arama ayraçtan (boşluk/tire) ve büyük/küçük
+  // harften tamamen bağımsız çalışsın — "otoiz01" yazan kullanıcı "06 OTOIZ
+  // 01" olarak kayıtlı aracı da bulabilmeli.
+  const filtered = vehicles.filter((v) => plateSearchKey(v.plate).includes(plateSearchKey(search)));
 
   if (loading) return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
 
@@ -125,7 +128,8 @@ export default function DashboardPage() {
               <a href={`/panel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
                 <div style={{ fontWeight: 700, fontSize: 16 }}>{v.plate}</div>
                 <div style={{ color: colors.textMuted, fontSize: 12.5 }}>
-                  {v.brand} {v.model} · {v.current_km?.toLocaleString("tr-TR")} km · Sonraki bakım: {v.next_service_km?.toLocaleString("tr-TR")} km
+                  {v.brand} {v.model} · {v.current_km?.toLocaleString("tr-TR")} km · Sonraki bakım:{" "}
+                  {describeMaintenancePlan({ nextServiceKm: v.next_service_km, nextServiceDate: v.next_service_date }).label}
                 </div>
               </a>
             </li>
