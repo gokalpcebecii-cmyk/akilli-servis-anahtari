@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, primaryButtonStyle } from "@/lib/theme";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
+const { prepareOwnershipTransfer } = require("@/lib/logic");
 
 export default function OwnershipTransferPage() {
   const params = useParams();
@@ -45,35 +46,80 @@ export default function OwnershipTransferPage() {
     }
     setSaving(true);
 
-    // İkinci düzeltme turu (madde 3): çok adımlı doğrudan Supabase
-    // yazmaları yerine tek, sunucu tarafında pilot bayrağını VE
-    // tenant kapsamını doğrulayan /api/ownership-transfer çağrılıyor
-    // (bkz. o route — mantık/veri modeli aynı, yalnızca yazma yolu
-    // taşındı ve API seviyesinde de kapatılabilir hale geldi).
+    // ÜÇÜNCÜ düzeltme turu (madde 6): ikinci turda bu akış geçici olarak
+    // /api/ownership-transfer'a taşınmıştı. İncelemede bu route'un GERÇEK
+    // bir güvenlik sınırı EKLEMEDİĞİ ortaya çıktı: ownership_transfers/
+    // customers/vehicles üzerindeki RLS politikaları ("staff_own_tenant_
+    // transfers" vb.) zaten aynı tenant-kapsamlı yazmaya izin veriyor —
+    // route'un servis-rolü kullanması yalnızca ekstra, gereksiz saldırı
+    // yüzeyi (yeni bir POST uç noktası) yaratıyordu, PILOT_FLAGS
+    // kontrolünü atlatmayı ENGELLEMİYORDU (bkz. final rapor). Bu yüzden
+    // route silindi, akış RLS'ye tabi doğrudan istemci çağrılarına geri
+    // döndürüldü — güvenlik sınırı zaten her zaman RLS'ydi, değişmedi.
+    // Gerçek koruma yalnızca aşağıdaki UI seviyesi PILOT_FLAGS kontrolü
+    // (bu dosyanın başında) ile sağlanıyor; bu, normal uygulama akışını
+    // kapatır ama doğrudan Supabase çağrısı yapan teknik bir kullanıcıyı
+    // DURDURMAZ — tam kapatma için RLS/EXECUTE değişikliği gerekir (bkz.
+    // SECURITY_FIX_04_PROPOSAL.md, uygulanmadı).
     const { data: session } = await supabase.auth.getSession();
-    const token = session.session?.access_token;
-    try {
-      const res = await fetch("/api/ownership-transfer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          vehicle_id: params.id,
-          new_owner: newOwner,
-          km_at_transfer: kmAtTransfer,
-          confirm_erase: confirmErase,
-        }),
-      });
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        setSaving(false);
-        alert(json.error || "Devir tamamlanamadı.");
-        return;
-      }
-    } catch {
-      setSaving(false);
-      alert("Bağlantı hatası. Lütfen tekrar deneyin.");
-      return;
+    const { data: staff } = await supabase
+      .from("staff_users")
+      .select("tenant_id")
+      .eq("id", session.session?.user.id)
+      .single();
+
+    const { data: vehicle } = await supabase
+      .from("vehicles")
+      .select("id, customer_id, current_km, owner_user_id")
+      .eq("id", params.id)
+      .single();
+
+    let previousCustomer = null;
+    if (vehicle?.customer_id) {
+      const { data: c } = await supabase.from("customers").select("*").eq("id", vehicle.customer_id).single();
+      previousCustomer = c;
     }
+
+    const transferDate = new Date().toISOString().slice(0, 10);
+    const { anonymizedSnapshot, fieldsToErase } = prepareOwnershipTransfer(previousCustomer, transferDate);
+
+    const { data: createdCustomer } = await supabase
+      .from("customers")
+      .insert({ tenant_id: staff?.tenant_id, ...newOwner })
+      .select()
+      .single();
+
+    // Önceki sahibin uygulama hesabı varsa (owner_user_id) devir kaydına
+    // düşülüyor; yeni sahip için henüz doğrulanmış bir OTOİZ hesabı
+    // bilinmediğinden new_owner_user_id bilerek boş bırakılıyor — rastgele
+    // bir kullanıcıya araç erişimi verilmiyor, hesap eşleşmesi ileride ayrı
+    // bir "devri kabul et" akışıyla yapılmalı.
+    await supabase.from("ownership_transfers").insert({
+      vehicle_id: params.id,
+      tenant_id: staff?.tenant_id,
+      previous_customer_snapshot: anonymizedSnapshot,
+      previous_customer_data_erased: fieldsToErase.length > 0,
+      new_customer_id: createdCustomer?.id,
+      km_at_transfer: kmAtTransfer ? Number(kmAtTransfer) : vehicle?.current_km,
+      performed_by: session.session?.user.id,
+      previous_owner_user_id: vehicle?.owner_user_id ?? null,
+      new_owner_user_id: null,
+    });
+
+    // Eski sahibin uygulama üzerinden bu araca erişimi hemen kesiliyor.
+    // Teknik geçmiş (maintenance_records/maintenance_items) vehicle_id
+    // üzerinden korunmaya devam ediyor, yalnızca erişim yetkisi kaldırılıyor.
+    await supabase.from("vehicles").update({ customer_id: createdCustomer?.id, owner_user_id: null }).eq("id", params.id);
+
+    if (previousCustomer && fieldsToErase.length > 0) {
+      await supabase
+        .from("customers")
+        .update({ full_name: "Devredilmiş Kayıt", phone: null, email: null })
+        .eq("id", previousCustomer.id);
+    }
+
+    // Not: bu olay istemcinin ayrı bir çağrısına değil, ownership_transfers
+    // insert'ini yakalayan DB tetikleyicisine (log_ownership_transfer) güveniyor.
 
     setSaving(false);
     router.push(`/panel/araclar/${params.id}`);

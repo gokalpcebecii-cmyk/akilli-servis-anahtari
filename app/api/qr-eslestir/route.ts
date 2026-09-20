@@ -8,6 +8,15 @@ export async function POST(req: NextRequest) {
     // İkinci düzeltme turu (madde 4): /panel/eslestir ekranı atlanıp
     // doğrudan bu route'a istek gönderilse bile pilot süresince sıfır
     // yan etkiyle (hiçbir sorgu/yazma çalışmadan) 403 döner.
+    // ÜÇÜNCÜ düzeltme turu (madde 6) DÜRÜSTLÜK NOTU: bu route ÖNCEDEN
+    // (PILOT FIX 03'ten) var — yalnızca bayrak kapısını sarmalamak için
+    // eklenmedi, tenant-kapsamlı doğrulama (vehicle.tenant_id kontrolü)
+    // gibi gerçek iş mantığı taşıyor, bu yüzden korunuyor. AMA: qr_keys
+    // üzerindeki "staff_update_own_tenant_qr_keys" RLS politikası zaten
+    // aynı tenant-kapsamlı UPDATE'e izin veriyor — yani bu bayrak, teknik
+    // bir kullanıcının doğrudan Supabase çağrısıyla eşleştirme yapmasını
+    // ENGELLEMEZ, yalnızca normal uygulama akışını kapatır (salt-okunur
+    // pg_policies incelemesiyle doğrulandı, bkz. final rapor).
     if (!PILOT_FLAGS.qrMatchingSelfService) {
       return NextResponse.json({ error: "feature_disabled" }, { status: 403 });
     }

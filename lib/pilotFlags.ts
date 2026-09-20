@@ -5,11 +5,18 @@
 // planlanmalı (final raporda listelendi) — bu flag'ler o görevler
 // tamamlanınca true'ya çevrilir.
 //
-// GÜVENLİK NOTU (ikinci düzeltme turu madde 3): bu flag'ler yalnızca
-// SAYFA/route seviyesinde değil, aynı zamanda ilgili API route'larının
-// (app/api/qr-uretim, app/api/ownership-transfer) İÇİNDE de kontrol
-// edilir — doğrudan API çağrısıyla UI'yi atlamaya çalışan bir istek de
-// aynı şekilde reddedilir (bkz. o route'lardaki kontroller).
+// GÜVENLİK NOTU (üçüncü düzeltme turu madde 6 — ikinci turun aşırı iddialı
+// notu düzeltildi): bulkQrGeneration, app/api/qr-uretim İÇİNDE de kontrol
+// edilir VE bu gerçek bir DB-seviyeli kapanıştır (qr_keys'te vehicle_id=
+// null satır ekleyebilecek hiçbir RLS politikası yok — salt-okunur
+// incelemeyle doğrulandı). AMA ownershipTransferSelfService ve
+// qrMatchingSelfService farklıdır: bunlar YALNIZCA UI/uygulama akışını
+// kapatır. Altlarındaki RPC/RLS (initiate_ownership_transfer vb. SECURITY
+// DEFINER + authenticated'e EXECUTE yetkisi; qr_keys UPDATE'i izin veren
+// staff RLS politikası) doğrulanmış bir kullanıcının doğrudan Supabase
+// çağrısıyla bu bayrakları BYPASS ETMESİNE halihazırda izin veriyor. Gerçek
+// DB-seviyeli kapanış için bkz. SECURITY_FIX_04_PROPOSAL.md (öneri,
+// uygulanmadı).
 export const PILOT_FLAGS = {
   // A7: geri alınamaz kişisel veri etkisine rağmen onay kutusu olmadan
   // erişilebilir olan servis self-service sahiplik devri. Kalıcı çözüm:

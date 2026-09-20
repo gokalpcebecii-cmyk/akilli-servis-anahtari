@@ -73,17 +73,13 @@ test.describe("İkinci düzeltme turu — madde 3/4: kapalı özellikler API sev
     expect(res.status()).toBe(403);
   });
 
-  test("POST /api/ownership-transfer (servis) → 403 (kimliksiz istekte bile)", async ({ request }) => {
-    const res = await request.post("/api/ownership-transfer", {
-      data: { vehicle_id: VEHICLE_ID, new_owner: { full_name: "Test" }, confirm_erase: true },
-    });
-    expect(res.status()).toBe(403);
-  });
-
-  test("POST /api/ownership-transfer-initiate (bireysel) → 403 (kimliksiz istekte bile)", async ({ request }) => {
-    const res = await request.post("/api/ownership-transfer-initiate", { data: { vehicle_id: VEHICLE_ID } });
-    expect(res.status()).toBe(403);
-  });
+  // ÜÇÜNCÜ düzeltme turu (madde 6): /api/ownership-transfer ve
+  // /api/ownership-transfer-initiate KALDIRILDI — incelemede bu iki
+  // route'un yalnızca kendi kendini sarmaladığı, gerçek RLS/RPC EXECUTE
+  // yetkilerinin zaten aynı işlemlere doğrudan izin verdiği (bu yüzden
+  // gerçek bir güvenlik sınırı EKLEMEDİKLERİ) ortaya çıktı. Sahiplik
+  // devri artık yalnızca UI seviyesi PILOT_FLAGS ile kapalı — bkz. yukarı
+  // "madde 3" describe bloğundaki iki URL testi ve final rapor.
 });
 
 test.describe("İkinci düzeltme turu — madde 2: çift gönderim tek araç oluşturur (istemci seviyesi)", () => {
@@ -140,40 +136,111 @@ test.describe("İkinci düzeltme turu — madde 2: çift gönderim tek araç olu
   });
 });
 
-test.describe("İkinci düzeltme turu — madde 7: aynı anda seçilen birden fazla işlem tek servis ziyareti olarak kaydedilir", () => {
-  test("Motor Yağı + Yağ Filtresi birlikte seçilip KAYDET'e basıldığında maintenance_records'a TEK satır yazılır", async ({ page, baseURL }) => {
-    const insertedPayloads: any[] = [];
-    await installMockSession(page.context(), { id: STAFF_ID, email: "grup@ornek.com" }, baseURL!);
+test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden fazla işlem tek servis ziyareti olarak kaydedilir", () => {
+  // DEFAULT_INTERVALS (app/panel/araclar/[id]/page.tsx): motor_yagi=10000,
+  // yag_filtresi=10000, hava_filtresi=15000. current_km=40000 ile Motor
+  // Yağı+Hava Filtresi seçilirse en erken vade 40000+10000=50000 olmalı
+  // (Hava Filtresi'nin 55000'i değil).
+  async function setupQuickSave(page: any, baseURL: string, plate: string) {
+    const recordInserts: any[] = [];
+    const vehiclePatches: any[] = [];
+    await installMockSession(page.context(), { id: STAFF_ID, email: `grup-${plate}@ornek.com` }, baseURL);
     await mockSupabaseRest(page, {
-      vehicles: { single: { id: VEHICLE_ID, plate: "34 GR 001", brand: "Fiat", model: "Egea", year: 2021, current_km: 40000, tenant_id: TENANT_ID, owner_user_id: null }, list: [] },
+      vehicles: { single: { id: VEHICLE_ID, plate, brand: "Fiat", model: "Egea", year: 2021, current_km: 40000, tenant_id: TENANT_ID, owner_user_id: null }, list: [] },
       maintenance_records: { list: [] },
       maintenance_items: { list: [] },
       qr_keys: { single: null, list: [] },
       staff_users: { single: { id: STAFF_ID, tenant_id: TENANT_ID } },
       tenants: { single: { id: TENANT_ID, name: "Grup Test Servis" } },
     });
-    await page.route("**/rest/v1/maintenance_records**", async (route) => {
+    await page.route("**/rest/v1/maintenance_records**", async (route: any) => {
       if (route.request().method() === "POST") {
         const body = route.request().postDataJSON();
-        insertedPayloads.push(body);
+        recordInserts.push(body);
+        await new Promise((r) => setTimeout(r, 100)); // gerçekçi ağ gecikmesi — çift tık senaryosu için
         await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(Array.isArray(body) ? body : [body]) });
         return;
       }
       await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
     });
-
+    await page.route("**/rest/v1/vehicles**", async (route: any) => {
+      if (route.request().method() === "PATCH") {
+        vehiclePatches.push(route.request().postDataJSON());
+        await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+        return;
+      }
+      // GET: sayfa yüklemesi .single() kullanıyor (Accept:
+      // vnd.pgrst.object) — bu durumda tek NESNE dönmeli, dizi değil,
+      // yoksa supabase-js parse hatası verir ve sayfa hiç dolmaz.
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      const row = { id: VEHICLE_ID, plate, brand: "Fiat", model: "Egea", year: 2021, current_km: 40000, tenant_id: TENANT_ID, owner_user_id: null };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
     await page.goto(`/panel/araclar/${VEHICLE_ID}`);
-    await page.getByText("34 GR 001").first().waitFor();
+    await page.getByText(plate).first().waitFor();
+    return { recordInserts, vehiclePatches };
+  }
 
+  test("madde 7: maintenance_records yazma fonksiyonu yalnız BİR kez çağrılır (iki ayrı satır değil, tek satır)", async ({ page, baseURL }) => {
+    const { recordInserts } = await setupQuickSave(page, baseURL!, "34 GR 001");
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await page.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
     await page.getByRole("button", { name: "KAYDET" }).click();
     await page.waitForTimeout(300);
 
-    expect(insertedPayloads.length, "maintenance_records'a tam olarak bir POST gitmeli").toBe(1);
-    const rows = Array.isArray(insertedPayloads[0]) ? insertedPayloads[0] : [insertedPayloads[0]];
-    expect(rows.length, "tek POST içinde tek satır olmalı (iki ayrı satır değil)").toBe(1);
-    expect(rows[0].description).toContain("Motor Yağı");
-    expect(rows[0].description).toContain("Yağ Filtresi");
+    expect(recordInserts.length, "maintenance_records'a tam olarak bir POST gitmeli").toBe(1);
+    const rows = Array.isArray(recordInserts[0]) ? recordInserts[0] : [recordInserts[0]];
+    expect(rows.length, "tek POST içinde tek satır olmalı").toBe(1);
+  });
+
+  test("madde 8: üç işlem seçildiğinde TÜM işlem adları birleştirilmiş açıklamada korunur", async ({ page, baseURL }) => {
+    const { recordInserts } = await setupQuickSave(page, baseURL!, "34 GR 003");
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
+    await page.getByRole("button", { name: "Hava Filtresi", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    const rows = Array.isArray(recordInserts[0]) ? recordInserts[0] : [recordInserts[0]];
+    expect(rows.length).toBe(1);
+    for (const label of ["Motor Yağı", "Yağ Filtresi", "Hava Filtresi"]) {
+      expect(rows[0].description, `${label} açıklamada eksik`).toContain(label);
+    }
+  });
+
+  test("madde 8: en erken bakım gerektiren işlem otomatik sonraki km olarak seçilir (10.000 vade, 15.000 değil)", async ({ page, baseURL }) => {
+    const { vehiclePatches } = await setupQuickSave(page, baseURL!, "34 GR 004");
+    // Motor Yağı: +10.000 (vade 50.000) — Hava Filtresi: +15.000 (vade 55.000).
+    // Otomatik öneri en erken olanı (50.000) seçmeli, en geç olanı değil.
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "Hava Filtresi", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    expect(vehiclePatches.length).toBeGreaterThan(0);
+    const patch = vehiclePatches[vehiclePatches.length - 1];
+    expect(patch.next_service_km, "en erken vade (40.000+10.000) seçilmeli").toBe(50000);
+  });
+
+  test("madde 8: güncel kilometre yalnız BİR kez güncellenir (vehicles PATCH tek çağrı)", async ({ page, baseURL }) => {
+    const { vehiclePatches } = await setupQuickSave(page, baseURL!, "34 GR 005");
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    expect(vehiclePatches.length, "vehicles'a tam olarak bir PATCH gitmeli").toBe(1);
+    expect(vehiclePatches[0].current_km).toBe(40000);
+  });
+
+  test("madde 8: KAYDET'e hızlı çift tıklama tek ziyaret üretir (ikinci istek engellenmeli)", async ({ page, baseURL }) => {
+    const { recordInserts } = await setupQuickSave(page, baseURL!, "34 GR 006");
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    const saveBtn = page.getByRole("button", { name: "KAYDET" });
+    // quickSubmitRef senkron kilidi — iki hızlı tıklama tek istek üretmeli.
+    await Promise.all([saveBtn.click(), saveBtn.click()]);
+    await page.waitForTimeout(400);
+
+    expect(recordInserts.length, "çift tıklama tek maintenance_records POST'u üretmeli").toBe(1);
   });
 });

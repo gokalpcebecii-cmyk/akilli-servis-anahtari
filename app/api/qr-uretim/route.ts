@@ -10,8 +10,13 @@ export async function POST(req: NextRequest) {
     // da, herhangi bir auth/DB sorgusu çalışmadan EN BAŞTA uygulanır —
     // /panel/qr-uretim ekranı atlanıp doğrudan bu route'a istek
     // gönderilse bile (kimliksiz olsa dahi) pilot süresince sıfır yan
-    // etkiyle 403 döner. Diğer üç bayrak-korumalı route'la (qr-eslestir,
-    // ownership-transfer, ownership-transfer-initiate) aynı sıralama.
+    // etkiyle 403 döner. qr-eslestir route'unda da aynı sıralama.
+    // ÜÇÜNCÜ düzeltme turu (madde 6): bu route, DİĞERLERİNDEN FARKLI olarak
+    // gerçek bir DB-seviyeli kapanış — qr_keys tablosunda vehicle_id=null
+    // (havuz) satırı ekleyebilecek HİÇBİR RLS INSERT politikası yok (staff
+    // için hiç, owner için yalnızca KENDİ aracına bağlı satır) — yani bu
+    // işlem yalnızca servis-rolüyle mümkün, bu route'un dışında bir
+    // bypass yolu yok (salt-okunur pg_policies incelemesiyle doğrulandı).
     if (!PILOT_FLAGS.bulkQrGeneration) {
       return NextResponse.json({ error: "feature_disabled" }, { status: 403 });
     }

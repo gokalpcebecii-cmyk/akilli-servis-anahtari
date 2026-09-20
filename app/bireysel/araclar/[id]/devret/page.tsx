@@ -54,29 +54,28 @@ export default function BireyselDevretPage() {
   async function handleStart() {
     setStarting(true);
     setError("");
-    // İkinci düzeltme turu (madde 3): RPC artık doğrudan tarayıcıdan değil,
-    // pilot bayrağını en başta kontrol eden /api/ownership-transfer-initiate
-    // üzerinden çağrılıyor (bkz. o route — RPC'nin kendisi/DB modeli
-    // değişmedi, yalnızca çağrı yolu bir bayrak kapısı arkasına taşındı).
-    const { data: session } = await supabase.auth.getSession();
-    const token = session.session?.access_token;
-    try {
-      const res = await fetch("/api/ownership-transfer-initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ vehicle_id: params.id }),
-      });
-      const data = await res.json();
-      setStarting(false);
-      if (!res.ok) {
-        setError("Devir başlatılamadı. Lütfen tekrar deneyin.");
-        return;
-      }
-      setResult({ token: data.token, expires_at: data.expires_at });
-    } catch {
-      setStarting(false);
-      setError("Bağlantı hatası. Lütfen tekrar deneyin.");
+    // ÜÇÜNCÜ düzeltme turu (madde 6): ikinci turda RPC çağrısı geçici
+    // olarak /api/ownership-transfer-initiate'e taşınmıştı. İncelemede,
+    // initiate_ownership_transfer RPC'sinin SECURITY DEFINER olduğu ve
+    // EXECUTE yetkisinin doğrudan `authenticated` rolüne verildiği
+    // doğrulandı — yani bu RPC, doğrudan supabase.rpc(...) ile HER ZAMAN
+    // çağrılabilir durumdaydı; Next.js tarafındaki PILOT_FLAGS kontrolü
+    // bu gerçek çağrı yolunu HİÇ ENGELLEMİYORDU, yalnızca kendi API
+    // route'umuzu (gereksiz bir ek saldırı yüzeyini) kapatıyordu. Bu
+    // yanıltıcı "kapatıldı" izlenimini vermemek için route silindi, RPC
+    // tekrar doğrudan çağrılıyor. Gerçek koruma yalnızca aşağıdaki UI
+    // seviyesi PILOT_FLAGS kontrolüdür (normal uygulama akışını kapatır,
+    // doğrudan RPC çağrısını DURDURMAZ) — RPC'nin EXECUTE yetkisinin
+    // authenticated'dan kaldırılması SECURITY_FIX_04_PROPOSAL.md'de
+    // ÖNERİ olarak yazıldı, uygulanmadı.
+    const { data, error: rpcError } = await supabase.rpc("initiate_ownership_transfer", { p_vehicle_id: params.id });
+    setStarting(false);
+
+    if (rpcError || !data) {
+      setError("Devir başlatılamadı. Lütfen tekrar deneyin.");
+      return;
     }
+    setResult({ token: data.token, expires_at: data.expires_at });
   }
 
   const shareUrl = result ? `${window.location.origin}/bireysel/devir-kabul/${result.token}` : "";
