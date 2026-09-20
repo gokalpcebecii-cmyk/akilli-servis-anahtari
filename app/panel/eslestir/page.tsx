@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 export default function EslestirPage() {
   const router = useRouter();
   const supabase = createBrowserSupabase();
+
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [code, setCode] = useState("");
@@ -16,6 +18,11 @@ export default function EslestirPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // İkinci düzeltme turu (madde 4): flag kapalıyken araç listesi dahil
+    // hiçbir veri çekilmesin — hook'un kendisi (Rules of Hooks gereği)
+    // koşulsuz çağrılıyor, yalnızca GÖVDESİ bayrağa göre erken çıkıyor.
+    if (!PILOT_FLAGS.qrMatchingSelfService) return;
+
     async function load() {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
@@ -41,6 +48,27 @@ export default function EslestirPage() {
     }
     load();
   }, []);
+
+  // İkinci düzeltme turu (madde 4): kamera ile tarama henüz yok; yalnızca
+  // manuel URL/kısa-kod eşleştirmeyi açık bırakmak güvenilmez bir yol
+  // olduğundan, kamera hazır olana kadar TÜM eşleştirme ekranı kapalı
+  // (bkz. lib/pilotFlags.ts, app/api/qr-eslestir/route.ts). Hook'lardan
+  // SONRA kontrol edilir (Rules of Hooks).
+  if (!PILOT_FLAGS.qrMatchingSelfService) {
+    return (
+      <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: font, color: colors.textDark, textAlign: "center" }}>
+        <h1 style={{ fontSize: 20 }}>Bu Özellik Şu An Kullanılamıyor</h1>
+        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+          Anahtarlık/QR eşleştirme, kamera ile güvenli tarama tamamlanana kadar pilot süresince
+          kapalı — manuel kod girişi kazara yanlış araca eşleştirme riski taşıyor. Bir eşleştirme
+          gerekiyorsa lütfen OTOİZ destek ekibiyle iletişime geçin.
+        </p>
+        <a href="/panel/dashboard" style={{ color: colors.greenDark, fontWeight: 700, fontSize: 13.5 }}>
+          ← Panele dön
+        </a>
+      </main>
+    );
+  }
 
   async function handleEslestir() {
     setError("");

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 const STEPS = [
   { n: 1, title: "Devir Detaylarını Gir", desc: "Devri başlatın, aracın erişimi hesabınızdan kaldırılır." },
@@ -27,6 +28,12 @@ export default function BireyselDevretPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    // İkinci düzeltme turu (madde 3): kapalıyken araç sorgusu dahi
+    // çalışmasın (hook koşulsuz çağrılır, yalnızca gövdesi erken çıkar).
+    if (!PILOT_FLAGS.ownershipTransferSelfService) {
+      setLoading(false);
+      return;
+    }
     async function load() {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
@@ -47,14 +54,29 @@ export default function BireyselDevretPage() {
   async function handleStart() {
     setStarting(true);
     setError("");
-    const { data, error: rpcError } = await supabase.rpc("initiate_ownership_transfer", { p_vehicle_id: params.id });
-    setStarting(false);
-
-    if (rpcError || !data) {
-      setError("Devir başlatılamadı. Lütfen tekrar deneyin.");
-      return;
+    // İkinci düzeltme turu (madde 3): RPC artık doğrudan tarayıcıdan değil,
+    // pilot bayrağını en başta kontrol eden /api/ownership-transfer-initiate
+    // üzerinden çağrılıyor (bkz. o route — RPC'nin kendisi/DB modeli
+    // değişmedi, yalnızca çağrı yolu bir bayrak kapısı arkasına taşındı).
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    try {
+      const res = await fetch("/api/ownership-transfer-initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ vehicle_id: params.id }),
+      });
+      const data = await res.json();
+      setStarting(false);
+      if (!res.ok) {
+        setError("Devir başlatılamadı. Lütfen tekrar deneyin.");
+        return;
+      }
+      setResult({ token: data.token, expires_at: data.expires_at });
+    } catch {
+      setStarting(false);
+      setError("Bağlantı hatası. Lütfen tekrar deneyin.");
     }
-    setResult({ token: data.token, expires_at: data.expires_at });
   }
 
   const shareUrl = result ? `${window.location.origin}/bireysel/devir-kabul/${result.token}` : "";
@@ -67,6 +89,26 @@ export default function BireyselDevretPage() {
     } catch {
       // sessizce yoksay
     }
+  }
+
+  // İkinci düzeltme turu (madde 3): bireysel self-service sahiplik devri
+  // de servis akışıyla AYNI pilot bayrağı arkasında — bu ekran, panel
+  // tarafındaki devret ekranından farklı bir DB fonksiyonu (RPC) kullanan
+  // TAMAMEN AYRI bir yol olduğu için ayrıca kapatılması gerekiyordu.
+  if (!PILOT_FLAGS.ownershipTransferSelfService) {
+    return (
+      <main style={{ maxWidth: 460, margin: "0 auto", padding: "32px 20px", fontFamily: font, color: colors.textDark, textAlign: "center" }}>
+        <h1 style={{ fontSize: 20 }}>Bu Özellik Şu An Kullanılamıyor</h1>
+        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+          Araç sahipliği devri, pilot süresi boyunca yalnızca kontrollü destek süreciyle yürütülüyor —
+          geri alınamaz kişisel veri etkisi taşıdığı için ek güvenlik adımları tamamlanana kadar
+          buradan doğrudan yapılamıyor. Bir devir gerekiyorsa lütfen OTOİZ destek ekibiyle iletişime geçin.
+        </p>
+        <a href="/bireysel/araclar" style={{ color: colors.greenDark, fontWeight: 700, fontSize: 13.5 }}>
+          ← Araçlarıma dön
+        </a>
+      </main>
+    );
   }
 
   if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;

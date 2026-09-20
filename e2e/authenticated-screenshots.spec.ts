@@ -95,10 +95,10 @@ test.describe("Authenticated ekranlar — mock fixture ile gerçek render (bkz. 
     await page.screenshot({ path: path.join(outDir, `13-qr-nfc-yonetimi-${suffix}.png`) });
   });
 
-  test("Araç devret", async ({ page, baseURL }, testInfo) => {
+  test("Araç devret (ikinci düzeltme turu: pilot bayrağı kapalı — 'Kullanılamıyor' ekranı)", async ({ page, baseURL }, testInfo) => {
     await setupBireyselAuth(page, baseURL!);
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}/devret`);
-    await page.getByRole("heading", { name: "Aracı Devret / Elden Çıkar" }).waitFor();
+    await page.getByRole("heading", { name: "Bu Özellik Şu An Kullanılamıyor" }).waitFor();
     const suffix = testInfo.project.name === "mobile-390" ? "mobile" : "desktop";
     await page.screenshot({ path: path.join(outDir, `14-arac-devret-${suffix}.png`) });
   });

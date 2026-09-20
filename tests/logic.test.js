@@ -12,6 +12,7 @@ const {
   validateVehicleInput,
   computeMaintenancePlan,
   isValidNextServiceKm,
+  isValidNextServiceDate,
   describeMaintenancePlan,
 } = require("../lib/logic");
 
@@ -268,4 +269,59 @@ test("describeMaintenancePlan: km veya tarih varsa 'Planlanmadı' göstermez", (
   const none = describeMaintenancePlan({ nextServiceKm: null, nextServiceDate: null });
   assert.equal(none.hasPlan, false);
   assert.equal(none.label, "Planlanmadı");
+});
+
+// ---------------------------------------------------------------------
+// İkinci düzeltme turu, madde 8: ek kabul testleri
+// ---------------------------------------------------------------------
+
+test("madde 8: normalize edilmiş mükerrer plaka — farklı yazımlar aynı kanonik forma indirgenir", () => {
+  const variants = ["06 OTOIZ 01", "06otoiz01", "06-otoiz-01", " 06  OTOIZ   01 "];
+  const canonical = variants.map((v) => normalizePlate(v));
+  for (const c of canonical) {
+    assert.equal(c, "06 OTOIZ 01");
+  }
+});
+
+test("madde 8: isValidNextServiceDate — geçmiş tarih reddedilir, bugün/gelecek kabul edilir", () => {
+  assert.equal(isValidNextServiceDate("2026-09-19", "2026-09-20"), false, "dün reddedilmeli");
+  assert.equal(isValidNextServiceDate("2026-09-20", "2026-09-20"), true, "bugün kabul edilmeli");
+  assert.equal(isValidNextServiceDate("2026-09-21", "2026-09-20"), true, "yarın kabul edilmeli");
+  assert.equal(isValidNextServiceDate(null, "2026-09-20"), true, "boş tarih (plan yok) her zaman geçerli");
+});
+
+test("madde 8: 132.000 km → varsayılan plan 142.000 km hesaplar (+10.000 km / 12 ay)", () => {
+  const plan = computeMaintenancePlan({ currentKm: 132000, planType: "default", today: "2026-09-19" });
+  assert.equal(plan.nextServiceKm, 142000);
+  assert.equal(isValidNextServiceKm(132000, plan.nextServiceKm), true);
+});
+
+test("madde 8: güncel kilometreden düşük sonraki bakım değeri her zaman reddedilir (132.000 → 130.000)", () => {
+  assert.equal(isValidNextServiceKm(132000, 130000), false);
+});
+
+test("madde 8: beş bakım planı seçeneği — hesapla → describeMaintenancePlan ile göster → aynı girdiyle tekrar hesapla tutarlı (kaydet/yenile simülasyonu)", () => {
+  const currentKm = 52430;
+  const today = "2026-09-19";
+  const planTypes = ["default", "extended_km", "extended_months", "custom", "later"];
+
+  for (const planType of planTypes) {
+    const opts = planType === "custom" ? { customNextKm: "70000", customNextDate: "2027-06-01" } : {};
+    const firstCompute = computeMaintenancePlan({ currentKm, planType, today, ...opts });
+    const shown = describeMaintenancePlan({ nextServiceKm: firstCompute.nextServiceKm, nextServiceDate: firstCompute.nextServiceDate });
+
+    // "Yenileme" (sayfa yenilenip aynı kayıttan tekrar okunması) simülasyonu:
+    // DB'den geri okunan ham next_service_km/next_service_date değerleri
+    // describeMaintenancePlan'a tekrar verildiğinde AYNI etiketi üretmeli —
+    // tutarsızlık (ör. "Planlanmadı" + "Sonraki bakım: X km" çelişkisi,
+    // PILOT FIX 03 madde A4) olmamalı.
+    const reloaded = describeMaintenancePlan({ nextServiceKm: firstCompute.nextServiceKm, nextServiceDate: firstCompute.nextServiceDate });
+    assert.deepEqual(reloaded, shown, `${planType} planı yeniden yüklendiğinde tutarlı kalmalı`);
+
+    if (planType === "later") {
+      assert.equal(shown.hasPlan, false);
+    } else {
+      assert.equal(shown.hasPlan, true);
+    }
+  }
 });

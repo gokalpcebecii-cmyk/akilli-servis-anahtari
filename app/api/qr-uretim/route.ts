@@ -1,10 +1,21 @@
 import { createServerSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { generateQrCode } = require("@/lib/qrToken");
 
 export async function POST(req: NextRequest) {
   try {
+    // İkinci düzeltme turu (madde 3): bu kapı yalnızca UI'de değil, burada
+    // da, herhangi bir auth/DB sorgusu çalışmadan EN BAŞTA uygulanır —
+    // /panel/qr-uretim ekranı atlanıp doğrudan bu route'a istek
+    // gönderilse bile (kimliksiz olsa dahi) pilot süresince sıfır yan
+    // etkiyle 403 döner. Diğer üç bayrak-korumalı route'la (qr-eslestir,
+    // ownership-transfer, ownership-transfer-initiate) aynı sıralama.
+    if (!PILOT_FLAGS.bulkQrGeneration) {
+      return NextResponse.json({ error: "feature_disabled" }, { status: 403 });
+    }
+
     const authHeader = req.headers.get("authorization");
 
     const userClient = createClient(

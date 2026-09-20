@@ -17,52 +17,107 @@ const ITEMS = [
 export function BottomNav({ active }: { active: "home" | "notifications" | "profile" }) {
   const router = useRouter();
   return (
-    <nav
-      role="navigation"
-      aria-label="Alt gezinme"
-      className="otoiz-bottom-nav"
-      style={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 40,
-        background: colors.surfaceLight,
-        borderTop: `1px solid ${colors.border}`,
-        display: "flex",
-        paddingBottom: "env(safe-area-inset-bottom)",
-        boxShadow: "0 -4px 20px rgba(6,20,33,0.06)",
-      }}
-    >
-      {ITEMS.map((item) => {
-        const isActive = item.key === active;
-        const tint = isActive ? colors.greenDark : colors.textMuted;
-        return (
-          <button
-            key={item.key}
-            onClick={() => router.push(item.href)}
-            aria-current={isActive ? "page" : undefined}
-            style={{
-              flex: 1,
-              minHeight: 56,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 3,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: tint,
-              fontFamily: font,
-              padding: "8px 4px",
-            }}
-          >
-            <Icon name={item.icon} color={tint} size={21} strokeWidth={isActive ? 2.4 : 2} />
-            <span style={{ fontSize: 10.5, fontWeight: isActive ? 700 : 500 }}>{item.label}</span>
-          </button>
-        );
-      })}
-    </nav>
+    <>
+      <nav
+        role="navigation"
+        aria-label="Alt gezinme"
+        className="otoiz-bottom-nav"
+        style={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 40,
+          background: colors.surfaceLight,
+          borderTop: `1px solid ${colors.border}`,
+          display: "flex",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          boxShadow: "0 -4px 20px rgba(6,20,33,0.06)",
+        }}
+      >
+        {ITEMS.map((item) => {
+          const isActive = item.key === active;
+          const tint = isActive ? colors.greenDark : colors.textMuted;
+          return (
+            <button
+              key={item.key}
+              onClick={() => router.push(item.href)}
+              aria-current={isActive ? "page" : undefined}
+              style={{
+                flex: 1,
+                minHeight: 56,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 3,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: tint,
+                fontFamily: font,
+                padding: "8px 4px",
+              }}
+            >
+              <Icon name={item.icon} color={tint} size={21} strokeWidth={isActive ? 2.4 : 2} />
+              <span style={{ fontSize: 10.5, fontWeight: isActive ? 700 : 500 }}>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* İkinci düzeltme turu, madde 6: .otoiz-bottom-nav ≥1024px'te
+          display:none oluyor (bkz. globals.css) ama yerine hiçbir gezinme
+          konmamıştı — masaüstünde Bildirimler/Profil'e ulaşacak hiçbir yol
+          kalmıyordu. Aynı bileşende, yalnızca masaüstünde görünen, sayfa
+          akışından bağımsız sabit bir mini-çubuk ekleniyor; DOM konumundan
+          bağımsız çalışsın diye fixed konumlandırılıyor. */}
+      <nav
+        role="navigation"
+        aria-label="Masaüstü gezinme"
+        className="otoiz-desktop-nav"
+        style={{
+          position: "fixed",
+          top: 16,
+          right: 16,
+          zIndex: 40,
+          display: "none",
+          background: colors.surfaceLight,
+          borderRadius: 999,
+          border: `1px solid ${colors.border}`,
+          boxShadow: "0 8px 24px rgba(6,20,33,0.12)",
+          padding: 4,
+          gap: 2,
+        }}
+      >
+        {ITEMS.map((item) => {
+          const isActive = item.key === active;
+          return (
+            <button
+              key={item.key}
+              onClick={() => router.push(item.href)}
+              aria-current={isActive ? "page" : undefined}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                borderRadius: 999,
+                border: "none",
+                cursor: "pointer",
+                background: isActive ? colors.greenDark : "transparent",
+                color: isActive ? colors.textLight : colors.textMuted,
+                fontFamily: font,
+                fontSize: 12.5,
+                fontWeight: isActive ? 700 : 600,
+              }}
+            >
+              <Icon name={item.icon} color={isActive ? colors.textLight : colors.textMuted} size={16} strokeWidth={isActive ? 2.4 : 2} />
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+    </>
   );
 }

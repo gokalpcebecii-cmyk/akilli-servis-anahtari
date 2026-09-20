@@ -677,4 +677,9 @@ a:focus-visible {
   .otoiz-has-bottom-nav {
     padding-bottom: 0 !important;
   }
+  /* İkinci düzeltme turu, madde 6: alt navigasyonun yerini alan sabit
+     masaüstü mini-çubuğu (bkz. BottomNav bileşeni). */
+  .otoiz-desktop-nav {
+    display: flex !important;
+  }
 }

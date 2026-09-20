@@ -1,9 +1,17 @@
 import { createServerSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 export async function POST(req: NextRequest) {
   try {
+    // İkinci düzeltme turu (madde 4): /panel/eslestir ekranı atlanıp
+    // doğrudan bu route'a istek gönderilse bile pilot süresince sıfır
+    // yan etkiyle (hiçbir sorgu/yazma çalışmadan) 403 döner.
+    if (!PILOT_FLAGS.qrMatchingSelfService) {
+      return NextResponse.json({ error: "feature_disabled" }, { status: 403 });
+    }
+
     const authHeader = req.headers.get("authorization");
     const body = await req.json();
     const { code, vehicle_id } = body;

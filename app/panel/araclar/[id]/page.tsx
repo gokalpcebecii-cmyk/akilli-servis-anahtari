@@ -8,7 +8,7 @@ import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardS
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
-const { validateVehicleInput, computeMaintenancePlan } = require("@/lib/logic");
+const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceDate } = require("@/lib/logic");
 
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
 // temizlenir. Bireysel formuyla aynı davranış (PILOT FIX 03 madde A3).
@@ -144,7 +144,7 @@ export default function VehicleDetailPage() {
   }
 
   function focusFirstError(errors: Record<string, string>) {
-    const order = ["plate", "brand", "model", "year", "current_km", "next_service_km"];
+    const order = ["plate", "brand", "model", "year", "current_km", "next_service_km", "next_service_date"];
     const firstKey = order.find((k) => errors[k]);
     if (firstKey) {
       window.setTimeout(() => {
@@ -289,6 +289,13 @@ export default function VehicleDetailPage() {
       setSubmitError("Diğer işlem için kısa bir açıklama yazın.");
       return;
     }
+    // İkinci düzeltme turu (madde 8): "Planı düzenle" manuel tarihi de
+    // input'un native min'inin ötesinde sunucuyla birebir aynı kontrolden
+    // geçiyor.
+    if (nextServiceDate && !isValidNextServiceDate(nextServiceDate)) {
+      setSubmitError("Sonraki bakım tarihi geçmişte olamaz.");
+      return;
+    }
 
     quickSubmitRef.current = true;
     setSubmitting(true);
@@ -329,27 +336,27 @@ export default function VehicleDetailPage() {
       await supabase.from("maintenance_items").upsert(itemsUpsert, { onConflict: "vehicle_id,item_key" });
     }
 
-    const recordsToInsert = selectedKeys.map((key) => {
-      const label = QUICK_ITEMS.find((it) => it.key === key)?.label ?? key;
-      return {
-        vehicle_id: params.id,
-        tenant_id: tenantId,
-        description: label,
-        km_at_service: km,
-        created_by: actorId,
-      };
-    });
+    // İkinci düzeltme turu, madde 7: aynı anda seçilen birden fazla işlem
+    // (ör. Motor Yağı + Yağ Filtresi) geçmişte AYRI satırlar olarak değil,
+    // TEK bir servis ziyareti altında (tek maintenance_records satırı,
+    // birleştirilmiş açıklama) kaydedilmeli — şema/migration değişikliği
+    // olmadan bunu sağlayan tek yol, tek satıra birleştirilmiş açıklama.
+    // maintenance_items (her işlemin kendi periyodu/son bakımı) yine de
+    // işlem başına ayrı ayrı güncelleniyor, yukarıda değişmedi.
+    const visitLabels = selectedKeys.map((key) => QUICK_ITEMS.find((it) => it.key === key)?.label ?? key);
     if (otherSelected && otherText.trim()) {
-      recordsToInsert.push({
-        vehicle_id: params.id,
-        tenant_id: tenantId,
-        description: otherText.trim(),
-        km_at_service: km,
-        created_by: actorId,
-      });
+      visitLabels.push(otherText.trim());
     }
-    if (recordsToInsert.length > 0) {
-      await supabase.from("maintenance_records").insert(recordsToInsert);
+    if (visitLabels.length > 0) {
+      await supabase.from("maintenance_records").insert([
+        {
+          vehicle_id: params.id,
+          tenant_id: tenantId,
+          description: visitLabels.join(", "),
+          km_at_service: km,
+          created_by: actorId,
+        },
+      ]);
     }
 
     const { data: mi } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
@@ -552,12 +559,17 @@ export default function VehicleDetailPage() {
                     <div style={{ flex: 1 }}>
                       <label style={{ fontSize: 12, color: colors.textMuted }}>Sonraki Bakım (tarih)</label>
                       <input
+                        data-field="next_service_date"
                         type="date"
                         min={new Date().toISOString().slice(0, 10)}
-                        style={inputStyle}
+                        aria-invalid={!!fieldErrors.next_service_date}
+                        style={{ ...inputStyle, borderColor: fieldErrors.next_service_date ? colors.danger : colors.border }}
                         value={vehicle.next_service_date || ""}
                         onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })}
                       />
+                      {fieldErrors.next_service_date && (
+                        <p role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "4px 0 0" }}>{fieldErrors.next_service_date}</p>
+                      )}
                     </div>
                   </div>
                 )}

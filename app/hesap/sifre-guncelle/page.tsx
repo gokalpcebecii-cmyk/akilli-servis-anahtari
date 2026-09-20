@@ -107,16 +107,16 @@ export default function SifreGuncellePage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
-      <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
-        <div style={{ maxWidth: 360, margin: "0 auto" }}>
+    <main className="otoiz-auth-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <div className="otoiz-auth-hero" style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
+        <div className="otoiz-auth-hero-inner" style={{ maxWidth: 360, margin: "0 auto" }}>
           <OtoizLogo variant="dark" size={190} mark="primary" />
           <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Yeni Şifre Belirle</h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, margin: 0 }}>Hesabınız için yeni bir şifre girin.</p>
         </div>
       </div>
 
-      <div style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
+      <div className="otoiz-auth-form-wrap" style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
         <form onSubmit={handleSubmit} noValidate style={{ background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}>
           <label htmlFor="new-password" style={{ display: "block", fontSize: 13, fontWeight: 600, color: colors.textMuted, marginBottom: 6 }}>Yeni Şifre</label>
           <input

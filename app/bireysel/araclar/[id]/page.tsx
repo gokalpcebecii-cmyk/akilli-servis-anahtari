@@ -8,7 +8,7 @@ import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, dange
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
-const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, describeMaintenancePlan } = require("@/lib/logic");
+const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan } = require("@/lib/logic");
 
 // Yeni araç akışındaki otomatik bakım planı seçenekleri (PILOT FIX 03 madde B).
 const PLAN_OPTIONS: { key: string; label: string }[] = [
@@ -241,7 +241,7 @@ export default function BireyselVehicleDetailPage() {
   }
 
   function focusFirstError(errors: Record<string, string>) {
-    const order = ["plate", "brand", "model", "year", "current_km", "next_service_km"];
+    const order = ["plate", "brand", "model", "year", "current_km", "next_service_km", "next_service_date"];
     const firstKey = order.find((k) => errors[k]);
     if (firstKey) {
       window.setTimeout(() => {
@@ -268,6 +268,14 @@ export default function BireyselVehicleDetailPage() {
     const customNextKmProvided = planType === "custom" && vehicle.next_service_km !== "" && vehicle.next_service_km != null;
     if (customNextKmProvided && !isValidNextServiceKm(normalized.current_km, Number(vehicle.next_service_km))) {
       errors.next_service_km = "Sonraki bakım kilometresi, güncel kilometreden büyük olmalı.";
+    }
+    // İkinci düzeltme turu (madde 8): tarih input'unun native min'i
+    // atlanabilir (yapıştırma/devtools) — sunucuyla birebir aynı kontrol
+    // burada da uygulanıyor. Manuel tarih alanı ya düzenleme akışında
+    // (isNew=false) ya da yeni araçta "Özel" plan seçiliyken görünür.
+    const manualDateVisible = !isNew || planType === "custom";
+    if (manualDateVisible && vehicle.next_service_date && !isValidNextServiceDate(vehicle.next_service_date)) {
+      errors.next_service_date = "Sonraki bakım tarihi geçmişte olamaz.";
     }
 
     if (!valid || Object.keys(errors).length > 0) {
@@ -737,12 +745,20 @@ export default function BireyselVehicleDetailPage() {
                     )}
                     <label style={labelStyle}>Sonraki Bakım (tarih)</label>
                     <input
+                      data-field="next_service_date"
                       type="date"
                       min={todayIso}
-                      style={{ ...inputStyle, marginBottom: 16 }}
+                      aria-describedby={fieldErrors.next_service_date ? "err-next-date" : undefined}
+                      aria-invalid={!!fieldErrors.next_service_date}
+                      style={{ ...inputStyle, marginBottom: fieldErrors.next_service_date ? 4 : 16, borderColor: fieldErrors.next_service_date ? colors.danger : colors.border }}
                       value={vehicle.next_service_date || ""}
                       onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })}
                     />
+                    {fieldErrors.next_service_date && (
+                      <p id="err-next-date" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                        {fieldErrors.next_service_date}
+                      </p>
+                    )}
                   </>
                 )}
               </>
@@ -760,12 +776,20 @@ export default function BireyselVehicleDetailPage() {
                 />
                 <label style={labelStyle}>Sonraki Bakım (tarih)</label>
                 <input
+                  data-field="next_service_date"
                   type="date"
                   min={todayIso}
-                  style={{ ...inputStyle, marginBottom: 16 }}
+                  aria-describedby={fieldErrors.next_service_date ? "err-next-date" : undefined}
+                  aria-invalid={!!fieldErrors.next_service_date}
+                  style={{ ...inputStyle, marginBottom: fieldErrors.next_service_date ? 4 : 16, borderColor: fieldErrors.next_service_date ? colors.danger : colors.border }}
                   value={vehicle.next_service_date || ""}
                   onChange={(e) => setVehicle({ ...vehicle, next_service_date: e.target.value })}
                 />
+                {fieldErrors.next_service_date && (
+                  <p id="err-next-date" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                    {fieldErrors.next_service_date}
+                  </p>
+                )}
               </>
             )}
 
