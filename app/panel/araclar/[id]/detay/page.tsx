@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle as themeInputStyle, labelStyle as themeLabelStyle, primaryButtonStyle } from "@/lib/theme";
@@ -35,6 +35,11 @@ export default function AracDetayPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  // Diğer araç formlarındaki (bireysel/panel [id]) savingRef deseniyle
+  // aynı: çift tıklama/Enter+click, senkron ref sayesinde re-render
+  // beklemeden engellenir (yalnızca disabled={saving} state kontrolü
+  // hızlı çift tıklamayı yakalayamaz).
+  const savingRef = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -57,6 +62,8 @@ export default function AracDetayPage() {
   }, [vehicleId]);
 
   async function handleSave() {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setMessage("");
 
@@ -67,6 +74,7 @@ export default function AracDetayPage() {
     }
 
     const { error } = await supabase.from("vehicles").update(payload).eq("id", vehicleId);
+    savingRef.current = false;
     setSaving(false);
 
     if (error) {

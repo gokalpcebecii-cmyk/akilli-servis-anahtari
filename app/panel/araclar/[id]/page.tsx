@@ -8,7 +8,15 @@ import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardS
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
-const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceDate } = require("@/lib/logic");
+const {
+  validateVehicleInput,
+  computeMaintenancePlan,
+  isValidNextServiceKm,
+  isValidNextServiceDate,
+  isValidCurrentKmUpdate,
+  computeAutoNextServicePlan,
+  todayIsoIstanbul,
+} = require("@/lib/logic");
 
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
 // temizlenir. Bireysel formuyla aynı davranış (PILOT FIX 03 madde A3).
@@ -93,8 +101,14 @@ export default function VehicleDetailPage() {
       setVehicle(v);
       if (v) {
         setQuickKm(String(v.current_km ?? ""));
-        setNextServiceKm(v.next_service_km ? String(v.next_service_km) : "");
-        setNextServiceDate(v.next_service_date || "");
+        // Pilot bugfix turu: nextServiceKm/nextServiceDate BİLEREK aracın
+        // ESKİ next_service_km/next_service_date'inden DOLDURULMAZ — bu
+        // ikisi yalnızca "Planı düzenle" altında kullanıcının GERÇEKTEN
+        // yazdığı bir manuel geçersiz kılmayı temsil eder (boş = henüz
+        // dokunulmadı = otomatik öneri kullanılır, bkz. handleQuickSave).
+        // Eskiden burada eski değerlerle dolduruluyordu; bu, kullanıcı
+        // hiçbir şeye dokunmasa bile ESKİ planın "manuel giriş" sanılıp
+        // otomatik önerinin üzerine sessizce yazılmasına yol açıyordu.
       }
 
       const { data: r } = await supabase
@@ -251,27 +265,14 @@ export default function VehicleDetailPage() {
   const anySelected = Object.values(selectedItems).some(Boolean) || otherSelected;
   const kmValid = quickKm !== "" && !Number.isNaN(Number(quickKm));
 
-  // Birden fazla işlem seçildiğinde en erken bakım gerektiren (en küçük
-  // mutlak km) sonuç genel sonraki bakım olarak önerilir (madde C) —
-  // "Planı düzenle"deki manuel giriş her zaman bu otomatik öneriyi ezer.
-  function computeAutoNextKm(km: number, selectedKeys: string[]) {
-    let earliest: number | null = null;
-    for (const key of selectedKeys) {
-      const interval = itemIntervals[key] ? Number(itemIntervals[key]) : null;
-      if (interval) {
-        const candidate = km + interval;
-        if (earliest == null || candidate < earliest) earliest = candidate;
-      }
-    }
-    return earliest;
-  }
-
   // Tek dokunuşla seçilen tüm işlemleri TEK seferde, tek "Kaydet" ile
   // gönderir: bir staff/tenant sorgusu, bir araç güncellemesi, bir toplu
   // maintenance_items upsert, bir toplu maintenance_records insert.
   // Hedef: 15-20 saniyelik bakım girişi.
   async function handleQuickSave() {
     // Çift tıklama / Enter+click / yavaş ağ tek kayıt üretsin (madde A5).
+    // Ref senkron olduğu için re-render beklemeden ikinci çağrıyı da
+    // engeller — hızlı çift tıklama tek mantıksal gönderim üretir.
     if (quickSubmitRef.current) return;
     if (submitting) return;
     setSubmitError("");
@@ -279,6 +280,15 @@ export default function VehicleDetailPage() {
 
     if (!kmValid) {
       setSubmitError("Lütfen geçerli bir kilometre girin.");
+      return;
+    }
+    const km = Number(quickKm);
+    // Pilot bugfix turu: güncel kilometre, kayıtlı ESKİ kilometreden
+    // düşük olamaz.
+    if (!isValidCurrentKmUpdate(vehicle.current_km, km)) {
+      setSubmitError(
+        `Güncel kilometre, kayıtlı son kilometreden (${Number(vehicle.current_km).toLocaleString("tr-TR")} km) düşük olamaz.`
+      );
       return;
     }
     if (!anySelected) {
@@ -289,51 +299,100 @@ export default function VehicleDetailPage() {
       setSubmitError("Diğer işlem için kısa bir açıklama yazın.");
       return;
     }
+
+    // Tüm "bugün" kontrolleri Europe/Istanbul takvim gününü kullanır.
+    const todayIso = todayIsoIstanbul();
+
     // İkinci düzeltme turu (madde 8): "Planı düzenle" manuel tarihi de
     // input'un native min'inin ötesinde sunucuyla birebir aynı kontrolden
     // geçiyor.
-    if (nextServiceDate && !isValidNextServiceDate(nextServiceDate)) {
+    if (nextServiceDate && !isValidNextServiceDate(nextServiceDate, todayIso)) {
       setSubmitError("Sonraki bakım tarihi geçmişte olamaz.");
+      return;
+    }
+
+    const selectedKeys = QUICK_ITEMS.filter((it) => selectedItems[it.key]).map((it) => it.key);
+
+    // Otomatik öneri: varsayılan +10.000 km / 12 ay taban, seçili
+    // işlemlerden biri DAHA ERKEN bir vadeye işaret ediyorsa o kazanır.
+    // Manuel "Planı düzenle" girişi YALNIZCA kullanıcı GERÇEKTEN
+    // doldurduysa (alan boş değilse) bu otomatik öneriyi ezer — sayfa
+    // yüklemesinde bu alanlar artık ESKİ plandan DOLDURULMUYOR (yukarıda),
+    // bu yüzden "boş" güvenilir biçimde "henüz dokunulmadı" anlamına gelir.
+    const selectedIntervals: Record<string, string> = {};
+    for (const key of selectedKeys) {
+      if (itemIntervals[key]) selectedIntervals[key] = itemIntervals[key];
+    }
+    const autoPlan = computeAutoNextServicePlan({ currentKm: km, today: todayIso, selectedItemIntervals: selectedIntervals });
+    const manualNextKmProvided = nextServiceKm !== "" && nextServiceKm != null;
+    const manualNextDateProvided = nextServiceDate !== "" && nextServiceDate != null;
+    const finalNextKm = manualNextKmProvided ? Number(nextServiceKm) : autoPlan.nextServiceKm;
+    const finalNextDate = manualNextDateProvided ? nextServiceDate : autoPlan.nextServiceDate;
+
+    if (!isValidNextServiceKm(km, finalNextKm)) {
+      setSubmitError("Sonraki bakım kilometresi, güncel kilometreden büyük olmalı.");
       return;
     }
 
     quickSubmitRef.current = true;
     setSubmitting(true);
 
-    const km = Number(quickKm);
-    const today = new Date().toISOString().slice(0, 10);
+    const RETRY_MESSAGE = " Tekrar göndermeden önce sayfayı yenileyip kayıt geçmişini kontrol edin.";
+    function failAndStop(message: string) {
+      quickSubmitRef.current = false;
+      setSubmitting(false);
+      setSubmitError(message + RETRY_MESSAGE);
+    }
 
-    const { data: session } = await supabase.auth.getSession();
-    const { data: staff } = await supabase.from("staff_users").select("tenant_id").eq("id", session.session?.user.id).single();
-    const tenantId = staff?.tenant_id;
-    const actorId = session.session?.user.id;
+    // Supabase session, staff/tenant, araç güncelleme, maintenance_items ve
+    // maintenance_records hataları AYRI AYRI kontrol edilir — herhangi biri
+    // başarısız olursa sonraki adıma geçilmez ve "Kayıt tamamlandı"
+    // GÖSTERİLMEZ.
+    const { data: session, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session.session) {
+      failAndStop("Oturum bilgisi alınamadı.");
+      return;
+    }
 
-    const selectedKeys = QUICK_ITEMS.filter((it) => selectedItems[it.key]).map((it) => it.key);
+    const { data: staff, error: staffError } = await supabase
+      .from("staff_users")
+      .select("tenant_id")
+      .eq("id", session.session.user.id)
+      .single();
+    if (staffError || !staff) {
+      failAndStop("Servis/personel bilgisi alınamadı.");
+      return;
+    }
+    const tenantId = staff.tenant_id;
+    const actorId = session.session.user.id;
 
-    // Manuel "Planı düzenle" girişi varsa o kazanır; yoksa seçilen
-    // işlemlerin en erken bakım gerektireni otomatik önerilir (madde C).
-    const autoNextKm = computeAutoNextKm(km, selectedKeys);
-    const finalNextKm = nextServiceKm ? Number(nextServiceKm) : autoNextKm;
-
-    await supabase
+    const { error: vehicleError } = await supabase
       .from("vehicles")
       .update({
         current_km: km,
         next_service_km: finalNextKm,
-        next_service_date: nextServiceDate || null,
+        next_service_date: finalNextDate,
         updated_at: new Date().toISOString(),
       })
       .eq("id", params.id);
+    if (vehicleError) {
+      failAndStop("Araç bilgisi güncellenemedi.");
+      return;
+    }
 
     if (selectedKeys.length > 0) {
       const itemsUpsert = selectedKeys.map((key) => ({
         vehicle_id: params.id,
         item_key: key,
-        last_service_date: today,
+        last_service_date: todayIso,
         last_service_km: km,
         interval_km: itemIntervals[key] ? Number(itemIntervals[key]) : null,
       }));
-      await supabase.from("maintenance_items").upsert(itemsUpsert, { onConflict: "vehicle_id,item_key" });
+      const { error: itemsError } = await supabase.from("maintenance_items").upsert(itemsUpsert, { onConflict: "vehicle_id,item_key" });
+      if (itemsError) {
+        failAndStop("Bakım kalemleri kaydedilemedi.");
+        return;
+      }
     }
 
     // İkinci düzeltme turu, madde 7: aynı anda seçilen birden fazla işlem
@@ -348,7 +407,7 @@ export default function VehicleDetailPage() {
       visitLabels.push(otherText.trim());
     }
     if (visitLabels.length > 0) {
-      await supabase.from("maintenance_records").insert([
+      const { error: recordError } = await supabase.from("maintenance_records").insert([
         {
           vehicle_id: params.id,
           tenant_id: tenantId,
@@ -357,6 +416,10 @@ export default function VehicleDetailPage() {
           created_by: actorId,
         },
       ]);
+      if (recordError) {
+        failAndStop("Servis kaydı oluşturulamadı.");
+        return;
+      }
     }
 
     const { data: mi } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
@@ -367,7 +430,7 @@ export default function VehicleDetailPage() {
       .eq("vehicle_id", params.id)
       .order("service_date", { ascending: false });
     setRecords(r ?? []);
-    setVehicle((prev: any) => ({ ...prev, current_km: km, next_service_km: finalNextKm, next_service_date: nextServiceDate || null }));
+    setVehicle((prev: any) => ({ ...prev, current_km: km, next_service_km: finalNextKm, next_service_date: finalNextDate }));
 
     setSelectedItems({});
     setItemIntervals({});

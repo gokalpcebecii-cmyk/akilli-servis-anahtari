@@ -264,17 +264,19 @@ export default function BireyselVehicleDetailPage() {
       current_km: vehicle.current_km,
     });
 
-    // Özel plan seçiliyse sonraki km, güncel km'den büyük olmalı (madde A4).
-    const customNextKmProvided = planType === "custom" && vehicle.next_service_km !== "" && vehicle.next_service_km != null;
-    if (customNextKmProvided && !isValidNextServiceKm(normalized.current_km, Number(vehicle.next_service_km))) {
+    // Düzenleme akışında (isNew=false) VEYA yeni araçta "Özel" plan
+    // seçiliyken manuel next_service_km/next_service_date alanları
+    // görünür ve doğrudan doğrulanır — sunucuyla birebir aynı kontrol.
+    const manualNextFieldsVisible = !isNew || planType === "custom";
+    if (
+      manualNextFieldsVisible &&
+      vehicle.next_service_km !== "" &&
+      vehicle.next_service_km != null &&
+      !isValidNextServiceKm(normalized.current_km, Number(vehicle.next_service_km))
+    ) {
       errors.next_service_km = "Sonraki bakım kilometresi, güncel kilometreden büyük olmalı.";
     }
-    // İkinci düzeltme turu (madde 8): tarih input'unun native min'i
-    // atlanabilir (yapıştırma/devtools) — sunucuyla birebir aynı kontrol
-    // burada da uygulanıyor. Manuel tarih alanı ya düzenleme akışında
-    // (isNew=false) ya da yeni araçta "Özel" plan seçiliyken görünür.
-    const manualDateVisible = !isNew || planType === "custom";
-    if (manualDateVisible && vehicle.next_service_date && !isValidNextServiceDate(vehicle.next_service_date)) {
+    if (manualNextFieldsVisible && vehicle.next_service_date && !isValidNextServiceDate(vehicle.next_service_date)) {
       errors.next_service_date = "Sonraki bakım tarihi geçmişte olamaz.";
     }
 
@@ -285,12 +287,21 @@ export default function BireyselVehicleDetailPage() {
     }
     setFieldErrors({});
 
-    const plan = computeMaintenancePlan({
-      currentKm: normalized.current_km,
-      planType,
-      customNextKm: vehicle.next_service_km,
-      customNextDate: vehicle.next_service_date,
-    });
+    // Düzenleme akışında (isNew=false) BAKIM PLANI YENİDEN HESAPLANMAZ —
+    // pilot bugfix turu: mevcut next_service_km/next_service_date değerleri
+    // kullanıcı açıkça değiştirmedikçe AYNEN korunmalı, "+10.000 km / 12 ay"
+    // varsayılan planı düzenlemede sessizce yeniden uygulanmamalı. planType
+    // düzenleme ekranında hiç değiştirilmediği (varsayılan "default" kaldığı)
+    // için computeMaintenancePlan burada ÇAĞRILMAZ — yalnızca YENİ araç
+    // oluştururken kullanılır.
+    const plan = isNew
+      ? computeMaintenancePlan({
+          currentKm: normalized.current_km,
+          planType,
+          customNextKm: vehicle.next_service_km,
+          customNextDate: vehicle.next_service_date,
+        })
+      : null;
 
     savingRef.current = true;
     setSaving(true);
@@ -333,7 +344,11 @@ export default function BireyselVehicleDetailPage() {
       }
       router.push(`/bireysel/araclar/${json.vehicle.id}`);
     } else {
-      await supabase
+      // Form alanlarında NE varsa (kullanıcı değiştirmediyse mevcut,
+      // değiştirdiyse yeni girilen) BİREBİR O yazılır — plan.nextServiceKm/
+      // nextServiceDate DEĞİL (yukarıda zaten hesaplanmadı, isNew=false).
+      const nextServiceKmValue = vehicle.next_service_km === "" || vehicle.next_service_km == null ? null : Number(vehicle.next_service_km);
+      const { error: updateError } = await supabase
         .from("vehicles")
         .update({
           plate: normalized.plate,
@@ -341,14 +356,23 @@ export default function BireyselVehicleDetailPage() {
           model: normalized.model,
           year: normalized.year,
           current_km: normalized.current_km,
-          next_service_km: plan.nextServiceKm,
-          next_service_date: plan.nextServiceDate,
+          next_service_km: nextServiceKmValue,
+          next_service_date: vehicle.next_service_date || null,
           notes: vehicle.notes || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", params.id);
       savingRef.current = false;
       setSaving(false);
+
+      if (updateError) {
+        // Kayıt hatası: düzenleme ekranı AÇIK kalır, başarı izlenimi
+        // VERİLMEZ — kullanıcı ikinci kez göndermeden önce yenileyip
+        // kontrol etmeye yönlendirilir.
+        alert("Kaydedilemedi. Lütfen sayfayı yenileyip tekrar deneyin; ikinci kez göndermeden önce kayıt bilgilerini kontrol edin.");
+        return;
+      }
+
       setEditingVehicle(false);
     }
   }
@@ -766,14 +790,22 @@ export default function BireyselVehicleDetailPage() {
               <>
                 <label style={labelStyle}>Sonraki Bakım (km)</label>
                 <input
+                  data-field="next_service_km"
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   placeholder="Opsiyonel"
-                  style={{ ...inputStyle, marginBottom: 10 }}
+                  aria-describedby={fieldErrors.next_service_km ? "err-next-km" : undefined}
+                  aria-invalid={!!fieldErrors.next_service_km}
+                  style={{ ...inputStyle, marginBottom: fieldErrors.next_service_km ? 4 : 10, borderColor: fieldErrors.next_service_km ? colors.danger : colors.border }}
                   value={vehicle.next_service_km || ""}
                   onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
                 />
+                {fieldErrors.next_service_km && (
+                  <p id="err-next-km" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+                    {fieldErrors.next_service_km}
+                  </p>
+                )}
                 <label style={labelStyle}>Sonraki Bakım (tarih)</label>
                 <input
                   data-field="next_service_date"

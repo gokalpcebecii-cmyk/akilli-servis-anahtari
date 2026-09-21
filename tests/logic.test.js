@@ -13,7 +13,10 @@ const {
   computeMaintenancePlan,
   isValidNextServiceKm,
   isValidNextServiceDate,
+  isValidCurrentKmUpdate,
+  computeAutoNextServicePlan,
   describeMaintenancePlan,
+  todayIsoIstanbul,
 } = require("../lib/logic");
 
 const { generateQrCode, QR_CODE_ALPHABET } = require("../lib/qrToken");
@@ -298,6 +301,64 @@ test("madde 8: 132.000 km → varsayılan plan 142.000 km hesaplar (+10.000 km /
 
 test("madde 8: güncel kilometreden düşük sonraki bakım değeri her zaman reddedilir (132.000 → 130.000)", () => {
   assert.equal(isValidNextServiceKm(132000, 130000), false);
+});
+
+// ---------------------------------------------------------------------
+// Pilot bugfix turu — araç düzenleme ve servis hızlı bakım kaydında
+// sonraki bakım km/tarihinin yanlışlıkla ezilmesini engelleme
+// ---------------------------------------------------------------------
+
+test("todayIsoIstanbul: YYYY-MM-DD biçiminde, gerçek bugüne (UTC gün farkı içinde) yakın bir tarih döner", () => {
+  const iso = todayIsoIstanbul();
+  assert.match(iso, /^\d{4}-\d{2}-\d{2}$/);
+  const utcToday = new Date().toISOString().slice(0, 10);
+  const diffDays = Math.abs((new Date(iso).getTime() - new Date(utcToday).getTime()) / 86400000);
+  assert.ok(diffDays <= 1, "İstanbul günü, UTC gününden en fazla 1 gün farklı olmalı");
+});
+
+test("isValidCurrentKmUpdate: yeni km eski km'den düşükse reddedilir, eşit/büyükse kabul edilir", () => {
+  assert.equal(isValidCurrentKmUpdate(40000, 39999), false);
+  assert.equal(isValidCurrentKmUpdate(40000, 40000), true);
+  assert.equal(isValidCurrentKmUpdate(40000, 40001), true);
+  assert.equal(isValidCurrentKmUpdate(40000, ""), false);
+  assert.equal(isValidCurrentKmUpdate(null, 100), true, "önceki km bilinmiyorsa her değer kabul edilir");
+});
+
+test("computeAutoNextServicePlan: hiç periyot yoksa (veya hepsi varsayılandan geç) varsayılan +10.000 km / 12 ay döner", () => {
+  const plan = computeAutoNextServicePlan({ currentKm: 40000, today: "2026-09-19", selectedItemIntervals: {} });
+  assert.equal(plan.nextServiceKm, 50000);
+  assert.equal(plan.nextServiceDate, "2027-09-19");
+
+  const withLateInterval = computeAutoNextServicePlan({
+    currentKm: 40000,
+    today: "2026-09-19",
+    selectedItemIntervals: { lastik: 40000 }, // 40000+40000=80000, varsayılan 50000'den GEÇ
+  });
+  assert.equal(withLateInterval.nextServiceKm, 50000, "varsayılandan daha geç bir periyot varsayılanı EZMEMELİ");
+});
+
+test("computeAutoNextServicePlan: seçili işlemlerden DAHA ERKEN periyodu olan kazanır", () => {
+  // Motor Yağı: +10.000 (vade 50.000) — Hava Filtresi: +15.000 (vade 55.000).
+  // İkisi de varsayılan tabanla (50.000) AYNI/GEÇ; erken kazanan senaryo
+  // için 5.000 km periyotlu bir kalem eklenir (vade 45.000 < 50.000).
+  const plan = computeAutoNextServicePlan({
+    currentKm: 40000,
+    today: "2026-09-19",
+    selectedItemIntervals: { motor_yagi: 10000, fren_on_balata: 5000 },
+  });
+  assert.equal(plan.nextServiceKm, 45000, "5.000 km periyotlu kalem (vade 45.000) en erken olmalı");
+});
+
+test("computeAutoNextServicePlan: manuel giriş yokken bu fonksiyonun sonucu ARACIN ESKİ next_service_km'inden bağımsızdır", () => {
+  // Bu, panel/[id] sayfasındaki "eski plan sessizce manuel giriş sanılıp
+  // otomatik öneriyi ezmesin" hatasının kök nedenini doğrudan test eder:
+  // fonksiyon aracın ESKİ next_service_km/next_service_date değerini HİÇ
+  // PARAMETRE olarak ALMAZ — yalnızca güncel km + seçili periyotlardan
+  // hesaplar.
+  const staleOldNextServiceKm = 999999; // aracın DB'deki eski (alakasız) planı
+  const plan = computeAutoNextServicePlan({ currentKm: 40000, today: "2026-09-19", selectedItemIntervals: { motor_yagi: 10000 } });
+  assert.notEqual(plan.nextServiceKm, staleOldNextServiceKm);
+  assert.equal(plan.nextServiceKm, 50000);
 });
 
 test("madde 8: beş bakım planı seçeneği — hesapla → describeMaintenancePlan ile göster → aynı girdiyle tekrar hesapla tutarlı (kaydet/yenile simülasyonu)", () => {

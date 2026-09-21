@@ -244,3 +244,279 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
     expect(recordInserts.length, "çift tıklama tek maintenance_records POST'u üretmeli").toBe(1);
   });
 });
+
+// -----------------------------------------------------------------------
+// Pilot bugfix turu — araç düzenleme ve servis hızlı bakım kaydında
+// sonraki bakım km/tarihinin yanlışlıkla ezilmesini engelleme.
+// -----------------------------------------------------------------------
+
+test.describe("Pilot bugfix turu — bireysel araç düzenleme, mevcut bakım planı korunur", () => {
+  test("Düzenle → hiçbir şey değiştirmeden Kaydet → PATCH, ESKİ next_service_km/next_service_date'i AYNEN gönderir (varsayılan plan yeniden uygulanmaz)", async ({
+    page,
+    baseURL,
+  }) => {
+    const ownerId = "cccccccc-1111-1111-1111-111111111111";
+    const vehicleId = "cccccccc-2222-2222-2222-222222222222";
+    const existingNextServiceKm = 87650; // aracın DB'deki GERÇEK, mevcut planı
+    const existingNextServiceDate = "2027-03-15";
+    const vehiclePatches: any[] = [];
+
+    await installMockSession(page.context(), { id: ownerId, email: "duzenle@ornek.com" }, baseURL!);
+    await mockSupabaseRest(page, {
+      maintenance_records: { list: [] },
+      maintenance_items: { list: [] },
+      qr_keys: { single: { code: "sabit-test-kodu", revoked_at: null } },
+    });
+    await page.route("**/rest/v1/vehicles**", async (route) => {
+      if (route.request().method() === "PATCH") {
+        vehiclePatches.push(route.request().postDataJSON());
+        await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+        return;
+      }
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      const row = {
+        id: vehicleId,
+        plate: "34 DZ 001",
+        brand: "Renault",
+        model: "Clio",
+        year: 2019,
+        current_km: 77000,
+        owner_user_id: ownerId,
+        next_service_km: existingNextServiceKm,
+        next_service_date: existingNextServiceDate,
+        notes: null,
+      };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
+
+    await page.goto(`/bireysel/araclar/${vehicleId}`);
+    await page.getByText("34 DZ 001").first().waitFor();
+    await page.getByRole("button", { name: "Düzenle" }).click();
+    // Form alanlarının GERÇEKTEN eski değerlerle dolu geldiğini doğrula —
+    // aksi halde bu test "boş alan kaydedildi" gibi yanlış bir yeşile
+    // düşebilir.
+    await expect(page.locator('input[value="87650"]')).toBeVisible();
+    await expect(page.locator(`input[value="${existingNextServiceDate}"]`)).toBeVisible();
+
+    await page.getByRole("button", { name: "Kaydet" }).click();
+    await page.waitForTimeout(300);
+
+    expect(vehiclePatches.length, "tam olarak bir PATCH gönderilmeli").toBe(1);
+    expect(vehiclePatches[0].next_service_km, "eski next_service_km DEĞİŞMEDEN gönderilmeli, +10.000 km yeniden hesaplanmamalı").toBe(
+      existingNextServiceKm
+    );
+    expect(vehiclePatches[0].next_service_date, "eski next_service_date DEĞİŞMEDEN gönderilmeli").toBe(existingNextServiceDate);
+  });
+
+  test("Düzenle → kayıt hatası → düzenleme ekranı AÇIK kalır, 'Kapat' düğmesine dönüşmez (başarı izlenimi verilmez)", async ({
+    page,
+    baseURL,
+  }) => {
+    const ownerId = "cccccccc-3333-3333-3333-333333333333";
+    const vehicleId = "cccccccc-4444-4444-4444-444444444444";
+
+    await installMockSession(page.context(), { id: ownerId, email: "hata@ornek.com" }, baseURL!);
+    await mockSupabaseRest(page, {
+      maintenance_records: { list: [] },
+      maintenance_items: { list: [] },
+      qr_keys: { single: { code: "sabit-test-kodu-2", revoked_at: null } },
+    });
+    await page.route("**/rest/v1/vehicles**", async (route) => {
+      if (route.request().method() === "PATCH") {
+        await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "beklenmeyen sunucu hatası" }) });
+        return;
+      }
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      const row = {
+        id: vehicleId,
+        plate: "34 DZ 002",
+        brand: "Renault",
+        model: "Clio",
+        year: 2019,
+        current_km: 77000,
+        owner_user_id: ownerId,
+        next_service_km: 90000,
+        next_service_date: "2027-03-15",
+        notes: null,
+      };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.goto(`/bireysel/araclar/${vehicleId}`);
+    await page.getByText("34 DZ 002").first().waitFor();
+    await page.getByRole("button", { name: "Düzenle" }).click();
+    await page.getByRole("button", { name: "Kaydet" }).click();
+    await page.waitForTimeout(300);
+
+    // Kayıt başarısız olduğu için "Düzenle"ye geri DÖNMEMELİ (hâlâ "Kapat"
+    // yazmalı — ekran açık kaldı) ve form hâlâ görünür olmalı.
+    await expect(page.getByRole("button", { name: "Kapat" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Kaydet" })).toBeVisible();
+  });
+});
+
+test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan, manuel geçersiz kılma, hata yönetimi", () => {
+  async function setupQuickSaveWithExistingPlan(page: any, baseURL: string, plate: string, vehicleId: string) {
+    const recordInserts: any[] = [];
+    const vehiclePatches: any[] = [];
+    const staffId = "dddddddd-1111-1111-1111-111111111111";
+    const tenantId = "dddddddd-2222-2222-2222-222222222222";
+
+    await installMockSession(page.context(), { id: staffId, email: `plan-${plate}@ornek.com` }, baseURL);
+    await mockSupabaseRest(page, {
+      maintenance_records: { list: [] },
+      maintenance_items: { list: [] },
+      qr_keys: { single: null, list: [] },
+      staff_users: { single: { id: staffId, tenant_id: tenantId } },
+      tenants: { single: { id: tenantId, name: "Plan Test Servis" } },
+    });
+    await page.route("**/rest/v1/maintenance_records**", async (route: any) => {
+      if (route.request().method() === "POST") {
+        const body = route.request().postDataJSON();
+        recordInserts.push(body);
+        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(Array.isArray(body) ? body : [body]) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
+    await page.route("**/rest/v1/vehicles**", async (route: any) => {
+      if (route.request().method() === "PATCH") {
+        vehiclePatches.push(route.request().postDataJSON());
+        await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+        return;
+      }
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      // KRİTİK: araç DB'de ZATEN eski/alakasız bir sonraki-bakım planı
+      // taşıyor — bu turdan ÖNCE bu değer sessizce "manuel giriş" sanılıp
+      // otomatik öneriyi eziyordu (hiçbir alan dokunulmasa bile).
+      const row = {
+        id: vehicleId,
+        plate,
+        brand: "Fiat",
+        model: "Egea",
+        year: 2021,
+        current_km: 40000,
+        tenant_id: tenantId,
+        owner_user_id: null,
+        next_service_km: 999999,
+        next_service_date: "2099-01-01",
+      };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
+    await page.goto(`/panel/araclar/${vehicleId}`);
+    await page.getByText(plate).first().waitFor();
+    return { recordInserts, vehiclePatches };
+  }
+
+  test("Hiçbir manuel plan alanına dokunmadan KAYDET → PATCH, aracın ESKİ next_service_km'ini DEĞİL, taze hesaplanan otomatik planı gönderir", async ({
+    page,
+    baseURL,
+  }) => {
+    const { vehiclePatches } = await setupQuickSaveWithExistingPlan(page, baseURL!, "34 PL 001", "dddddddd-3333-3333-3333-333333333333");
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click(); // periyot 10.000 → vade 50.000
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    expect(vehiclePatches.length).toBe(1);
+    expect(vehiclePatches[0].next_service_km, "eski (999999) DEĞİL, otomatik hesaplanan (40.000+10.000) yazılmalı").toBe(50000);
+    expect(vehiclePatches[0].next_service_km).not.toBe(999999);
+    expect(vehiclePatches[0].next_service_date).not.toBe("2099-01-01");
+  });
+
+  test("Hiç işlem seçilmeden (yalnızca 'Diğer') KAYDET → varsayılan +10.000 km / 12 ay uygulanır", async ({ page, baseURL }) => {
+    const { vehiclePatches } = await setupQuickSaveWithExistingPlan(page, baseURL!, "34 PL 002", "dddddddd-4444-4444-4444-444444444444");
+    await page.getByRole("button", { name: "Diğer", exact: true }).click();
+    await page.getByPlaceholder("Yapılan işlemi kısaca yazın").fill("Genel kontrol");
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    expect(vehiclePatches.length).toBe(1);
+    expect(vehiclePatches[0].next_service_km, "varsayılan +10.000 km taban değeri kullanılmalı").toBe(50000);
+  });
+
+  test("Planı düzenle → manuel km gir → KAYDET → PATCH, otomatik öneri YERİNE manuel girilen değeri gönderir", async ({ page, baseURL }) => {
+    const { vehiclePatches } = await setupQuickSaveWithExistingPlan(page, baseURL!, "34 PL 003", "dddddddd-5555-5555-5555-555555555555");
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: /Planı düzenle/ }).click();
+    await page.getByPlaceholder("Otomatik önerilir").fill("65000");
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    expect(vehiclePatches.length).toBe(1);
+    expect(vehiclePatches[0].next_service_km, "kullanıcının elle girdiği değer otomatik öneriyi (50.000) ezmeli").toBe(65000);
+  });
+
+  test("Güncel kilometre, kayıtlı eski kilometreden düşük girilirse KAYDET reddedilir, hiçbir yazma yapılmaz", async ({ page, baseURL }) => {
+    const { vehiclePatches, recordInserts } = await setupQuickSaveWithExistingPlan(
+      page,
+      baseURL!,
+      "34 PL 004",
+      "dddddddd-6666-6666-6666-666666666666"
+    );
+    // Sayfa yüklemesinde quickKm=40000 (aracın current_km'i) geliyor —
+    // bunu ESKİSİNDEN düşük bir değere değiştiriyoruz.
+    const kmInput = page.getByPlaceholder("Km");
+    await kmInput.fill("");
+    await kmInput.fill("39000");
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    await expect(page.locator('p[role="alert"]')).toContainText("düşük olamaz");
+    expect(vehiclePatches.length, "geçersiz istekte vehicles'a HİÇ PATCH gitmemeli").toBe(0);
+    expect(recordInserts.length, "geçersiz istekte maintenance_records'a HİÇ POST gitmemeli").toBe(0);
+  });
+
+  test("Araç güncellemesi (vehicles PATCH) başarısız olursa: 'Kayıt tamamlandı' GÖSTERİLMEZ, açık hata mesajı gösterilir, sonraki yazmalar denenmez", async ({
+    page,
+    baseURL,
+  }) => {
+    const recordInserts: any[] = [];
+    const staffId = "dddddddd-7777-7777-7777-777777777777";
+    const tenantId = "dddddddd-8888-8888-8888-888888888888";
+    const vehicleId = "dddddddd-9999-9999-9999-999999999999";
+    const plate = "34 PL 005";
+
+    await installMockSession(page.context(), { id: staffId, email: `hata-${plate}@ornek.com` }, baseURL!);
+    await mockSupabaseRest(page, {
+      maintenance_records: { list: [] },
+      maintenance_items: { list: [] },
+      qr_keys: { single: null, list: [] },
+      staff_users: { single: { id: staffId, tenant_id: tenantId } },
+      tenants: { single: { id: tenantId, name: "Hata Test Servis" } },
+    });
+    await page.route("**/rest/v1/maintenance_records**", async (route: any) => {
+      if (route.request().method() === "POST") {
+        recordInserts.push(route.request().postDataJSON());
+        await route.fulfill({ status: 201, contentType: "application/json", body: "[]" });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
+    await page.route("**/rest/v1/vehicles**", async (route: any) => {
+      if (route.request().method() === "PATCH") {
+        // Supabase/DB tarafında bir yazma hatasını simüle eder.
+        await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "db hatası" }) });
+        return;
+      }
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      const row = { id: vehicleId, plate, brand: "Fiat", model: "Egea", year: 2021, current_km: 40000, tenant_id: tenantId, owner_user_id: null };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
+
+    await page.goto(`/panel/araclar/${vehicleId}`);
+    await page.getByText(plate).first().waitFor();
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
+    await expect(page.locator('p[role="alert"]')).toContainText("sayfayı yenileyip");
+    expect(recordInserts.length, "araç güncellemesi başarısız olduğunda maintenance_records'a HİÇ yazılmamalı").toBe(0);
+
+    // Kilitlenmemiş: hata sonrası KAYDET'e yeniden basılabilmeli (submitting
+    // durumu sıfırlanmış olmalı).
+    await expect(page.getByRole("button", { name: "KAYDET" })).toBeEnabled();
+  });
+});
