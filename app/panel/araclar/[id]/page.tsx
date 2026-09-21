@@ -338,110 +338,155 @@ export default function VehicleDetailPage() {
     setSubmitting(true);
 
     const RETRY_MESSAGE = " Tekrar göndermeden önce sayfayı yenileyip kayıt geçmişini kontrol edin.";
-    function failAndStop(message: string) {
+
+    // ÖNEMLİ — GERÇEK BİR DB TRANSACTION'I DEĞİL: aşağıdaki üç yazma
+    // (vehicles update, maintenance_items upsert, maintenance_records
+    // insert) HÂLÂ AYRI, birbirinden BAĞIMSIZ isteklerdir — tek bir
+    // Postgres transaction'ı İÇİNDE DEĞİLDİR (Supabase'in istemci SDK'sı
+    // çoklu tablo yazmalarını atomik sarmalamaz). Aşağıdaki "her adımdan
+    // sonra hata kontrolü + ilk hatada dur" deseni kısmi başarıyı EN AZA
+    // indirir (ör. vehicles güncellemesi başarısızsa maintenance_items/
+    // records'a HİÇ geçilmez) — ama vehicles GÜNCELLENDİKTEN SONRA
+    // maintenance_items/records adımlarından biri başarısız olursa yine
+    // de KISMİ bir durum (araç güncellenmiş, bakım kaydı GİRİLMEMİŞ)
+    // oluşabilir; bu istemci tarafından GERİ ALINAMAZ. Gerçek atomiklik
+    // yalnızca sunucu tarafında TEK bir (BEGIN...COMMIT içeren) SECURITY
+    // DEFINER RPC ile sağlanabilir — bu, AYRI bir Supabase staging
+    // kurulumunda tasarlanıp test edilmeli. Bu turda hiçbir migration/RPC
+    // oluşturulmadı/uygulanmadı; bu yalnızca istemci-seviyesi bir hata
+    // yönetimi sıkılaştırmasıdır.
+    try {
+      // Supabase session, staff/tenant, araç güncelleme, maintenance_items
+      // ve maintenance_records hataları AYRI AYRI kontrol edilir — herhangi
+      // biri başarısız olursa sonraki adıma geçilmez ve "Kayıt tamamlandı"
+      // GÖSTERİLMEZ.
+      const { data: session, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session.session) {
+        setSubmitError("Oturum bilgisi alınamadı." + RETRY_MESSAGE);
+        return;
+      }
+
+      const { data: staff, error: staffError } = await supabase
+        .from("staff_users")
+        .select("tenant_id")
+        .eq("id", session.session.user.id)
+        .single();
+      // Yalnızca staff nesnesi değil, tenant_id'nin KENDİSİ de zorunlu —
+      // tenant_id boş/null ise HİÇBİR yazma yapılmaz (aşağıdaki vehicles
+      // güncellemesi de tenant_id'ye bağlı olduğundan bu kontrol olmadan
+      // sorgu geçersiz bir filtreyle çalışırdı).
+      if (staffError || !staff || !staff.tenant_id) {
+        setSubmitError("Servis/personel bilgisi doğrulanamadı." + RETRY_MESSAGE);
+        return;
+      }
+      const tenantId = staff.tenant_id;
+      const actorId = session.session.user.id;
+
+      // Araç güncellemesi TENANT KAPSAMINA bağlanır: hem id hem tenant_id
+      // filtrelenir VE güncellemenin GERÇEKTEN bir satır döndürdüğü
+      // doğrulanır (`.select("id")` ile) — hata dönmese bile eşleşen/
+      // güncellenen satır yoksa (ör. araç başka bir tenant'a aitse, RLS
+      // sessizce 0 satır etkiler) işlem yetkisiz/başarısız kabul edilir.
+      const { data: updatedVehicle, error: vehicleError } = await supabase
+        .from("vehicles")
+        .update({
+          current_km: km,
+          next_service_km: finalNextKm,
+          next_service_date: finalNextDate,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", params.id)
+        .eq("tenant_id", tenantId)
+        .select("id");
+      if (vehicleError || !updatedVehicle || updatedVehicle.length === 0) {
+        setSubmitError("Araç bulunamadı veya bu araca erişim yetkiniz yok." + RETRY_MESSAGE);
+        return;
+      }
+
+      if (selectedKeys.length > 0) {
+        const itemsUpsert = selectedKeys.map((key) => ({
+          vehicle_id: params.id,
+          item_key: key,
+          last_service_date: todayIso,
+          last_service_km: km,
+          interval_km: itemIntervals[key] ? Number(itemIntervals[key]) : null,
+        }));
+        const { error: itemsError } = await supabase.from("maintenance_items").upsert(itemsUpsert, { onConflict: "vehicle_id,item_key" });
+        if (itemsError) {
+          setSubmitError("Bakım kalemleri kaydedilemedi." + RETRY_MESSAGE);
+          return;
+        }
+      }
+
+      // İkinci düzeltme turu, madde 7: aynı anda seçilen birden fazla işlem
+      // (ör. Motor Yağı + Yağ Filtresi) geçmişte AYRI satırlar olarak değil,
+      // TEK bir servis ziyareti altında (tek maintenance_records satırı,
+      // birleştirilmiş açıklama) kaydedilmeli — şema/migration değişikliği
+      // olmadan bunu sağlayan tek yol, tek satıra birleştirilmiş açıklama.
+      // maintenance_items (her işlemin kendi periyodu/son bakımı) yine de
+      // işlem başına ayrı ayrı güncelleniyor, yukarıda değişmedi.
+      const visitLabels = selectedKeys.map((key) => QUICK_ITEMS.find((it) => it.key === key)?.label ?? key);
+      if (otherSelected && otherText.trim()) {
+        visitLabels.push(otherText.trim());
+      }
+      if (visitLabels.length > 0) {
+        const { error: recordError } = await supabase.from("maintenance_records").insert([
+          {
+            vehicle_id: params.id,
+            tenant_id: tenantId,
+            description: visitLabels.join(", "),
+            km_at_service: km,
+            created_by: actorId,
+          },
+        ]);
+        if (recordError) {
+          setSubmitError("Servis kaydı oluşturulamadı." + RETRY_MESSAGE);
+          return;
+        }
+      }
+
+      // Yazmalar tamamlandı — ekranı yenileyen okuma sorgularının
+      // hataları da kontrol edilir. Yazmalar BAŞARILI olduğu için burada
+      // bir hata, "kayıt başarısız" DEĞİL, "kayıt olmuş olabilir ama ekran
+      // güncel değil" anlamına gelir — bu YÜZDEN normal başarı mesajı
+      // GÖSTERİLMEZ, form verileri TEMİZLENMEZ (kullanıcı ne seçtiğini
+      // kaybetmesin, gerekirse manuel sayfa yenilemesiyle devam etsin).
+      const { data: mi, error: miError } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
+      const { data: r, error: rError } = await supabase
+        .from("maintenance_records")
+        .select("*")
+        .eq("vehicle_id", params.id)
+        .order("service_date", { ascending: false });
+      if (miError || rError) {
+        setSubmitError("Kayıt kaydedilmiş olabilir ancak ekran yenilenemedi. Yeniden göndermeyin; sayfayı yenileyin.");
+        return;
+      }
+
+      setMaintenanceItems(mi ?? []);
+      setRecords(r ?? []);
+      setVehicle((prev: any) => ({ ...prev, current_km: km, next_service_km: finalNextKm, next_service_date: finalNextDate }));
+
+      setSelectedItems({});
+      setItemIntervals({});
+      setOtherSelected(false);
+      setOtherText("");
+      setNextServiceKm("");
+      setNextServiceDate("");
+      setSuccessMessage("✓ Kayıt tamamlandı");
+      setTimeout(() => setSuccessMessage(""), 4000);
+    } catch {
+      // Beklenmeyen ağ/fetch istisnası (ör. bağlantı koptu) — yukarıdaki
+      // adımların HİÇBİRİ {error} SONUCU DEĞİL, doğrudan THROW ile
+      // sonlanmış olabilir. Bu durumda da "Kayıt tamamlandı" GÖSTERİLMEZ
+      // ve kullanıcı aynı açık mesajla yönlendirilir.
+      setSubmitError("Beklenmeyen bir bağlantı hatası oluştu." + RETRY_MESSAGE);
+    } finally {
+      // Buton kalıcı olarak "Kaydediliyor…" durumunda KALMAZ — başarı,
+      // beklenen hata VEYA beklenmeyen istisna FARK ETMEKSİZİN kilit
+      // mutlaka açılır.
       quickSubmitRef.current = false;
       setSubmitting(false);
-      setSubmitError(message + RETRY_MESSAGE);
     }
-
-    // Supabase session, staff/tenant, araç güncelleme, maintenance_items ve
-    // maintenance_records hataları AYRI AYRI kontrol edilir — herhangi biri
-    // başarısız olursa sonraki adıma geçilmez ve "Kayıt tamamlandı"
-    // GÖSTERİLMEZ.
-    const { data: session, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session.session) {
-      failAndStop("Oturum bilgisi alınamadı.");
-      return;
-    }
-
-    const { data: staff, error: staffError } = await supabase
-      .from("staff_users")
-      .select("tenant_id")
-      .eq("id", session.session.user.id)
-      .single();
-    if (staffError || !staff) {
-      failAndStop("Servis/personel bilgisi alınamadı.");
-      return;
-    }
-    const tenantId = staff.tenant_id;
-    const actorId = session.session.user.id;
-
-    const { error: vehicleError } = await supabase
-      .from("vehicles")
-      .update({
-        current_km: km,
-        next_service_km: finalNextKm,
-        next_service_date: finalNextDate,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", params.id);
-    if (vehicleError) {
-      failAndStop("Araç bilgisi güncellenemedi.");
-      return;
-    }
-
-    if (selectedKeys.length > 0) {
-      const itemsUpsert = selectedKeys.map((key) => ({
-        vehicle_id: params.id,
-        item_key: key,
-        last_service_date: todayIso,
-        last_service_km: km,
-        interval_km: itemIntervals[key] ? Number(itemIntervals[key]) : null,
-      }));
-      const { error: itemsError } = await supabase.from("maintenance_items").upsert(itemsUpsert, { onConflict: "vehicle_id,item_key" });
-      if (itemsError) {
-        failAndStop("Bakım kalemleri kaydedilemedi.");
-        return;
-      }
-    }
-
-    // İkinci düzeltme turu, madde 7: aynı anda seçilen birden fazla işlem
-    // (ör. Motor Yağı + Yağ Filtresi) geçmişte AYRI satırlar olarak değil,
-    // TEK bir servis ziyareti altında (tek maintenance_records satırı,
-    // birleştirilmiş açıklama) kaydedilmeli — şema/migration değişikliği
-    // olmadan bunu sağlayan tek yol, tek satıra birleştirilmiş açıklama.
-    // maintenance_items (her işlemin kendi periyodu/son bakımı) yine de
-    // işlem başına ayrı ayrı güncelleniyor, yukarıda değişmedi.
-    const visitLabels = selectedKeys.map((key) => QUICK_ITEMS.find((it) => it.key === key)?.label ?? key);
-    if (otherSelected && otherText.trim()) {
-      visitLabels.push(otherText.trim());
-    }
-    if (visitLabels.length > 0) {
-      const { error: recordError } = await supabase.from("maintenance_records").insert([
-        {
-          vehicle_id: params.id,
-          tenant_id: tenantId,
-          description: visitLabels.join(", "),
-          km_at_service: km,
-          created_by: actorId,
-        },
-      ]);
-      if (recordError) {
-        failAndStop("Servis kaydı oluşturulamadı.");
-        return;
-      }
-    }
-
-    const { data: mi } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
-    setMaintenanceItems(mi ?? []);
-    const { data: r } = await supabase
-      .from("maintenance_records")
-      .select("*")
-      .eq("vehicle_id", params.id)
-      .order("service_date", { ascending: false });
-    setRecords(r ?? []);
-    setVehicle((prev: any) => ({ ...prev, current_km: km, next_service_km: finalNextKm, next_service_date: finalNextDate }));
-
-    setSelectedItems({});
-    setItemIntervals({});
-    setOtherSelected(false);
-    setOtherText("");
-    setNextServiceKm("");
-    setNextServiceDate("");
-    quickSubmitRef.current = false;
-    setSubmitting(false);
-    setSuccessMessage("✓ Kayıt tamamlandı");
-    setTimeout(() => setSuccessMessage(""), 4000);
   }
 
   if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;

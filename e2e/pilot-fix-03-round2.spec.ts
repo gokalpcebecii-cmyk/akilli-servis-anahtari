@@ -144,6 +144,7 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
   async function setupQuickSave(page: any, baseURL: string, plate: string) {
     const recordInserts: any[] = [];
     const vehiclePatches: any[] = [];
+    const vehiclePatchUrls: string[] = [];
     await installMockSession(page.context(), { id: STAFF_ID, email: `grup-${plate}@ornek.com` }, baseURL);
     await mockSupabaseRest(page, {
       vehicles: { single: { id: VEHICLE_ID, plate, brand: "Fiat", model: "Egea", year: 2021, current_km: 40000, tenant_id: TENANT_ID, owner_user_id: null }, list: [] },
@@ -166,7 +167,11 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
     await page.route("**/rest/v1/vehicles**", async (route: any) => {
       if (route.request().method() === "PATCH") {
         vehiclePatches.push(route.request().postDataJSON());
-        await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+        vehiclePatchUrls.push(route.request().url());
+        // .select("id") ZİNCİRLENDİĞİ İÇİN GERÇEK bir eşleşen satır
+        // döndürülmeli — boş dizi "araç bulunamadı/yetkisiz" olarak
+        // yorumlanır (bkz. handleQuickSave, pilot bugfix turu).
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([{ id: VEHICLE_ID }]) });
         return;
       }
       // GET: sayfa yüklemesi .single() kullanıyor (Accept:
@@ -178,7 +183,7 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
     });
     await page.goto(`/panel/araclar/${VEHICLE_ID}`);
     await page.getByText(plate).first().waitFor();
-    return { recordInserts, vehiclePatches };
+    return { recordInserts, vehiclePatches, vehiclePatchUrls };
   }
 
   test("madde 7: maintenance_records yazma fonksiyonu yalnız BİR kez çağrılır (iki ayrı satır değil, tek satır)", async ({ page, baseURL }) => {
@@ -357,16 +362,26 @@ test.describe("Pilot bugfix turu — bireysel araç düzenleme, mevcut bakım pl
 });
 
 test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan, manuel geçersiz kılma, hata yönetimi", () => {
-  async function setupQuickSaveWithExistingPlan(page: any, baseURL: string, plate: string, vehicleId: string) {
+  const PLAN_STAFF_ID = "dddddddd-1111-1111-1111-111111111111";
+  const PLAN_TENANT_ID = "dddddddd-2222-2222-2222-222222222222";
+
+  async function setupQuickSaveWithExistingPlan(
+    page: any,
+    baseURL: string,
+    plate: string,
+    vehicleId: string,
+    opts?: { staffId?: string; tenantId?: string | null }
+  ) {
     const recordInserts: any[] = [];
+    const itemsUpserts: any[] = [];
     const vehiclePatches: any[] = [];
-    const staffId = "dddddddd-1111-1111-1111-111111111111";
-    const tenantId = "dddddddd-2222-2222-2222-222222222222";
+    const vehiclePatchUrls: string[] = [];
+    const staffId = opts?.staffId ?? PLAN_STAFF_ID;
+    const tenantId = opts?.tenantId === undefined ? PLAN_TENANT_ID : opts.tenantId;
 
     await installMockSession(page.context(), { id: staffId, email: `plan-${plate}@ornek.com` }, baseURL);
     await mockSupabaseRest(page, {
       maintenance_records: { list: [] },
-      maintenance_items: { list: [] },
       qr_keys: { single: null, list: [] },
       staff_users: { single: { id: staffId, tenant_id: tenantId } },
       tenants: { single: { id: tenantId, name: "Plan Test Servis" } },
@@ -380,10 +395,24 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
       }
       await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
     });
+    await page.route("**/rest/v1/maintenance_items**", async (route: any) => {
+      const method = route.request().method();
+      if (method === "POST" || method === "PATCH") {
+        const body = route.request().postDataJSON();
+        itemsUpserts.push(body);
+        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(Array.isArray(body) ? body : [body]) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
     await page.route("**/rest/v1/vehicles**", async (route: any) => {
       if (route.request().method() === "PATCH") {
         vehiclePatches.push(route.request().postDataJSON());
-        await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+        vehiclePatchUrls.push(route.request().url());
+        // .select("id") ZİNCİRLENDİĞİ İÇİN GERÇEK bir eşleşen satır
+        // döndürülmeli — boş dizi "araç bulunamadı/yetkisiz" olarak
+        // yorumlanır (bkz. handleQuickSave, pilot bugfix turu).
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([{ id: vehicleId }]) });
         return;
       }
       const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
@@ -406,7 +435,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     });
     await page.goto(`/panel/araclar/${vehicleId}`);
     await page.getByText(plate).first().waitFor();
-    return { recordInserts, vehiclePatches };
+    return { recordInserts, itemsUpserts, vehiclePatches, vehiclePatchUrls };
   }
 
   test("Hiçbir manuel plan alanına dokunmadan KAYDET → PATCH, aracın ESKİ next_service_km'ini DEĞİL, taze hesaplanan otomatik planı gönderir", async ({
@@ -518,5 +547,184 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     // Kilitlenmemiş: hata sonrası KAYDET'e yeniden basılabilmeli (submitting
     // durumu sıfırlanmış olmalı).
     await expect(page.getByRole("button", { name: "KAYDET" })).toBeEnabled();
+  });
+
+  test("staff.tenant_id null/boş olduğunda hiçbir yazma yapılmaz (yalnızca staff nesnesi değil, tenant_id'nin kendisi zorunlu)", async ({
+    page,
+    baseURL,
+  }) => {
+    const { recordInserts, itemsUpserts, vehiclePatches } = await setupQuickSaveWithExistingPlan(
+      page,
+      baseURL!,
+      "34 TN 001",
+      "eeeeeeee-1111-1111-1111-111111111111",
+      { tenantId: null }
+    );
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
+    await expect(page.locator('p[role="alert"]')).toContainText("doğrulanamadı");
+    expect(vehiclePatches.length, "tenant_id yokken vehicles'a HİÇ PATCH gitmemeli").toBe(0);
+    expect(itemsUpserts.length, "tenant_id yokken maintenance_items'a HİÇ yazılmamalı").toBe(0);
+    expect(recordInserts.length, "tenant_id yokken maintenance_records'a HİÇ yazılmamalı").toBe(0);
+  });
+
+  test("vehicles PATCH isteği hem id hem tenant_id filtresi taşır (tenant kapsamına bağlı güncelleme)", async ({ page, baseURL }) => {
+    const { vehiclePatchUrls } = await setupQuickSaveWithExistingPlan(page, baseURL!, "34 TN 002", "eeeeeeee-2222-2222-2222-222222222222");
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    expect(vehiclePatchUrls.length).toBe(1);
+    expect(vehiclePatchUrls[0]).toContain(`tenant_id=eq.${PLAN_TENANT_ID}`);
+    expect(vehiclePatchUrls[0]).toContain("id=eq.eeeeeeee-2222-2222-2222-222222222222");
+  });
+
+  test("Araç bulunamadığında/güncellenmediğinde (0 satır dönerse) sonraki yazmalar hiç denenmez", async ({ page, baseURL }) => {
+    const vehicleId = "eeeeeeee-3333-3333-3333-333333333333";
+    const plate = "34 TN 003";
+    const itemsUpserts: any[] = [];
+    const recordInserts: any[] = [];
+
+    await installMockSession(page.context(), { id: PLAN_STAFF_ID, email: `notfound-${plate}@ornek.com` }, baseURL!);
+    await mockSupabaseRest(page, {
+      maintenance_records: { list: [] },
+      qr_keys: { single: null, list: [] },
+      staff_users: { single: { id: PLAN_STAFF_ID, tenant_id: PLAN_TENANT_ID } },
+      tenants: { single: { id: PLAN_TENANT_ID, name: "Bulunamadı Test Servis" } },
+    });
+    await page.route("**/rest/v1/maintenance_items**", async (route: any) => {
+      const method = route.request().method();
+      if (method === "POST" || method === "PATCH") {
+        itemsUpserts.push(route.request().postDataJSON());
+        await route.fulfill({ status: 201, contentType: "application/json", body: "[]" });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
+    await page.route("**/rest/v1/maintenance_records**", async (route: any) => {
+      if (route.request().method() === "POST") {
+        recordInserts.push(route.request().postDataJSON());
+        await route.fulfill({ status: 201, contentType: "application/json", body: "[]" });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
+    await page.route("**/rest/v1/vehicles**", async (route: any) => {
+      if (route.request().method() === "PATCH") {
+        // Hata YOK ama eşleşen/güncellenen satır da YOK (ör. araç başka
+        // bir tenant'a ait, RLS sessizce 0 satır etkiledi).
+        await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+        return;
+      }
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      const row = { id: vehicleId, plate, brand: "Fiat", model: "Egea", year: 2021, current_km: 40000, tenant_id: PLAN_TENANT_ID, owner_user_id: null };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
+
+    await page.goto(`/panel/araclar/${vehicleId}`);
+    await page.getByText(plate).first().waitFor();
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
+    await expect(page.locator('p[role="alert"]')).toContainText("bulunamadı");
+    expect(itemsUpserts.length, "araç güncellenmediyse maintenance_items'a HİÇ yazılmamalı").toBe(0);
+    expect(recordInserts.length, "araç güncellenmediyse maintenance_records'a HİÇ yazılmamalı").toBe(0);
+  });
+
+  test("Beklenmeyen ağ istisnasında (vehicles PATCH ağ hatası) başarı mesajı çıkmaz, KAYDET yeniden etkinleşir", async ({ page, baseURL }) => {
+    const vehicleId = "eeeeeeee-4444-4444-4444-444444444444";
+    const plate = "34 TN 004";
+
+    await installMockSession(page.context(), { id: PLAN_STAFF_ID, email: `netfail-${plate}@ornek.com` }, baseURL!);
+    await mockSupabaseRest(page, {
+      maintenance_records: { list: [] },
+      maintenance_items: { list: [] },
+      qr_keys: { single: null, list: [] },
+      staff_users: { single: { id: PLAN_STAFF_ID, tenant_id: PLAN_TENANT_ID } },
+      tenants: { single: { id: PLAN_TENANT_ID, name: "Ağ Hatası Test Servis" } },
+    });
+    await page.route("**/rest/v1/vehicles**", async (route: any) => {
+      if (route.request().method() === "PATCH") {
+        // Beklenmeyen ağ/bağlantı istisnasını simüle eder — normal bir
+        // {error} SONUCU DEĞİL, isteğin kendisi başarısız olur.
+        await route.abort("failed");
+        return;
+      }
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      const row = { id: vehicleId, plate, brand: "Fiat", model: "Egea", year: 2021, current_km: 40000, tenant_id: PLAN_TENANT_ID, owner_user_id: null };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
+
+    await page.goto(`/panel/araclar/${vehicleId}`);
+    await page.getByText(plate).first().waitFor();
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
+    await expect(page.locator('p[role="alert"]')).toBeVisible();
+    // Kilitlenmemiş: buton kalıcı "Kaydediliyor…" durumunda KALMAZ.
+    await expect(page.getByRole("button", { name: "KAYDET" })).toBeEnabled();
+  });
+
+  test("Yenileme (refresh) sorgusu başarısız olursa: normal başarı mesajı ÇIKMAZ, 'yeniden göndermeyin' uyarısı gösterilir, form temizlenmez", async ({
+    page,
+    baseURL,
+  }) => {
+    const vehicleId = "eeeeeeee-5555-5555-5555-555555555555";
+    const plate = "34 TN 005";
+
+    await installMockSession(page.context(), { id: PLAN_STAFF_ID, email: `refresh-${plate}@ornek.com` }, baseURL!);
+    await mockSupabaseRest(page, {
+      staff_users: { single: { id: PLAN_STAFF_ID, tenant_id: PLAN_TENANT_ID } },
+      tenants: { single: { id: PLAN_TENANT_ID, name: "Yenileme Hatası Test Servis" } },
+      qr_keys: { single: null, list: [] },
+    });
+    await page.route("**/rest/v1/maintenance_items**", async (route: any) => {
+      const method = route.request().method();
+      if (method === "POST" || method === "PATCH") {
+        // Yazma BAŞARILI (upsert).
+        const body = route.request().postDataJSON();
+        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(Array.isArray(body) ? body : [body]) });
+        return;
+      }
+      // GET (yenileme okuması): BAŞARISIZ.
+      await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "okuma hatası" }) });
+    });
+    await page.route("**/rest/v1/maintenance_records**", async (route: any) => {
+      const method = route.request().method();
+      if (method === "POST") {
+        const body = route.request().postDataJSON();
+        await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(Array.isArray(body) ? body : [body]) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
+    await page.route("**/rest/v1/vehicles**", async (route: any) => {
+      if (route.request().method() === "PATCH") {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([{ id: vehicleId }]) });
+        return;
+      }
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      const row = { id: vehicleId, plate, brand: "Fiat", model: "Egea", year: 2021, current_km: 40000, tenant_id: PLAN_TENANT_ID, owner_user_id: null };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
+
+    await page.goto(`/panel/araclar/${vehicleId}`);
+    await page.getByText(plate).first().waitFor();
+    await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.waitForTimeout(300);
+
+    await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
+    await expect(page.locator('p[role="alert"]')).toContainText("ekran yenilenemedi");
+    // Form verileri gereksiz yere TEMİZLENMEZ — seçili işlem hâlâ işaretli
+    // görünmeli (aria-pressed="true").
+    await expect(page.getByRole("button", { name: "Motor Yağı", exact: true })).toHaveAttribute("aria-pressed", "true");
   });
 });
