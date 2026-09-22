@@ -1150,7 +1150,7 @@ export default function BireyselVehicleDetailPage() {
               </div>
             </section>
 
-            <section id="qr" className="otoiz-hero-pattern" style={{ ...cardStyle, textAlign: "center", display: activeTab === "belgeler" ? "block" : "none" }}>
+            <section id="qr" className="otoiz-hero-pattern" style={{ ...cardStyle, textAlign: "center", display: activeTab === "belgeler" && PILOT_FLAGS.qrSelfIssuance ? "block" : "none" }}>
               <SectionHeader icon="qr" title="QR / NFC Yönetimi" center />
               <div className="otoiz-accent-line" style={{ margin: "-6px auto 14px" }} />
               {!PILOT_FLAGS.qrSelfIssuance ? (
@@ -1209,7 +1209,7 @@ export default function BireyselVehicleDetailPage() {
               )}
             </section>
 
-            <section id="devir" style={{ ...cardStyle, textAlign: "center", display: activeTab === "genel" ? "block" : "none" }}>
+            <section id="devir" style={{ ...cardStyle, textAlign: "center", display: activeTab === "genel" && PILOT_FLAGS.ownershipTransferSelfService ? "block" : "none" }}>
               <SectionHeader icon="swap" title="Sahiplik Devri" center />
               <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 14, lineHeight: 1.6 }}>
                 Aracınızı sattığınızda teknik geçmişi koruyarak yeni sahibine güvenle devredin.
