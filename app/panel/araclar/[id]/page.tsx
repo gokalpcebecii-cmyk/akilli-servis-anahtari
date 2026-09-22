@@ -869,8 +869,15 @@ export default function VehicleDetailPage() {
               </>
             ) : (
               <p style={{ fontSize: 13, color: colors.textMuted }}>
-                Bu araca henüz bir QR anahtarlık atanmamış.{" "}
-                <a href="/panel/eslestir" style={{ color: colors.greenDark, fontWeight: 700 }}>Anahtarlık Eşleştir</a> sayfasından atayabilirsiniz.
+                Bu araca henüz bir QR anahtarlık atanmamış.
+                {PILOT_FLAGS.qrMatchingSelfService ? (
+                  <>
+                    {" "}
+                    <a href="/panel/eslestir" style={{ color: colors.greenDark, fontWeight: 700 }}>Anahtarlık Eşleştir</a> sayfasından atayabilirsiniz.
+                  </>
+                ) : (
+                  " Anahtarlık eşleştirme pilot sürecinde OTOİZ ekibi tarafından yapılır."
+                )}
               </p>
             )}
           </section>
