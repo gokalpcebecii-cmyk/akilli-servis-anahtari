@@ -159,3 +159,34 @@ test("GÜVENLİK: VERCEL=1 + bypass denemesi + aksi halde TAM GEÇERLİ staging 
   assert.equal(result.testMode, false);
   assert.equal(result.ok, true, JSON.stringify(result.errors));
 });
+
+// 2026-09-23 staging olayı: Vercel'de değer alanına değişken ADI yapıştırıldı,
+// build geçti, tüm girişler 401 ile kırıldı. Bu artık build'i durdurmalı.
+test("anon key değeri değişken adının kendisiyse -> reddedilir", () => {
+  const r = validateDeploymentEnv(baseStagingEnv({ VERCEL: "1", NEXT_PUBLIC_SUPABASE_ANON_KEY: "NEXT_PUBLIC_SUPABASE_ANON_KEY" }));
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes("NEXT_PUBLIC_SUPABASE_ANON_KEY")));
+});
+
+test("bilinmeyen biçimde uzun anahtar -> reddedilir", () => {
+  const r = validateDeploymentEnv(baseStagingEnv({ VERCEL: "1", SUPABASE_SERVICE_ROLE_KEY: "abcdefghijklmnopqrstuvwxyz0123456789" }));
+  assert.equal(r.ok, false);
+});
+
+test("anon ile service_role anahtarları yer değiştirmişse -> reddedilir", () => {
+  const r = validateDeploymentEnv(baseStagingEnv({
+    VERCEL: "1",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: fakeJwt({ iss: "supabase", ref: STAGING_REF, role: "service_role" }),
+  }));
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes("yanlış rolde")));
+});
+
+test("opaque sb_publishable_ / sb_secret_ anahtarlar doğru rolde -> kabul", () => {
+  const r = validateDeploymentEnv(baseStagingEnv({
+    VERCEL: "1",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_Ab12Cd34Ef56Gh78",
+    SUPABASE_SERVICE_ROLE_KEY: "sb_secret_Zy98Xw76Vu54Ts32",
+  }));
+  assert.equal(r.ok, true, JSON.stringify(r.errors));
+});
