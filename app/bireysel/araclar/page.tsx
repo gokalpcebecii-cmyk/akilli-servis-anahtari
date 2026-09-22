@@ -7,6 +7,7 @@ import { colors, font, radius } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { BottomNav } from "@/components/BottomNav";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 const { plateSearchKey, describeMaintenancePlan } = require("@/lib/logic");
 
@@ -17,7 +18,12 @@ const MODULES = [
   { key: "muayene", title: "Muayene Bilgileri", desc: "Muayene ve sigorta notlarınız.", icon: "clipboard" },
   { key: "qr", title: "QR / NFC Yönetimi", desc: "Aktif kodu görün, iptal edin veya yenileyin.", icon: "qr" },
   { key: "devir", title: "Sahiplik Devri", desc: "Aracı güvenle yeni sahibine devredin.", icon: "swap" },
-];
+].filter((m) =>
+  // Pilot: güvenlik kabulü bekleyen özellikler menüde hiç görünmez
+  // (bkz. lib/pilotFlags.ts). Bayrak açılınca kart kendiliğinden geri gelir.
+  (m.key !== "qr" || PILOT_FLAGS.qrSelfIssuance) &&
+  (m.key !== "devir" || PILOT_FLAGS.ownershipTransferSelfService)
+);
 
 export default function BireyselAraclarPage() {
   const router = useRouter();
@@ -30,6 +36,12 @@ export default function BireyselAraclarPage() {
   const [email, setEmail] = useState<string | null>(null);
 
   async function loadPendingTransfers() {
+    // Pilotta bu RPC'nin EXECUTE yetkisi authenticated'dan alındı; çağırmak
+    // yalnızca konsolda hata üretir.
+    if (!PILOT_FLAGS.ownershipTransferSelfService) {
+      setPendingTransfers([]);
+      return;
+    }
     const { data } = await supabase.rpc("list_my_pending_outgoing_transfers");
     setPendingTransfers(data ?? []);
   }
