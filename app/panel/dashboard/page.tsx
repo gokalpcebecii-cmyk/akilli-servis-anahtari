@@ -1,5 +1,6 @@
 "use client";
 
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
@@ -110,12 +111,16 @@ export default function DashboardPage() {
           <a href="/panel/araclar/yeni" style={{ display: "inline-block", padding: "12px 20px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, minHeight: 44 }}>
             + Yeni Araç Ekle
           </a>
-          <a href="/panel/eslestir" style={{ ...secondaryButtonStyle(), width: "auto", display: "inline-block", textDecoration: "none", padding: "12px 20px" }}>
-            Anahtarlık Eşleştir
-          </a>
-          <a href="/panel/qr-uretim" style={{ ...secondaryButtonStyle(), width: "auto", display: "inline-block", textDecoration: "none", padding: "12px 20px", color: colors.textMuted, borderColor: colors.border }}>
-            QR Üret
-          </a>
+          {PILOT_FLAGS.qrMatchingSelfService && (
+            <a href="/panel/eslestir" style={{ ...secondaryButtonStyle(), width: "auto", display: "inline-block", textDecoration: "none", padding: "12px 20px" }}>
+              Anahtarlık Eşleştir
+            </a>
+          )}
+          {PILOT_FLAGS.bulkQrGeneration && (
+            <a href="/panel/qr-uretim" style={{ ...secondaryButtonStyle(), width: "auto", display: "inline-block", textDecoration: "none", padding: "12px 20px", color: colors.textMuted, borderColor: colors.border }}>
+              QR Üret
+            </a>
+          )}
         </div>
 
         {filtered.length === 0 && (
