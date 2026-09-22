@@ -9,7 +9,7 @@ import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
-const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan } = require("@/lib/logic");
+const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan, todayIsoIstanbul } = require("@/lib/logic");
 
 // Yeni araç akışındaki otomatik bakım planı seçenekleri (PILOT FIX 03 madde B).
 const PLAN_OPTIONS: { key: string; label: string }[] = [
@@ -406,7 +406,7 @@ export default function BireyselVehicleDetailPage() {
 
   async function handleQuickMaintenance(itemKey: string, label: string) {
     setSavingItem(itemKey);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayIsoIstanbul();
     const existingInterval = intervalInputs[itemKey];
     // Kullanıcı hiç periyot seçmediyse makul varsayılan otomatik atanır.
     const intervalKm = existingInterval ? Number(existingInterval) : DEFAULT_ITEM_INTERVALS[itemKey] ?? null;
@@ -530,7 +530,7 @@ export default function BireyselVehicleDetailPage() {
   if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
 
   // "Sonraki bakım" için geçmiş tarih seçilemesin diye native date input'un min'i.
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayIsoIstanbul();
 
   function getUpcomingStatus(itemKey: string) {
     const item = maintenanceItems.find((m) => m.item_key === itemKey);
@@ -554,7 +554,7 @@ export default function BireyselVehicleDetailPage() {
   function getItemStatus(itemKey: string) {
     const item = maintenanceItems.find((m) => m.item_key === itemKey);
     if (!item || !item.last_service_date) return null;
-    const isToday = item.last_service_date === new Date().toISOString().slice(0, 10);
+    const isToday = item.last_service_date === todayIsoIstanbul();
     return { date: item.last_service_date, isToday };
   }
 
