@@ -28,8 +28,15 @@
 
 import type { BrowserContext, Page } from "@playwright/test";
 
-const SUPABASE_HOSTNAME = "sbfsiwqxbsojcxdutnem";
-const STORAGE_KEY = `sb-${SUPABASE_HOSTNAME}-auth-token`;
+// 04A-S: gerçek Production ref'i yerine, playwright.config.ts'nin
+// NEXT_PUBLIC_SUPABASE_URL'sindeki (https://otoiz-e2e-test.supabase.invalid)
+// ilk hostname etiketiyle birebir eşleşen sahte bir test ref'i kullanılıyor.
+// Depolama anahtarı adı @supabase/supabase-js'in kendi varsayılan türetme
+// mantığıyla (`sb-${new URL(url).hostname.split(".")[0]}-auth-token`,
+// bkz. node_modules/@supabase/supabase-js/src/SupabaseClient.ts) birebir
+// hesaplanır — bu yüzden URL değişirse bu sabit de değişmelidir.
+const SUPABASE_PROJECT_REF = "otoiz-e2e-test";
+const STORAGE_KEY = `sb-${SUPABASE_PROJECT_REF}-auth-token`;
 
 function base64url(input: string): string {
   return Buffer.from(input, "utf8").toString("base64url");

@@ -2,11 +2,13 @@ import { createServerSupabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 const { shouldSendReminder } = require("@/lib/logic");
 const { sendSms } = require("@/lib/sms");
+const { authorizeCronRequest } = require("@/lib/cronAuth");
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const auth = authorizeCronRequest(authHeader, process.env.CRON_SECRET);
+  if (!auth.ok) {
+    return NextResponse.json(auth.body, { status: auth.status });
   }
 
   const supabase = createServerSupabase();

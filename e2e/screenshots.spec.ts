@@ -60,10 +60,16 @@ test.describe("QA görsel doğrulama ekran görüntüleri", () => {
     await page.screenshot({ path: path.join(outDir, "09-public-passport-invalid.png") });
   });
 
-  test("Devret adımları (giriş yapılmamış -> giriş sayfasına döner)", async ({ page }, testInfo) => {
+  test("Devret adımları (sahiplik devri pilot kapalı -> 'Kullanılamıyor' gösterir)", async ({ page }, testInfo) => {
     if (testInfo.project.name !== "desktop-chromium") test.skip();
+    // Not: bu ekran önceden token geçersizse "Geçersiz veya Süresi Dolmuş
+    // Bağlantı" gösterirdi. Takip turunda (ağ seviyesinde sıfır istek
+    // kapatması) PILOT_FLAGS.ownershipTransferSelfService kontrolü bu
+    // sayfanın en başına taşındı — flag kapalıyken (mevcut durum) hangi
+    // token verilirse verilsin her zaman "Bu Özellik Şu An Kullanılamıyor"
+    // gösterilir, hiçbir RPC isteği atılmaz.
     await page.goto("/bireysel/devir-kabul/gecersiz-token-000");
-    await page.getByRole("heading", { name: "Geçersiz veya Süresi Dolmuş Bağlantı" }).waitFor();
+    await page.getByRole("heading", { name: "Bu Özellik Şu An Kullanılamıyor" }).waitFor();
     await page.screenshot({ path: path.join(outDir, "10-devir-kabul-invalid.png") });
   });
 });
