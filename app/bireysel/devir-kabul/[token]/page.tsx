@@ -6,6 +6,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { Icon } from "@/components/Icon";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 export default function DevirKabulPage() {
   const params = useParams();
@@ -48,6 +49,26 @@ export default function DevirKabulPage() {
       return;
     }
     setDone(data.vehicle_id);
+  }
+
+  // 04A-S turu bulgusu: bu sayfa, karşı sayfalardan (devret) farklı olarak
+  // hiçbir PILOT_FLAGS kapısı arkasında değildi — initiate tarafı kapalı
+  // olsa bile, önceden üretilmiş geçerli bir token linkiyle bu ekrana
+  // ulaşılabiliyordu. "QR/NFC pilot kapsamı güvenlik kabulüne kadar kapalı
+  // kalacak" kuralı gereği aynı bayrak burada da uygulanır. Altındaki RPC'ler
+  // (accept/preview_ownership_transfer) zaten staging'de authenticated/anon
+  // EXECUTE yetkisi revoke edilerek DB seviyesinde kapatıldı.
+  if (!PILOT_FLAGS.ownershipTransferSelfService) {
+    return (
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bu Özellik Şu An Kullanılamıyor</h1>
+          <p style={{ color: colors.textMuted, marginTop: 8 }}>
+            Sahiplik devri, güvenlik kabulü tamamlanana kadar pilot kapsamı dışındadır.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   if (loading) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;

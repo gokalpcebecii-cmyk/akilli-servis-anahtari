@@ -5,18 +5,19 @@
 // planlanmalı (final raporda listelendi) — bu flag'ler o görevler
 // tamamlanınca true'ya çevrilir.
 //
-// GÜVENLİK NOTU (üçüncü düzeltme turu madde 6 — ikinci turun aşırı iddialı
-// notu düzeltildi): bulkQrGeneration, app/api/qr-uretim İÇİNDE de kontrol
-// edilir VE bu gerçek bir DB-seviyeli kapanıştır (qr_keys'te vehicle_id=
-// null satır ekleyebilecek hiçbir RLS politikası yok — salt-okunur
-// incelemeyle doğrulandı). AMA ownershipTransferSelfService ve
-// qrMatchingSelfService farklıdır: bunlar YALNIZCA UI/uygulama akışını
-// kapatır. Altlarındaki RPC/RLS (initiate_ownership_transfer vb. SECURITY
-// DEFINER + authenticated'e EXECUTE yetkisi; qr_keys UPDATE'i izin veren
-// staff RLS politikası) doğrulanmış bir kullanıcının doğrudan Supabase
-// çağrısıyla bu bayrakları BYPASS ETMESİNE halihazırda izin veriyor. Gerçek
-// DB-seviyeli kapanış için bkz. SECURITY_FIX_04_PROPOSAL.md (öneri,
-// uygulanmadı).
+// GÜVENLİK NOTU (04A-S güvenlik sertleştirme turu — STAGING'DE doğrulandı,
+// bkz. supabase/migrations/20260922174352_qr_pilot_lockdown.sql ve
+// 20260922174458_security_definer_hardening.sql): önceki not burada
+// ownershipTransferSelfService ve qrMatchingSelfService'in yalnızca UI
+// seviyesinde kapalı olduğunu, altlarındaki RPC/RLS'in doğrudan Supabase
+// çağrısıyla bypass edilebildiğini söylüyordu. Bu artık staging'de DOĞRU
+// DEĞİL: qr_keys'teki havuz-claim'e izin veren staff UPDATE politikası
+// kaldırıldı ve qr_keys INSERT/UPDATE/DELETE anon+authenticated'den tümüyle
+// revoke edildi; initiate/accept/cancel/list_my_pending_outgoing_transfers
+// ve preview_ownership_transfer RPC'lerinin EXECUTE yetkisi authenticated
+// (ve preview için anon) rollerinden alındı, yalnızca service_role kaldı.
+// Production'da bu değişiklikler HENÜZ uygulanmadı (SECURITY_FIX_04_PROPOSAL.md,
+// öneri) — bu flag'ler yine de UX'i kapalı tutmaya devam ediyor.
 export const PILOT_FLAGS = {
   // A7: geri alınamaz kişisel veri etkisine rağmen onay kutusu olmadan
   // erişilebilir olan servis self-service sahiplik devri. Kalıcı çözüm:
@@ -31,4 +32,14 @@ export const PILOT_FLAGS = {
   // eşleştirme ekranı (kamera dahil, ne zaman eklenirse) kapatılana kadar
   // kapalı.
   qrMatchingSelfService: false,
+  // 04A-S turu bulgusu: bireysel araç detay sayfası (loadQr/handleRevokeQr/
+  // handleIssueNewQr), qr_keys'e DOĞRUDAN istemci tarafından (browser,
+  // authenticated rolüyle) insert/update yapıyordu — diğer QR akışlarının
+  // aksine hiçbir PILOT_FLAGS kapısı arkasında değildi. "QR/NFC pilot
+  // kapsamı güvenlik kabulüne kadar kapalı kalacak" kuralı gereği, aynı
+  // desen kullanılarak kapatıldı. qr_keys üzerindeki client INSERT/UPDATE
+  // zaten staging'de RLS+grant seviyesinde kapatıldı (yukarı bakınız); bu
+  // flag yalnızca UX'i buna uygun hale getirir (kırık istek yerine temiz
+  // "kullanılamıyor" mesajı).
+  qrSelfIssuance: false,
 } as const;

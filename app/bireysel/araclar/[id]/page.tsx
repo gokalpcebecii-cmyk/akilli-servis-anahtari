@@ -7,6 +7,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, dangerOutlineButtonStyle, badgeStyle, cardStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan } = require("@/lib/logic");
 
@@ -192,7 +193,11 @@ export default function BireyselVehicleDetailPage() {
       .is("revoked_at", null)
       .maybeSingle();
 
-    if (!qrKey) {
+    // 04A-S: yeni kod istemciden doğrudan insert edilmiyor artık — pilot
+    // süresince kapalı (bkz. lib/pilotFlags.ts qrSelfIssuance). Zaten
+    // atanmış bir kod varsa (önceki turda oluşturulmuş) göstermeye devam
+    // ediyoruz; yoksa üretmiyoruz.
+    if (!qrKey && PILOT_FLAGS.qrSelfIssuance) {
       const code = generateCode();
       const { data: created } = await supabase
         .from("qr_keys")
@@ -212,6 +217,7 @@ export default function BireyselVehicleDetailPage() {
   }
 
   async function handleRevokeQr() {
+    if (!PILOT_FLAGS.qrSelfIssuance) return;
     if (!qrCode) return;
     if (!confirm("Bu QR/NFC kodunu iptal etmek istediğinize emin misiniz? İptal edilen kod bir daha kullanılamaz.")) return;
     setQrBusy(true);
@@ -221,6 +227,7 @@ export default function BireyselVehicleDetailPage() {
   }
 
   async function handleIssueNewQr() {
+    if (!PILOT_FLAGS.qrSelfIssuance) return;
     setQrBusy(true);
     await loadQr(params.id as string);
     setQrBusy(false);
@@ -1135,7 +1142,11 @@ export default function BireyselVehicleDetailPage() {
             <section id="qr" className="otoiz-hero-pattern" style={{ ...cardStyle, textAlign: "center", display: activeTab === "belgeler" ? "block" : "none" }}>
               <SectionHeader icon="qr" title="QR / NFC Yönetimi" center />
               <div className="otoiz-accent-line" style={{ margin: "-6px auto 14px" }} />
-              {qrRevokedAt ? (
+              {!PILOT_FLAGS.qrSelfIssuance ? (
+                <p style={{ fontSize: 12.5, color: colors.textMuted, padding: "12px 0" }}>
+                  Bu özellik şu an kullanılamıyor. QR/NFC yönetimi, güvenlik kabulü tamamlanana kadar pilot kapsamı dışındadır.
+                </p>
+              ) : qrRevokedAt ? (
                 <>
                   <div style={{ padding: "12px 0" }}>
                     <span style={badgeStyle("danger")}>İptal Edildi</span>
