@@ -728,3 +728,86 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     await expect(page.getByRole("button", { name: "Motor Yağı", exact: true })).toHaveAttribute("aria-pressed", "true");
   });
 });
+
+// Takip turu — bağımsız incelemede bulunan bulgu: erken JSX return'ü
+// yalnızca RENDER'ı kapatıyordu; useEffect hook sırası gereği yine de
+// çalışıp session/RPC/qr_keys isteği gönderiyordu. Bu blok, pilot kapalı
+// iki özellik için tarayıcıdan HİÇBİR ilgili Supabase isteği gitmediğini
+// ağ seviyesinde (route interception ile) kanıtlar — yalnızca UI mesajının
+// göründüğünü değil.
+test.describe("Takip turu — pilot kapalı özelliklerde sıfır ağ isteği (ownershipTransferSelfService + qrSelfIssuance)", () => {
+  test("devir-kabul sayfası: ownershipTransferSelfService=false iken hiçbir /rest/v1/** isteği (session/RPC dahil) gönderilmez, konsolda kritik hata olmaz", async ({
+    page,
+  }) => {
+    const restRequests: string[] = [];
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
+    page.on("pageerror", (err) => consoleErrors.push(err.message));
+    await page.route("**/rest/v1/**", async (route) => {
+      restRequests.push(route.request().method() + " " + route.request().url());
+      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
+
+    await page.goto(`/bireysel/devir-kabul/test-token-${Date.now()}`);
+    await expect(page.getByRole("heading", { name: "Bu Özellik Şu An Kullanılamıyor" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Devri Kabul Et" })).toHaveCount(0);
+
+    expect(restRequests, "flag kapalıyken HİÇBİR /rest/v1/** isteği (preview/accept_ownership_transfer dahil) gönderilmemeli: " + JSON.stringify(restRequests)).toEqual(
+      []
+    );
+    expect(consoleErrors, "konsolda kritik hata olmamalı: " + JSON.stringify(consoleErrors)).toEqual([]);
+  });
+
+  test("bireysel araç detayı: qrSelfIssuance=false iken qr_keys'e hiçbir SELECT/INSERT/UPDATE/DELETE isteği gönderilmez, QR görseli üretilmez, konsolda kritik hata olmaz", async ({
+    page,
+    baseURL,
+  }) => {
+    const ownerId = "dddddddd-1111-1111-1111-111111111111";
+    const vehicleId = "dddddddd-2222-2222-2222-222222222222";
+    const qrKeysRequests: string[] = [];
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
+    page.on("pageerror", (err) => consoleErrors.push(err.message));
+
+    await installMockSession(page.context(), { id: ownerId, email: "qrkapali@ornek.com" }, baseURL!);
+    await mockSupabaseRest(page, {
+      maintenance_records: { list: [] },
+      maintenance_items: { list: [] },
+    });
+    await page.route("**/rest/v1/qr_keys**", async (route) => {
+      qrKeysRequests.push(route.request().method() + " " + route.request().url());
+      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    });
+    await page.route("**/rest/v1/vehicles**", async (route) => {
+      const wantsSingle = (route.request().headers()["accept"] ?? "").includes("vnd.pgrst.object");
+      const row = {
+        id: vehicleId,
+        plate: "34 QR 001",
+        brand: "Renault",
+        model: "Clio",
+        year: 2019,
+        current_km: 50000,
+        owner_user_id: ownerId,
+        next_service_km: null,
+        next_service_date: null,
+        notes: null,
+      };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(wantsSingle ? row : [row]) });
+    });
+
+    await page.goto(`/bireysel/araclar/${vehicleId}#qr`);
+    await page.getByText("34 QR 001").first().waitFor();
+
+    await expect(
+      page.getByText("Bu özellik şu an kullanılamıyor. QR/NFC yönetimi, güvenlik kabulü tamamlanana kadar pilot kapsamı dışındadır.")
+    ).toBeVisible();
+    await expect(page.locator('img[alt="Araç QR kodu"]')).toHaveCount(0);
+
+    expect(qrKeysRequests, "qr_keys'e hiçbir istek gitmemeli: " + JSON.stringify(qrKeysRequests)).toEqual([]);
+    expect(consoleErrors, "konsolda kritik hata olmamalı: " + JSON.stringify(consoleErrors)).toEqual([]);
+  });
+});

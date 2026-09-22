@@ -23,6 +23,15 @@ export default function DevirKabulPage() {
 
   useEffect(() => {
     async function load() {
+      // 04A-S takip turu: erken JSX return'ü yalnızca render'ı kapatıyordu —
+      // bu effect hook sırası gereği yine de çalışıp session/RPC isteği
+      // gönderiyordu. Bayrak kapalıyken HİÇBİR Supabase çağrısı yapılmadan
+      // (session dahil) doğrudan çıkılır.
+      if (!PILOT_FLAGS.ownershipTransferSelfService) {
+        setLoading(false);
+        return;
+      }
+
       const { data: session } = await supabase.auth.getSession();
       setLoggedIn(!!session.session);
 

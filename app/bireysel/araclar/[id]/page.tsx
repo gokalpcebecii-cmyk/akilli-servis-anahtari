@@ -167,7 +167,12 @@ export default function BireyselVehicleDetailPage() {
       });
       setIntervalInputs(initialIntervals);
 
-      await loadQr(params.id as string);
+      // 04A-S takip turu: bayrak kapalıyken loadQr() içine hiç girilmez —
+      // fonksiyonun kendisinde de aynı kontrol var (savunma derinliği),
+      // ama çağrı noktasında atlamak qr_keys'e giden isteği baştan yok eder.
+      if (PILOT_FLAGS.qrSelfIssuance) {
+        await loadQr(params.id as string);
+      }
 
       setLoading(false);
 
@@ -186,6 +191,16 @@ export default function BireyselVehicleDetailPage() {
   }, [params.id]);
 
   async function loadQr(vehicleId: string) {
+    // Savunma derinliği: çağrı noktası zaten bayrağı kontrol ediyor, ama
+    // bu fonksiyon başka bir yerden (ör. handleRevokeQr/handleIssueNewQr)
+    // çağrılırsa da qr_keys'e HİÇBİR istek (SELECT dahil) gitmemeli.
+    if (!PILOT_FLAGS.qrSelfIssuance) {
+      setQrCode(null);
+      setQrRevokedAt(null);
+      setQrDataUrl(null);
+      return;
+    }
+
     let { data: qrKey } = await supabase
       .from("qr_keys")
       .select("code, revoked_at")
@@ -193,11 +208,7 @@ export default function BireyselVehicleDetailPage() {
       .is("revoked_at", null)
       .maybeSingle();
 
-    // 04A-S: yeni kod istemciden doğrudan insert edilmiyor artık — pilot
-    // süresince kapalı (bkz. lib/pilotFlags.ts qrSelfIssuance). Zaten
-    // atanmış bir kod varsa (önceki turda oluşturulmuş) göstermeye devam
-    // ediyoruz; yoksa üretmiyoruz.
-    if (!qrKey && PILOT_FLAGS.qrSelfIssuance) {
+    if (!qrKey) {
       const code = generateCode();
       const { data: created } = await supabase
         .from("qr_keys")
