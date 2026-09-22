@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   let sent = 0;
+  let dryRun = 0;
   const results: any[] = [];
 
   for (const v of vehicles ?? []) {
@@ -41,10 +42,12 @@ export async function GET(req: NextRequest) {
     if (due) {
       const message = `Sayın ${customer.full_name || "müşterimiz"}, ${v.plate} plakalı aracınızın bakım zamanı yaklaşıyor. ${tenant?.name} sizi bekliyor.`;
       const result = await sendSms(customer.phone, message);
-      results.push({ vehicle: v.plate, sent: result.ok });
-      if (result.ok) sent++;
+      // Kuru çalıştırma "gönderildi" sayılmaz; yanıtta plaka yerine araç id'si.
+      results.push({ vehicle_id: v.id, sent: result.ok && !result.dryRun, dryRun: !!result.dryRun });
+      if (result.ok && result.dryRun) dryRun++;
+      else if (result.ok) sent++;
     }
   }
 
-  return NextResponse.json({ checked: vehicles?.length ?? 0, sent, results });
+  return NextResponse.json({ checked: vehicles?.length ?? 0, sent, dryRun, results });
 }
