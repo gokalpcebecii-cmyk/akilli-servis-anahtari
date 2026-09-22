@@ -669,7 +669,7 @@ export default function VehicleDetailPage() {
                       <input
                         data-field="next_service_date"
                         type="date"
-                        min={new Date().toISOString().slice(0, 10)}
+                        min={todayIsoIstanbul()}
                         aria-invalid={!!fieldErrors.next_service_date}
                         style={{ ...inputStyle, borderColor: fieldErrors.next_service_date ? colors.danger : colors.border }}
                         value={vehicle.next_service_date || ""}
@@ -698,6 +698,10 @@ export default function VehicleDetailPage() {
               inputMode="numeric"
               pattern="[0-9]*"
               autoFocus
+              // Mevcut km önceden dolu geliyor; odaklanınca tümü seçilsin ki
+              // yazılan yeni değer eskisinin SONUNA eklenmesin (canlı testte
+              // 68000 + "68500" → 6806850000 oldu).
+              onFocus={(e) => e.currentTarget.select()}
               style={{ ...inputStyle, fontSize: 24, fontWeight: 800, padding: 16, textAlign: "center", marginBottom: 16 }}
               value={quickKm}
               onChange={(e) => setQuickKm(sanitizeKmInput(e.target.value))}
@@ -808,7 +812,7 @@ export default function VehicleDetailPage() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: 12, color: colors.textMuted }}>Sonraki Bakım (tarih)</label>
-                    <input type="date" min={new Date().toISOString().slice(0, 10)} style={inputStyle} value={nextServiceDate} onChange={(e) => setNextServiceDate(e.target.value)} />
+                    <input type="date" min={todayIsoIstanbul()} style={inputStyle} value={nextServiceDate} onChange={(e) => setNextServiceDate(e.target.value)} />
                   </div>
                 </div>
               </div>
