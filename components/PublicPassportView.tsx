@@ -131,8 +131,8 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
         <div style={{ ...cardStyle, boxShadow: "0 14px 34px rgba(6,20,33,0.14)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
-              <div style={{ fontSize: 21, fontWeight: 800, color: colors.textDark }}>{vehicle.plate}</div>
-              <div style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>
+              <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: 0.8, color: colors.textDark }}>{vehicle.plate}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
                 {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
               </div>
             </div>
@@ -154,7 +154,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
           <div style={{ display: "grid", gridTemplateColumns: nextService ? "1fr 1fr 1fr" : "1fr 1fr", gap: 10 }}>
             <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
               <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KM</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: colors.textDark }}>{vehicle.current_km?.toLocaleString("tr-TR") ?? "—"}</div>
+              <div style={{ fontSize: 19, fontWeight: 900, color: colors.textDark }}>{vehicle.current_km?.toLocaleString("tr-TR") ?? "—"}</div>
             </div>
             <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
               <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>SON SERVİS</div>
@@ -222,12 +222,17 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
           </div>
         )}
 
-        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Yetkili Servis</h2>
-        <div style={cardStyle}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, margin: "0 0 4px" }}>{tenant?.name}</p>
-          <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 2px" }}>{tenant?.phone}</p>
-          <p style={{ fontSize: 12.5, color: colors.textMuted, margin: 0 }}>{tenant?.address}</p>
-        </div>
+        {/* Bireysel (servissiz) araçlarda boş "Yetkili Servis" kartı gösterilmez. */}
+        {tenant?.name && (
+          <>
+            <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Yetkili Servis</h2>
+            <div style={cardStyle}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, margin: "0 0 4px" }}>{tenant?.name}</p>
+              <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 2px" }}>{tenant?.phone}</p>
+              <p style={{ fontSize: 12.5, color: colors.textMuted, margin: 0 }}>{tenant?.address}</p>
+            </div>
+          </>
+        )}
       </div>
     </main>
   );
