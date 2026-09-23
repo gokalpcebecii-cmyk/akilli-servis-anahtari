@@ -258,7 +258,7 @@ export default function BireyselAraclarPage() {
           <p style={{ color: colors.textMuted, marginTop: 20, textAlign: "center", fontSize: 14 }}>Araç bulunamadı.</p>
         )}
 
-        <button onClick={handleLogout} style={{ display: "block", margin: "28px auto 0", background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: 13 }}>
+        <button onClick={handleLogout} style={{ display: "block", margin: "28px auto 0", background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: 13, minHeight: 44, padding: "0 16px" }}>
           Çıkış yap
         </button>
       </div>
