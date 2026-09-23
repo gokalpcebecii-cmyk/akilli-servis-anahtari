@@ -250,76 +250,31 @@ a:focus-visible {
   .otoiz-hero-photo {
     bottom: 0;
     height: auto;
-    background-image: url(/marketing/otoiz-master-hero-v3.webp);
+    background-image: url(/marketing/otoiz-hero-clean.webp);
     background-size: cover;
     background-position: 50% 50%;
     filter: saturate(0.97) brightness(0.98);
   }
   .otoiz-hero-scrim {
-    /* Elips denemesi (bkz. git geçmişi) BÜYÜK dikdörtgen bölgelerde (sol
-       metin bloğu, sağ fayda listesi) köşe sızıntısı üretti — bir elips
-       kendi sınırlayıcı dikdörtgeninin köşelerine doğal olarak ulaşamaz;
-       köşeyi kaplayacak kadar büyütülünce de gereksiz alan kaplıyordu.
-       Bunun yerine her bölge, ölçülen sınırlarına dolgu paylı TAM
-       DİKDÖRTGEN bir düz-renk katman olarak uygulanıyor (linear-gradient
-       solid + açık background-size/position, köşe sızıntısı yok, önceki
-       turlarda kanıtlanmış teknik). Katmanlar KÜÇÜK ve gerçek metin
-       bölgelerine SIKI oturuyor — aralarındaki TÜM alanlarda (araç,
-       anahtarlık, telefon, bina, zemin yansımaları) fotoğraf tamamen
-       dokunulmamış görünüyor; "tek sahne" hissini bu sağlıyor. */
+    /* 2026-09-24: Görseldeki gömülü yazılar (logo, menü, başlık, butonlar,
+       fayda listesi, imza) görselin kendisinden temizlendi
+       (public/marketing/otoiz-hero-clean.webp). Artık bunları örtmek için
+       sert koyu dikdörtgenlere gerek yok — yalnız metnin okunaklı kalması
+       için kenarlardan yumuşak geçişler kullanılıyor; araç, anahtarlık ve
+       telefon tamamen görünür. */
     background-image:
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99));
+      linear-gradient(90deg, rgba(6, 20, 33, 0.9) 0%, rgba(6, 20, 33, 0.72) 18%, rgba(6, 20, 33, 0.3) 30%, rgba(6, 20, 33, 0) 40%),
+      linear-gradient(270deg, rgba(6, 20, 33, 0.85) 0%, rgba(6, 20, 33, 0.55) 13%, rgba(6, 20, 33, 0) 23%),
+      linear-gradient(180deg, rgba(6, 20, 33, 0.75) 0%, rgba(6, 20, 33, 0) 16%),
+      linear-gradient(0deg, rgba(6, 20, 33, 0.8) 0%, rgba(6, 20, 33, 0) 18%);
     background-repeat: no-repeat;
-    /* 2026-09-24: sol metin bloğu tek büyük (48%) dikdörtgen yerine
-       basamaklı 3 küçük dikdörtgen — yalnız görseldeki gömülü yazıların
-       üstünü örter; aracın ön kaputu ve farları artık görünür.
-       Sıra: logo, nav, header-cta, başlık(37%), gövde metni(30%),
-       butonlar(26%), güven-şeridi, faydalar, imza */
-    background-size: 25.5% 21%, 51% 12%, 32% 12%, 37% 20%, 30% 11%, 26% 17%, 48% 18%, 26% 60%, 26% 24%;
-    background-position:
-      2.01% 1.27%,
-      44.9% 2.27%,
-      98.53% 1.14%,
-      0% 27.5%,
-      0% 47.2%,
-      0% 63.9%,
-      0% 96.34%,
-      100% 40%,
-      100% 94.74%;
-    /* backdrop-filter:blur() bu headless Chromium'da GÖRSEL OLARAK
-       uygulanmıyordu (önceki turda ölçülüp kanıtlandı) — ama filter:blur()
-       FARKLI bir özellik (kendi elemanının render'ını bulanıklaştırır,
-       ARKASINDAKİ içeriği örneklemez) ve izole test sayfasıyla piksel piksel
-       DOĞRU render ettiği doğrulandı. Bu, sert dikdörtgen kenarları
-       "kesik yama" hissi vermeden yumuşatıyor — asıl "tek sahne" hissini
-       veren şey bu: küçük yamalar + yumuşak kenarlar. */
-    filter: blur(17px);
+    background-size: 100% 100%;
+    filter: none;
   }
   .otoiz-hero-master-screen {
-    /* Fotoğraftaki telefonun gerçek ekran alanı (bezel hariç) — 1536×1024
-       v3 kaynağına göre ölçüldü: sol 985px/üst 300px/sağ 1160px/alt 790px. */
-    display: block !important;
-    /* 2026-09-24: ekran görüntüsü (390×844) telefon ekranından daha geniş
-       orantılı; "cover" sol/sağ kenarları kırpıyordu ("erhaba, ali…").
-       "contain" + üst hizalama ile içerik tam genişlikte, kırpılmadan
-       görünür; alttaki boşluk uygulamanın açık zemin rengiyle doluyor. */
-    object-fit: contain !important;
-    object-position: 50% 0% !important;
-    background: #F4F7F9;
-    left: 64.13%;
-    top: 29.3%;
-    width: 11.39%;
-    height: 47.85%;
-    border-radius: 7% / 2.8%;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    /* 2026-09-24: Görseldeki telefonun kendi ekranı kullanılıyor; üstüne
+       bindirilen ekran görüntüsü telefon çerçevesine oturmuyor ve taşıyordu. */
+    display: none !important;
   }
   .otoiz-hero-section {
     aspect-ratio: 1536 / 1024;
