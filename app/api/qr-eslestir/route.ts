@@ -100,6 +100,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    // 2026-09-23: yönetici panelinde "kim neyi bağladı" görünsün diye
+    // servis eşleştirmesi de denetim kaydına yazılır (hata akışı bozmaz).
+    await supabase.from("audit_log").insert({
+      tenant_id: staff.tenant_id,
+      actor_staff_id: userData.user.id,
+      action: "qr_key_assigned",
+      target_table: "qr_keys",
+      target_id: qrKey.id,
+      detail: { code, vehicle_id, via: "servis_panel" },
+    });
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: "Beklenmeyen hata" }, { status: 500 });
