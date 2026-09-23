@@ -9,9 +9,14 @@ export const metadata = {
     statusBarStyle: "black-translucent",
     title: "OTOİZ",
   },
+  // 2026-09-24: eski anahtar simgesi yerine OTOİZ marka logosu (yeni dosya
+  // adları iOS/Android önbelleğindeki eski simgenin yenilenmesi için).
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: [
+      { url: "/favicon-otoiz-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-otoiz-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

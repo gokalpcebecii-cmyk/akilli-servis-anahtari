@@ -53,6 +53,10 @@ export async function POST(req: NextRequest) {
       .eq("id", vehicle_id)
       .single();
 
+    if (!staff?.tenant_id) {
+      return NextResponse.json({ error: "Servis hesabı gerekli" }, { status: 403 });
+    }
+
     if (!vehicle || vehicle.tenant_id !== staff?.tenant_id) {
       return NextResponse.json({ error: "Bu araç sizin işletmenize ait değil" }, { status: 403 });
     }
@@ -62,6 +66,12 @@ export async function POST(req: NextRequest) {
     if (!qrKey) {
       return NextResponse.json({ error: "Bu kod sistemde bulunamadı" }, { status: 404 });
     }
+    // 2026-09-24: servis YALNIZ yönetici tarafından kendi işletmesine
+    // ayrılmış (reserved_tenant_id) kodları eşleştirebilir — havuzdaki
+    // ya da başka servise ayrılmış bir kodu tahmin/deneme yoluyla alamaz.
+    if (qrKey.reserved_tenant_id !== staff.tenant_id) {
+      return NextResponse.json({ error: "Bu kod işletmenize tanımlı değil. OTOİZ yönetimiyle iletişime geçin." }, { status: 403 });
+    }
     if (qrKey.revoked_at) {
       return NextResponse.json({ error: "Bu QR kod iptal edilmiş, tekrar kullanılamaz" }, { status: 400 });
     }
@@ -69,10 +79,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Bu QR kod zaten başka bir araca bağlı" }, { status: 400 });
     }
 
+    const { data: activeForVehicle } = await supabase
+      .from("qr_keys")
+      .select("code")
+      .eq("vehicle_id", vehicle_id)
+      .is("revoked_at", null)
+      .maybeSingle();
+    if (activeForVehicle) {
+      return NextResponse.json({ error: "Bu aracın zaten aktif bir QR anahtarlığı var" }, { status: 400 });
+    }
+
     const { error } = await supabase
       .from("qr_keys")
       .update({ vehicle_id, assigned_at: new Date().toISOString() })
-      .eq("code", code);
+      .eq("code", code)
+      .is("vehicle_id", null)
+      .is("revoked_at", null);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

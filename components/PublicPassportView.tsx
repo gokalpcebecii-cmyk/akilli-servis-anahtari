@@ -19,6 +19,9 @@ const ITEM_DISPLAY: Record<string, { label: string; icon: string }> = {
   triger_seti: { label: "Triger Seti", icon: "wrench" },
   aku: { label: "Akü", icon: "wrench" },
   lastik: { label: "Lastik", icon: "wrench" },
+  fren_diski: { label: "Fren Diski", icon: "wrench" },
+  buji: { label: "Buji", icon: "wrench" },
+  silecek: { label: "Silecek", icon: "wrench" },
 };
 
 const ITEM_ORDER = [
@@ -31,6 +34,9 @@ const ITEM_ORDER = [
   "triger_seti",
   "aku",
   "lastik",
+  "fren_diski",
+  "buji",
+  "silecek",
 ];
 // fren_disk_balata: eski/tek parça fren kaydı, geriye dönük uyumluluk için.
 // Yeni araçlarda hiç kullanılmadığı için yalnızca o araçta gerçekten kaydı

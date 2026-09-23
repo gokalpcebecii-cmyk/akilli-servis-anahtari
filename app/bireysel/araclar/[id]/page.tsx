@@ -30,6 +30,9 @@ const MAINTENANCE_ITEMS = [
   { key: "triger_seti", label: "Triger Seti" },
   { key: "aku", label: "Akü" },
   { key: "lastik", label: "Lastik" },
+  { key: "fren_diski", label: "Fren Diski" },
+  { key: "buji", label: "Buji" },
+  { key: "silecek", label: "Silecek" },
 ];
 // Eski/tek parça fren kaydı: geriye dönük uyumluluk için yalnızca gerçekten
 // kayıtlı olduğu araçlarda gösterilir, yeni kayıtlar için sunulmaz.
@@ -55,6 +58,9 @@ const DEFAULT_ITEM_INTERVALS: Record<string, number> = {
   triger_seti: 60000,
   aku: 30000,
   lastik: 40000,
+  fren_diski: 60000,
+  buji: 30000,
+  silecek: 20000,
 };
 
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar

@@ -31,7 +31,10 @@ export const PILOT_FLAGS = {
   // Güvenilir olmayan bir eşleştirme yolu açık bırakılmasın diye TÜM
   // eşleştirme ekranı (kamera dahil, ne zaman eklenirse) kapatılana kadar
   // kapalı.
-  qrMatchingSelfService: false,
+  // 2026-09-24: açıldı — servis yalnız yönetim panelinden KENDİNE ayrılmış
+  // kodları eşleştirebilir (bkz. app/api/qr-eslestir reserved_tenant_id
+  // kontrolü). Havuz/başka servis kodu reddedilir.
+  qrMatchingSelfService: true,
   // 04A-S turu bulgusu: bireysel araç detay sayfası (loadQr/handleRevokeQr/
   // handleIssueNewQr), qr_keys'e DOĞRUDAN istemci tarafından (browser,
   // authenticated rolüyle) insert/update yapıyordu — diğer QR akışlarının

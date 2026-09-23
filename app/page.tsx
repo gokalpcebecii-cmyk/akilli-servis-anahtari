@@ -41,10 +41,15 @@ export default function HomePage() {
   // olduğunda geri eklenip gerçek bir hedefe bağlanabilir). "Bireysel"
   // aslında giriş TÜRÜ seçim ekranına gidiyor (doğrudan bireysel girişe
   // değil) — etiket bunu doğru yansıtacak şekilde güncellendi.
+  // 2026-09-24: Hizmetler / Kurumsal / Bireysel / İletişim artık sayfadaki
+  // gerçek bölümlere bağlı (id="hizmetler" | "kurumsal" | "bireysel" | "iletisim").
   const navLinks = [
     { label: "Ana Sayfa", href: "/", active: true },
     { label: "Nasıl Çalışır?", href: "#nasil-calisir", active: false },
-    { label: "Giriş Türü Seç", href: "/giris", active: false },
+    { label: "Hizmetler", href: "#hizmetler", active: false },
+    { label: "Kurumsal", href: "#kurumsal", active: false },
+    { label: "Bireysel", href: "#bireysel", active: false },
+    { label: "İletişim", href: "#iletisim", active: false },
   ];
 
   const steps = [
@@ -67,6 +72,35 @@ export default function HomePage() {
     { title: "Servis kaydı doğrulaması", desc: "Servis kayıtlarını yalnızca yetkili servis ekler; araç sahibi kendi kaydını da tutabilir.", icon: "check" },
     { title: "Kişisel veri kontrolü", desc: "Kişisel veriler talep halinde silinir.", icon: "shield" },
     { title: "Araçla birlikte yaşayan geçmiş", desc: "Sahiplik değişse de teknik geçmiş kalır.", icon: "link" },
+  ];
+
+  const audiencePaths = [
+    {
+      id: "kurumsal",
+      eyebrow: "Kurumsal",
+      title: "Servisler ve işletmeler için",
+      points: [
+        "Plakayla araç bulun, bakımı 15–20 saniyede kaydedin.",
+        "Sonraki bakım km ve tarihi otomatik önerilir.",
+        "Kendi logonuz ve iletişim bilgilerinizle müşteri pasaportu.",
+        "Yalnızca kendi müşterilerinizi görürsünüz — veriler servisler arasında ayrıdır.",
+      ],
+      primary: { label: "İşletme Kaydı", href: "/panel/kayit" },
+      secondary: { label: "İşletme Girişi", href: "/panel/login" },
+    },
+    {
+      id: "bireysel",
+      eyebrow: "Bireysel",
+      title: "Araç sahipleri için",
+      points: [
+        "Aracınızın tüm bakım geçmişi tek ekranda.",
+        "Kendi yaptırdığınız bakımları da kaydedin.",
+        "NFC + QR anahtarlıkla pasaporta tek dokunuşla ulaşın.",
+        "Aracınızı satarken düzenli bakım geçmişiyle güven verin.",
+      ],
+      primary: { label: "Bireysel Kayıt", href: "/bireysel/kayit" },
+      secondary: { label: "Bireysel Giriş", href: "/bireysel/giris" },
+    },
   ];
 
   const audience = [
@@ -186,14 +220,14 @@ export default function HomePage() {
                 {/* Mobil kırılımı değişmedi; desktop referanstaki birebir
                     3 satırlık kırılımı kullanıyor (ayrı span, CSS ile
                     breakpoint'e göre gösterilip gizleniyor). */}
-                <span className="otoiz-hero-headline-mobile">Bu otomobil için premium<br />dijital servis pasaportu.</span>
+                <span className="otoiz-hero-headline-mobile">Otomobiliniz için<br />dijital servis pasaportu.</span>
                 {/* Bu turun talimatı: "'servis pasaportu.' yeşil vurgu
                     taşımalı" — yalnızca desktop varyantında, mobil
                     değişmedi. */}
                 <span className="otoiz-hero-headline-desktop">
-                  Bu otomobil için
+                  Otomobiliniz için
                   <br />
-                  premium dijital
+                  dijital
                   <br />
                   <span style={{ color: colors.green }}>servis pasaportu.</span>
                 </span>
@@ -416,11 +450,11 @@ export default function HomePage() {
 
       {/* Temel Özellikler — aynı koyu shell devam ediyor (Nasıl Çalışır'dan
           sert bir kesim yerine kesintisiz koyu zemin). */}
-      <section className="otoiz-hero-pattern" style={{ padding: "48px 20px 56px", background: colors.bg, position: "relative", overflow: "hidden" }}>
+      <section id="hizmetler" className="otoiz-hero-pattern" style={{ padding: "48px 20px 56px", background: colors.bg, position: "relative", overflow: "hidden", scrollMarginTop: 24 }}>
         <div className="otoiz-reflection" aria-hidden="true" />
         <div className="otoiz-accent-line" style={{ margin: "0 auto 36px" }} />
         <h2 style={{ textAlign: "center", fontSize: 24, marginBottom: 36, color: colors.textLight, fontWeight: 800, position: "relative" }}>
-          Temel Özellikler
+          Hizmetlerimiz
         </h2>
         <div style={{ maxWidth: 760, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, position: "relative" }}>
           {features.map((f) => (
@@ -445,6 +479,41 @@ export default function HomePage() {
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, marginBottom: 3 }}>{f.title}</div>
                 <div style={{ fontSize: 12.5, color: colors.textMuted, lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 2026-09-24: Kurumsal (servisler) ve Bireysel (araç sahipleri)
+          menü bağlantılarının hedefi — her biri kendi kayıt/giriş yoluna. */}
+      <section className="otoiz-hero-pattern" style={{ background: colors.surfaceDark, padding: "56px 20px", position: "relative" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+          {audiencePaths.map((p) => (
+            <div
+              key={p.id}
+              id={p.id}
+              className="otoiz-glass-surface"
+              style={{ background: "rgba(255,255,255,0.05)", borderRadius: 18, padding: 26, scrollMarginTop: 24 }}
+            >
+              <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: colors.green, fontWeight: 700, marginBottom: 6 }}>{p.eyebrow}</div>
+              <h2 style={{ fontSize: 22, color: colors.textLight, fontWeight: 800, margin: "0 0 14px" }}>{p.title}</h2>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {p.points.map((pt) => (
+                  <li key={pt} style={{ display: "flex", gap: 10, alignItems: "flex-start", color: "rgba(255,255,255,0.78)", fontSize: 14, lineHeight: 1.5 }}>
+                    <span style={{ marginTop: 2 }}><Icon name="check" color={colors.green} size={16} /></span>
+                    {pt}
+                  </li>
+                ))}
+              </ul>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                <a href={p.primary.href} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "12px 22px", minHeight: 48, background: colors.green, color: colors.textDark, borderRadius: 999, fontWeight: 800, fontSize: 14.5, textDecoration: "none" }}>
+                  {p.primary.label}
+                  <Icon name="chevron-right" color={colors.textDark} size={15} />
+                </a>
+                <a href={p.secondary.href} style={{ display: "inline-flex", alignItems: "center", padding: "12px 22px", minHeight: 48, border: "1.5px solid rgba(255,255,255,0.3)", color: colors.textLight, borderRadius: 999, fontWeight: 600, fontSize: 14.5, textDecoration: "none" }}>
+                  {p.secondary.label}
+                </a>
               </div>
             </div>
           ))}
@@ -528,8 +597,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer style={{ textAlign: "center", padding: "28px 20px", color: colors.textMuted, fontSize: 12, background: colors.surfaceSoft }}>
-        © 2026 OTOİZ — Ankara
+      <footer id="iletisim" style={{ textAlign: "center", padding: "36px 20px 28px", color: colors.textMuted, fontSize: 13, background: colors.surfaceSoft, scrollMarginTop: 24 }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: colors.textDark, marginBottom: 6 }}>İletişim</div>
+        <p style={{ margin: "0 0 14px", lineHeight: 1.6 }}>
+          OTOİZ pilot programı Ankara'da başlıyor. Servisinizi pilota dahil etmek için işletme kaydı oluşturun;
+          ekibimiz sizinle iletişime geçsin.
+        </p>
+        <a href="/panel/kayit" style={{ display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 18px", borderRadius: 999, background: colors.textDark, color: colors.textLight, fontWeight: 700, textDecoration: "none", marginBottom: 16 }}>
+          Pilot başvurusu
+        </a>
+        <div style={{ fontSize: 12 }}>© 2026 OTOİZ — Ankara</div>
       </footer>
     </main>
   );

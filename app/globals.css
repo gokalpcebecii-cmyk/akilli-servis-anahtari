@@ -274,15 +274,23 @@ a:focus-visible {
       linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
       linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
       linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
+      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
       linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99));
     background-repeat: no-repeat;
-    /* logo, nav, header-cta, sol-metin, güven-şeridi, faydalar, imza */
-    background-size: 25.5% 21%, 51% 12%, 32% 12%, 48% 51.5%, 48% 18%, 26% 60%, 26% 24%;
+    /* 2026-09-24: sol metin bloğu tek büyük (48%) dikdörtgen yerine
+       basamaklı 3 küçük dikdörtgen — yalnız görseldeki gömülü yazıların
+       üstünü örter; aracın ön kaputu ve farları artık görünür.
+       Sıra: logo, nav, header-cta, başlık(37%), gövde metni(30%),
+       butonlar(26%), güven-şeridi, faydalar, imza */
+    background-size: 25.5% 21%, 51% 12%, 32% 12%, 37% 20%, 30% 11%, 26% 17%, 48% 18%, 26% 60%, 26% 24%;
     background-position:
       2.01% 1.27%,
       44.9% 2.27%,
       98.53% 1.14%,
-      0% 39.18%,
+      0% 27.5%,
+      0% 47.2%,
+      0% 63.9%,
       0% 96.34%,
       100% 40%,
       100% 94.74%;
@@ -299,6 +307,13 @@ a:focus-visible {
     /* Fotoğraftaki telefonun gerçek ekran alanı (bezel hariç) — 1536×1024
        v3 kaynağına göre ölçüldü: sol 985px/üst 300px/sağ 1160px/alt 790px. */
     display: block !important;
+    /* 2026-09-24: ekran görüntüsü (390×844) telefon ekranından daha geniş
+       orantılı; "cover" sol/sağ kenarları kırpıyordu ("erhaba, ali…").
+       "contain" + üst hizalama ile içerik tam genişlikte, kırpılmadan
+       görünür; alttaki boşluk uygulamanın açık zemin rengiyle doluyor. */
+    object-fit: contain !important;
+    object-position: 50% 0% !important;
+    background: #F4F7F9;
     left: 64.13%;
     top: 29.3%;
     width: 11.39%;

@@ -42,6 +42,10 @@ const QUICK_ITEMS = [
   { key: "fren_arka_balata", label: "Arka Balata" },
   { key: "lastik", label: "Lastik" },
   { key: "aku", label: "Akü" },
+  { key: "triger_seti", label: "Triger Seti" },
+  { key: "fren_diski", label: "Fren Diski" },
+  { key: "buji", label: "Buji" },
+  { key: "silecek", label: "Silecek" },
 ];
 
 // Bir işlem seçildiğinde "önerilen periyot otomatik atansın" (madde C) —
@@ -55,6 +59,10 @@ const DEFAULT_INTERVALS: Record<string, number> = {
   fren_arka_balata: 20000,
   lastik: 40000,
   aku: 30000,
+  triger_seti: 60000,
+  fren_diski: 60000,
+  buji: 30000,
+  silecek: 20000,
 };
 
 const PRESET_KM_OPTIONS = [5000, 10000, 15000, 20000, 30000];
