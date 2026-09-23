@@ -31,12 +31,13 @@ export async function GET(req: NextRequest) {
 
   let q = db
     .from("qr_keys")
-    .select("id, code, batch_label, created_at, assigned_at, revoked_at, vehicle_id, reserved_tenant_id")
+    .select("id, code, batch_label, created_at, assigned_at, revoked_at, vehicle_id, reserved_tenant_id, reserved_user_id")
     .order("created_at", { ascending: false })
     .limit(1000);
   if (batch) q = q.eq("batch_label", batch);
-  if (filter === "free") q = q.is("vehicle_id", null).is("reserved_tenant_id", null).is("revoked_at", null);
+  if (filter === "free") q = q.is("vehicle_id", null).is("reserved_tenant_id", null).is("reserved_user_id", null).is("revoked_at", null);
   if (filter === "reserved") q = q.is("vehicle_id", null).not("reserved_tenant_id", "is", null).is("revoked_at", null);
+  if (filter === "reserved_user") q = q.is("vehicle_id", null).not("reserved_user_id", "is", null).is("revoked_at", null);
   if (filter === "assigned") q = q.not("vehicle_id", "is", null).is("revoked_at", null);
   if (filter === "revoked") q = q.not("revoked_at", "is", null);
 
@@ -53,6 +54,14 @@ export async function GET(req: NextRequest) {
   const tenantName: Record<string, string> = {};
   for (const t of tenants ?? []) tenantName[t.id] = t.name;
 
+  // Bireysel kullanıcıya tanımlı kodlar için e-posta (yalnız yönetici görür).
+  const userIds = Array.from(new Set((rows ?? []).map((r: any) => r.reserved_user_id).filter(Boolean))) as string[];
+  const userEmail: Record<string, string> = {};
+  for (const uid of userIds) {
+    const { data } = await db.auth.admin.getUserById(uid);
+    if (data?.user) userEmail[uid] = data.user.email ?? "—";
+  }
+
   const { data: batchRows } = await db.from("qr_keys").select("batch_label").not("batch_label", "is", null);
   const batches = Array.from(new Set((batchRows ?? []).map((b: any) => b.batch_label))).sort().reverse();
 
@@ -60,7 +69,7 @@ export async function GET(req: NextRequest) {
     batches,
     codes: (rows ?? []).map((r: any) => {
       const v = r.vehicle_id ? vehicleMap[r.vehicle_id] : null;
-      const status = r.revoked_at ? "revoked" : r.vehicle_id ? "assigned" : r.reserved_tenant_id ? "reserved" : "free";
+      const status = r.revoked_at ? "revoked" : r.vehicle_id ? "assigned" : r.reserved_tenant_id ? "reserved" : r.reserved_user_id ? "reserved_user" : "free";
       return {
         id: r.id,
         code: r.code,
@@ -70,6 +79,7 @@ export async function GET(req: NextRequest) {
         revoked_at: r.revoked_at,
         status,
         reserved_tenant: r.reserved_tenant_id ? { id: r.reserved_tenant_id, name: tenantName[r.reserved_tenant_id] ?? "—" } : null,
+        reserved_user: r.reserved_user_id ? { id: r.reserved_user_id, email: userEmail[r.reserved_user_id] ?? "—" } : null,
         vehicle: v
           ? {
               id: v.id,
@@ -181,6 +191,7 @@ export async function POST(req: NextRequest) {
         .select("code")
         .is("vehicle_id", null)
         .is("reserved_tenant_id", null)
+        .is("reserved_user_id", null)
         .is("revoked_at", null)
         .order("created_at", { ascending: true })
         .limit(n);
@@ -192,6 +203,7 @@ export async function POST(req: NextRequest) {
       .update({ reserved_tenant_id: tenantId })
       .in("code", targetCodes)
       .is("vehicle_id", null)
+      .is("reserved_user_id", null)
       .is("revoked_at", null)
       .select("code");
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -199,10 +211,60 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, reserved: (updated ?? []).length, tenant: t.name });
   }
 
-  // ---- Servis ayırmasını kaldır ----
+  // ---- Bireysel satış: boştaki kod(lar)ı bir bireysel kullanıcıya tanımla ----
+  // Kullanıcı önce OTOİZ'e bireysel olarak kayıt olmuş olmalı (e-posta ile
+  // bulunur). Servis personeli hesabına tanımlanamaz. Kullanıcı kodu kendi
+  // aracına "Anahtarlığımı bağla" ekranından bağlar.
+  if (action === "reserve_user") {
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    if (!email || !email.includes("@")) return NextResponse.json({ error: "Geçerli bir e-posta girin" }, { status: 400 });
+    let found: any = null;
+    for (let page = 1; page <= 20 && !found; page++) {
+      const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      found = (data?.users ?? []).find((u: any) => (u.email ?? "").toLowerCase() === email) ?? null;
+      if (!data?.users || data.users.length < 1000) break;
+    }
+    if (!found) {
+      return NextResponse.json({ error: "Bu e-postayla kayıtlı kullanıcı yok. Müşteri önce OTOİZ'e bireysel kayıt olmalı." }, { status: 404 });
+    }
+    const { data: staffRow } = await db.from("staff_users").select("id").eq("id", found.id).maybeSingle();
+    if (staffRow) return NextResponse.json({ error: "Bu e-posta bir servis personeline ait. Servis kodları 'servise ayır' ile verilir." }, { status: 400 });
+
+    let targetCodes: string[] = code ? [code] : [];
+    if (targetCodes.length === 0) {
+      const n = Math.floor(Number(body.count ?? 1));
+      if (!Number.isFinite(n) || n < 1 || n > 20) return NextResponse.json({ error: "Adet 1 ile 20 arasında olmalı" }, { status: 400 });
+      const { data: free } = await db
+        .from("qr_keys")
+        .select("code")
+        .is("vehicle_id", null)
+        .is("reserved_tenant_id", null)
+        .is("reserved_user_id", null)
+        .is("revoked_at", null)
+        .order("created_at", { ascending: true })
+        .limit(n);
+      targetCodes = (free ?? []).map((f: any) => f.code);
+      if (targetCodes.length < n) return NextResponse.json({ error: `Boşta yalnız ${targetCodes.length} kod var. Önce yeni QR üretin.` }, { status: 400 });
+    }
+    const { data: updated, error } = await db
+      .from("qr_keys")
+      .update({ reserved_user_id: found.id, reserved_tenant_id: null })
+      .in("code", targetCodes)
+      .is("vehicle_id", null)
+      .is("reserved_tenant_id", null)
+      .is("revoked_at", null)
+      .select("code");
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!updated || updated.length === 0) return NextResponse.json({ error: "Kod boşta değil (servise ayrılmış, bağlı ya da iptal)" }, { status: 400 });
+    await audit(db, ctx.userId, "admin_qr_reserved_user", null, { email, codes: updated.map((u: any) => u.code) });
+    return NextResponse.json({ ok: true, reserved: updated.length, codes: updated.map((u: any) => u.code), email });
+  }
+
+  // ---- Servis / kullanıcı ayırmasını kaldır ----
   if (action === "unreserve") {
     if (!code) return NextResponse.json({ error: "Kod gerekli" }, { status: 400 });
-    const { error } = await db.from("qr_keys").update({ reserved_tenant_id: null }).eq("code", code).is("vehicle_id", null);
+    const { error } = await db.from("qr_keys").update({ reserved_tenant_id: null, reserved_user_id: null }).eq("code", code).is("vehicle_id", null);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     await audit(db, ctx.userId, "admin_qr_unreserved", null, { code });
     return NextResponse.json({ ok: true });

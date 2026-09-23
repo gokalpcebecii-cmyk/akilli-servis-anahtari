@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     db.from("tenants").select("id, name, phone, is_active, created_at").order("created_at", { ascending: true }),
     db.from("vehicles").select("id, tenant_id, owner_user_id"),
     db.from("maintenance_records").select("id, tenant_id"),
-    db.from("qr_keys").select("id, vehicle_id, reserved_tenant_id, revoked_at"),
+    db.from("qr_keys").select("id, vehicle_id, reserved_tenant_id, reserved_user_id, revoked_at"),
     db.from("staff_users").select("id, tenant_id"),
     db
       .from("maintenance_records")
@@ -87,7 +87,8 @@ export async function GET(req: NextRequest) {
       qr_total: qr.length,
       qr_assigned: qr.filter((q: any) => q.vehicle_id && !q.revoked_at).length,
       qr_reserved_free: qr.filter((q: any) => !q.vehicle_id && q.reserved_tenant_id && !q.revoked_at).length,
-      qr_free: qr.filter((q: any) => !q.vehicle_id && !q.reserved_tenant_id && !q.revoked_at).length,
+      qr_reserved_user: qr.filter((q: any) => !q.vehicle_id && q.reserved_user_id && !q.revoked_at).length,
+      qr_free: qr.filter((q: any) => !q.vehicle_id && !q.reserved_tenant_id && !q.reserved_user_id && !q.revoked_at).length,
       qr_revoked: qr.filter((q: any) => !!q.revoked_at).length,
     },
     tenants: tenantRows,

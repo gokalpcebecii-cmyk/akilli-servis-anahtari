@@ -8,6 +8,8 @@ import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, dange
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
+import OwnerQuickVisit from "@/components/OwnerQuickVisit";
+import OwnerKeychainCard from "@/components/OwnerKeychainCard";
 
 const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan, todayIsoIstanbul } = require("@/lib/logic");
 
@@ -922,6 +924,26 @@ export default function BireyselVehicleDetailPage() {
                   ))}
                 </div>
               </section>
+            )}
+
+            {/* 2026-09-23: bireysel satış — servis panelindeki gibi hızlı bakım
+                kaydı ve yöneticinin tanımladığı QR anahtarlığı bağlama. */}
+            {!isNew && vehicle?.id && (
+              <div style={{ display: activeTab === "genel" ? "flex" : "none", flexDirection: "column", gap: 16 }}>
+                <OwnerQuickVisit
+                  vehicle={vehicle}
+                  userId={userId}
+                  items={MAINTENANCE_ITEMS}
+                  defaultIntervals={DEFAULT_ITEM_INTERVALS}
+                  maintenanceItems={maintenanceItems}
+                  onSaved={async (u) => {
+                    setVehicle((prev: any) => ({ ...prev, ...u }));
+                    await refreshMaintenanceItems();
+                    await refreshRecords();
+                  }}
+                />
+                <OwnerKeychainCard vehicleId={vehicle.id} />
+              </div>
             )}
 
             <section id="parca" style={{ ...cardStyle, display: activeTab === "genel" ? "block" : "none" }}>

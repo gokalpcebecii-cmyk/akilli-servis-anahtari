@@ -43,6 +43,7 @@ function ago(d: string | null | undefined) {
 const STATUS_LABEL: Record<string, { text: string; kind: "success" | "warning" | "danger" | "neutral" }> = {
   free: { text: "Boşta", kind: "neutral" },
   reserved: { text: "Servise ayrıldı", kind: "warning" },
+  reserved_user: { text: "Kullanıcıya tanımlı", kind: "warning" },
   assigned: { text: "Araca bağlı", kind: "success" },
   revoked: { text: "İptal", kind: "danger" },
 };
@@ -78,6 +79,9 @@ export default function YonetimPage() {
   const [assignResults, setAssignResults] = useState<any[]>([]);
   const [reserveTenant, setReserveTenant] = useState("");
   const [reserveCount, setReserveCount] = useState<number | "">("");
+  const [userEmailInput, setUserEmailInput] = useState("");
+  const [userCount, setUserCount] = useState<number | "">(1);
+  const [userResult, setUserResult] = useState<{ email: string; codes: string[] } | null>(null);
 
   async function token() {
     const { data } = await supabase.auth.getSession();
@@ -331,7 +335,7 @@ export default function YonetimPage() {
               {statCard("Servis", c?.tenants, c ? `${c.staff} servis çalışanı` : undefined)}
               {statCard("Araç", c?.vehicles, c ? `${c.vehicles_service} servis · ${c.vehicles_individual} bireysel` : undefined)}
               {statCard("Bakım kaydı", c?.records, c ? `${c.records_service} servis · ${c.records_owner} araç sahibi` : undefined)}
-              {statCard("QR kodu", c?.qr_total, c ? `${c.qr_assigned} bağlı · ${c.qr_reserved_free} serviste · ${c.qr_free} boşta` : undefined)}
+              {statCard("QR kodu", c?.qr_total, c ? `${c.qr_assigned} bağlı · ${c.qr_reserved_free} serviste · ${c.qr_reserved_user ?? 0} kullanıcıda · ${c.qr_free} boşta` : undefined)}
             </div>
 
             <section style={{ ...cardStyle, marginBottom: 18 }}>
@@ -444,6 +448,52 @@ export default function YonetimPage() {
               </p>
             </section>
 
+            <section style={{ ...cardStyle, marginBottom: 16 }}>
+              <h2 style={{ fontSize: 16, margin: "0 0 10px" }}>Bireysel müşteriye QR tanımla (bireysel satış)</h2>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                <input type="email" placeholder="Müşterinin OTOİZ e-postası" aria-label="Müşteri e-postası" value={userEmailInput}
+                  onChange={(e) => setUserEmailInput(e.target.value)} style={{ ...inputStyle, maxWidth: 300 }} />
+                <input type="number" inputMode="numeric" min={1} max={20} placeholder="Adet" aria-label="Adet" value={userCount}
+                  onChange={(e) => setUserCount(e.target.value ? Number(e.target.value) : "")} style={{ ...inputStyle, width: 90 }} />
+                <button
+                  disabled={busy || !userEmailInput.includes("@") || typeof userCount !== "number"}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError("");
+                    setUserResult(null);
+                    try {
+                      const res = await api("/api/admin/qr", { method: "POST", body: JSON.stringify({ action: "reserve_user", email: userEmailInput, count: userCount }) });
+                      const j = res.body || {};
+                      if (!res.ok) {
+                        setError(j.error || "Tanımlanamadı");
+                      } else {
+                        setUserResult({ email: j.email, codes: j.codes });
+                        flash(`${j.reserved} kod ${j.email} kullanıcısına tanımlandı`);
+                        setUserEmailInput("");
+                        loadQr();
+                        loadOverview();
+                      }
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  style={smallBtn(colors.textDark, colors.textLight)}
+                >
+                  Tanımla
+                </button>
+              </div>
+              {userResult && (
+                <p style={{ fontSize: 13, margin: "10px 0 0" }}>
+                  Müşteriye verilecek kod{userResult.codes.length > 1 ? "lar" : ""}:{" "}
+                  {userResult.codes.map((c) => <code key={c} style={{ fontWeight: 700, marginRight: 8 }}>{c}</code>)}
+                </p>
+              )}
+              <p style={{ fontSize: 12, color: colors.textMuted, margin: "8px 0 0" }}>
+                Müşteri önce bireysel kayıt olur. Tanımlanan kod müşterinin uygulamasında görünür; müşteri aracının sayfasında
+                "Anahtarlığımı bağla" ile kodu aracına bağlar ve bakımlarını kendisi girer.
+              </p>
+            </section>
+
             <section style={cardStyle}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 12 }}>
                 <h2 style={{ fontSize: 16, margin: 0, marginRight: "auto" }}>Kodlar ({qrData.codes.length})</h2>
@@ -451,6 +501,7 @@ export default function YonetimPage() {
                   <option value="all">Tümü</option>
                   <option value="free">Boşta</option>
                   <option value="reserved">Servise ayrılmış</option>
+                  <option value="reserved_user">Kullanıcıya tanımlı</option>
                   <option value="assigned">Araca bağlı</option>
                   <option value="revoked">İptal</option>
                 </select>
@@ -473,6 +524,7 @@ export default function YonetimPage() {
                       <code style={{ fontSize: 14, fontWeight: 700, letterSpacing: 0.5 }}>{q.code}</code>
                       <span style={badgeStyle(STATUS_LABEL[q.status].kind)}>{STATUS_LABEL[q.status].text}</span>
                       {q.reserved_tenant && q.status !== "assigned" && <span style={{ fontSize: 12.5 }}>→ {q.reserved_tenant.name}</span>}
+                      {q.reserved_user && q.status !== "assigned" && <span style={{ fontSize: 12.5 }}>→ {q.reserved_user.email}</span>}
                       {q.vehicle && (
                         <span style={{ fontSize: 12.5 }}>
                           → <strong>{q.vehicle.plate}</strong> ({q.vehicle.owner_type === "servis" ? q.vehicle.tenant_name : "bireysel"})
@@ -487,8 +539,8 @@ export default function YonetimPage() {
                             Araca ata
                           </button>
                         )}
-                        {q.status === "reserved" && (
-                          <button onClick={() => qrAction({ action: "unreserve", code: q.code }, "Servis ayırması kaldırıldı")} style={smallBtn(colors.surfaceSoft, colors.textDark, colors.border)}>
+                        {(q.status === "reserved" || q.status === "reserved_user") && (
+                          <button onClick={() => qrAction({ action: "unreserve", code: q.code }, "Ayırma kaldırıldı")} style={smallBtn(colors.surfaceSoft, colors.textDark, colors.border)}>
                             Ayırmayı kaldır
                           </button>
                         )}
