@@ -352,6 +352,12 @@ export default function BireyselVehicleDetailPage() {
         if (!res.ok) {
           savingRef.current = false;
           setSaving(false);
+          if (res.status === 401) {
+            alert("Oturumunuz sona ermiş. Lütfen tekrar giriş yapın; girdiğiniz bilgiler kaydedilmedi.");
+            await supabase.auth.signOut({ scope: "local" });
+            window.location.replace("/bireysel/giris?oturum=bitti");
+            return;
+          }
           if (json.errors) {
             setFieldErrors(json.errors);
             focusFirstError(json.errors);

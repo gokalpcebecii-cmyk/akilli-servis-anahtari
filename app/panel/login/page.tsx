@@ -27,6 +27,9 @@ export default function LoginPage() {
         router.replace("/panel/dashboard");
         return;
       }
+      if (new URLSearchParams(window.location.search).get("oturum") === "bitti") {
+        setError("Oturumunuz sona erdi. Devam etmek için lütfen tekrar giriş yapın.");
+      }
       setCheckingSession(false);
     }
     checkExistingSession();

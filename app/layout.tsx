@@ -1,4 +1,5 @@
 import "./globals.css";
+import SessionWatch from "@/components/SessionWatch";
 
 export const metadata = {
   title: "OTOİZ — Dijital Araç Servis Pasaportu",
@@ -29,7 +30,10 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr">
-      <body>{children}</body>
+      <body>
+        <SessionWatch />
+        {children}
+      </body>
     </html>
   );
 }

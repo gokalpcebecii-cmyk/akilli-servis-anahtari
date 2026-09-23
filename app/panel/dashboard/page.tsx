@@ -50,7 +50,7 @@ export default function DashboardPage() {
   }, []);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     router.push("/panel/login");
   }
 

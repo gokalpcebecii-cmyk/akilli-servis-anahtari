@@ -331,44 +331,38 @@ export default function HomePage() {
                 altında premium "imza" sloganı. Yalnızca desktop'ta görünür
                 (bkz. .otoiz-hero-benefits-col / .otoiz-hero-signature). */}
             <div className="otoiz-hero-benefits-col">
-              <div className="otoiz-hero-benefits-desktop" style={{ flexDirection: "column", gap: 30, textAlign: "left", marginBottom: 34, maxWidth: 300 }}>
+              <div className="otoiz-hero-benefits-desktop" style={{ flexDirection: "column", gap: 26, textAlign: "left", marginBottom: 34, maxWidth: 300 }}>
                 {valueProps.map((v) => (
-                  <div key={v.title} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <div key={v.title} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <div
                       style={{
-                        width: 38, height: 38, minWidth: 38, borderRadius: "50%", background: "rgba(255,255,255,0.06)",
+                        width: 34, height: 34, minWidth: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)",
                         border: "1px solid rgba(255,255,255,0.14)", display: "flex", alignItems: "center", justifyContent: "center",
                       }}
                     >
-                      <Icon name={v.icon} color={colors.green} size={17} />
+                      <Icon name={v.icon} color={colors.green} size={16} />
                     </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: colors.textLight, marginBottom: 1 }}>{v.title}</div>
-                      <div style={{ fontSize: 12.5, opacity: 0.6 }}>{v.desc}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: colors.textLight, marginBottom: 2, lineHeight: 1.3 }}>{v.title}</div>
+                      <div style={{ fontSize: 12.5, opacity: 0.65, lineHeight: 1.4 }}>{v.desc}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Referanstaki premium "imza" hissi — el yazısı stilinde,
-                  sağ kolonun ALTINA sabitlenmiş (bkz. .otoiz-hero-signature
-                  margin-top:auto), sağa hizalı, altında yeşil bir "swoosh"
-                  çizgisiyle. Caveat artık self-hosted (bkz. globals.css
-                  @font-face) — Google Fonts CDN'e runtime bağımlılığı yok. */}
-              <div className="otoiz-hero-signature" style={{ maxWidth: 260, textAlign: "right" }}>
+              {/* 2026-09-23: Slogan artık el yazısı değil — sol taraftaki ana
+                  başlıkla aynı yazı ailesi ve aynı beyaz + yeşil vurgu. */}
+              <div className="otoiz-hero-signature" style={{ maxWidth: 300, textAlign: "left" }}>
                 <div
                   style={{
-                    fontFamily: "'Caveat', cursive", fontSize: 34, fontWeight: 600, color: colors.textLight,
-                    lineHeight: 1.15, textShadow: "0 2px 10px rgba(0,0,0,0.4)",
+                    fontFamily: "inherit", fontSize: 28, fontWeight: 800, letterSpacing: -0.6, color: colors.textLight,
+                    lineHeight: 1.12, textShadow: "0 2px 10px rgba(0,0,0,0.4)",
                   }}
                 >
                   Aracınızın İzi
                   <br />
-                  Hep Sizinle.
+                  <span style={{ color: colors.green }}>Hep Sizinle.</span>
                 </div>
-                <svg width="132" height="18" viewBox="0 0 132 18" fill="none" style={{ marginTop: 2, marginLeft: "auto" }} aria-hidden="true">
-                  <path d="M4 10C34 2 72 2 102 8C112 10 120 9 128 4" stroke={colors.green} strokeWidth="3" strokeLinecap="round" />
-                </svg>
               </div>
             </div>
           </div>

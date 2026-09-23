@@ -30,6 +30,9 @@ function BireyselGirisForm() {
         router.replace(redirectTo);
         return;
       }
+      if (searchParams.get("oturum") === "bitti") {
+        setError("Oturumunuz sona erdi. Devam etmek için lütfen tekrar giriş yapın.");
+      }
       setCheckingSession(false);
     }
     checkExistingSession();

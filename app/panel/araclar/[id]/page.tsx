@@ -224,6 +224,12 @@ export default function VehicleDetailPage() {
         if (!res.ok) {
           savingRef.current = false;
           setSavingVehicle(false);
+          if (res.status === 401) {
+            alert("Oturumunuz sona ermiş. Lütfen tekrar giriş yapın; girdiğiniz bilgiler kaydedilmedi.");
+            await supabase.auth.signOut({ scope: "local" });
+            window.location.replace("/panel/login?oturum=bitti");
+            return;
+          }
           if (json.errors) {
             setFieldErrors(json.errors);
             focusFirstError(json.errors);

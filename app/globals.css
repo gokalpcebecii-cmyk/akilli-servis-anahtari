@@ -396,8 +396,8 @@ a:focus-visible {
        (300px) fayda listesine nefes payı veriyor. Orta 1fr hiçbir gerçek
        metin taşımıyor — yalnızca arka plan fotoğrafındaki araç/anahtarlık/
        telefon (+ üzerindeki gerçek ekran overlay'i) görünüyor. */
-    grid-template-columns: 560px 1fr 300px;
-    grid-template-areas: "text phone benefits";
+    grid-template-columns: 560px 1fr;
+    grid-template-areas: "text phone";
     align-items: stretch;
     gap: 0;
     text-align: left;
@@ -438,10 +438,20 @@ a:focus-visible {
     display: none !important;
   }
   .otoiz-hero-benefits-col {
-    grid-area: benefits;
+    /* 2026-09-23: Sağ kolon artık grid'de sabit 300px değil. Section
+       görselle aynı en-boy oranına kilitli olduğu için telefon her ekran
+       genişliğinde section'ın ~%63–%77 aralığında duruyor; fayda listesi
+       telefona binmesin diye kolon section genişliğinin %79'undan başlıyor
+       ve section'ın sağ kenarına (24px pay) kadar uzanıyor. Kapsayıcı
+       (.otoiz-hero-container) ortalı olduğu için sol kenarı
+       (100vw - 100%) / 2 kadar kaydırılarak hesaplanıyor. */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(79vw - (100vw - 100%) / 2);
+    right: calc(24px - (100vw - 100%) / 2);
     display: flex !important;
     flex-direction: column;
-    height: 100%;
     padding: 4px 0 40px;
   }
   .otoiz-hero-benefits-desktop {

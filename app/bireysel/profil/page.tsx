@@ -33,7 +33,7 @@ export default function ProfilPage() {
   }, []);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     router.push("/bireysel/giris");
   }
 
