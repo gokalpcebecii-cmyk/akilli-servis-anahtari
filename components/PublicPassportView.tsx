@@ -127,7 +127,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
         </div>
       </div>
 
-      <div style={{ maxWidth: 460, margin: "-24px auto 0", padding: "0 20px" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 460, margin: "-24px auto 0", padding: "0 20px" }}>
         <div style={{ ...cardStyle, boxShadow: "0 14px 34px rgba(6,20,33,0.14)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
