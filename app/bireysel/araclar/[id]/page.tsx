@@ -608,7 +608,7 @@ export default function BireyselVehicleDetailPage() {
     <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, paddingBottom: 60 }}>
       <div style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "20px 18px 26px" }}>
         <div className="otoiz-vehicle-shell" style={{ maxWidth: 560, margin: "0 auto" }}>
-          <a href="/bireysel/araclar" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
+          <a href="/bireysel/araclar" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44, paddingRight: 12 }}>
             ← Araçlarım
           </a>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12 }}>
@@ -626,7 +626,7 @@ export default function BireyselVehicleDetailPage() {
             {!isNew && (
               <button
                 onClick={() => setEditingVehicle((v) => !v)}
-                style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", borderRadius: radius.sm }}
+                style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", minHeight: 44, borderRadius: radius.sm }}
               >
                 {editingVehicle ? "Kapat" : "Düzenle"}
               </button>
