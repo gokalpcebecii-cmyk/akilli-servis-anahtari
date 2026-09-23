@@ -511,13 +511,13 @@ export default function VehicleDetailPage() {
         <div className="otoiz-reflection" aria-hidden="true" />
         <div className="otoiz-servis-container" style={{ maxWidth: 560, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <a href="/panel/dashboard" aria-label="Geri" style={{ color: colors.textLight, textDecoration: "none", fontSize: 18, padding: 4 }}>
+            <a href="/panel/dashboard" aria-label="Geri" style={{ color: colors.textLight, textDecoration: "none", fontSize: 18, minWidth: 44, minHeight: 44, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
               ←
             </a>
             {!isNew && (
               <button
                 onClick={() => setEditingVehicle((v) => !v)}
-                style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", borderRadius: radius.sm }}
+                style={{ background: "rgba(255,255,255,0.08)", border: "none", color: colors.textLight, fontSize: 12.5, cursor: "pointer", padding: "8px 12px", minHeight: 44, borderRadius: radius.sm }}
               >
                 {editingVehicle ? "Kapat" : "Araç bilgilerini düzenle"}
               </button>
@@ -762,7 +762,7 @@ export default function VehicleDetailPage() {
             <button
               type="button"
               onClick={() => setShowPlanEditor((v) => !v)}
-              style={{ background: "none", border: "none", color: colors.greenDark, fontWeight: 700, fontSize: 12.5, padding: "6px 0", cursor: "pointer", marginBottom: showPlanEditor ? 10 : 4 }}
+              style={{ background: "none", border: "none", color: colors.greenDark, fontWeight: 700, fontSize: 12.5, padding: "6px 0", minHeight: 44, cursor: "pointer", marginBottom: showPlanEditor ? 10 : 4 }}
             >
               {showPlanEditor ? "Planı düzenle ▲" : "Planı düzenle ▾"}
             </button>
