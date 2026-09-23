@@ -90,8 +90,8 @@ export default function DashboardPage() {
         <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
           <OtoizLogo variant="dark" size={255} />
           <div style={{ fontSize: 13, textAlign: "right" }}>
-            <a href="/panel/ayarlar" style={{ color: "rgba(255,255,255,0.65)", marginRight: 16, textDecoration: "none" }}>Ayarlar</a>
-            <button onClick={handleLogout} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontSize: 13, padding: 0 }}>Çıkış yap</button>
+            <a href="/panel/ayarlar" style={{ color: "rgba(255,255,255,0.65)", marginRight: 8, textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 8px" }}>Ayarlar</a>
+            <button onClick={handleLogout} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontSize: 13, padding: "0 8px", minHeight: 44 }}>Çıkış yap</button>
           </div>
         </div>
       </div>
