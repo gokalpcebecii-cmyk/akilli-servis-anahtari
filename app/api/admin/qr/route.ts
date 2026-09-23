@@ -3,6 +3,8 @@ import { requireAdmin, isAdminContext } from "@/lib/adminAuth";
 const { generateQrCode } = require("@/lib/qrToken");
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 const MAX_BATCH = 500;
 

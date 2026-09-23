@@ -26,7 +26,10 @@ export async function requireAdmin(req: NextRequest): Promise<AdminContext | Nex
   const userClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } }
+    {
+      global: { headers: { Authorization: authHeader }, fetch: (i: any, o?: any) => fetch(i, { ...(o || {}), cache: "no-store" }) },
+      auth: { persistSession: false },
+    }
   );
   const { data: userData } = await userClient.auth.getUser();
   const user = userData?.user;

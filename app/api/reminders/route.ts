@@ -4,6 +4,10 @@ const { shouldSendReminder } = require("@/lib/logic");
 const { sendSms } = require("@/lib/sms");
 const { authorizeCronRequest } = require("@/lib/cronAuth");
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const auth = authorizeCronRequest(authHeader, process.env.CRON_SECRET);

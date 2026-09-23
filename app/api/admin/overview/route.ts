@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, isAdminContext } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 // Yönetici genel bakışı — salt okuma. Tüm sorgular service_role ile, ama
 // yalnız requireAdmin() geçen proje sahibi çağırabilir.

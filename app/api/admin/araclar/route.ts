@@ -3,6 +3,8 @@ import { requireAdmin, isAdminContext } from "@/lib/adminAuth";
 const { plateSearchKey } = require("@/lib/logic");
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 // GET /api/admin/araclar?q=06ABC — plaka ile araç arama (bireysel + tüm servisler)
 export async function GET(req: NextRequest) {
