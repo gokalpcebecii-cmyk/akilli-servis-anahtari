@@ -20,6 +20,13 @@ const {
 
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
 // temizlenir. Bireysel formuyla aynı davranış (PILOT FIX 03 madde A3).
+// 2026-09-23: km alanları yazarken binlik ayraçla gösterilir (120.500);
+// state'te yalnız rakamlar tutulur (sanitizeKmInput).
+function formatKmInput(v: any) {
+  const d = String(v ?? "").replace(/\D/g, "");
+  return d ? Number(d).toLocaleString("tr-TR") : "";
+}
+
 function sanitizeKmInput(raw: string) {
   const digitsOnly = raw.replace(/[^0-9]/g, "");
   return digitsOnly.replace(/^0+(?=\d)/, "");
@@ -543,7 +550,19 @@ export default function VehicleDetailPage() {
           <h1 style={{ fontSize: 21, fontWeight: 800, margin: "6px 0 0", color: colors.textLight }}>
             {isNew ? "Yeni Araç" : "Hızlı Bakım Kaydı"}
           </h1>
-          {!isNew && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>{vehicle.plate}</div>}
+          {!isNew && (
+            <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginTop: 6 }}>
+              <span style={{ fontSize: 24, fontWeight: 900, letterSpacing: 0.8, color: colors.textLight }}>{vehicle.plate}</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.8)" }}>
+                {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
+              </span>
+              {vehicle.current_km != null && vehicle.current_km !== "" && (
+                <span style={{ fontSize: 18, fontWeight: 900, color: colors.green }}>
+                  {Number(vehicle.current_km).toLocaleString("tr-TR")} <span style={{ fontSize: 12, fontWeight: 700 }}>km</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -603,11 +622,11 @@ export default function VehicleDetailPage() {
                     data-field="current_km"
                     type="text"
                     inputMode="numeric"
-                    pattern="[0-9]*"
+                   
                     placeholder="Örn. 52430"
                     aria-invalid={!!fieldErrors.current_km}
-                    style={{ ...inputStyle, marginBottom: fieldErrors.current_km ? 4 : 14, borderColor: fieldErrors.current_km ? colors.danger : colors.border }}
-                    value={vehicle.current_km}
+                    style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3, marginBottom: fieldErrors.current_km ? 4 : 14, borderColor: fieldErrors.current_km ? colors.danger : colors.border }}
+                    value={formatKmInput(vehicle.current_km)}
                     onChange={(e) => setVehicle({ ...vehicle, current_km: sanitizeKmInput(e.target.value) })}
                   />
                   {fieldErrors.current_km && <p role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "-10px 0 14px" }}>{fieldErrors.current_km}</p>}
@@ -671,10 +690,10 @@ export default function VehicleDetailPage() {
                         data-field="next_service_km"
                         type="text"
                         inputMode="numeric"
-                        pattern="[0-9]*"
+                       
                         placeholder="Opsiyonel"
-                        style={inputStyle}
-                        value={vehicle.next_service_km || ""}
+                        style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
+                        value={formatKmInput(vehicle.next_service_km || "")}
                         onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
                       />
                     </div>
@@ -710,14 +729,14 @@ export default function VehicleDetailPage() {
             <input
               type="text"
               inputMode="numeric"
-              pattern="[0-9]*"
+             
               autoFocus
               // Mevcut km önceden dolu geliyor; odaklanınca tümü seçilsin ki
               // yazılan yeni değer eskisinin SONUNA eklenmesin (canlı testte
               // 68000 + "68500" → 6806850000 oldu).
               onFocus={(e) => e.currentTarget.select()}
               style={{ ...inputStyle, fontSize: 24, fontWeight: 800, padding: 16, textAlign: "center", marginBottom: 16 }}
-              value={quickKm}
+              value={formatKmInput(quickKm)}
               onChange={(e) => setQuickKm(sanitizeKmInput(e.target.value))}
               placeholder="Km"
             />
@@ -817,9 +836,9 @@ export default function VehicleDetailPage() {
                     <input
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]*"
-                      style={inputStyle}
-                      value={nextServiceKm}
+                     
+                      style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
+                      value={formatKmInput(nextServiceKm)}
                       onChange={(e) => setNextServiceKm(sanitizeKmInput(e.target.value))}
                       placeholder="Otomatik önerilir"
                     />
@@ -920,7 +939,8 @@ export default function VehicleDetailPage() {
               <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                 {records.map((r) => (
                   <li key={r.id} style={{ borderBottom: `1px solid ${colors.border}`, padding: "9px 0", fontSize: 13.5, color: colors.textDark }}>
-                    {new Date(r.service_date).toLocaleDateString("tr-TR")} — {r.description} {r.km_at_service ? `(${r.km_at_service.toLocaleString("tr-TR")} km)` : ""}
+                    <strong style={{ fontWeight: 800 }}>{new Date(r.service_date).toLocaleDateString("tr-TR")}</strong> — {r.description}{" "}
+                    {r.km_at_service ? <strong style={{ fontWeight: 900, color: colors.textDark }}>{Number(r.km_at_service).toLocaleString("tr-TR")} km</strong> : ""}
                   </li>
                 ))}
               </ul>

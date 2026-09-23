@@ -152,7 +152,7 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
       <input
         id="owner-quick-km"
         inputMode="numeric"
-        value={km}
+        value={km ? Number(km).toLocaleString("tr-TR") : ""}
         onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => setKm(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, ""))}
         style={{ ...inputStyle, fontSize: 20, fontWeight: 800, textAlign: "center", marginBottom: 14 }}

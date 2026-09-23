@@ -68,6 +68,13 @@ const DEFAULT_ITEM_INTERVALS: Record<string, number> = {
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
 // temizlenir (örn. "052430" yazılamaz). Negatif değer zaten mümkün değil
 // çünkü "-" karakteri rakam olmadığı için süzülüyor.
+// 2026-09-23: km alanları yazarken binlik ayraçla gösterilir (120.500);
+// state'te yalnız rakamlar tutulur (sanitizeKmInput).
+function formatKmInput(v: any) {
+  const d = String(v ?? "").replace(/\D/g, "");
+  return d ? Number(d).toLocaleString("tr-TR") : "";
+}
+
 function sanitizeKmInput(raw: string) {
   const digitsOnly = raw.replace(/[^0-9]/g, "");
   return digitsOnly.replace(/^0+(?=\d)/, "");
@@ -628,12 +635,19 @@ export default function BireyselVehicleDetailPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12 }}>
             <div>
               <OtoizLogo variant="dark" size={158} />
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.textLight, margin: "8px 0 0" }}>
+              <h1 style={{ fontSize: 28, fontWeight: 900, letterSpacing: 0.8, color: colors.textLight, margin: "8px 0 0" }}>
                 {isNew ? "Yeni Araç" : vehicle.plate}
               </h1>
               {!isNew && (
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
-                  {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
+                <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>
+                    {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
+                  </span>
+                  {vehicle.current_km != null && vehicle.current_km !== "" && (
+                    <span style={{ fontSize: 18, fontWeight: 900, color: colors.green }}>
+                      {Number(vehicle.current_km).toLocaleString("tr-TR")} <span style={{ fontSize: 12, fontWeight: 700 }}>km</span>
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -724,12 +738,12 @@ export default function BireyselVehicleDetailPage() {
                   data-field="current_km"
                   type="text"
                   inputMode="numeric"
-                  pattern="[0-9]*"
+                 
                   placeholder="Örn. 52430"
                   aria-describedby={fieldErrors.current_km ? "err-current_km" : undefined}
                   aria-invalid={!!fieldErrors.current_km}
-                  style={{ ...inputStyle, marginBottom: fieldErrors.current_km ? 4 : 10, borderColor: fieldErrors.current_km ? colors.danger : colors.border }}
-                  value={vehicle.current_km}
+                  style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3, marginBottom: fieldErrors.current_km ? 4 : 10, borderColor: fieldErrors.current_km ? colors.danger : colors.border }}
+                  value={formatKmInput(vehicle.current_km)}
                   onChange={(e) => setVehicle({ ...vehicle, current_km: sanitizeKmInput(e.target.value) })}
                 />
                 {fieldErrors.current_km && (
@@ -786,12 +800,12 @@ export default function BireyselVehicleDetailPage() {
                       data-field="next_service_km"
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]*"
+                     
                       placeholder="Opsiyonel"
                       aria-describedby={fieldErrors.next_service_km ? "err-next-km" : undefined}
                       aria-invalid={!!fieldErrors.next_service_km}
-                      style={{ ...inputStyle, marginBottom: fieldErrors.next_service_km ? 4 : 10, borderColor: fieldErrors.next_service_km ? colors.danger : colors.border }}
-                      value={vehicle.next_service_km || ""}
+                      style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3, marginBottom: fieldErrors.next_service_km ? 4 : 10, borderColor: fieldErrors.next_service_km ? colors.danger : colors.border }}
+                      value={formatKmInput(vehicle.next_service_km || "")}
                       onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
                     />
                     {fieldErrors.next_service_km && (
@@ -825,12 +839,12 @@ export default function BireyselVehicleDetailPage() {
                   data-field="next_service_km"
                   type="text"
                   inputMode="numeric"
-                  pattern="[0-9]*"
+                 
                   placeholder="Opsiyonel"
                   aria-describedby={fieldErrors.next_service_km ? "err-next-km" : undefined}
                   aria-invalid={!!fieldErrors.next_service_km}
-                  style={{ ...inputStyle, marginBottom: fieldErrors.next_service_km ? 4 : 10, borderColor: fieldErrors.next_service_km ? colors.danger : colors.border }}
-                  value={vehicle.next_service_km || ""}
+                  style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3, marginBottom: fieldErrors.next_service_km ? 4 : 10, borderColor: fieldErrors.next_service_km ? colors.danger : colors.border }}
+                  value={formatKmInput(vehicle.next_service_km || "")}
                   onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
                 />
                 {fieldErrors.next_service_km && (
@@ -894,8 +908,9 @@ export default function BireyselVehicleDetailPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
                   <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
                     <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KİLOMETRE</div>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: colors.textDark }}>
-                      {vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"} km
+                    <div style={{ fontSize: 22, fontWeight: 900, color: colors.textDark, letterSpacing: 0.2 }}>
+                      {vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"}
+                      <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
                     </div>
                   </div>
                   <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
@@ -1278,8 +1293,8 @@ export default function BireyselVehicleDetailPage() {
               )}
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <input
-                  type="text" inputMode="numeric" pattern="[0-9]*" placeholder="Km" style={inputStyle}
-                  value={newRecord.km_at_service}
+                  type="text" inputMode="numeric" placeholder="Km" style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
+                  value={formatKmInput(newRecord.km_at_service)}
                   onChange={(e) => setNewRecord({ ...newRecord, km_at_service: sanitizeKmInput(e.target.value) })}
                 />
                 <input

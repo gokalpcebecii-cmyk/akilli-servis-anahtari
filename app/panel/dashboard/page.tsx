@@ -131,10 +131,21 @@ export default function DashboardPage() {
           {filtered.map((v) => (
             <li key={v.id} style={{ background: colors.surfaceLight, borderRadius: radius.md, border: `1px solid ${colors.border}` }}>
               <a href={`/panel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{v.plate}</div>
-                <div style={{ color: colors.textMuted, fontSize: 12.5 }}>
-                  {v.brand} {v.model} · {v.current_km?.toLocaleString("tr-TR")} km · Sonraki bakım:{" "}
-                  {describeMaintenancePlan({ nextServiceKm: v.next_service_km, nextServiceDate: v.next_service_date }).label}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ fontWeight: 900, fontSize: 20, letterSpacing: 0.6 }}>{v.plate}</div>
+                  <div style={{ fontWeight: 900, fontSize: 19, color: colors.textDark }}>
+                    {v.current_km != null ? Number(v.current_km).toLocaleString("tr-TR") : "—"}
+                    <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
+                  {v.brand} {v.model}
+                </div>
+                <div style={{ color: colors.textMuted, fontSize: 12.5, marginTop: 4 }}>
+                  Sonraki bakım:{" "}
+                  <strong style={{ color: colors.greenDark, fontWeight: 800 }}>
+                    {describeMaintenancePlan({ nextServiceKm: v.next_service_km, nextServiceDate: v.next_service_date }).label}
+                  </strong>
                 </div>
               </a>
             </li>

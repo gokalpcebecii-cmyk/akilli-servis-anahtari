@@ -241,9 +241,15 @@ export default function BireyselAraclarPage() {
                   {rest.map((v) => (
                     <li key={v.id} style={{ background: colors.surfaceLight, borderRadius: radius.md, border: `1px solid ${colors.border}`, marginBottom: 8 }}>
                       <a href={`/bireysel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, fontSize: 15 }}>{v.plate}</div>
-                        <div style={{ color: colors.textMuted, fontSize: 12.5 }}>
-                          {v.brand} {v.model} · {v.current_km?.toLocaleString("tr-TR")} km
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                          <div style={{ fontWeight: 900, fontSize: 19, letterSpacing: 0.6 }}>{v.plate}</div>
+                          <div style={{ fontWeight: 900, fontSize: 18 }}>
+                            {v.current_km != null ? Number(v.current_km).toLocaleString("tr-TR") : "—"}
+                            <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
+                          {v.brand} {v.model}
                         </div>
                       </a>
                     </li>
