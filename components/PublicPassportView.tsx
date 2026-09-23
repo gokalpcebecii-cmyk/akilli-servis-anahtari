@@ -96,7 +96,8 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
     return { label: "Normal", kind: "success" };
   }
 
-  const hasVerifiedRecord = records.some((r: any) => r.tenant_id);
+  const isVerified = (r: any) => Boolean(r.service_verified ?? r.tenant_id);
+  const hasVerifiedRecord = records.some(isVerified);
   const lastServiceDate = records.reduce((latest: string | null, r: any) => {
     const d = r.service_date || r.created_at;
     return !latest || (d && d > latest) ? d : latest;
@@ -204,7 +205,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
                       {r.km_at_service != null ? ` · ${r.km_at_service.toLocaleString("tr-TR")} km` : ""}
                     </div>
                   </div>
-                  {r.tenant_id ? (
+                  {isVerified(r) ? (
                     <span style={{ display: "flex", alignItems: "center", gap: 4, ...badgeStyle("success"), whiteSpace: "nowrap" }}>
                       <Icon name="shield-check" color={colors.greenDark} size={11} strokeWidth={2.5} />
                       Servis Doğrulamalı
