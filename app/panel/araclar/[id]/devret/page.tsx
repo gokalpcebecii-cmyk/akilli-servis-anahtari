@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, primaryButtonStyle } from "@/lib/theme";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { prepareOwnershipTransfer } = require("@/lib/logic");
 
 export default function OwnershipTransferPage() {
@@ -16,6 +17,28 @@ export default function OwnershipTransferPage() {
   const [confirmErase, setConfirmErase] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // PILOT FIX 03 (madde A7): geri alınamaz kişisel veri etkisine rağmen
+  // bu akış onay kutusu işaretlenmeden erişilebilirdi — canlı testte
+  // bulunan pilot-engelleyici gizlilik riski. Kalıcı, güvenli sürüm
+  // (etki özeti + alıcı doğrulaması + yeniden kimlik doğrulama + audit)
+  // ayrı bir teknik görev; o tamamlanana kadar bu route erişilemez.
+  // Veri modeli/mantık DEĞİŞMEDİ — yalnızca UX erişimi kapatıldı.
+  if (!PILOT_FLAGS.serviceOwnershipTransfer) {
+    return (
+      <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: font, color: colors.textDark, textAlign: "center" }}>
+        <h1 style={{ fontSize: 20 }}>Bu Özellik Şu An Kullanılamıyor</h1>
+        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+          Araç sahipliği devri, pilot süresi boyunca yalnızca kontrollü destek süreciyle yürütülüyor —
+          geri alınamaz kişisel veri etkisi taşıdığı için ek güvenlik adımları tamamlanana kadar
+          buradan doğrudan yapılamıyor. Bir devir gerekiyorsa lütfen OTOİZ destek ekibiyle iletişime geçin.
+        </p>
+        <a href={`/panel/araclar/${params.id}`} style={{ color: colors.greenDark, fontWeight: 700, fontSize: 13.5 }}>
+          ← Araç detayına dön
+        </a>
+      </main>
+    );
+  }
+
   async function handleTransfer() {
     if (!confirmErase) {
       alert("Devam etmeden önce, önceki sahibin kişisel verilerinin silineceğini onaylamalısınız.");
@@ -23,6 +46,21 @@ export default function OwnershipTransferPage() {
     }
     setSaving(true);
 
+    // ÜÇÜNCÜ düzeltme turu (madde 6): ikinci turda bu akış geçici olarak
+    // /api/ownership-transfer'a taşınmıştı. İncelemede bu route'un GERÇEK
+    // bir güvenlik sınırı EKLEMEDİĞİ ortaya çıktı: ownership_transfers/
+    // customers/vehicles üzerindeki RLS politikaları ("staff_own_tenant_
+    // transfers" vb.) zaten aynı tenant-kapsamlı yazmaya izin veriyor —
+    // route'un servis-rolü kullanması yalnızca ekstra, gereksiz saldırı
+    // yüzeyi (yeni bir POST uç noktası) yaratıyordu, PILOT_FLAGS
+    // kontrolünü atlatmayı ENGELLEMİYORDU (bkz. final rapor). Bu yüzden
+    // route silindi, akış RLS'ye tabi doğrudan istemci çağrılarına geri
+    // döndürüldü — güvenlik sınırı zaten her zaman RLS'ydi, değişmedi.
+    // Gerçek koruma yalnızca aşağıdaki UI seviyesi PILOT_FLAGS kontrolü
+    // (bu dosyanın başında) ile sağlanıyor; bu, normal uygulama akışını
+    // kapatır ama doğrudan Supabase çağrısı yapan teknik bir kullanıcıyı
+    // DURDURMAZ — tam kapatma için RLS/EXECUTE değişikliği gerekir (bkz.
+    // SECURITY_FIX_04_PROPOSAL.md, uygulanmadı).
     const { data: session } = await supabase.auth.getSession();
     const { data: staff } = await supabase
       .from("staff_users")
@@ -80,7 +118,7 @@ export default function OwnershipTransferPage() {
         .eq("id", previousCustomer.id);
     }
 
-    // Not: bu olay artık istemcinin ayrı bir çağrısına değil, ownership_transfers
+    // Not: bu olay istemcinin ayrı bir çağrısına değil, ownership_transfers
     // insert'ini yakalayan DB tetikleyicisine (log_ownership_transfer) güveniyor.
 
     setSaving(false);

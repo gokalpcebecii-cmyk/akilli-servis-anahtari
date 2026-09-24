@@ -33,7 +33,7 @@ export default function SettingsPage() {
 
   async function handleSave() {
     setSaving(true);
-    await supabase
+    const { data: saved, error } = await supabase
       .from("tenants")
       .update({
         name: tenant.name,
@@ -46,8 +46,14 @@ export default function SettingsPage() {
         reminder_days_before: tenant.reminder_days_before,
         reminder_km_before: tenant.reminder_km_before,
       })
-      .eq("id", tenant.id);
+      .eq("id", tenant.id)
+      .select("id");
     setSaving(false);
+    // RLS reddi hata DEĞİL, 0 satır döner — ikisini de başarısızlık say.
+    if (error || !saved || saved.length === 0) {
+      alert("Kaydedilemedi. Servis ayarlarını yalnızca işletme sahibi hesabı değiştirebilir.");
+      return;
+    }
     alert("Kaydedildi. Değişiklikler tüm araç sayfalarına anında yansır.");
   }
 

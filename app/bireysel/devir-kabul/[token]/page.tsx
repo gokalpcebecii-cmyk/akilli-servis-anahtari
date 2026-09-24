@@ -6,6 +6,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { Icon } from "@/components/Icon";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 export default function DevirKabulPage() {
   const params = useParams();
@@ -22,6 +23,15 @@ export default function DevirKabulPage() {
 
   useEffect(() => {
     async function load() {
+      // 04A-S takip turu: erken JSX return'ü yalnızca render'ı kapatıyordu —
+      // bu effect hook sırası gereği yine de çalışıp session/RPC isteği
+      // gönderiyordu. Bayrak kapalıyken HİÇBİR Supabase çağrısı yapılmadan
+      // (session dahil) doğrudan çıkılır.
+      if (!PILOT_FLAGS.ownershipTransferSelfService) {
+        setLoading(false);
+        return;
+      }
+
       const { data: session } = await supabase.auth.getSession();
       setLoggedIn(!!session.session);
 
@@ -44,10 +54,31 @@ export default function DevirKabulPage() {
       else if (msg.includes("already_accepted")) setError("Bu araç zaten devralınmış.");
       else if (msg.includes("cancelled")) setError("Bu devir iptal edilmiş.");
       else if (msg.includes("cannot_accept_own_transfer")) setError("Kendi başlattığınız bir devri kabul edemezsiniz.");
+      else if (msg.includes("staff_account_cannot_own")) setError("Servis hesabıyla araç devralınamaz; bireysel hesabınızla giriş yapın.");
       else setError("Devir tamamlanamadı. Bağlantı geçersiz olabilir.");
       return;
     }
     setDone(data.vehicle_id);
+  }
+
+  // 04A-S turu bulgusu: bu sayfa, karşı sayfalardan (devret) farklı olarak
+  // hiçbir PILOT_FLAGS kapısı arkasında değildi — initiate tarafı kapalı
+  // olsa bile, önceden üretilmiş geçerli bir token linkiyle bu ekrana
+  // ulaşılabiliyordu. "QR/NFC pilot kapsamı güvenlik kabulüne kadar kapalı
+  // kalacak" kuralı gereği aynı bayrak burada da uygulanır. Altındaki RPC'ler
+  // (accept/preview_ownership_transfer) zaten staging'de authenticated/anon
+  // EXECUTE yetkisi revoke edilerek DB seviyesinde kapatıldı.
+  if (!PILOT_FLAGS.ownershipTransferSelfService) {
+    return (
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bu Özellik Şu An Kullanılamıyor</h1>
+          <p style={{ color: colors.textMuted, marginTop: 8 }}>
+            Sahiplik devri, güvenlik kabulü tamamlanana kadar pilot kapsamı dışındadır.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   if (loading) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
@@ -64,6 +95,37 @@ export default function DevirKabulPage() {
           <button onClick={() => router.push(`/bireysel/araclar/${done}`)} style={{ ...primaryButtonStyle(false), width: "auto", padding: "12px 24px" }}>
             Aracımı Görüntüle
           </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (!preview && !loggedIn) {
+    return (
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <OtoizLogo variant="light" size={150} mark="primary" />
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800, marginTop: 16 }}>Araç Devrini Kabul Et</h1>
+          <p style={{ fontSize: 13, color: colors.textMuted, margin: "8px 0 16px" }}>
+            Devir bilgilerini görmek ve aracı devralmak için OTOİZ bireysel hesabınızla giriş yapın veya hesap oluşturun.
+          </p>
+          <button onClick={() => router.push(`/bireysel/giris?next=/bireysel/devir-kabul/${token}`)} style={{ ...primaryButtonStyle(false), marginBottom: 10 }}>
+            Giriş Yap
+          </button>
+          <button onClick={() => router.push(`/bireysel/kayit?next=/bireysel/devir-kabul/${token}`)} style={secondaryButtonStyle()}>
+            Hesap Oluştur
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (preview?.own_transfer) {
+    return (
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bu devri siz başlattınız</h1>
+          <p style={{ color: colors.textMuted }}>Bağlantıyı aracı devredeceğiniz kişiyle paylaşın. Kendi hesabınızla kabul edemezsiniz.</p>
         </div>
       </main>
     );

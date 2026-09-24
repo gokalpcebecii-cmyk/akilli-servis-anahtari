@@ -1,10 +1,13 @@
 "use client";
 
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, secondaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+
+const { plateSearchKey, describeMaintenancePlan } = require("@/lib/logic");
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -13,6 +16,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [notStaffAccount, setNotStaffAccount] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -34,6 +38,9 @@ export default function DashboardPage() {
         return;
       }
 
+      const { data: tenantRow } = await supabase.from("tenants").select("approval_status").eq("id", staff.tenant_id).maybeSingle();
+      setApprovalStatus(tenantRow?.approval_status ?? null);
+
       const { data: vehicleList } = await supabase
         .from("vehicles")
         .select("*")
@@ -47,13 +54,14 @@ export default function DashboardPage() {
   }, []);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     router.push("/panel/login");
   }
 
-  const filtered = vehicles.filter((v) =>
-    v.plate?.toLowerCase().includes(search.toLowerCase())
-  );
+  // PILOT FIX 03 (madde A2): arama ayraçtan (boşluk/tire) ve büyük/küçük
+  // harften tamamen bağımsız çalışsın — "otoiz01" yazan kullanıcı "06 OTOIZ
+  // 01" olarak kayıtlı aracı da bulabilmeli.
+  const filtered = vehicles.filter((v) => plateSearchKey(v.plate).includes(plateSearchKey(search)));
 
   if (loading) return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
 
@@ -86,13 +94,20 @@ export default function DashboardPage() {
         <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
           <OtoizLogo variant="dark" size={255} />
           <div style={{ fontSize: 13, textAlign: "right" }}>
-            <a href="/panel/ayarlar" style={{ color: "rgba(255,255,255,0.65)", marginRight: 16, textDecoration: "none" }}>Ayarlar</a>
-            <button onClick={handleLogout} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontSize: 13, padding: 0 }}>Çıkış yap</button>
+            <a href="/panel/ayarlar" style={{ color: "rgba(255,255,255,0.65)", marginRight: 8, textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 8px" }}>Ayarlar</a>
+            <button onClick={handleLogout} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontSize: 13, padding: "0 8px", minHeight: 44 }}>Çıkış yap</button>
           </div>
         </div>
       </div>
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 40px" }}>
+        {approvalStatus && approvalStatus !== "approved" && (
+          <div role="status" style={{ background: approvalStatus === "rejected" ? "#FDECEC" : "#FFF8E6", border: `1px solid ${approvalStatus === "rejected" ? colors.danger : "#E8C468"}`, borderRadius: radius.md, padding: "14px 16px", marginBottom: 16, fontSize: 14, fontWeight: 700, color: colors.textDark, lineHeight: 1.5 }}>
+            {approvalStatus === "rejected"
+              ? "İşletme başvurunuz onaylanmadı. Araç ve bakım kaydı yapamazsınız. Bilgi için OTOİZ ile iletişime geçin."
+              : "İşletmeniz OTOİZ onayı bekliyor. Onaylandıktan sonra araç ekleyebilir, bakım kaydı girebilir ve size ayrılan QR anahtarlıkları eşleştirebilirsiniz."}
+          </div>
+        )}
         <h1 style={{ fontSize: 20, margin: "0 0 14px", color: colors.textDark, fontWeight: 800 }}>Plaka Ara</h1>
 
         <input
@@ -107,12 +122,16 @@ export default function DashboardPage() {
           <a href="/panel/araclar/yeni" style={{ display: "inline-block", padding: "12px 20px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, minHeight: 44 }}>
             + Yeni Araç Ekle
           </a>
-          <a href="/panel/eslestir" style={{ ...secondaryButtonStyle(), width: "auto", display: "inline-block", textDecoration: "none", padding: "12px 20px" }}>
-            Anahtarlık Eşleştir
-          </a>
-          <a href="/panel/qr-uretim" style={{ ...secondaryButtonStyle(), width: "auto", display: "inline-block", textDecoration: "none", padding: "12px 20px", color: colors.textMuted, borderColor: colors.border }}>
-            QR Üret
-          </a>
+          {PILOT_FLAGS.qrMatchingSelfService && (
+            <a href="/panel/eslestir" style={{ ...secondaryButtonStyle(), width: "auto", display: "inline-block", textDecoration: "none", padding: "12px 20px" }}>
+              Anahtarlık Eşleştir
+            </a>
+          )}
+          {PILOT_FLAGS.bulkQrGeneration && (
+            <a href="/panel/qr-uretim" style={{ ...secondaryButtonStyle(), width: "auto", display: "inline-block", textDecoration: "none", padding: "12px 20px", color: colors.textMuted, borderColor: colors.border }}>
+              QR Üret
+            </a>
+          )}
         </div>
 
         {filtered.length === 0 && (
@@ -123,9 +142,21 @@ export default function DashboardPage() {
           {filtered.map((v) => (
             <li key={v.id} style={{ background: colors.surfaceLight, borderRadius: radius.md, border: `1px solid ${colors.border}` }}>
               <a href={`/panel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{v.plate}</div>
-                <div style={{ color: colors.textMuted, fontSize: 12.5 }}>
-                  {v.brand} {v.model} · {v.current_km?.toLocaleString("tr-TR")} km · Sonraki bakım: {v.next_service_km?.toLocaleString("tr-TR")} km
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ fontWeight: 900, fontSize: 20, letterSpacing: 0.6 }}>{v.plate}</div>
+                  <div style={{ fontWeight: 900, fontSize: 19, color: colors.textDark }}>
+                    {v.current_km != null ? Number(v.current_km).toLocaleString("tr-TR") : "—"}
+                    <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
+                  {v.brand} {v.model}
+                </div>
+                <div style={{ color: colors.textMuted, fontSize: 12.5, marginTop: 4 }}>
+                  Sonraki bakım:{" "}
+                  <strong style={{ color: colors.greenDark, fontWeight: 800 }}>
+                    {describeMaintenancePlan({ nextServiceKm: v.next_service_km, nextServiceDate: v.next_service_date }).label}
+                  </strong>
                 </div>
               </a>
             </li>

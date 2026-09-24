@@ -250,61 +250,31 @@ a:focus-visible {
   .otoiz-hero-photo {
     bottom: 0;
     height: auto;
-    background-image: url(/marketing/otoiz-master-hero-v3.webp);
+    background-image: url(/marketing/otoiz-hero-clean.webp);
     background-size: cover;
     background-position: 50% 50%;
     filter: saturate(0.97) brightness(0.98);
   }
   .otoiz-hero-scrim {
-    /* Elips denemesi (bkz. git geçmişi) BÜYÜK dikdörtgen bölgelerde (sol
-       metin bloğu, sağ fayda listesi) köşe sızıntısı üretti — bir elips
-       kendi sınırlayıcı dikdörtgeninin köşelerine doğal olarak ulaşamaz;
-       köşeyi kaplayacak kadar büyütülünce de gereksiz alan kaplıyordu.
-       Bunun yerine her bölge, ölçülen sınırlarına dolgu paylı TAM
-       DİKDÖRTGEN bir düz-renk katman olarak uygulanıyor (linear-gradient
-       solid + açık background-size/position, köşe sızıntısı yok, önceki
-       turlarda kanıtlanmış teknik). Katmanlar KÜÇÜK ve gerçek metin
-       bölgelerine SIKI oturuyor — aralarındaki TÜM alanlarda (araç,
-       anahtarlık, telefon, bina, zemin yansımaları) fotoğraf tamamen
-       dokunulmamış görünüyor; "tek sahne" hissini bu sağlıyor. */
+    /* 2026-09-24: Görseldeki gömülü yazılar (logo, menü, başlık, butonlar,
+       fayda listesi, imza) görselin kendisinden temizlendi
+       (public/marketing/otoiz-hero-clean.webp). Artık bunları örtmek için
+       sert koyu dikdörtgenlere gerek yok — yalnız metnin okunaklı kalması
+       için kenarlardan yumuşak geçişler kullanılıyor; araç, anahtarlık ve
+       telefon tamamen görünür. */
     background-image:
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99)),
-      linear-gradient(rgba(6, 20, 33, 0.99), rgba(6, 20, 33, 0.99));
+      linear-gradient(90deg, rgba(6, 20, 33, 0.9) 0%, rgba(6, 20, 33, 0.72) 18%, rgba(6, 20, 33, 0.3) 30%, rgba(6, 20, 33, 0) 40%),
+      linear-gradient(270deg, rgba(6, 20, 33, 0.85) 0%, rgba(6, 20, 33, 0.55) 13%, rgba(6, 20, 33, 0) 23%),
+      linear-gradient(180deg, rgba(6, 20, 33, 0.75) 0%, rgba(6, 20, 33, 0) 16%),
+      linear-gradient(0deg, rgba(6, 20, 33, 0.8) 0%, rgba(6, 20, 33, 0) 18%);
     background-repeat: no-repeat;
-    /* logo, nav, header-cta, sol-metin, güven-şeridi, faydalar, imza */
-    background-size: 25.5% 21%, 51% 12%, 32% 12%, 48% 51.5%, 48% 18%, 26% 60%, 26% 24%;
-    background-position:
-      2.01% 1.27%,
-      44.9% 2.27%,
-      98.53% 1.14%,
-      0% 39.18%,
-      0% 96.34%,
-      100% 40%,
-      100% 94.74%;
-    /* backdrop-filter:blur() bu headless Chromium'da GÖRSEL OLARAK
-       uygulanmıyordu (önceki turda ölçülüp kanıtlandı) — ama filter:blur()
-       FARKLI bir özellik (kendi elemanının render'ını bulanıklaştırır,
-       ARKASINDAKİ içeriği örneklemez) ve izole test sayfasıyla piksel piksel
-       DOĞRU render ettiği doğrulandı. Bu, sert dikdörtgen kenarları
-       "kesik yama" hissi vermeden yumuşatıyor — asıl "tek sahne" hissini
-       veren şey bu: küçük yamalar + yumuşak kenarlar. */
-    filter: blur(17px);
+    background-size: 100% 100%;
+    filter: none;
   }
   .otoiz-hero-master-screen {
-    /* Fotoğraftaki telefonun gerçek ekran alanı (bezel hariç) — 1536×1024
-       v3 kaynağına göre ölçüldü: sol 985px/üst 300px/sağ 1160px/alt 790px. */
-    display: block !important;
-    left: 64.13%;
-    top: 29.3%;
-    width: 11.39%;
-    height: 47.85%;
-    border-radius: 7% / 2.8%;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    /* 2026-09-24: Görseldeki telefonun kendi ekranı kullanılıyor; üstüne
+       bindirilen ekran görüntüsü telefon çerçevesine oturmuyor ve taşıyordu. */
+    display: none !important;
   }
   .otoiz-hero-section {
     aspect-ratio: 1536 / 1024;
@@ -426,8 +396,8 @@ a:focus-visible {
        (300px) fayda listesine nefes payı veriyor. Orta 1fr hiçbir gerçek
        metin taşımıyor — yalnızca arka plan fotoğrafındaki araç/anahtarlık/
        telefon (+ üzerindeki gerçek ekran overlay'i) görünüyor. */
-    grid-template-columns: 560px 1fr 300px;
-    grid-template-areas: "text phone benefits";
+    grid-template-columns: 560px 1fr;
+    grid-template-areas: "text phone";
     align-items: stretch;
     gap: 0;
     text-align: left;
@@ -468,10 +438,20 @@ a:focus-visible {
     display: none !important;
   }
   .otoiz-hero-benefits-col {
-    grid-area: benefits;
+    /* 2026-09-23: Sağ kolon artık grid'de sabit 300px değil. Section
+       görselle aynı en-boy oranına kilitli olduğu için telefon her ekran
+       genişliğinde section'ın ~%63–%77 aralığında duruyor; fayda listesi
+       telefona binmesin diye kolon section genişliğinin %79'undan başlıyor
+       ve section'ın sağ kenarına (24px pay) kadar uzanıyor. Kapsayıcı
+       (.otoiz-hero-container) ortalı olduğu için sol kenarı
+       (100vw - 100%) / 2 kadar kaydırılarak hesaplanıyor. */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(79vw - (100vw - 100%) / 2);
+    right: calc(24px - (100vw - 100%) / 2);
     display: flex !important;
     flex-direction: column;
-    height: 100%;
     padding: 4px 0 40px;
   }
   .otoiz-hero-benefits-desktop {
@@ -621,5 +601,65 @@ a:focus-visible {
   .otoiz-servis-header {
     background: linear-gradient(160deg, var(--otoiz-bg) 0%, var(--otoiz-bg-alt) 55%, var(--otoiz-surface-dark) 100%) !important;
     padding: 26px 18px 34px !important;
+  }
+}
+
+/* PILOT FIX 03 (bölüm E): giriş/kayıt sayfaları — mobilde üstte marka
+   bandı + altta kart (değişmiyor), masaüstünde (≥1024px) yan yana iki
+   sütun: solda marka/anlatım, sağda form — boş beyaz alan yerine dengeli
+   bir masaüstü kompozisyon. DOM sırası ve mantık aynı kalıyor. */
+@media (min-width: 1024px) {
+  .otoiz-auth-shell {
+    display: flex !important;
+    min-height: 100vh;
+  }
+  .otoiz-auth-hero {
+    flex: 1 1 50% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 48px !important;
+  }
+  .otoiz-auth-hero-inner {
+    max-width: 420px !important;
+    margin: 0 !important;
+  }
+  .otoiz-auth-form-wrap {
+    flex: 1 1 50% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    max-width: 480px !important;
+    padding: 48px !important;
+  }
+  .otoiz-auth-form-wrap form {
+    width: 100%;
+  }
+}
+
+/* PILOT FIX 03 (bölüm E): bireysel araç formu/detayı — mobilde tek sütun
+   (değişmiyor), masaüstünde (≥1024px) 560px yerine 720px genişlikte,
+   dengeli bir okuma sütunu (uç-uca beyaz alan yerine). */
+@media (min-width: 1024px) {
+  .otoiz-vehicle-shell {
+    max-width: 720px !important;
+  }
+}
+
+/* PILOT FIX 03 (bölüm E): mobil alt navigasyon (BottomNav) masaüstünde
+   yer kaplamasın diye ≥1024px'te gizleniyor; içerik alt boşluğu da
+   birlikte kaldırılıyor (bkz. .otoiz-has-bottom-nav, BottomNav bileşeni). */
+@media (min-width: 1024px) {
+  .otoiz-bottom-nav {
+    display: none !important;
+  }
+  .otoiz-has-bottom-nav {
+    padding-bottom: 0 !important;
+  }
+  /* İkinci düzeltme turu, madde 6: alt navigasyonun yerini alan sabit
+     masaüstü mini-çubuğu (bkz. BottomNav bileşeni). */
+  .otoiz-desktop-nav {
+    display: flex !important;
   }
 }

@@ -39,9 +39,16 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 60_000,
     env: {
-      NEXT_PUBLIC_SUPABASE_URL: "https://sbfsiwqxbsojcxdutnem.supabase.co",
+      // 04A-S: e2e testleri artık gerçek Production Supabase alan adını
+      // (sbfsiwqxbsojcxdutnem.supabase.co) HİÇ KULLANMIYOR. `.invalid`,
+      // RFC 2606 gereği ağda asla çözülemeyen (DNS resolve edilemeyen)
+      // ayrılmış bir TLD'dir — bu yüzden mock'lanmamış/eksik bir
+      // page.route() olsa bile istek Production'a (veya herhangi bir
+      // gerçek sunucuya) ULAŞAMAZ, yalnızca DNS/network hatası alır.
+      // Mock storage key'i (e2e/fixtures/mockAuth.ts) bu ref'le uyumlu.
+      NEXT_PUBLIC_SUPABASE_URL: "https://otoiz-e2e-test.supabase.invalid",
       NEXT_PUBLIC_SUPABASE_ANON_KEY:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZnNpd3F4YnNvamN4ZHV0bmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNzI3OTYsImV4cCI6MjEwNDk0ODc5Nn0.VIodITf_RNW6BYglQJew4rs7q7qPIo4bQr5gvWpsf40",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90b2l6LWUyZS10ZXN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNzI3OTYsImV4cCI6MjEwNDk0ODc5Nn0.mock-signature-not-real-never-sent-to-a-server",
       SUPABASE_SERVICE_ROLE_KEY: "unavailable-in-this-session-placeholder",
     },
   },

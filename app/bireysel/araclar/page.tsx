@@ -7,6 +7,9 @@ import { colors, font, radius } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { BottomNav } from "@/components/BottomNav";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
+
+const { plateSearchKey, describeMaintenancePlan } = require("@/lib/logic");
 
 const MODULES = [
   { key: "servis-gecmisi", title: "Servis Geçmişi", desc: "Yapılan tüm bakım ve onarım kayıtları.", icon: "history" },
@@ -15,7 +18,12 @@ const MODULES = [
   { key: "muayene", title: "Muayene Bilgileri", desc: "Muayene ve sigorta notlarınız.", icon: "clipboard" },
   { key: "qr", title: "QR / NFC Yönetimi", desc: "Aktif kodu görün, iptal edin veya yenileyin.", icon: "qr" },
   { key: "devir", title: "Sahiplik Devri", desc: "Aracı güvenle yeni sahibine devredin.", icon: "swap" },
-];
+].filter((m) =>
+  // Pilot: güvenlik kabulü bekleyen özellikler menüde hiç görünmez
+  // (bkz. lib/pilotFlags.ts). Bayrak açılınca kart kendiliğinden geri gelir.
+  (m.key !== "qr" || PILOT_FLAGS.qrSelfIssuance) &&
+  (m.key !== "devir" || PILOT_FLAGS.ownershipTransferSelfService)
+);
 
 export default function BireyselAraclarPage() {
   const router = useRouter();
@@ -28,6 +36,12 @@ export default function BireyselAraclarPage() {
   const [email, setEmail] = useState<string | null>(null);
 
   async function loadPendingTransfers() {
+    // Pilotta bu RPC'nin EXECUTE yetkisi authenticated'dan alındı; çağırmak
+    // yalnızca konsolda hata üretir.
+    if (!PILOT_FLAGS.ownershipTransferSelfService) {
+      setPendingTransfers([]);
+      return;
+    }
     const { data } = await supabase.rpc("list_my_pending_outgoing_transfers");
     setPendingTransfers(data ?? []);
   }
@@ -54,9 +68,9 @@ export default function BireyselAraclarPage() {
     load();
   }, []);
 
-  async function handleCancelTransfer(token: string) {
-    setCancelling(token);
-    const { error } = await supabase.rpc("cancel_ownership_transfer", { p_token: token });
+  async function handleCancelTransfer(transferId: string) {
+    setCancelling(transferId);
+    const { error } = await supabase.rpc("cancel_ownership_transfer", { p_transfer_id: transferId });
     setCancelling(null);
     if (error) {
       alert("İptal edilemedi. Sayfayı yenileyip tekrar deneyin.");
@@ -75,11 +89,11 @@ export default function BireyselAraclarPage() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     router.push("/bireysel/giris");
   }
 
-  const filtered = search ? vehicles.filter((v) => v.plate?.toLowerCase().includes(search.toLowerCase())) : vehicles;
+  const filtered = search ? vehicles.filter((v) => plateSearchKey(v.plate).includes(plateSearchKey(search))) : vehicles;
   const primary = filtered[0];
   const rest = filtered.slice(1);
   const firstName = email ? email.split("@")[0] : "";
@@ -154,17 +168,17 @@ export default function BireyselAraclarPage() {
               Bekleyen Devirler
             </h2>
             {pendingTransfers.map((t) => (
-              <div key={t.transfer_token} style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 12, padding: 14, marginBottom: 10 }}>
+              <div key={t.transfer_id} style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 12, padding: 14, marginBottom: 10 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: "#7a5c10" }}>{t.plate}</div>
                 <div style={{ fontSize: 12, color: "#7a5c10", marginBottom: 10 }}>
-                  {t.brand} {t.model} — yeni sahibin kabul etmesi bekleniyor
+                  {t.brand} {t.model} — {t.expired ? "devir bağlantısının süresi doldu; aracı geri alabilirsiniz" : "yeni sahibin kabul etmesi bekleniyor"}
                 </div>
                 <button
-                  onClick={() => handleCancelTransfer(t.transfer_token)}
-                  disabled={cancelling === t.transfer_token}
+                  onClick={() => handleCancelTransfer(t.transfer_id)}
+                  disabled={cancelling === t.transfer_id}
                   style={{ fontSize: 12, padding: "8px 14px", background: "#fff", border: "1px solid #E8C468", borderRadius: 8, color: "#7a5c10", fontWeight: 600, cursor: "pointer", minHeight: 36 }}
                 >
-                  {cancelling === t.transfer_token ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
+                  {cancelling === t.transfer_id ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
                 </button>
               </div>
             ))}
@@ -227,9 +241,15 @@ export default function BireyselAraclarPage() {
                   {rest.map((v) => (
                     <li key={v.id} style={{ background: colors.surfaceLight, borderRadius: radius.md, border: `1px solid ${colors.border}`, marginBottom: 8 }}>
                       <a href={`/bireysel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
-                        <div style={{ fontWeight: 700, fontSize: 15 }}>{v.plate}</div>
-                        <div style={{ color: colors.textMuted, fontSize: 12.5 }}>
-                          {v.brand} {v.model} · {v.current_km?.toLocaleString("tr-TR")} km
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                          <div style={{ fontWeight: 900, fontSize: 19, letterSpacing: 0.6 }}>{v.plate}</div>
+                          <div style={{ fontWeight: 900, fontSize: 18 }}>
+                            {v.current_km != null ? Number(v.current_km).toLocaleString("tr-TR") : "—"}
+                            <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
+                          {v.brand} {v.model}
                         </div>
                       </a>
                     </li>
@@ -244,7 +264,7 @@ export default function BireyselAraclarPage() {
           <p style={{ color: colors.textMuted, marginTop: 20, textAlign: "center", fontSize: 14 }}>Araç bulunamadı.</p>
         )}
 
-        <button onClick={handleLogout} style={{ display: "block", margin: "28px auto 0", background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: 13 }}>
+        <button onClick={handleLogout} style={{ display: "block", margin: "28px auto 0", background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: 13, minHeight: 44, padding: "0 16px" }}>
           Çıkış yap
         </button>
       </div>
@@ -297,7 +317,7 @@ function VehicleHeroCard({ vehicle, onClick }: { vehicle: any; onClick: () => vo
         <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 12, padding: "11px 13px", backdropFilter: "blur(2px)" }}>
           <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>SONRAKİ BAKIM</div>
           <div style={{ fontSize: 17, fontWeight: 700, color: colors.green }}>
-            {vehicle.next_service_km ? `${Number(vehicle.next_service_km).toLocaleString("tr-TR")} km` : "—"}
+            {describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).label}
           </div>
         </div>
       </div>

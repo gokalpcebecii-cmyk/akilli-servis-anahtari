@@ -128,11 +128,11 @@ test.describe("Referans görsel sadakat seti", () => {
     await page.screenshot({ path: path.join(outDir, "06-qr-nfc-mobil.png") });
   });
 
-  test("07 Araç devret", async ({ page, baseURL }, ti) => {
+  test("07 Araç devret (ikinci düzeltme turu: pilot bayrağı kapalı)", async ({ page, baseURL }, ti) => {
     test.skip(ti.project.name !== "mobile-390", "yalnızca mobil");
     await setupBireysel(page, baseURL!);
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}/devret`);
-    await page.getByRole("heading", { name: "Aracı Devret / Elden Çıkar" }).waitFor();
+    await page.getByRole("heading", { name: "Bu Özellik Şu An Kullanılamıyor" }).waitFor();
     await page.screenshot({ path: path.join(outDir, "07-arac-devret-mobil.png") });
   });
 

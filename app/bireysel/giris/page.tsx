@@ -6,10 +6,13 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function BireyselGirisForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const router = useRouter();
@@ -27,6 +30,9 @@ function BireyselGirisForm() {
         router.replace(redirectTo);
         return;
       }
+      if (searchParams.get("oturum") === "bitti") {
+        setError("Oturumunuz sona erdi. Devam etmek için lütfen tekrar giriş yapın.");
+      }
       setCheckingSession(false);
     }
     checkExistingSession();
@@ -39,15 +45,42 @@ function BireyselGirisForm() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
-    setLoading(true);
     setError(null);
 
-    const supabase = createBrowserSupabase();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // PILOT FIX 03 (madde A6): boş/biçimsiz e-posta ve boş şifre sunucuya
+    // gitmeden, alan altında Türkçe hatayla yakalanır — "boş form" ile
+    // "yanlış kimlik bilgisi" artık aynı genel mesajı paylaşmıyor.
+    const errors: { email?: string; password?: string } = {};
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) errors.email = "E-posta zorunlu.";
+    else if (!EMAIL_RE.test(trimmedEmail)) errors.email = "Geçerli bir e-posta adresi girin.";
+    if (!password) errors.password = "Şifre zorunlu.";
 
-    setLoading(false);
-    if (error) {
-      setError("E-posta veya şifre hatalı. Bilgilerinizi kontrol edip tekrar deneyin.");
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      document.getElementById(errors.email ? "bireysel-email" : "bireysel-password")?.focus();
+      return;
+    }
+    setFieldErrors({});
+    setLoading(true);
+
+    const supabase = createBrowserSupabase();
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
+      setLoading(false);
+      if (error) {
+        // Sunucudan gelen ham teknik metin asla doğrudan gösterilmez;
+        // yalnızca durum koduna göre iki genel, anlaşılır mesajdan biri.
+        if (typeof error.status === "number" && error.status >= 500) {
+          setError("Sunucuda geçici bir sorun oluştu. Lütfen birazdan tekrar deneyin.");
+        } else {
+          setError("E-posta veya şifre hatalı. Bilgilerinizi kontrol edip tekrar deneyin.");
+        }
+        return;
+      }
+    } catch {
+      setLoading(false);
+      setError("Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.");
       return;
     }
     router.push(redirectTo);
@@ -58,16 +91,16 @@ function BireyselGirisForm() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+    <main className="otoiz-auth-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
       <div
-        className="otoiz-hero-pattern"
+        className="otoiz-hero-pattern otoiz-auth-hero"
         style={{ position: "relative", overflow: "hidden", background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 48px" }}
       >
         <div className="otoiz-reflection" aria-hidden="true" />
         <a href="/" style={{ position: "relative", display: "inline-block", marginBottom: 24, fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
           ← Ana sayfaya dön
         </a>
-        <div style={{ position: "relative", maxWidth: 360, margin: "0 auto" }}>
+        <div className="otoiz-auth-hero-inner" style={{ position: "relative", maxWidth: 360, margin: "0 auto" }}>
           <OtoizLogo variant="dark" size={190} mark="primary" />
           <div className="otoiz-accent-line" style={{ margin: "12px 0 16px" }} />
           <h1 style={{ fontSize: 23, marginTop: 0, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Bireysel Giriş</h1>
@@ -78,7 +111,7 @@ function BireyselGirisForm() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
+      <div className="otoiz-auth-form-wrap" style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
         <form
           onSubmit={handleLogin}
           noValidate
@@ -91,9 +124,15 @@ function BireyselGirisForm() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ ...inputStyle, marginBottom: 14 }}
+            aria-invalid={!!fieldErrors.email}
+            aria-describedby={fieldErrors.email ? "bireysel-email-err" : undefined}
+            style={{ ...inputStyle, marginBottom: fieldErrors.email ? 4 : 14, borderColor: fieldErrors.email ? colors.danger : colors.border }}
           />
+          {fieldErrors.email && (
+            <p id="bireysel-email-err" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
+              {fieldErrors.email}
+            </p>
+          )}
 
           <label htmlFor="bireysel-password" style={labelStyle}>Şifre</label>
           <input
@@ -102,9 +141,15 @@ function BireyselGirisForm() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ ...inputStyle, marginBottom: 8 }}
+            aria-invalid={!!fieldErrors.password}
+            aria-describedby={fieldErrors.password ? "bireysel-password-err" : undefined}
+            style={{ ...inputStyle, marginBottom: fieldErrors.password ? 4 : 8, borderColor: fieldErrors.password ? colors.danger : colors.border }}
           />
+          {fieldErrors.password && (
+            <p id="bireysel-password-err" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 8px" }}>
+              {fieldErrors.password}
+            </p>
+          )}
 
           <div style={{ textAlign: "right", marginBottom: 16 }}>
             <a href="/hesap/sifremi-unuttum" style={{ fontSize: 12.5, color: colors.textMuted }}>Şifremi unuttum</a>

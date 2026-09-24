@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
+import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 const STEPS = [
   { n: 1, title: "Devir Detaylarını Gir", desc: "Devri başlatın, aracın erişimi hesabınızdan kaldırılır." },
@@ -27,6 +28,12 @@ export default function BireyselDevretPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    // İkinci düzeltme turu (madde 3): kapalıyken araç sorgusu dahi
+    // çalışmasın (hook koşulsuz çağrılır, yalnızca gövdesi erken çıkar).
+    if (!PILOT_FLAGS.ownershipTransferSelfService) {
+      setLoading(false);
+      return;
+    }
     async function load() {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
@@ -47,6 +54,20 @@ export default function BireyselDevretPage() {
   async function handleStart() {
     setStarting(true);
     setError("");
+    // ÜÇÜNCÜ düzeltme turu (madde 6): ikinci turda RPC çağrısı geçici
+    // olarak /api/ownership-transfer-initiate'e taşınmıştı. İncelemede,
+    // initiate_ownership_transfer RPC'sinin SECURITY DEFINER olduğu ve
+    // EXECUTE yetkisinin doğrudan `authenticated` rolüne verildiği
+    // doğrulandı — yani bu RPC, doğrudan supabase.rpc(...) ile HER ZAMAN
+    // çağrılabilir durumdaydı; Next.js tarafındaki PILOT_FLAGS kontrolü
+    // bu gerçek çağrı yolunu HİÇ ENGELLEMİYORDU, yalnızca kendi API
+    // route'umuzu (gereksiz bir ek saldırı yüzeyini) kapatıyordu. Bu
+    // yanıltıcı "kapatıldı" izlenimini vermemek için route silindi, RPC
+    // tekrar doğrudan çağrılıyor. Gerçek koruma yalnızca aşağıdaki UI
+    // seviyesi PILOT_FLAGS kontrolüdür (normal uygulama akışını kapatır,
+    // doğrudan RPC çağrısını DURDURMAZ) — RPC'nin EXECUTE yetkisinin
+    // authenticated'dan kaldırılması SECURITY_FIX_04_PROPOSAL.md'de
+    // ÖNERİ olarak yazıldı, uygulanmadı.
     const { data, error: rpcError } = await supabase.rpc("initiate_ownership_transfer", { p_vehicle_id: params.id });
     setStarting(false);
 
@@ -67,6 +88,26 @@ export default function BireyselDevretPage() {
     } catch {
       // sessizce yoksay
     }
+  }
+
+  // İkinci düzeltme turu (madde 3): bireysel self-service sahiplik devri
+  // de servis akışıyla AYNI pilot bayrağı arkasında — bu ekran, panel
+  // tarafındaki devret ekranından farklı bir DB fonksiyonu (RPC) kullanan
+  // TAMAMEN AYRI bir yol olduğu için ayrıca kapatılması gerekiyordu.
+  if (!PILOT_FLAGS.ownershipTransferSelfService) {
+    return (
+      <main style={{ maxWidth: 460, margin: "0 auto", padding: "32px 20px", fontFamily: font, color: colors.textDark, textAlign: "center" }}>
+        <h1 style={{ fontSize: 20 }}>Bu Özellik Şu An Kullanılamıyor</h1>
+        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+          Araç sahipliği devri, pilot süresi boyunca yalnızca kontrollü destek süreciyle yürütülüyor —
+          geri alınamaz kişisel veri etkisi taşıdığı için ek güvenlik adımları tamamlanana kadar
+          buradan doğrudan yapılamıyor. Bir devir gerekiyorsa lütfen OTOİZ destek ekibiyle iletişime geçin.
+        </p>
+        <a href="/bireysel/araclar" style={{ color: colors.greenDark, fontWeight: 700, fontSize: 13.5 }}>
+          ← Araçlarıma dön
+        </a>
+      </main>
+    );
   }
 
   if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
@@ -96,8 +137,9 @@ export default function BireyselDevretPage() {
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: colors.greenSoft, borderRadius: radius.md, padding: 14, marginBottom: 20 }}>
             <Icon name="shield-check" color={colors.greenDark} size={16} strokeWidth={2.5} />
             <p style={{ fontSize: 12.5, color: colors.textDark, margin: 0, lineHeight: 1.6 }}>
-              Kişisel bilgileriniz yeni sahibine aktarılmaz. Bağlantı 7 gün geçerlidir; karşı taraf henüz kabul etmediyse
-              araç listenizden "Bekleyen Devirler" bölümünden iptal edebilirsiniz.
+              Kişisel bilgileriniz yeni sahibine aktarılmaz. Bağlantı tek kullanımlıktır ve 72 saat geçerlidir; bu bağlantı
+              yalnız şimdi gösterilir, kaydedin. Karşı taraf kabul etmediyse araç listenizdeki "Bekleyen Devirler"
+              bölümünden devri iptal edip aracı geri alabilirsiniz.
             </p>
           </div>
 
