@@ -68,10 +68,42 @@ Kanıt:
 5. PR #5 `main`'e merge edilir → Vercel build'inde ortam kapısı çalışır:
    - Rol, branch ve Supabase ref uyumu kontrol edilir.
    - Anahtarlar canlı olarak doğrulanır.
-6. Kısa QR kodları: Yönetici panelinden 26 karakterlik yeni kodlar üretilir. Eski 7 kısa kod, araca bağlı olanlar yenisiyle değiştirilerek iptal edilir.
+6. **Kısa QR kodlarının değiştirilmesi — PİLOT BAŞLAMADAN ÖNCE ZORUNLU** (ayrıntı §4.1).
 7. Supabase Auth ayarları (dashboard):
    - Minimum şifre uzunluğu 8.
    - Leaked password protection açık (planın destekliyorsa).
+
+### 4.1 Production'daki 7 kısa QR kodunun değiştirilmesi (pilot öncesi, zorunlu)
+
+Salt-okuma sorgusuyla tespit edildi (24.09.2026). Kodların hepsi 10–12 karakter, yani <128 bit:
+
+| Kod | Durum | Yapılacak |
+|---|---|---|
+| zye3paww6v, 6ve8wamtb8, phcbfws5e7, 76hherns9m | Boşta (araca bağlı değil) | İptal et |
+| 69czghtnp7 | Servis aracı 06SGD48'e bağlı | Yeni kodla değiştir |
+| q882a77gwt4c | Bireysel araç 06ELİZ23'e bağlı | Yeni kodla değiştir |
+| mpw8hhdrqz32 | Bireysel araç 06otoiz01'e bağlı | Yeni kodla değiştir |
+
+Sıra: migration'lar uygulanıp yeni sürüm production'a çıktıktan **sonra**, ilk pilot kullanıcı eklenmeden **önce**. Tüm adımlar `/yonetim` panelinden yapılır; hepsi audit_log'a yazılır.
+
+1. **Üret:** QR Kodları sekmesi → "Yeni parti" → adet 3 (bağlı araçlar için) + pilotta dağıtılacak adet (ör. 20). Etiket: `Pilot-v1`. Bu kodlar 26 karakterlidir.
+2. **Bas:** 3 bağlı araç için yeni anahtarlıklar basılır. Etiket basılmadan eski kod iptal edilmez; yoksa araç sahibinin elindeki QR boşa düşer.
+3. **Boştaki 4 kodu iptal et:** QR Kodları → ilgili kod → "İptal". İptal geri alınamaz; pasaport açılmaz, kod başka araca bağlanamaz.
+4. **Bağlı 3 kodu değiştir (her araç için sırayla):**
+   - a. Eski kodu iptal et. Araç aktif QR'sız kalır; bakım geçmişi ve vehicle_id değişmez.
+   - b. Aynı araca yeni 26 karakterlik kodu "Araca bağla" ile tanımla. Sistem araç başına tek aktif QR'a izin verir, bu yüzden önce (a) yapılmalıdır.
+   - c. Yeni anahtarlığı araç sahibine/servise teslim et. Eski fiziksel anahtarlık artık "bulunamadı" gösterir.
+5. **Doğrula (salt-okuma):**
+   ```sql
+   select count(*) from public.qr_keys where length(code) < 26 and revoked_at is null;          -- 0 olmalı
+   select count(*) from (select vehicle_id from public.qr_keys where vehicle_id is not null and revoked_at is null
+                         group by vehicle_id having count(*) > 1) d;                            -- 0 olmalı
+   select plate from public.vehicles v where not exists (select 1 from public.qr_keys q where q.vehicle_id=v.id and q.revoked_at is null)
+     and v.plate in ('06SGD48','06ELİZ23','06otoiz01');                                         -- boş olmalı
+   ```
+6. Her araç için `/p/<yeni-kod>` pasaportunun açıldığı, `/p/<eski-kod>` adresinin açılmadığı kontrol edilir.
+
+Kabul kriteri: aktif kısa kod sayısı 0; 3 aracın her biri tek aktif 26 karakterlik QR'a sahip; `qr_key_revoked` + `qr_key_assigned` audit kayıtları mevcut.
 
 ## 5. Geri dönüş (rollback) testi ve planı
 
