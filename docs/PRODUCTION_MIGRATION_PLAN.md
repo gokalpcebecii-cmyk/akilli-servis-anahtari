@@ -61,17 +61,18 @@ Kanıt:
 1. Supabase production için yedek / PITR noktası alınır.
 2. §2 repair çalıştırılır. Ardından §3 listesi `supabase db push` ile uygulanır.
 3. `supabase/tests/pilot_acceptance.sql` **production'da çalıştırılmaz**, çünkü test kullanıcı kimlikleri staging'e ait. Bunun yerine salt-okuma parmak izi karşılaştırması yapılır.
-4. Vercel production ortam değişkenleri eklenir:
-   - `OTOIZ_DEPLOYMENT_ROLE=production`
-   - `OTOIZ_EXPECTED_SUPABASE_REF=sbfsiwqxbsojcxdutnem`
-   - `CRON_SECRET` (en az 16 karakter; staging'dekinden farklı olmalı)
+4. ✅ **Tamamlandı (24.09.2026)** — Vercel production ortam değişkenleri:
+   - `OTOIZ_DEPLOYMENT_ROLE=production` (yalnız Production hedefi)
+   - `OTOIZ_EXPECTED_SUPABASE_REF=sbfsiwqxbsojcxdutnem` (yalnız Production hedefi)
+   - `CRON_SECRET` yeni 48 karakterlik rastgele değerle değiştirildi (tarayıcıda üretildi, hiçbir yerde gösterilmedi; staging'dekinden farklı)
+   - `NEXT_PUBLIC_SUPABASE_URL` production ref'ini gösteriyor (doğrulandı). Değişiklik yeni deploy tetiklemedi.
 5. PR #5 `main`'e merge edilir → Vercel build'inde ortam kapısı çalışır:
    - Rol, branch ve Supabase ref uyumu kontrol edilir.
    - Anahtarlar canlı olarak doğrulanır.
 6. **Kısa QR kodlarının değiştirilmesi — PİLOT BAŞLAMADAN ÖNCE ZORUNLU** (ayrıntı §4.1).
-7. Supabase Auth ayarları (dashboard):
-   - Minimum şifre uzunluğu 8.
-   - Leaked password protection açık (planın destekliyorsa).
+7. ✅ **Tamamlandı (24.09.2026)** — Supabase Auth ayarları (staging + production):
+   - Minimum şifre uzunluğu 6 → **8** (Supabase 7 karakteri `weak_password` ile reddediyor, test edildi).
+   - Leaked password protection: organizasyon **Free** planında desteklenmiyor (API: 402 "Pro Plans and up"). Pro plana geçilirse açılmalı.
 
 ### 4.1 Production'daki 7 kısa QR kodunun değiştirilmesi (pilot öncesi, zorunlu)
 
@@ -130,5 +131,5 @@ Plan: **Şema geri alınmaz (roll-forward).**
 ## 6. Kalan riskler
 
 - Kayıtta e-posta doğrulaması yok (`email_confirm: true`). Bireysel QR ataması hesap kodu + e-posta eşleşmesiyle korunuyor.
-- Leaked password protection ve Auth minimum şifre uzunluğu dashboard'dan ayarlanmalı. Uygulama tarafında minimum 8 zaten zorunlu.
+- Leaked password protection Free planda kullanılamıyor (minimum 8 hem Supabase hem uygulama tarafında zorunlu).
 - 7 kısa QR kodu değiştirilene kadar <128 bit.
