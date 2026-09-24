@@ -12,25 +12,16 @@ export async function POST(req: NextRequest) {
     // ÜÇÜNCÜ düzeltme turu (madde 6) DÜRÜSTLÜK NOTU: bu route ÖNCEDEN
     // (PILOT FIX 03'ten) var — yalnızca bayrak kapısını sarmalamak için
     // eklenmedi, tenant-kapsamlı doğrulama (vehicle.tenant_id kontrolü)
-    // gibi gerçek iş mantığı taşıyor, bu yüzden korunuyor. AMA: qr_keys
-    // üzerindeki "staff_update_own_tenant_qr_keys" RLS politikası zaten
-    // aynı tenant-kapsamlı UPDATE'e izin veriyor — yani bu bayrak, teknik
-    // bir kullanıcının doğrudan Supabase çağrısıyla eşleştirme yapmasını
-    // ENGELLEMEZ, yalnızca normal uygulama akışını kapatır (salt-okunur
-    // pg_policies incelemesiyle doğrulandı, bkz. final rapor).
+    // gibi gerçek iş mantığı taşıyor, bu yüzden korunuyor. 2026-09-24:
+    // qr_keys üzerindeki istemci yazma yetkileri (INSERT/UPDATE/DELETE)
+    // grant_hardening migration'ı ile tamamen kaldırıldı; eşleştirme
+    // yalnızca bu route (service role) üzerinden yapılabilir.
     if (!PILOT_FLAGS.qrMatchingSelfService) {
       return NextResponse.json({ error: "feature_disabled" }, { status: 403 });
     }
 
+    // Kimlik doğrulama gövde doğrulamasından ÖNCE yapılır (kimliksiz istek her zaman 401).
     const authHeader = req.headers.get("authorization");
-    const body = await req.json();
-    const code = normalizeQrCode(body?.code);
-    const vehicle_id = body?.vehicle_id;
-
-    if (!code || !vehicle_id) {
-      return NextResponse.json({ error: "Kod ve araç gerekli" }, { status: 400 });
-    }
-
     const userClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -39,6 +30,14 @@ export async function POST(req: NextRequest) {
     const { data: userData } = await userClient.auth.getUser();
     if (!userData?.user) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const code = normalizeQrCode(body?.code);
+    const vehicle_id = body?.vehicle_id;
+
+    if (!code || !vehicle_id) {
+      return NextResponse.json({ error: "Kod ve araç gerekli" }, { status: 400 });
     }
 
     const supabase = createServerSupabase();
