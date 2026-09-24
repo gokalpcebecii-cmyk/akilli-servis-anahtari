@@ -68,9 +68,9 @@ export default function BireyselAraclarPage() {
     load();
   }, []);
 
-  async function handleCancelTransfer(token: string) {
-    setCancelling(token);
-    const { error } = await supabase.rpc("cancel_ownership_transfer", { p_token: token });
+  async function handleCancelTransfer(transferId: string) {
+    setCancelling(transferId);
+    const { error } = await supabase.rpc("cancel_ownership_transfer", { p_transfer_id: transferId });
     setCancelling(null);
     if (error) {
       alert("İptal edilemedi. Sayfayı yenileyip tekrar deneyin.");
@@ -168,17 +168,17 @@ export default function BireyselAraclarPage() {
               Bekleyen Devirler
             </h2>
             {pendingTransfers.map((t) => (
-              <div key={t.transfer_token} style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 12, padding: 14, marginBottom: 10 }}>
+              <div key={t.transfer_id} style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 12, padding: 14, marginBottom: 10 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: "#7a5c10" }}>{t.plate}</div>
                 <div style={{ fontSize: 12, color: "#7a5c10", marginBottom: 10 }}>
-                  {t.brand} {t.model} — yeni sahibin kabul etmesi bekleniyor
+                  {t.brand} {t.model} — {t.expired ? "devir bağlantısının süresi doldu; aracı geri alabilirsiniz" : "yeni sahibin kabul etmesi bekleniyor"}
                 </div>
                 <button
-                  onClick={() => handleCancelTransfer(t.transfer_token)}
-                  disabled={cancelling === t.transfer_token}
+                  onClick={() => handleCancelTransfer(t.transfer_id)}
+                  disabled={cancelling === t.transfer_id}
                   style={{ fontSize: 12, padding: "8px 14px", background: "#fff", border: "1px solid #E8C468", borderRadius: 8, color: "#7a5c10", fontWeight: 600, cursor: "pointer", minHeight: 36 }}
                 >
-                  {cancelling === t.transfer_token ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
+                  {cancelling === t.transfer_id ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
                 </button>
               </div>
             ))}

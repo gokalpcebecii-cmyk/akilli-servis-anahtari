@@ -7,6 +7,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase";
+const { normalizeQrCode } = require("@/lib/qrToken");
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -50,11 +51,38 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
   }
-  const code = typeof body.code === "string" ? body.code.trim().toLowerCase() : "";
+  const code = normalizeQrCode(body.code);
   const vehicleId = typeof body.vehicle_id === "string" ? body.vehicle_id : "";
-  if (!code || !vehicleId) return NextResponse.json({ error: "Kod ve araç gerekli" }, { status: 400 });
-
   const db = createServerSupabase();
+
+  // ---- Kayıp/çalıntı anahtarlık: aracın aktif QR'ını iptal et ----
+  // İptal geri alınamaz; araç geçmişi korunur. Yeni anahtarlık yönetim
+  // panelinden müşteriye tanımlanır ve buradan tekrar bağlanır.
+  if (body.action === "revoke") {
+    if (!vehicleId) return NextResponse.json({ error: "Araç gerekli" }, { status: 400 });
+    const { data: v } = await db.from("vehicles").select("id, owner_user_id, tenant_id, plate").eq("id", vehicleId).maybeSingle();
+    if (!v || v.owner_user_id !== user.id) return NextResponse.json({ error: "Bu araç size ait değil" }, { status: 403 });
+    const { data: active } = await db.from("qr_keys").select("id, code").eq("vehicle_id", vehicleId).is("revoked_at", null).maybeSingle();
+    if (!active) return NextResponse.json({ error: "Bu araçta aktif anahtarlık yok" }, { status: 400 });
+    const { data: upd, error: revErr } = await db
+      .from("qr_keys")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("id", active.id)
+      .is("revoked_at", null)
+      .select("id");
+    if (revErr || !upd || upd.length === 0) return NextResponse.json({ error: "İptal edilemedi, tekrar deneyin" }, { status: 400 });
+    await db.from("audit_log").insert({
+      tenant_id: v.tenant_id ?? null,
+      actor_staff_id: null,
+      action: "qr_key_revoked",
+      target_table: "qr_keys",
+      target_id: active.id,
+      detail: { vehicle_id: vehicleId, plate: v.plate, actor_user_id: user.id, via: "bireysel_uygulama" },
+    });
+    return NextResponse.json({ ok: true, revoked: true });
+  }
+
+  if (!code || !vehicleId) return NextResponse.json({ error: "Kod ve araç gerekli" }, { status: 400 });
 
   const { data: vehicle } = await db.from("vehicles").select("id, owner_user_id, tenant_id, plate").eq("id", vehicleId).maybeSingle();
   if (!vehicle || vehicle.owner_user_id !== user.id) {

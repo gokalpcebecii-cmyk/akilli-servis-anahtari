@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [notStaffAccount, setNotStaffAccount] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -36,6 +37,9 @@ export default function DashboardPage() {
         setLoading(false);
         return;
       }
+
+      const { data: tenantRow } = await supabase.from("tenants").select("approval_status").eq("id", staff.tenant_id).maybeSingle();
+      setApprovalStatus(tenantRow?.approval_status ?? null);
 
       const { data: vehicleList } = await supabase
         .from("vehicles")
@@ -97,6 +101,13 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 40px" }}>
+        {approvalStatus && approvalStatus !== "approved" && (
+          <div role="status" style={{ background: approvalStatus === "rejected" ? "#FDECEC" : "#FFF8E6", border: `1px solid ${approvalStatus === "rejected" ? colors.danger : "#E8C468"}`, borderRadius: radius.md, padding: "14px 16px", marginBottom: 16, fontSize: 14, fontWeight: 700, color: colors.textDark, lineHeight: 1.5 }}>
+            {approvalStatus === "rejected"
+              ? "İşletme başvurunuz onaylanmadı. Araç ve bakım kaydı yapamazsınız. Bilgi için OTOİZ ile iletişime geçin."
+              : "İşletmeniz OTOİZ onayı bekliyor. Onaylandıktan sonra araç ekleyebilir, bakım kaydı girebilir ve size ayrılan QR anahtarlıkları eşleştirebilirsiniz."}
+          </div>
+        )}
         <h1 style={{ fontSize: 20, margin: "0 0 14px", color: colors.textDark, fontWeight: 800 }}>Plaka Ara</h1>
 
         <input

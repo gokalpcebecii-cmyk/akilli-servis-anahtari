@@ -44,6 +44,10 @@ export async function POST(req: NextRequest) {
     if (!staff?.tenant_id) {
       return NextResponse.json({ error: "unauthorized" }, { status: 403 });
     }
+    const { data: tenantRow } = await supabase.from("tenants").select("approval_status").eq("id", staff.tenant_id).maybeSingle();
+    if (tenantRow?.approval_status !== "approved") {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
 
     // Hedefin gerçekten bu kullanıcının tenant'ına ait olduğunu DB'den
     // doğrula; istemcinin iddiasına güvenme.

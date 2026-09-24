@@ -9,9 +9,8 @@
 alter table public.maintenance_records alter column service_date set default ((now() at time zone 'Europe/Istanbul')::date);
 alter table public.ownership_transfers alter column transfer_date set default ((now() at time zone 'Europe/Istanbul')::date);
 
--- Geçmişte bu hatayla yanlış güne yazılmış kayıtları düzelt (yalnız
--- tarih = UTC günü ve İstanbul günü farklı olan satırlar).
-update public.maintenance_records
-   set service_date = (created_at at time zone 'Europe/Istanbul')::date
- where service_date = (created_at at time zone 'UTC')::date
-   and service_date <> (created_at at time zone 'Europe/Istanbul')::date;
+-- NOT (2026-09-24): Staging'de bu dosyanın ilk sürümü, geçmiş kayıtların
+-- tarihini düzelten bir UPDATE da içeriyordu. Migration'lar veri
+-- değiştirmemeli ve her ortamda müdahalesiz çalışmalı; bu nedenle o satır
+-- ayrı, onaya tabi tek seferlik bir veri düzeltmesine taşındı:
+--   supabase/data_fixes/20260922234026_backfill_service_date_istanbul.sql

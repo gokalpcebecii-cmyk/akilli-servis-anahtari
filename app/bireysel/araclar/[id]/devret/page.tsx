@@ -137,8 +137,9 @@ export default function BireyselDevretPage() {
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: colors.greenSoft, borderRadius: radius.md, padding: 14, marginBottom: 20 }}>
             <Icon name="shield-check" color={colors.greenDark} size={16} strokeWidth={2.5} />
             <p style={{ fontSize: 12.5, color: colors.textDark, margin: 0, lineHeight: 1.6 }}>
-              Kişisel bilgileriniz yeni sahibine aktarılmaz. Bağlantı 7 gün geçerlidir; karşı taraf henüz kabul etmediyse
-              araç listenizden "Bekleyen Devirler" bölümünden iptal edebilirsiniz.
+              Kişisel bilgileriniz yeni sahibine aktarılmaz. Bağlantı tek kullanımlıktır ve 72 saat geçerlidir; bu bağlantı
+              yalnız şimdi gösterilir, kaydedin. Karşı taraf kabul etmediyse araç listenizdeki "Bekleyen Devirler"
+              bölümünden devri iptal edip aracı geri alabilirsiniz.
             </p>
           </div>
 

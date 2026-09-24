@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, isAdminContext } from "@/lib/adminAuth";
-const { generateQrCode } = require("@/lib/qrToken");
+const { generateQrCode, normalizeQrCode } = require("@/lib/qrToken");
+const { accountCodeFromUserId } = require("@/lib/passwordPolicy");
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -116,8 +117,9 @@ export async function POST(req: NextRequest) {
     }
     const reservedTenantId = body.reserved_tenant_id || null;
     if (reservedTenantId) {
-      const { data: t } = await db.from("tenants").select("id").eq("id", reservedTenantId).maybeSingle();
+      const { data: t } = await db.from("tenants").select("id, approval_status").eq("id", reservedTenantId).maybeSingle();
       if (!t) return NextResponse.json({ error: "Servis bulunamadı" }, { status: 400 });
+      if (t.approval_status !== "approved") return NextResponse.json({ error: "Servis henüz onaylanmadı" }, { status: 400 });
     }
     const now = new Date();
     const stamp = new Intl.DateTimeFormat("sv-SE", {
@@ -151,7 +153,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, batch_label: batchLabel, codes: (inserted ?? []).map((r: any) => r.code) });
   }
 
-  const code = typeof body.code === "string" ? body.code.trim().toLowerCase() : "";
+  const code = typeof body.code === "string" ? normalizeQrCode(body.code) : "";
 
   // ---- QR'ı doğrudan bir araca bağla (bireysel ya da servis aracı) ----
   if (action === "assign") {
@@ -180,9 +182,10 @@ export async function POST(req: NextRequest) {
   if (action === "reserve") {
     const tenantId = body.tenant_id;
     if (!tenantId) return NextResponse.json({ error: "Servis seçin" }, { status: 400 });
-    const { data: t } = await db.from("tenants").select("id, name").eq("id", tenantId).maybeSingle();
+    const { data: t } = await db.from("tenants").select("id, name, approval_status").eq("id", tenantId).maybeSingle();
     if (!t) return NextResponse.json({ error: "Servis bulunamadı" }, { status: 404 });
-    let targetCodes: string[] = Array.isArray(body.codes) ? body.codes.map((c: any) => String(c).trim().toLowerCase()).filter(Boolean) : [];
+    if (t.approval_status !== "approved") return NextResponse.json({ error: "Servis henüz onaylanmadı; önce Servisler sekmesinden onaylayın" }, { status: 400 });
+    let targetCodes: string[] = Array.isArray(body.codes) ? body.codes.map((c: any) => normalizeQrCode(c)).filter(Boolean) : [];
     if (targetCodes.length === 0) {
       const n = Math.floor(Number(body.count));
       if (!Number.isFinite(n) || n < 1 || n > MAX_BATCH) return NextResponse.json({ error: "Adet geçersiz" }, { status: 400 });
@@ -228,6 +231,13 @@ export async function POST(req: NextRequest) {
     if (!found) {
       return NextResponse.json({ error: "Bu e-postayla kayıtlı kullanıcı yok. Müşteri önce OTOİZ'e bireysel kayıt olmalı." }, { status: 404 });
     }
+    const accountCode = typeof body.account_code === "string" ? body.account_code.trim().toUpperCase().replace(/\s+/g, "") : "";
+    if (!accountCode || accountCode !== accountCodeFromUserId(found.id)) {
+      return NextResponse.json({ error: "Hesap kodu bu e-postayla eşleşmiyor. Müşterinin uygulamasındaki Profil sayfasında yazan kodu girin." }, { status: 400 });
+    }
+    if (!found.email_confirmed_at) {
+      return NextResponse.json({ error: "Müşterinin e-posta adresi henüz doğrulanmamış. Doğrulandıktan sonra tanımlayın." }, { status: 400 });
+    }
     const { data: staffRow } = await db.from("staff_users").select("id").eq("id", found.id).maybeSingle();
     if (staffRow) return NextResponse.json({ error: "Bu e-posta bir servis personeline ait. Servis kodları 'servise ayır' ile verilir." }, { status: 400 });
 
@@ -247,6 +257,9 @@ export async function POST(req: NextRequest) {
       targetCodes = (free ?? []).map((f: any) => f.code);
       if (targetCodes.length < n) return NextResponse.json({ error: `Boşta yalnız ${targetCodes.length} kod var. Önce yeni QR üretin.` }, { status: 400 });
     }
+    // Açıkça verilen tek kod başka bir müşteriye ayrılmış olsa bile yeniden
+    // atanabilir (yönetici kararı); servise ayrılmış, bağlı ya da iptal
+    // edilmiş kod ise değiştirilemez.
     const { data: updated, error } = await db
       .from("qr_keys")
       .update({ reserved_user_id: found.id, reserved_tenant_id: null })
@@ -254,7 +267,7 @@ export async function POST(req: NextRequest) {
       .is("vehicle_id", null)
       .is("reserved_tenant_id", null)
       .is("revoked_at", null)
-      .select("code");
+      .select("id, code");
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     if (!updated || updated.length === 0) return NextResponse.json({ error: "Kod boşta değil (servise ayrılmış, bağlı ya da iptal)" }, { status: 400 });
     await audit(db, ctx.userId, "admin_qr_reserved_user", null, { email, codes: updated.map((u: any) => u.code) });

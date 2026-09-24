@@ -22,7 +22,13 @@ export const PILOT_FLAGS = {
   // A7: geri alınamaz kişisel veri etkisine rağmen onay kutusu olmadan
   // erişilebilir olan servis self-service sahiplik devri. Kalıcı çözüm:
   // etki özeti + alıcı doğrulaması + yeniden kimlik doğrulama + audit.
-  ownershipTransferSelfService: false,
+  // 2026-09-24: 20 kullanıcılı canlı pilotta BİREYSEL sahiplik devri AÇIK
+  // (ownership_transfer_v2: hash'li, tek kullanımlık, 72 saat süreli jeton;
+  // tüm işlemler RPC ile, istemci tablo erişimi kapalı).
+  ownershipTransferSelfService: true,
+  // Servis panelinden müşteri adına devir (eski akış, doğrudan tablo yazıyordu;
+  // ownership_transfers istemci erişimi kapatıldığı için çalışmaz) — kapalı.
+  serviceOwnershipTransfer: false,
   // F: sayfa 50 adet seçili açılıyor, üretim eylemi baştan aktif —
   // kazara toplu üretim riski. Kabul testleri geçene kadar kapalı.
   bulkQrGeneration: false,

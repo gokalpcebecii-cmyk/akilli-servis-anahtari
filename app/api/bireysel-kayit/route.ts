@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+const { validatePassword } = require("@/lib/passwordPolicy");
 
 export async function POST(req: Request) {
   try {
@@ -8,8 +9,9 @@ export async function POST(req: Request) {
     if (!email || !password) {
       return Response.json({ error: "E-posta ve şifre zorunlu." }, { status: 400 });
     }
-    if (password.length < 6) {
-      return Response.json({ error: "Şifre en az 6 karakter olmalı." }, { status: 400 });
+    const pwError = validatePassword(password);
+    if (pwError) {
+      return Response.json({ error: pwError }, { status: 400 });
     }
 
     const admin = createClient(

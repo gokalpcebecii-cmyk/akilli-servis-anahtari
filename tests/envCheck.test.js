@@ -190,3 +190,50 @@ test("opaque sb_publishable_ / sb_secret_ anahtarlar doğru rolde -> kabul", () 
   }));
   assert.equal(r.ok, true, JSON.stringify(r.errors));
 });
+
+
+// ---- 2026-09-24: canlı anahtar doğrulaması + dal/rol eşleşmesi ----
+const { verifyKeysLive, validateBranchRole } = require("../lib/envCheck");
+
+function fakeFetch(map) {
+  return async (url, opts) => {
+    const key = (opts && opts.headers && opts.headers.apikey) || "";
+    const u = new URL(url);
+    return { status: (map[u.host] && map[u.host][key]) || 401 };
+  };
+}
+
+test("verifyKeysLive: anahtarlar hedef projeye aitse geçer", async () => {
+  const env = {
+    NEXT_PUBLIC_SUPABASE_URL: "https://sbfsiwqxbsojcxdutnem.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "prod-anon",
+    SUPABASE_SERVICE_ROLE_KEY: "prod-secret",
+  };
+  const r = await verifyKeysLive(env, fakeFetch({ "sbfsiwqxbsojcxdutnem.supabase.co": { "prod-anon": 200, "prod-secret": 200 } }));
+  assert.equal(r.ok, true);
+});
+
+test("verifyKeysLive: staging anahtarları Production URL'siyle kullanılırsa build durur", async () => {
+  const env = {
+    NEXT_PUBLIC_SUPABASE_URL: "https://sbfsiwqxbsojcxdutnem.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "staging-anon",
+    SUPABASE_SERVICE_ROLE_KEY: "staging-secret",
+  };
+  const r = await verifyKeysLive(env, fakeFetch({ "ctltjunojlaanzurxpzy.supabase.co": { "staging-anon": 200, "staging-secret": 200 } }));
+  assert.equal(r.ok, false);
+  assert.equal(r.errors.length, 2);
+  for (const e of r.errors) assert.ok(!e.includes("staging-anon") && !e.includes("staging-secret"), "anahtar değeri mesajda görünmemeli");
+});
+
+test("verifyKeysLive: ağ hatası da build'i durdurur (fail-closed)", async () => {
+  const env = { NEXT_PUBLIC_SUPABASE_URL: "https://x.supabase.co", NEXT_PUBLIC_SUPABASE_ANON_KEY: "a", SUPABASE_SERVICE_ROLE_KEY: "b" };
+  const r = await verifyKeysLive(env, async () => { throw new Error("network"); });
+  assert.equal(r.ok, false);
+});
+
+test("validateBranchRole: main dalı staging rolüyle build edilemez; production rolü main dışında kullanılamaz", () => {
+  assert.ok(validateBranchRole({ VERCEL_GIT_COMMIT_REF: "main", OTOIZ_DEPLOYMENT_ROLE: "staging" }));
+  assert.ok(validateBranchRole({ VERCEL_GIT_COMMIT_REF: "claude/otoiz-pilot-bugfix-01", OTOIZ_DEPLOYMENT_ROLE: "production" }));
+  assert.equal(validateBranchRole({ VERCEL_GIT_COMMIT_REF: "main", OTOIZ_DEPLOYMENT_ROLE: "production" }), null);
+  assert.equal(validateBranchRole({ VERCEL_GIT_COMMIT_REF: "claude/otoiz-pilot-bugfix-01", OTOIZ_DEPLOYMENT_ROLE: "staging" }), null);
+});

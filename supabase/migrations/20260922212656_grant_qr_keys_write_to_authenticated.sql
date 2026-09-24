@@ -1,5 +1,8 @@
--- DRIFT KAYDI: Bu migration staging'e repo DIŞINDAN uygulanmıştı (22.09.2026 21:26 UTC).
--- Tarihçenin staging ile birebir eşleşmesi için olduğu gibi kaydedildi.
--- Etkisi 20260922222343_relock_qr_keys_and_vehicle_tenant_guard ile GERİ ALINDI.
--- Production'a UYGULANMAMALIDIR.
-grant insert, update, delete on public.qr_keys to authenticated;
+-- OTOİZ — NÖTRLENMİŞ MIGRATION (bilinçli olarak işlem yapmaz).
+-- Bu sürüm numarası staging'in migration geçmişinde kayıtlıdır: 22.09.2026'da
+-- staging'e repo dışından uygulanmış bir değişikliğin (qr_keys'e authenticated
+-- yazma yetkisi) kaydıdır; etkisi 20260922222343_relock_qr_keys_and_vehicle_tenant_guard
+-- ile geri alınmıştır. Production dahil hiçbir ortamda tekrar çalıştırılmaması
+-- için içerik kaldırıldı. Orijinal içerik izlenebilirlik için:
+--   supabase/staging_history/20260922212656_grant_qr_keys_write_to_authenticated.sql
+select 1;

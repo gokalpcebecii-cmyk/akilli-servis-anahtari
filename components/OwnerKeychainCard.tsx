@@ -56,7 +56,7 @@ export default function OwnerKeychainCard({ vehicleId }: { vehicleId: string }) 
     if (busy) return;
     setError("");
     setSuccess("");
-    const c = code.trim().toLowerCase();
+    const c = code.toLowerCase().replace(/[\s-]+/g, "");
     if (!c) {
       setError("Anahtarlık kodunu girin.");
       return;
@@ -86,6 +86,32 @@ export default function OwnerKeychainCard({ vehicleId }: { vehicleId: string }) 
     }
   }
 
+  async function revoke() {
+    if (busy) return;
+    if (!window.confirm("Bu anahtarlık kalıcı olarak iptal edilecek; QR artık pasaportu açmaz. Aracınızın geçmişi korunur. Yeni anahtarlık için OTOİZ ile iletişime geçmeniz gerekir. Devam edilsin mi?")) return;
+    setError("");
+    setSuccess("");
+    setBusy(true);
+    try {
+      const res = await fetch("/api/bireysel/qr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(await authHeader()) },
+        body: JSON.stringify({ action: "revoke", vehicle_id: vehicleId }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(j.error || "İptal edilemedi.");
+        return;
+      }
+      setSuccess("Anahtarlık iptal edildi.");
+      await load();
+    } catch {
+      setError("Bağlantı hatası. Tekrar deneyin.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) return null;
 
   return (
@@ -105,6 +131,15 @@ export default function OwnerKeychainCard({ vehicleId }: { vehicleId: string }) 
           >
             Dijital pasaportu aç
           </a>
+          <button
+            type="button"
+            onClick={revoke}
+            disabled={busy}
+            style={{ display: "block", marginTop: 12, background: "transparent", border: "none", color: colors.danger, fontWeight: 700, fontSize: 13, cursor: "pointer", padding: "10px 0", minHeight: 44, fontFamily: "inherit" }}
+          >
+            Anahtarlığımı kaybettim — iptal et
+          </button>
+          {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, margin: "4px 0 0" }}>{error}</p>}
         </div>
       ) : (
         <div>
@@ -128,6 +163,7 @@ export default function OwnerKeychainCard({ vehicleId }: { vehicleId: string }) 
               style={{ ...inputStyle, marginBottom: 10 }}
             />
           )}
+          {success && <p role="status" style={{ color: colors.greenDark, fontSize: 13, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
           {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 10px" }}>{error}</p>}
           <button type="button" onClick={bind} disabled={busy} style={primaryButtonStyle(busy)}>
             {busy ? "Bağlanıyor…" : "Anahtarlığımı bu araca bağla"}

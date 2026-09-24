@@ -2,6 +2,7 @@ import { createServerSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
+const { normalizeQrCode } = require("@/lib/qrToken");
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +24,8 @@ export async function POST(req: NextRequest) {
 
     const authHeader = req.headers.get("authorization");
     const body = await req.json();
-    const { code, vehicle_id } = body;
+    const code = normalizeQrCode(body?.code);
+    const vehicle_id = body?.vehicle_id;
 
     if (!code || !vehicle_id) {
       return NextResponse.json({ error: "Kod ve araç gerekli" }, { status: 400 });
@@ -55,6 +57,10 @@ export async function POST(req: NextRequest) {
 
     if (!staff?.tenant_id) {
       return NextResponse.json({ error: "Servis hesabı gerekli" }, { status: 403 });
+    }
+    const { data: tenantRow } = await supabase.from("tenants").select("approval_status").eq("id", staff.tenant_id).maybeSingle();
+    if (tenantRow?.approval_status !== "approved") {
+      return NextResponse.json({ error: "İşletmeniz henüz OTOİZ tarafından onaylanmadı." }, { status: 403 });
     }
 
     if (!vehicle || vehicle.tenant_id !== staff?.tenant_id) {

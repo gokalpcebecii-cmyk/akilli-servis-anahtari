@@ -135,8 +135,23 @@ test("anonymizeCustomerRecord: kişisel alanları temizlenmiş bir kayıt döner
 // ---------------------------------------------------------------------
 
 test("generateQrCode: istenen uzunlukta kod üretir", () => {
-  const code = generateQrCode(12);
-  assert.equal(code.length, 12);
+  const code = generateQrCode(30);
+  assert.equal(code.length, 30);
+});
+
+test("generateQrCode: varsayılan kod en az 128 bit entropi taşır (26 karakter)", () => {
+  const { qrEntropyBits, QR_CODE_LENGTH } = require("../lib/qrToken");
+  assert.equal(generateQrCode().length, QR_CODE_LENGTH);
+  assert.ok(qrEntropyBits(QR_CODE_LENGTH) >= 128);
+});
+
+test("generateQrCode: 128 bitin altındaki uzunluk reddedilir", () => {
+  assert.throws(() => generateQrCode(12));
+});
+
+test("normalizeQrCode: büyük harf, boşluk ve tire farkı kodu değiştirmez", () => {
+  const { normalizeQrCode } = require("../lib/qrToken");
+  assert.equal(normalizeQrCode("  ABCD-efgh 2345 "), "abcdefgh2345");
 });
 
 test("generateQrCode: yalnızca izin verilen (karışabilecek karakterler hariç) alfabeden üretir", () => {
@@ -151,14 +166,14 @@ test("generateQrCode: ardışık üretimler pratikte tekrar etmez (çarpışma t
   const seen = new Set();
   const count = 2000;
   for (let i = 0; i < count; i++) {
-    seen.add(generateQrCode(12));
+    seen.add(generateQrCode());
   }
   assert.equal(seen.size, count);
 });
 
 test("generateQrCode: aynı girdilerle deterministik OLMAYAN (rastgele) sonuç üretir", () => {
-  const a = generateQrCode(16);
-  const b = generateQrCode(16);
+  const a = generateQrCode();
+  const b = generateQrCode();
   assert.notEqual(a, b);
 });
 

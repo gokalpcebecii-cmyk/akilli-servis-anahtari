@@ -34,7 +34,7 @@ export default function SignupPage() {
     }
 
     setSuccess(true);
-    setTimeout(() => router.push("/panel/login"), 2000);
+    setTimeout(() => router.push("/panel/login"), 4000);
   }
 
   if (success) {
@@ -45,7 +45,10 @@ export default function SignupPage() {
             <Icon name="check" color={colors.greenDark} size={24} />
           </div>
           <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Hesabınız oluşturuldu</h1>
-          <p style={{ color: colors.textMuted }}>Giriş sayfasına yönlendiriliyorsunuz...</p>
+          <p style={{ color: colors.textMuted }}>
+            İşletme başvurunuz OTOİZ onayına gönderildi. Onaylandıktan sonra araç ve bakım kaydı yapabilirsiniz.
+            Giriş sayfasına yönlendiriliyorsunuz...
+          </p>
         </div>
       </main>
     );
@@ -75,7 +78,7 @@ export default function SignupPage() {
           <input style={{ ...inputStyle, marginBottom: 14 }} required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="ornek@mail.com" />
 
           <label style={labelStyle}>Şifre *</label>
-          <input style={{ ...inputStyle, marginBottom: 14 }} required type="password" minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="En az 6 karakter" />
+          <input style={{ ...inputStyle, marginBottom: 14 }} required type="password" minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="En az 8 karakter" />
 
           <label style={labelStyle}>Telefon</label>
           <input style={{ ...inputStyle, marginBottom: 14 }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0312 000 00 00" />

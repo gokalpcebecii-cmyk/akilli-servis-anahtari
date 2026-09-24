@@ -81,6 +81,7 @@ export default function YonetimPage() {
   const [reserveCount, setReserveCount] = useState<number | "">("");
   const [userEmailInput, setUserEmailInput] = useState("");
   const [userCount, setUserCount] = useState<number | "">(1);
+  const [userAccountCode, setUserAccountCode] = useState("");
   const [userResult, setUserResult] = useState<{ email: string; codes: string[] } | null>(null);
 
   async function token() {
@@ -330,6 +331,14 @@ export default function YonetimPage() {
         {/* ================= GENEL BAKIŞ ================= */}
         {tab === "genel" && (
           <>
+            {tenants.some((t) => t.approval_status === "pending") && (
+              <button
+                onClick={() => setTab("servisler")}
+                style={{ display: "block", width: "100%", textAlign: "left", background: colors.warningSoft, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 14px", marginBottom: 14, fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: "inherit", minHeight: 44 }}
+              >
+                {tenants.filter((t) => t.approval_status === "pending").length} servis onay bekliyor → Servisler
+              </button>
+            )}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
               {statCard("Kayıtlı kullanıcı", c?.users, c ? `Son 7 gün aktif: ${c.active_users_7d ?? "—"} · 30 gün: ${c.active_users_30d ?? "—"}` : undefined)}
               {statCard("Servis", c?.tenants, c ? `${c.staff} servis çalışanı` : undefined)}
@@ -410,7 +419,7 @@ export default function YonetimPage() {
               <label style={labelStyle} htmlFor="gen-tenant">Üretilen kodları doğrudan bir servise ayır (isteğe bağlı)</label>
               <select id="gen-tenant" value={genTenant} onChange={(e) => setGenTenant(e.target.value)} style={{ ...inputStyle, marginBottom: 12, maxWidth: 420 }}>
                 <option value="">— Servise ayırma, boşta kalsın —</option>
-                {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {tenants.filter((t) => t.approval_status === "approved").map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
               <div>
                 <button
@@ -428,7 +437,7 @@ export default function YonetimPage() {
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
                 <select value={reserveTenant} onChange={(e) => setReserveTenant(e.target.value)} style={{ ...inputStyle, maxWidth: 280 }} aria-label="Servis">
                   <option value="">— Servis seçin —</option>
-                  {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {tenants.filter((t) => t.approval_status === "approved").map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
                 <input type="number" inputMode="numeric" min={1} max={500} placeholder="Adet" aria-label="Adet" value={reserveCount}
                   onChange={(e) => setReserveCount(e.target.value ? Number(e.target.value) : "")} style={{ ...inputStyle, width: 110 }} />
@@ -453,16 +462,18 @@ export default function YonetimPage() {
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
                 <input type="email" placeholder="Müşterinin OTOİZ e-postası" aria-label="Müşteri e-postası" value={userEmailInput}
                   onChange={(e) => setUserEmailInput(e.target.value)} style={{ ...inputStyle, maxWidth: 300 }} />
+                <input placeholder="Hesap kodu" aria-label="Müşteri hesap kodu" value={userAccountCode}
+                  onChange={(e) => setUserAccountCode(e.target.value.toUpperCase())} style={{ ...inputStyle, width: 140, letterSpacing: 1.5, fontWeight: 800 }} />
                 <input type="number" inputMode="numeric" min={1} max={20} placeholder="Adet" aria-label="Adet" value={userCount}
                   onChange={(e) => setUserCount(e.target.value ? Number(e.target.value) : "")} style={{ ...inputStyle, width: 90 }} />
                 <button
-                  disabled={busy || !userEmailInput.includes("@") || typeof userCount !== "number"}
+                  disabled={busy || !userEmailInput.includes("@") || userAccountCode.trim().length < 8 || typeof userCount !== "number"}
                   onClick={async () => {
                     setBusy(true);
                     setError("");
                     setUserResult(null);
                     try {
-                      const res = await api("/api/admin/qr", { method: "POST", body: JSON.stringify({ action: "reserve_user", email: userEmailInput, count: userCount }) });
+                      const res = await api("/api/admin/qr", { method: "POST", body: JSON.stringify({ action: "reserve_user", email: userEmailInput, account_code: userAccountCode, count: userCount }) });
                       const j = res.body || {};
                       if (!res.ok) {
                         setError(j.error || "Tanımlanamadı");
@@ -470,6 +481,7 @@ export default function YonetimPage() {
                         setUserResult({ email: j.email, codes: j.codes });
                         flash(`${j.reserved} kod ${j.email} kullanıcısına tanımlandı`);
                         setUserEmailInput("");
+                        setUserAccountCode("");
                         loadQr();
                         loadOverview();
                       }
@@ -489,7 +501,8 @@ export default function YonetimPage() {
                 </p>
               )}
               <p style={{ fontSize: 12, color: colors.textMuted, margin: "8px 0 0" }}>
-                Müşteri önce bireysel kayıt olur. Tanımlanan kod müşterinin uygulamasında görünür; müşteri aracının sayfasında
+                Müşteri önce bireysel kayıt olur ve Profil sayfasındaki 8 haneli hesap kodunu size gösterir; kod yalnız e-posta ve hesap kodu
+                eşleşirse tanımlanır. Tanımlanan kod müşterinin uygulamasında görünür; müşteri aracının sayfasında
                 "Anahtarlığımı bağla" ile kodu aracına bağlar ve bakımlarını kendisi girer.
               </p>
             </section>
@@ -632,11 +645,48 @@ export default function YonetimPage() {
                     <div style={{ fontWeight: 700 }}>{t.name}</div>
                     <div style={{ fontSize: 12, color: colors.textMuted }}>{t.phone || "telefon yok"} · kayıt {fmtDate(t.created_at)}</div>
                   </div>
-                  <span style={badgeStyle(t.is_active === false ? "danger" : "success")}>{t.is_active === false ? "Pasif" : "Aktif"}</span>
+                  <span style={badgeStyle(t.approval_status === "approved" ? "success" : t.approval_status === "rejected" ? "danger" : "warning")}>
+                    {t.approval_status === "approved" ? "Onaylı" : t.approval_status === "rejected" ? "Reddedildi" : "Onay bekliyor"}
+                  </span>
                   <span style={{ fontSize: 13 }}>{t.staff} çalışan</span>
                   <span style={{ fontSize: 13 }}>{t.vehicles} araç</span>
                   <span style={{ fontSize: 13 }}>{t.records} kayıt</span>
                   <span style={{ fontSize: 13 }}>{t.qr_reserved_free} boş QR</span>
+                  <div style={{ display: "flex", gap: 6, flexBasis: "100%" }}>
+                    {t.approval_status !== "approved" && (
+                      <button
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          setError("");
+                          const r = await api("/api/admin/servisler", { method: "POST", body: JSON.stringify({ tenant_id: t.id, decision: "approve" }) });
+                          setBusy(false);
+                          if (!r.ok) setError(r.body?.error || "Onaylanamadı");
+                          else { flash(`${t.name} onaylandı`); loadOverview(); }
+                        }}
+                        style={smallBtn(colors.green, colors.textDark)}
+                      >
+                        Onayla
+                      </button>
+                    )}
+                    {t.approval_status !== "rejected" && (
+                      <button
+                        disabled={busy}
+                        onClick={async () => {
+                          if (!window.confirm(`${t.name} reddedilsin mi? Servis araç ve bakım kaydı yapamaz; önceki kayıtları "Servis Doğrulamalı" görünmez.`)) return;
+                          setBusy(true);
+                          setError("");
+                          const r = await api("/api/admin/servisler", { method: "POST", body: JSON.stringify({ tenant_id: t.id, decision: "reject" }) });
+                          setBusy(false);
+                          if (!r.ok) setError(r.body?.error || "Reddedilemedi");
+                          else { flash(`${t.name} reddedildi`); loadOverview(); }
+                        }}
+                        style={smallBtn(colors.surfaceSoft, colors.danger, colors.border)}
+                      >
+                        Reddet
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               {tenants.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>Servis yok.</p>}

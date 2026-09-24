@@ -32,7 +32,7 @@ const { createVehicle } = require("../lib/vehicleWrite");
 // ama filtre MANTIĞINI uygulamaz (testler zaten hangi tabloya hangi
 // sonucun döneceğini doğrudan ayarlıyor). Bu bir Supabase/RLS/Postgres
 // SİMÜLASYONU değildir — yalnızca JS arayüzünü taklit eder.
-function makeClient({ user, staffUsers, existingVehicle, insertResult, insertError } = {}) {
+function makeClient({ user, staffUsers, existingVehicle, insertResult, insertError, tenant } = {}) {
   const calls = { selects: [], inserts: [] };
 
   function from(table) {
@@ -48,6 +48,7 @@ function makeClient({ user, staffUsers, existingVehicle, insertResult, insertErr
             calls.selects.push(record);
             if (table === "staff_users") return { data: staffUsers ?? null };
             if (table === "vehicles") return { data: existingVehicle ?? null };
+            if (table === "tenants") return { data: tenant === undefined ? { approval_status: "approved" } : tenant };
             return { data: null };
           },
           async single() {
@@ -213,4 +214,37 @@ test("başarılı oluşturma: insert tam olarak bir kez, doğru normalize edilmi
   assert.equal(payload.plate, "34 ABC 123");
   assert.equal(payload.brand, "Toyota");
   assert.equal(payload.current_km, 50000);
+});
+
+
+test("createVehicle: onay bekleyen (pending) servis araç oluşturamaz — insert'e hiç ulaşılmaz", async () => {
+  const client = makeClient({
+    user: { id: "staff-1" },
+    staffUsers: { tenant_id: "tenant-1" },
+    tenant: { approval_status: "pending" },
+  });
+  const calls = client.calls;
+  const result = await createVehicle({
+    authHeader: "Bearer x",
+    body: { plate: "34 ABC 123", brand: "Opel", model: "Astra", year: 2015, current_km: 1000 },
+    client,
+  });
+  assert.equal(result.status, 403);
+  assert.equal(calls.inserts.length, 0);
+});
+
+test("createVehicle: reddedilmiş (rejected) servis araç oluşturamaz", async () => {
+  const client = makeClient({
+    user: { id: "staff-1" },
+    staffUsers: { tenant_id: "tenant-1" },
+    tenant: { approval_status: "rejected" },
+  });
+  const calls = client.calls;
+  const result = await createVehicle({
+    authHeader: "Bearer x",
+    body: { plate: "34 ABC 123", brand: "Opel", model: "Astra", year: 2015, current_km: 1000 },
+    client,
+  });
+  assert.equal(result.status, 403);
+  assert.equal(calls.inserts.length, 0);
 });

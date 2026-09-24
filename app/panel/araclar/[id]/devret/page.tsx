@@ -23,7 +23,7 @@ export default function OwnershipTransferPage() {
   // (etki özeti + alıcı doğrulaması + yeniden kimlik doğrulama + audit)
   // ayrı bir teknik görev; o tamamlanana kadar bu route erişilemez.
   // Veri modeli/mantık DEĞİŞMEDİ — yalnızca UX erişimi kapatıldı.
-  if (!PILOT_FLAGS.ownershipTransferSelfService) {
+  if (!PILOT_FLAGS.serviceOwnershipTransfer) {
     return (
       <main style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px", fontFamily: font, color: colors.textDark, textAlign: "center" }}>
         <h1 style={{ fontSize: 20 }}>Bu Özellik Şu An Kullanılamıyor</h1>

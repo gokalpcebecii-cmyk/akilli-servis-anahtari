@@ -108,6 +108,9 @@ export default function VehicleDetailPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
   const quickSubmitRef = useRef(false);
+  // Tek bir kayıt denemesinin kimliği: başarıya kadar aynı kalır (tekrar
+  // deneme aynı kaydı üretir), başarıdan sonra sıfırlanır.
+  const quickRequestIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isNew) return;
@@ -377,94 +380,47 @@ export default function VehicleDetailPage() {
     // oluşturulmadı/uygulanmadı; bu yalnızca istemci-seviyesi bir hata
     // yönetimi sıkılaştırmasıdır.
     try {
-      // Supabase session, staff/tenant, araç güncelleme, maintenance_items
-      // ve maintenance_records hataları AYRI AYRI kontrol edilir — herhangi
-      // biri başarısız olursa sonraki adıma geçilmez ve "Kayıt tamamlandı"
-      // GÖSTERİLMEZ.
-      const { data: session, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session.session) {
-        setSubmitError("Oturum bilgisi alınamadı." + RETRY_MESSAGE);
-        return;
+      // 2026-09-24: araç km/sonraki bakım + bakım kalemleri + bakım kaydı
+      // artık TEK veritabanı transaction'ında (record_service_visit RPC)
+      // yazılıyor — bir adım hata verirse hiçbiri kalıcı olmaz. Aynı istek
+      // kimliğiyle yeniden gönderim ikinci kayıt üretmez (çift tıklama /
+      // bağlantı kopması sonrası tekrar deneme güvenli). Kaydın "Servis
+      // Doğrulamalı" olup olmadığını istemci değil veritabanı belirler.
+      if (!quickRequestIdRef.current) {
+        quickRequestIdRef.current =
+          typeof crypto !== "undefined" && (crypto as any).randomUUID
+            ? (crypto as any).randomUUID()
+            : `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, "0")}`;
       }
-
-      const { data: staff, error: staffError } = await supabase
-        .from("staff_users")
-        .select("tenant_id")
-        .eq("id", session.session.user.id)
-        .single();
-      // Yalnızca staff nesnesi değil, tenant_id'nin KENDİSİ de zorunlu —
-      // tenant_id boş/null ise HİÇBİR yazma yapılmaz (aşağıdaki vehicles
-      // güncellemesi de tenant_id'ye bağlı olduğundan bu kontrol olmadan
-      // sorgu geçersiz bir filtreyle çalışırdı).
-      if (staffError || !staff || !staff.tenant_id) {
-        setSubmitError("Servis/personel bilgisi doğrulanamadı." + RETRY_MESSAGE);
-        return;
-      }
-      const tenantId = staff.tenant_id;
-      const actorId = session.session.user.id;
-
-      // Araç güncellemesi TENANT KAPSAMINA bağlanır: hem id hem tenant_id
-      // filtrelenir VE güncellemenin GERÇEKTEN bir satır döndürdüğü
-      // doğrulanır (`.select("id")` ile) — hata dönmese bile eşleşen/
-      // güncellenen satır yoksa (ör. araç başka bir tenant'a aitse, RLS
-      // sessizce 0 satır etkiler) işlem yetkisiz/başarısız kabul edilir.
-      const { data: updatedVehicle, error: vehicleError } = await supabase
-        .from("vehicles")
-        .update({
-          current_km: km,
-          next_service_km: finalNextKm,
-          next_service_date: finalNextDate,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", params.id)
-        .eq("tenant_id", tenantId)
-        .select("id");
-      if (vehicleError || !updatedVehicle || updatedVehicle.length === 0) {
-        setSubmitError("Araç bulunamadı veya bu araca erişim yetkiniz yok." + RETRY_MESSAGE);
-        return;
-      }
-
-      if (selectedKeys.length > 0) {
-        const itemsUpsert = selectedKeys.map((key) => ({
-          vehicle_id: params.id,
-          item_key: key,
-          last_service_date: todayIso,
-          last_service_km: km,
-          interval_km: itemIntervals[key] ? Number(itemIntervals[key]) : null,
-        }));
-        const { error: itemsError } = await supabase.from("maintenance_items").upsert(itemsUpsert, { onConflict: "vehicle_id,item_key" });
-        if (itemsError) {
-          setSubmitError("Bakım kalemleri kaydedilemedi." + RETRY_MESSAGE);
-          return;
-        }
-      }
-
-      // İkinci düzeltme turu, madde 7: aynı anda seçilen birden fazla işlem
-      // (ör. Motor Yağı + Yağ Filtresi) geçmişte AYRI satırlar olarak değil,
-      // TEK bir servis ziyareti altında (tek maintenance_records satırı,
-      // birleştirilmiş açıklama) kaydedilmeli — şema/migration değişikliği
-      // olmadan bunu sağlayan tek yol, tek satıra birleştirilmiş açıklama.
-      // maintenance_items (her işlemin kendi periyodu/son bakımı) yine de
-      // işlem başına ayrı ayrı güncelleniyor, yukarıda değişmedi.
       const visitLabels = selectedKeys.map((key) => QUICK_ITEMS.find((it) => it.key === key)?.label ?? key);
       if (otherSelected && otherText.trim()) {
         visitLabels.push(otherText.trim());
       }
-      if (visitLabels.length > 0) {
-        const { error: recordError } = await supabase.from("maintenance_records").insert([
-          {
-            vehicle_id: params.id,
-            tenant_id: tenantId,
-            description: visitLabels.join(", "),
-            km_at_service: km,
-            created_by: actorId,
-          },
-        ]);
-        if (recordError) {
-          setSubmitError("Servis kaydı oluşturulamadı." + RETRY_MESSAGE);
-          return;
+      const itemsPayload = selectedKeys.map((key) => ({
+        key,
+        interval_km: itemIntervals[key] ? Number(itemIntervals[key]) : null,
+      }));
+      const { error: rpcError } = await supabase.rpc("record_service_visit", {
+        p_vehicle_id: params.id,
+        p_km: km,
+        p_items: itemsPayload,
+        p_description: visitLabels.join(", "),
+        p_next_km: finalNextKm,
+        p_next_date: finalNextDate,
+        p_request_id: quickRequestIdRef.current,
+      });
+      if (rpcError) {
+        const msg = String(rpcError.message || "");
+        if (msg.includes("km_lower_than_current")) {
+          setSubmitError("Güncel kilometre, kayıtlı son kilometreden düşük olamaz.");
+        } else if (msg.includes("forbidden") || (rpcError as any).code === "42501") {
+          setSubmitError("Bu araca kayıt yetkiniz yok ya da işletmeniz henüz onaylanmadı.");
+        } else {
+          setSubmitError("Kayıt yapılamadı; hiçbir değişiklik kaydedilmedi." + RETRY_MESSAGE);
         }
+        return;
       }
+      quickRequestIdRef.current = null;
 
       // Yazmalar tamamlandı — ekranı yenileyen okuma sorgularının
       // hataları da kontrol edilir. Yazmalar BAŞARILI olduğu için burada
@@ -922,7 +878,7 @@ export default function VehicleDetailPage() {
 
         {/* PILOT FIX 03 madde A7: self-service devir pilot boyunca
             erişilemez — CTA'nın kendisi de kaldırıldı (bkz. lib/pilotFlags.ts). */}
-        {!isNew && PILOT_FLAGS.ownershipTransferSelfService && (
+        {!isNew && PILOT_FLAGS.serviceOwnershipTransfer && (
           <section className="otoiz-servis-area-devret" style={{ textAlign: "center" }}>
             <a href={`/panel/araclar/${params.id}/devret`} style={{ fontSize: 13, color: colors.textMuted, textDecoration: "underline" }}>
               Bu aracın sahipliğini devret

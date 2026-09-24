@@ -433,28 +433,25 @@ export default function BireyselVehicleDetailPage() {
     const intervalKm = existingInterval ? Number(existingInterval) : DEFAULT_ITEM_INTERVALS[itemKey] ?? null;
     const previousItem = maintenanceItems.find((m: any) => m.item_key === itemKey) ?? null;
 
-    await supabase.from("maintenance_items").upsert(
-      {
-        vehicle_id: params.id,
-        item_key: itemKey,
-        last_service_date: today,
-        last_service_km: vehicle.current_km,
-        interval_km: intervalKm,
-      },
-      { onConflict: "vehicle_id,item_key" }
-    );
-
-    const { data: insertedRecord } = await supabase
-      .from("maintenance_records")
-      .insert({
-        vehicle_id: params.id,
-        tenant_id: null,
-        description: label,
-        km_at_service: vehicle.current_km,
-        created_by: userId,
-      })
-      .select()
-      .single();
+    // 2026-09-24: kalem + kayıt tek transaction'da (record_service_visit).
+    const currentKm = Number(vehicle.current_km) || 0;
+    const keepNextKm = vehicle.next_service_km != null && Number(vehicle.next_service_km) > currentKm ? Number(vehicle.next_service_km) : null;
+    const keepNextDate = vehicle.next_service_date && vehicle.next_service_date >= today ? vehicle.next_service_date : null;
+    const requestId =
+      typeof crypto !== "undefined" && (crypto as any).randomUUID
+        ? (crypto as any).randomUUID()
+        : `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, "0")}`;
+    const { data: rpcData, error: rpcError } = await supabase.rpc("record_service_visit", {
+      p_vehicle_id: params.id,
+      p_km: currentKm,
+      p_items: [{ key: itemKey, interval_km: intervalKm }],
+      p_description: label,
+      p_next_km: keepNextKm,
+      p_next_date: keepNextDate,
+      p_request_id: requestId,
+    });
+    const insertedRecord = !rpcError && rpcData?.record_id ? { id: rpcData.record_id } : null;
+    if (rpcError) alert("Kayıt yapılamadı; hiçbir değişiklik kaydedilmedi.");
 
     await refreshMaintenanceItems();
     await refreshRecords();

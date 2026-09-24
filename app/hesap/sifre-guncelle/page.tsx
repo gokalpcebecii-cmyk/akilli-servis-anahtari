@@ -47,8 +47,8 @@ export default function SifreGuncellePage() {
     if (loading) return;
     setError("");
 
-    if (password.length < 6) {
-      setError("Şifre en az 6 karakter olmalı.");
+    if (password.length < 8) {
+      setError("Şifre en az 8 karakter olmalı.");
       return;
     }
     if (password !== confirmPassword) {
@@ -123,7 +123,7 @@ export default function SifreGuncellePage() {
             id="new-password"
             type="password"
             autoComplete="new-password"
-            minLength={6}
+            minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -135,7 +135,7 @@ export default function SifreGuncellePage() {
             id="confirm-password"
             type="password"
             autoComplete="new-password"
-            minLength={6}
+            minLength={8}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required

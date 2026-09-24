@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const db = ctx.db;
 
   const [tenantsRes, vehiclesRes, recordsRes, qrRes, staffRes, recentRes] = await Promise.all([
-    db.from("tenants").select("id, name, phone, is_active, created_at").order("created_at", { ascending: true }),
+    db.from("tenants").select("id, name, phone, is_active, created_at, approval_status").order("created_at", { ascending: true }),
     db.from("vehicles").select("id, tenant_id, owner_user_id"),
     db.from("maintenance_records").select("id, tenant_id"),
     db.from("qr_keys").select("id, vehicle_id, reserved_tenant_id, reserved_user_id, revoked_at"),
@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
     name: t.name,
     phone: t.phone,
     is_active: t.is_active,
+    approval_status: t.approval_status,
     created_at: t.created_at,
     vehicles: vehicles.filter((v: any) => v.tenant_id === t.id).length,
     records: records.filter((r: any) => r.tenant_id === t.id).length,

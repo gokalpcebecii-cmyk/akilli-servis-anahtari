@@ -6,7 +6,7 @@
 // son bakım km/tarihi ayrı güncellenir; sonraki bakım, seçilen kalemlerin
 // en erken vadesine göre otomatik önerilir. Kayıt tenant_id=null ile
 // ("Kullanıcı Kaydı") yazılır — servis doğrulamalı kayıt gibi görünmez.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
 
@@ -32,6 +32,7 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const requestIdRef = useRef<string | null>(null);
 
   const selectedKeys = items.filter((it) => selected[it.key]).map((it) => it.key);
 
@@ -73,50 +74,36 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
 
     setSaving(true);
     try {
-      const { data: v, error: vErr } = await supabase
-        .from("vehicles")
-        .update({
-          current_km: kmNum,
-          next_service_km: plan.nextServiceKm,
-          next_service_date: plan.nextServiceDate,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", vehicle.id)
-        .eq("owner_user_id", userId)
-        .select("id");
-      if (vErr || !v || v.length === 0) {
-        setError("Araç güncellenemedi. Sayfayı yenileyip tekrar deneyin.");
-        return;
+      // 2026-09-24: tek transaction (record_service_visit RPC); hata olursa
+      // hiçbir şey yazılmaz, aynı istek kimliğiyle tekrar gönderim ikinci
+      // kayıt üretmez. Kullanıcı kaydı (tenant_id=null) veritabanında belirlenir.
+      if (!requestIdRef.current) {
+        requestIdRef.current =
+          typeof crypto !== "undefined" && (crypto as any).randomUUID
+            ? (crypto as any).randomUUID()
+            : `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, "0")}`;
       }
-
-      if (selectedKeys.length > 0) {
-        const rows = selectedKeys.map((k) => ({
-          vehicle_id: vehicle.id,
-          item_key: k,
-          last_service_date: today,
-          last_service_km: kmNum,
-          interval_km: intervalFor(k),
-        }));
-        const { error: iErr } = await supabase.from("maintenance_items").upsert(rows, { onConflict: "vehicle_id,item_key" });
-        if (iErr) {
-          setError("Bakım kalemleri kaydedilemedi. Sayfayı yenileyip geçmişi kontrol edin.");
-          return;
-        }
-      }
-
       const labels = selectedKeys.map((k) => items.find((it) => it.key === k)?.label ?? k);
       if (otherOn && otherText.trim()) labels.push(otherText.trim());
-      const { error: rErr } = await supabase.from("maintenance_records").insert({
-        vehicle_id: vehicle.id,
-        tenant_id: null,
-        description: labels.join(", "),
-        km_at_service: kmNum,
-        created_by: userId,
+      const { error: rpcError } = await supabase.rpc("record_service_visit", {
+        p_vehicle_id: vehicle.id,
+        p_km: kmNum,
+        p_items: selectedKeys.map((k) => ({ key: k, interval_km: intervalFor(k) })),
+        p_description: labels.join(", "),
+        p_next_km: plan.nextServiceKm,
+        p_next_date: plan.nextServiceDate,
+        p_request_id: requestIdRef.current,
       });
-      if (rErr) {
-        setError("Bakım kaydı oluşturulamadı. Sayfayı yenileyip geçmişi kontrol edin.");
+      if (rpcError) {
+        const msg = String(rpcError.message || "");
+        setError(
+          msg.includes("km_lower_than_current")
+            ? "Kilometre, kayıtlı son kilometreden düşük olamaz."
+            : "Kayıt yapılamadı; hiçbir değişiklik kaydedilmedi. Tekrar deneyin."
+        );
         return;
       }
+      requestIdRef.current = null;
 
       await onSaved({ current_km: kmNum, next_service_km: plan.nextServiceKm, next_service_date: plan.nextServiceDate });
       setSelected({});

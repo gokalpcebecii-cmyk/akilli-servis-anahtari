@@ -6,11 +6,13 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, secondaryButtonStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { BottomNav } from "@/components/BottomNav";
+const { accountCodeFromUserId } = require("@/lib/passwordPolicy");
 
 export default function ProfilPage() {
   const router = useRouter();
   const supabase = createBrowserSupabase();
   const [email, setEmail] = useState<string | null>(null);
+  const [accountCode, setAccountCode] = useState<string>("");
   const [vehicleCount, setVehicleCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -22,6 +24,7 @@ export default function ProfilPage() {
         return;
       }
       setEmail(session.session.user.email ?? null);
+      setAccountCode(accountCodeFromUserId(session.session.user.id));
       const { count } = await supabase
         .from("vehicles")
         .select("id", { count: "exact", head: true })
@@ -52,6 +55,15 @@ export default function ProfilPage() {
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: colors.textDark }}>{email}</div>
           <div style={{ fontSize: 12.5, color: colors.textMuted, marginTop: 2 }}>Bireysel Kullanıcı hesabı</div>
+        </div>
+
+        {/* 2026-09-24: OTOİZ anahtarlığı satın alırken satıcıya gösterilen
+            hesap kodu — yönetici QR'ı yalnız e-posta + bu kod eşleşirse
+            hesaba tanımlayabilir. */}
+        <div style={{ background: colors.surfaceLight, borderRadius: radius.lg, border: `1px solid ${colors.border}`, padding: 16, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ fontSize: 11.5, color: colors.textMuted, fontWeight: 700, letterSpacing: 0.4 }}>HESAP KODUNUZ</div>
+          <div data-testid="account-code" style={{ fontSize: 26, fontWeight: 900, letterSpacing: 3, color: colors.textDark, margin: "4px 0" }}>{accountCode}</div>
+          <div style={{ fontSize: 12, color: colors.textMuted }}>OTOİZ anahtarlığı alırken bu kodu satıcıya gösterin.</div>
         </div>
 
         <div style={{ background: colors.surfaceLight, borderRadius: radius.lg, border: `1px solid ${colors.border}`, padding: 16, marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>

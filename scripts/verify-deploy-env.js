@@ -6,7 +6,7 @@
 // varsa build hiç başlamadan process.exit(1) ile durur. Hiçbir anahtar/
 // secret DEĞERİ konsola yazdırılmaz — yalnızca isim + karşılaştırma sonucu.
 
-const { validateDeploymentEnv } = require("../lib/envCheck");
+const { validateDeploymentEnv, verifyKeysLive, validateBranchRole } = require("../lib/envCheck");
 
 const result = validateDeploymentEnv(process.env);
 
@@ -27,5 +27,23 @@ if (!result.ok) {
   process.exit(1);
 }
 
-console.log(`[otoiz-env-check] Ortam doğrulaması geçti (rol: ${process.env.OTOIZ_DEPLOYMENT_ROLE}).`);
-process.exit(0);
+const branchError = validateBranchRole(process.env);
+if (branchError) {
+  console.error("[otoiz-env-check] Ortam doğrulaması BAŞARISIZ — build durduruldu:");
+  console.error(`  - ${branchError}`);
+  process.exit(1);
+}
+
+(async () => {
+  if (process.env.VERCEL === "1") {
+    const live = await verifyKeysLive(process.env);
+    if (!live.ok) {
+      console.error("[otoiz-env-check] Canlı anahtar doğrulaması BAŞARISIZ — build durduruldu:");
+      for (const err of live.errors) console.error(`  - ${err}`);
+      process.exit(1);
+    }
+    console.log("[otoiz-env-check] Anahtarlar hedef Supabase projesinde canlı doğrulandı.");
+  }
+  console.log(`[otoiz-env-check] Ortam doğrulaması geçti (rol: ${process.env.OTOIZ_DEPLOYMENT_ROLE}).`);
+  process.exit(0);
+})();

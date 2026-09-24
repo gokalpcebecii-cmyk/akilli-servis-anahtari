@@ -1,5 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
+const { validatePassword } = require("@/lib/passwordPolicy");
 
 function slugify(text: string) {
   const trMap: Record<string, string> = { ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", Ç: "c", Ğ: "g", İ: "i", Ö: "o", Ş: "s", Ü: "u" };
@@ -17,8 +18,9 @@ export async function POST(req: NextRequest) {
     if (!business_name || !email || !password) {
       return NextResponse.json({ error: "Eksik bilgi" }, { status: 400 });
     }
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Şifre en az 6 karakter olmalı" }, { status: 400 });
+    const pwError = validatePassword(password);
+    if (pwError) {
+      return NextResponse.json({ error: pwError }, { status: 400 });
     }
 
     const supabase = createServerSupabase();
