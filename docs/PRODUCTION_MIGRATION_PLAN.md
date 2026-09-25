@@ -69,7 +69,11 @@ Kanıt:
 5. PR #5 `main`'e merge edilir → Vercel build'inde ortam kapısı çalışır:
    - Rol, branch ve Supabase ref uyumu kontrol edilir.
    - Anahtarlar canlı olarak doğrulanır.
-6. **Kısa QR kodlarının değiştirilmesi — PİLOT BAŞLAMADAN ÖNCE ZORUNLU** (ayrıntı §4.1).
+6. ✅ **Tamamlandı (25.09.2026)** — Kısa QR kodlarının değiştirilmesi (ayrıntı §4.1):
+   - 4 boş kısa kod iptal edildi.
+   - 3 araç, `Yenileme-v1` partisindeki yeni 26 karakterlik kodlara tek tek geçirildi. Proje sahibi bunların test araçları olduğunu teyit etti.
+   - Eski kodlar "Geçersiz Kod" gösteriyor, yeni kodlar pasaportu açıyor.
+   - Aktif kısa QR = 0. Audit: `admin_qr_revoked` ×7, `admin_qr_generated` ×1, `admin_qr_assigned` ×3.
 7. ✅ **Tamamlandı (24.09.2026)** — Supabase Auth ayarları (staging + production):
    - Minimum şifre uzunluğu 6 → **8** (Supabase 7 karakteri `weak_password` ile reddediyor, test edildi).
    - Leaked password protection: organizasyon **Free** planında desteklenmiyor (API: 402 "Pro Plans and up"). Pro plana geçilirse açılmalı.
