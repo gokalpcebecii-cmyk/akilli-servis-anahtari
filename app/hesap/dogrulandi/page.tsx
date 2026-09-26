@@ -22,10 +22,18 @@ function Inner() {
   const [state, setState] = useState<"loading" | "ok" | "error" | "unknown">("loading");
 
   useEffect(() => {
-    const r = parseConfirmHash(window.location.hash);
-    // Token'lar tarayıcı geçmişinde / ekran görüntüsünde kalmasın.
-    if (window.location.hash) window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    setState(r.ok === true ? "ok" : r.ok === false ? "error" : "unknown");
+    function read() {
+      if (!window.location.hash) return;
+      const r = parseConfirmHash(window.location.hash);
+      // Token'lar tarayıcı geçmişinde / ekran görüntüsünde kalmasın.
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      setState(r.ok === true ? "ok" : r.ok === false ? "error" : "unknown");
+    }
+    if (window.location.hash) read();
+    else setState("unknown");
+    // Sayfa açıkken aynı sekmede yeni bir bağlantı açılırsa (yalnız #hash değişir).
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
   }, []);
 
   const loginHref = `/bireysel/giris?next=${encodeURIComponent(next)}`;
