@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { ResendConfirmation } from "@/components/ResendConfirmation";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,6 +15,7 @@ function BireyselGirisForm() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,6 +48,7 @@ function BireyselGirisForm() {
     e.preventDefault();
     if (loading) return;
     setError(null);
+    setUnconfirmed(false);
 
     // PILOT FIX 03 (madde A6): boş/biçimsiz e-posta ve boş şifre sunucuya
     // gitmeden, alan altında Türkçe hatayla yakalanır — "boş form" ile
@@ -71,7 +74,11 @@ function BireyselGirisForm() {
       if (error) {
         // Sunucudan gelen ham teknik metin asla doğrudan gösterilmez;
         // yalnızca durum koduna göre iki genel, anlaşılır mesajdan biri.
-        if (typeof error.status === "number" && error.status >= 500) {
+        if ((error as any).code === "email_not_confirmed") {
+          // Faz 3.1: e-posta doğrulanmadan giriş yapılamaz (Supabase Auth).
+          setUnconfirmed(true);
+          setError("E-posta adresin henüz doğrulanmadı. Gelen kutundaki doğrulama bağlantısına bas, sonra tekrar giriş yap.");
+        } else if (typeof error.status === "number" && error.status >= 500) {
           setError("Sunucuda geçici bir sorun oluştu. Lütfen birazdan tekrar deneyin.");
         } else {
           setError("E-posta veya şifre hatalı. Bilgilerinizi kontrol edip tekrar deneyin.");
@@ -165,9 +172,14 @@ function BireyselGirisForm() {
             {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
           </button>
         </form>
+        {unconfirmed && (
+          <div style={{ marginTop: 14 }}>
+            <ResendConfirmation email={email.trim().toLowerCase()} next={redirectTo} />
+          </div>
+        )}
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: colors.textDark }}>
-          Hesabınız yok mu? <a href="/bireysel/kayit" style={{ color: colors.greenDark, fontWeight: 600 }}>Kayıt olun</a>
+          Hesabınız yok mu? <a href={`/bireysel/kayit${next ? `?next=${encodeURIComponent(redirectTo)}` : ""}`} style={{ color: colors.greenDark, fontWeight: 600 }}>Kayıt olun</a>
         </p>
         <p style={{ textAlign: "center", marginTop: 8, fontSize: 12.5 }}>
           <a href="/panel/login" style={{ color: colors.textMuted }}>Servis / İşletme hesabınız mı var?</a>
