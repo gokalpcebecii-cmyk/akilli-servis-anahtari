@@ -21,8 +21,23 @@ function appOrigin() {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Aşama 1: resolver (/r/<token>/) hiçbir aşamada 301/308 üretmemeli.
+  // Next'in otomatik trailing-slash 308'i kapatılır ve aşağıda /r/ hariç
+  // tüm yollar için birebir aynı kurallarla (Next'in dahili kuralları)
+  // geri eklenir; resolver'da sondaki "/" beforeFiles rewrite ile atılır.
+  skipTrailingSlashRedirect: true,
   async redirects() {
     const rules = [
+      {
+        source: "/:file((?!\\.well-known(?:/.*)?)(?!r/)(?:[^/]+/)*[^/]+\\.\\w+)/",
+        destination: "/:file",
+        permanent: true,
+      },
+      {
+        source: "/:notfile((?!\\.well-known(?:/.*)?)(?!r/)(?:[^/]+/)*[^/\\.]+)/",
+        destination: "/:notfile",
+        permanent: true,
+      },
       // İkinci düzeltme turu, madde 5: erişilemez/ölü app/panel/araclar
       // sayfası kaldırılmıştı (statik route, [id] segmenti yok, hiçbir
       // yerden linklenmiyordu) ama doğrudan bu adrese gidenler artık
@@ -43,9 +58,12 @@ const nextConfig = {
   },
   async rewrites() {
     const host = permanentQrHost();
-    if (!host) return [];
+    // /r/<token>/ → /r/<token> (redirect yok, doğrudan resolver).
+    const resolverSlash = { source: "/r/:token/", destination: "/r/:token" };
+    if (!host) return { beforeFiles: [resolverSlash] };
     return {
       beforeFiles: [
+        resolverSlash,
         // go.<alan-adı>/<26 karakter> → resolver. Büyük harf de kabul edilir
         // (resolver normalize eder); format dışı her şey resolver'da 404 olur.
         { source: "/:token([A-Za-z0-9]{26})", has: [{ type: "host", value: host }], destination: "/r/:token" },
