@@ -7,7 +7,7 @@
     "build": "node scripts/verify-deploy-env.js && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test tests/logic.test.js tests/vehicleWrite.test.js tests/envCheck.test.js tests/cronAuth.test.js",
+    "test": "node --test tests/logic.test.js tests/vehicleWrite.test.js tests/envCheck.test.js tests/cronAuth.test.js tests/qrUrl.test.js tests/qrResolver.test.js",
     "test:e2e": "playwright test"
   },
   "dependencies": {

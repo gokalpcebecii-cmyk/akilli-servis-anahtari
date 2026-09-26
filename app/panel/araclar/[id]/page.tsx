@@ -7,6 +7,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
+const { printableQrUrl, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
 
 const {
   validateVehicleInput,
@@ -166,9 +167,8 @@ export default function VehicleDetailPage() {
 
     if (qrKey) {
       setQrCode(qrKey.code);
-      const publicUrl = `${window.location.origin}/p/${qrKey.code}`;
-      const qr = await QRCode.toDataURL(publicUrl, { width: 200 });
-      setQrDataUrl(qr);
+      const publicUrl = printableQrUrl(qrKey.code);
+      setQrDataUrl(publicUrl ? await QRCode.toDataURL(publicUrl, { width: 200 }) : null);
     } else {
       setQrCode(null);
       setQrDataUrl(null);
@@ -833,12 +833,16 @@ export default function VehicleDetailPage() {
         {!isNew && (
           <section className="otoiz-servis-area-qr" style={{ ...cardStyle, textAlign: "center" }}>
             <h2 style={{ fontSize: 14, color: colors.textMuted, fontWeight: 700, marginTop: 0 }}>Araç QR Kodu</h2>
-            {qrDataUrl ? (
+            {qrCode ? (
               <>
                 {/* PILOT FIX 03 (bölüm F): büyük taranabilir QR varsayılan
                     açık görünmüyor — "QR'ı Göster" ile açığa çıkıyor. */}
                 {qrRevealed ? (
-                  <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 150, height: 150, borderRadius: radius.md }} />
+                  qrDataUrl ? (
+                    <img src={qrDataUrl} alt="Araç QR kodu" style={{ width: 150, height: 150, borderRadius: radius.md }} />
+                  ) : (
+                    <p role="status" style={{ fontSize: 12, color: colors.danger, fontWeight: 700 }}>{QR_LOCK_MESSAGE}</p>
+                  )
                 ) : (
                   <div
                     style={{ width: 150, height: 150, margin: "0 auto", borderRadius: radius.md, background: colors.surfaceSoft, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}

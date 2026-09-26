@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, isAdminContext } from "@/lib/adminAuth";
 const { generateQrCode, normalizeQrCode } = require("@/lib/qrToken");
 const { accountCodeFromUserId } = require("@/lib/passwordPolicy");
+const { qrIssuanceLocked, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -111,6 +112,12 @@ export async function POST(req: NextRequest) {
 
   // ---- Toplu QR üretimi (yalnız yönetici) ----
   if (action === "generate") {
+    // Aşama 1: kalıcı QR adresi (go.<alan-adı>) tanımlı değilse QR partisi
+    // üretilemez — basılacak her QR'ın kalıcı adresi taşıması garanti edilir.
+    // Uygulamanın geri kalanı ve deploy bundan etkilenmez.
+    if (qrIssuanceLocked()) {
+      return NextResponse.json({ error: QR_LOCK_MESSAGE, code: "qr_issuance_locked" }, { status: 423 });
+    }
     const count = Math.floor(Number(body.count));
     if (!Number.isFinite(count) || count < 1 || count > MAX_BATCH) {
       return NextResponse.json({ error: `Adet 1 ile ${MAX_BATCH} arasında olmalı` }, { status: 400 });

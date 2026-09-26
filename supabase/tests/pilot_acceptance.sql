@@ -433,9 +433,9 @@ begin
   -- SRV-10: Reddedilmiş servisin eski kaydı pasaportta "Servis Doğrulamalı" görünmez
   v_ok := null; v_err := null;
   begin
-    insert into public.qr_keys (code, vehicle_id) values ('pendingtestqrcodeaaaaaaaaa', '0badc0de-0000-4000-8000-00000000cc01');
-    select not coalesce(bool_or((r->>'service_verified')::boolean), false) and (public.get_public_vehicle_passport('pendingtestqrcodeaaaaaaaaa')->'tenant'->>'name') is null
-      into v_ok from jsonb_array_elements(public.get_public_vehicle_passport('pendingtestqrcodeaaaaaaaaa')->'maintenance_records') r;
+    insert into public.qr_keys (code, vehicle_id) values ('pendngtestqrcdeaaaaaaaaaaa', '0badc0de-0000-4000-8000-00000000cc01');
+    select not coalesce(bool_or((r->>'service_verified')::boolean), false) and (public.get_public_vehicle_passport('pendngtestqrcdeaaaaaaaaaaa')->'tenant'->>'name') is null
+      into v_ok from jsonb_array_elements(public.get_public_vehicle_passport('pendngtestqrcdeaaaaaaaaaaa')->'maintenance_records') r;
   exception when others then
     v_err := sqlerrm; v_ok := false;
   end;
@@ -572,7 +572,7 @@ begin
   -- QR-01: Aynı araçta ikinci aktif QR olamaz
   v_ok := null; v_err := null;
   begin
-    insert into public.qr_keys (code, vehicle_id) values ('secondactiveqrtestaaaaaaaa', '04a00000-a000-4000-a000-000000000501'); v_ok := false;
+    insert into public.qr_keys (code, vehicle_id) values ('secndactvqrtestaaaaaaaaaaa', '04a00000-a000-4000-a000-000000000501'); v_ok := false;
     v_err := 'beklenen hata oluşmadı'; v_ok := false;
   exception when others then
     v_err := sqlerrm; v_ok := true;
@@ -625,7 +625,7 @@ begin
   -- QR-07: İptalden sonra araca yeni QR bağlanabilir
   v_ok := null; v_err := null;
   begin
-    insert into public.qr_keys (code, vehicle_id) values ('replacementqrcodeaaaaaaaaa', '04a00000-a000-4000-a000-000000000501'); v_ok := true;
+    insert into public.qr_keys (code, vehicle_id) values ('repkacementqrcdeaaaaaaaaaa', '04a00000-a000-4000-a000-000000000501'); v_ok := true;
   exception when others then
     v_err := sqlerrm; v_ok := false;
   end;
@@ -932,6 +932,46 @@ begin
     v_err := sqlerrm; v_ok := false;
   end;
   results := results || jsonb_build_object('id','ADM-02','desc','service_role platform_admins okur (sunucu yöntemi)','ok',coalesce(v_ok,false),'err',v_err);
+  -- RSV-01: anon resolve_qr_token çağırabilir; yalnız durum döner, tablo yine okunamaz
+  v_ok := null; v_err := null;
+  begin
+    insert into public.qr_keys (code, vehicle_id) values ('rsvactvetestcdeaaaaaaaaaaa', '04a00000-a000-4000-a000-000000000402');
+    insert into public.qr_keys (code) values ('rsvunassgnedcdeaaaaaaaaaaa');
+    insert into public.qr_keys (code, revoked_at) values ('rsvrevkedtestcdeaaaaaaaaaa', now());
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    execute 'set local role anon';
+    select public.resolve_qr_token('rsvactvetestcdeaaaaaaaaaaa') = 'active'
+       and public.resolve_qr_token('rsvunassgnedcdeaaaaaaaaaaa') = 'unassigned'
+       and public.resolve_qr_token('rsvrevkedtestcdeaaaaaaaaaa') = 'revoked'
+       and public.resolve_qr_token('zzzzzzzzzzzzzzzzzzzzzzzzzz') = 'not_found'
+       and public.resolve_qr_token('RSVACTVETESTCDEAAAAAAAAAAA') = 'not_found'
+       and public.resolve_qr_token(null) = 'not_found'
+       and public.resolve_qr_token('nwanp2ue22pm') = 'not_found'
+      into v_ok;
+    execute 'reset role';
+    perform set_config('request.jwt.claims', '', true);
+  exception when others then
+    v_err := sqlerrm; v_ok := false;
+  end;
+  results := results || jsonb_build_object('id','RSV-01','desc','resolve_qr_token 4 durumu doğru döndürür (anon)','ok',coalesce(v_ok,false),'err',v_err);
+  -- RSV-02: Aktif kod kısa/format dışı olamaz
+  v_ok := null; v_err := null;
+  begin
+    insert into public.qr_keys (code) values ('shortcode234'); v_ok := false;
+    v_err := 'beklenen hata oluşmadı';
+  exception when others then
+    v_err := sqlerrm; v_ok := (sqlerrm like '%qr_keys_active_code_format%');
+  end;
+  results := results || jsonb_build_object('id','RSV-02','desc','Aktif kod 26 karakter/alfabe dışında olamaz','ok',coalesce(v_ok,false),'err',v_err);
+  -- RSV-03: QR geçmişi olan araç silinemez (token boşa düşüp başka araca bağlanamaz)
+  v_ok := null; v_err := null;
+  begin
+    delete from public.vehicles where id='04a00000-a000-4000-a000-000000000402'; v_ok := false;
+    v_err := 'beklenen hata oluşmadı';
+  exception when others then
+    v_err := sqlerrm; v_ok := (sqlerrm like '%qr_keys_vehicle_id_fkey%');
+  end;
+  results := results || jsonb_build_object('id','RSV-03','desc','QR geçmişi olan araç silinemez','ok',coalesce(v_ok,false),'err',v_err);
   raise exception 'OTOIZ_TEST_RESULTS %', jsonb_build_object('total', jsonb_array_length(results), 'passed', (select count(*) from jsonb_array_elements(results) r where (r->>'ok')::boolean), 'failed', (select coalesce(jsonb_agg(r), '[]'::jsonb) from jsonb_array_elements(results) r where not (r->>'ok')::boolean), 'ids', (select jsonb_agg(r->>'id') from jsonb_array_elements(results) r));
 end
 $otoiz$;
