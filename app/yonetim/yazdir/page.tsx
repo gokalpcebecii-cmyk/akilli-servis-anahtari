@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font } from "@/lib/theme";
-const { buildQrUrl, hasPermanentQrBase } = require("@/lib/qrUrl");
+const { printableQrUrl, qrIssuanceLocked, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
 
 function YazdirInner() {
   const supabase = createBrowserSupabase();
@@ -37,11 +37,12 @@ function YazdirInner() {
         setLoading(false);
         return;
       }
-      const origin = window.location.origin;
       const codes: any[] = (body?.codes ?? []).filter((c: any) => c.status !== "revoked");
       const out: { code: string; img: string }[] = [];
       for (const c of codes) {
-        const img = await QRCode.toDataURL(buildQrUrl(c.code, origin), { margin: 1, width: 300, errorCorrectionLevel: "M" });
+        const url = printableQrUrl(c.code);
+        if (!url) continue;
+        const img = await QRCode.toDataURL(url, { margin: 1, width: 300, errorCorrectionLevel: "M" });
         out.push({ code: c.code, img });
       }
       setItems(out);
@@ -68,9 +69,9 @@ function YazdirInner() {
           Yazdır
         </button>
       </div>
-      {!hasPermanentQrBase() && (
-        <p role="alert" style={{ border: `2px solid ${colors.danger}`, color: colors.danger, borderRadius: 8, padding: "10px 12px", fontWeight: 700, margin: "0 0 12px" }}>
-          TEST ÇIKTISI — kalıcı QR adresi (go.&lt;alan-adı&gt;) bu ortamda tanımlı değil. Bu etiketler dağıtım için basılmamalıdır.
+      {qrIssuanceLocked() && (
+        <p role="alert" data-testid="qr-print-locked" style={{ border: `2px solid ${colors.danger}`, color: colors.danger, borderRadius: 8, padding: "10px 12px", fontWeight: 700, margin: "0 0 12px" }}>
+          {QR_LOCK_MESSAGE}
         </p>
       )}
       {loading && <p>Hazırlanıyor…</p>}

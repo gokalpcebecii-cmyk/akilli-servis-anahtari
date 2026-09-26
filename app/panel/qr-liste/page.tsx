@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import QRCode from "qrcode";
 import { colors, font, radius, cardStyle } from "@/lib/theme";
-const { buildQrUrl } = require("@/lib/qrUrl");
+const { printableQrUrl } = require("@/lib/qrUrl");
 
 export default function QrListePage() {
   const router = useRouter();
@@ -15,7 +15,6 @@ export default function QrListePage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unassigned" | "assigned">("all");
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
     async function load() {
@@ -34,7 +33,8 @@ export default function QrListePage() {
 
       const imgs: Record<string, string> = {};
       for (const item of data ?? []) {
-        imgs[item.code] = await QRCode.toDataURL(buildQrUrl(item.code, baseUrl), { width: 300, margin: 1 });
+        const url = printableQrUrl(item.code);
+        if (url) imgs[item.code] = await QRCode.toDataURL(url, { width: 300, margin: 1 });
       }
       setImages(imgs);
       setLoading(false);
@@ -89,7 +89,7 @@ export default function QrListePage() {
             ) : (
               <p style={{ fontSize: 11, color: colors.textMuted, marginBottom: 6 }}>Boş</p>
             )}
-            <button onClick={() => downloadOne(item.code)} style={{ fontSize: 11, padding: "6px 12px", background: colors.surfaceSoft, border: "none", borderRadius: 6, cursor: "pointer", minHeight: 32 }}>
+            <button onClick={() => downloadOne(item.code)} disabled={!images[item.code]} style={{ fontSize: 11, padding: "6px 12px", background: colors.surfaceSoft, border: "none", borderRadius: 6, cursor: "pointer", minHeight: 32 }}>
               İndir
             </button>
           </div>

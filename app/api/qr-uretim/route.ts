@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { generateQrCode } = require("@/lib/qrToken");
+const { qrIssuanceLocked, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
     // bypass yolu yok (salt-okunur pg_policies incelemesiyle doğrulandı).
     if (!PILOT_FLAGS.bulkQrGeneration) {
       return NextResponse.json({ error: "feature_disabled" }, { status: 403 });
+    }
+    if (qrIssuanceLocked()) {
+      return NextResponse.json({ error: QR_LOCK_MESSAGE, code: "qr_issuance_locked" }, { status: 423 });
     }
 
     const authHeader = req.headers.get("authorization");

@@ -28,10 +28,14 @@ go-host'ta başka her yol → 404; go-host kökü → 307 ana site.
 
 | Değişken | Production | Staging |
 |---|---|---|
-| `NEXT_PUBLIC_QR_BASE_URL` | Zorunlu. `https://go.<domain>` (path yok, vercel.app değil) | İsteğe bağlı. Ör. `https://<staging>.vercel.app/r` |
-| `OTOIZ_APP_ORIGIN` | Zorunlu. `https://<domain>` | QR adresi tanımlıysa zorunlu |
+| `NEXT_PUBLIC_QR_BASE_URL` | `https://go.<domain>` (path yok, vercel.app değil) | Ör. `https://<staging>.vercel.app/r` |
+| `OTOIZ_APP_ORIGIN` | `https://<domain>` | `https://<staging>.vercel.app` |
 
-Production build bu değerler eksik/yanlışsa başlamaz (`lib/envCheck.js`).
+**QR kilidi:** `NEXT_PUBLIC_QR_BASE_URL` tanımlı değilse uygulama normal build/deploy olur (QR ile ilgisiz acil düzeltmeler çıkabilir), ancak:
+- `/api/admin/qr` `generate` ve `/api/qr-uretim` → **423** `qr_issuance_locked` (QR partisi üretilemez),
+- hiçbir ekran QR görseli üretmez (`printableQrUrl` → null): toplu baskı, QR listesi/indirme, araç ekranı.
+
+Tanımlıysa değer sıkı doğrulanır; yanlış değerle (http, go. olmayan, path'li, vercel.app) production build başlamaz ve `OTOIZ_APP_ORIGIN` zorunludur (`lib/envCheck.js`).
 
 ## Veritabanı (migration `20260926094725_qr_resolver_foundation`)
 

@@ -14,22 +14,24 @@ test("qrUrl: üretilen her token resolver formatına uyar", () => {
   for (let i = 0; i < 2000; i++) assert.ok(isQrToken(generateQrCode()));
 });
 
-test("qrUrl: kalıcı adres tanımlıysa QR içeriği yalnız go.<alan-adı>/<token>", () => {
-  const { buildQrUrl } = load("https://go.otoiz-pilot.com/");
+test("qrUrl: kalıcı adres tanımlıysa QR içeriği yalnız go.<alan-adı>/<token>, kilit açık", () => {
+  const { printableQrUrl, qrIssuanceLocked } = load("https://go.otoiz-pilot.com/");
   const t = generateQrCode();
-  assert.equal(buildQrUrl(t, "https://akilli-servis-anahtari.vercel.app"), `https://go.otoiz-pilot.com/${t}`);
+  assert.equal(printableQrUrl(t), `https://go.otoiz-pilot.com/${t}`);
+  assert.equal(qrIssuanceLocked(), false);
 });
 
-test("qrUrl: tanımlı değilse eski davranış (origin/p/kod) korunur", () => {
-  const { buildQrUrl, hasPermanentQrBase } = load(undefined);
-  const t = generateQrCode();
-  assert.equal(buildQrUrl(t, "https://x.vercel.app/"), `https://x.vercel.app/p/${t}`);
-  assert.equal(hasPermanentQrBase(), false);
+test("qrUrl: kalıcı adres yoksa QR görseli üretilmez ve üretim kilitli", () => {
+  const { printableQrUrl, qrIssuanceLocked } = load(undefined);
+  assert.equal(printableQrUrl(generateQrCode()), null);
+  assert.equal(qrIssuanceLocked(), true);
+  const again = load("   ");
+  assert.equal(again.qrIssuanceLocked(), true);
 });
 
-test("qrUrl: eski kısa kod kalıcı adrese yazılmaz", () => {
-  const { buildQrUrl } = load("https://go.otoiz-pilot.com");
-  assert.equal(buildQrUrl("nwanp2ue22pm", "https://x.vercel.app"), "https://x.vercel.app/p/nwanp2ue22pm");
+test("qrUrl: eski kısa kod için QR görseli üretilmez", () => {
+  const { printableQrUrl } = load("https://go.otoiz-pilot.com");
+  assert.equal(printableQrUrl("nwanp2ue22pm"), null);
 });
 
 test("qrUrl: token formatı dışı değerler reddedilir", () => {

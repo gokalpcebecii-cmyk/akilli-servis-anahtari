@@ -248,10 +248,15 @@ test("QR: geçerli production QR/uygulama adresi kabul edilir", () => {
   assert.equal(r.ok, true, r.errors.join(" | "));
 });
 
-test("QR: production'da NEXT_PUBLIC_QR_BASE_URL yoksa build durur", () => {
-  const r = validateDeploymentEnv(baseProductionEnv({ NEXT_PUBLIC_QR_BASE_URL: "" }));
+test("QR: production'da NEXT_PUBLIC_QR_BASE_URL yoksa build GEÇER (acil düzeltme), kilit bildirilir", () => {
+  const r = validateDeploymentEnv(baseProductionEnv({ NEXT_PUBLIC_QR_BASE_URL: "", OTOIZ_APP_ORIGIN: "" }));
+  assert.equal(r.ok, true, r.errors.join(" | "));
+  assert.ok(r.notices.some((n) => n.includes("KİLİTLİ")));
+});
+
+test("QR: production'da QR adresi YANLIŞ tanımlıysa build durur", () => {
+  const r = validateDeploymentEnv(baseProductionEnv({ NEXT_PUBLIC_QR_BASE_URL: "https://akilli-servis-anahtari.vercel.app" }));
   assert.equal(r.ok, false);
-  assert.ok(r.errors.some((e) => e.includes("NEXT_PUBLIC_QR_BASE_URL")));
 });
 
 test("QR: production'da go. olmayan, http, path'li, vercel.app veya sorgulu adres reddedilir", () => {

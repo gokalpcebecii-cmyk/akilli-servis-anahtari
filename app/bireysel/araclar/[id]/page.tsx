@@ -10,7 +10,7 @@ import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 import OwnerQuickVisit from "@/components/OwnerQuickVisit";
 import OwnerKeychainCard from "@/components/OwnerKeychainCard";
-const { buildQrUrl } = require("@/lib/qrUrl");
+const { printableQrUrl } = require("@/lib/qrUrl");
 
 const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan, todayIsoIstanbul } = require("@/lib/logic");
 
@@ -237,9 +237,8 @@ export default function BireyselVehicleDetailPage() {
     if (qrKey) {
       setQrCode(qrKey.code);
       setQrRevokedAt(qrKey.revoked_at);
-      const publicUrl = buildQrUrl(qrKey.code, window.location.origin);
-      const qr = await QRCode.toDataURL(publicUrl, { width: 220 });
-      setQrDataUrl(qr);
+      const publicUrl = printableQrUrl(qrKey.code);
+      setQrDataUrl(publicUrl ? await QRCode.toDataURL(publicUrl, { width: 220 }) : null);
     }
   }
 

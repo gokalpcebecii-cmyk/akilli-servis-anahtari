@@ -6,7 +6,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import QRCode from "qrcode";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
-const { buildQrUrl } = require("@/lib/qrUrl");
+const { printableQrUrl } = require("@/lib/qrUrl");
 
 const QUICK_COUNTS = [1, 10, 20, 50];
 
@@ -24,7 +24,6 @@ export default function QrUretimPage() {
   const [confirming, setConfirming] = useState(false);
   const generatingRef = useRef(false);
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
     async function checkSession() {
@@ -79,8 +78,8 @@ export default function QrUretimPage() {
 
     const images: Record<string, string> = {};
     for (const item of data.codes) {
-      const url = buildQrUrl(item.code, baseUrl);
-      images[item.code] = await QRCode.toDataURL(url, { width: 300, margin: 1 });
+      const url = printableQrUrl(item.code);
+      if (url) images[item.code] = await QRCode.toDataURL(url, { width: 300, margin: 1 });
     }
     setQrImages(images);
     setLoading(false);
