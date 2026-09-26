@@ -50,6 +50,10 @@ const nextConfig = {
     ];
     const host = permanentQrHost();
     const app = appOrigin();
+    // go-host'ta trailing-slash 308'i yok; /<token>/ doğrudan resolver'a gider.
+    if (host) {
+      for (const r of rules.slice(0, 2)) r.missing = [{ type: "host", value: host }];
+    }
     if (host && app) {
       // go.<alan-adı>/ (token'sız) → ana site. Geçici (307).
       rules.push({ source: "/", has: [{ type: "host", value: host }], destination: `${app}/`, permanent: false });
@@ -64,11 +68,15 @@ const nextConfig = {
     return {
       beforeFiles: [
         resolverSlash,
-        // go.<alan-adı>/<26 karakter> → resolver. Büyük harf de kabul edilir
-        // (resolver normalize eder); format dışı her şey resolver'da 404 olur.
+        // go-host'ta token dışındaki HİÇBİR yol ana uygulamaya düşmez →
+        // geçersiz kod (404). Token kuralından ÖNCE gelir ve token yollarını
+        // hariç tutar: beforeFiles rewrite'ları zincirlenir, sonda olursa
+        // /r/<token>'a yazılmış isteği de yakalayıp 404'e çeviriyordu.
+        { source: "/:path((?![A-Za-z0-9]{26}/?$).*)", has: [{ type: "host", value: host }], destination: "/r/-" },
+        // go.<alan-adı>/<26 karakter>[/] → resolver. Büyük harf de kabul
+        // edilir (resolver normalize eder).
         { source: "/:token([A-Za-z0-9]{26})", has: [{ type: "host", value: host }], destination: "/r/:token" },
-        // go-host'ta başka HİÇBİR yol ana uygulamaya düşmez → geçersiz kod (404).
-        { source: "/:path*", has: [{ type: "host", value: host }], destination: "/r/-" },
+        { source: "/:token([A-Za-z0-9]{26})/", has: [{ type: "host", value: host }], destination: "/r/:token" },
       ],
     };
   },
