@@ -7,6 +7,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
+const { buildQrUrl } = require("@/lib/qrUrl");
 
 const {
   validateVehicleInput,
@@ -166,7 +167,7 @@ export default function VehicleDetailPage() {
 
     if (qrKey) {
       setQrCode(qrKey.code);
-      const publicUrl = `${window.location.origin}/p/${qrKey.code}`;
+      const publicUrl = buildQrUrl(qrKey.code, window.location.origin);
       const qr = await QRCode.toDataURL(publicUrl, { width: 200 });
       setQrDataUrl(qr);
     } else {

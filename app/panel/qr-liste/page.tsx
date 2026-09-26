@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import QRCode from "qrcode";
 import { colors, font, radius, cardStyle } from "@/lib/theme";
+const { buildQrUrl } = require("@/lib/qrUrl");
 
 export default function QrListePage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function QrListePage() {
 
       const imgs: Record<string, string> = {};
       for (const item of data ?? []) {
-        imgs[item.code] = await QRCode.toDataURL(`${baseUrl}/p/${item.code}`, { width: 300, margin: 1 });
+        imgs[item.code] = await QRCode.toDataURL(buildQrUrl(item.code, baseUrl), { width: 300, margin: 1 });
       }
       setImages(imgs);
       setLoading(false);

@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font } from "@/lib/theme";
+const { buildQrUrl, hasPermanentQrBase } = require("@/lib/qrUrl");
 
 function YazdirInner() {
   const supabase = createBrowserSupabase();
@@ -40,7 +41,7 @@ function YazdirInner() {
       const codes: any[] = (body?.codes ?? []).filter((c: any) => c.status !== "revoked");
       const out: { code: string; img: string }[] = [];
       for (const c of codes) {
-        const img = await QRCode.toDataURL(`${origin}/p/${c.code}`, { margin: 1, width: 300, errorCorrectionLevel: "M" });
+        const img = await QRCode.toDataURL(buildQrUrl(c.code, origin), { margin: 1, width: 300, errorCorrectionLevel: "M" });
         out.push({ code: c.code, img });
       }
       setItems(out);
@@ -67,6 +68,11 @@ function YazdirInner() {
           Yazdır
         </button>
       </div>
+      {!hasPermanentQrBase() && (
+        <p role="alert" style={{ border: `2px solid ${colors.danger}`, color: colors.danger, borderRadius: 8, padding: "10px 12px", fontWeight: 700, margin: "0 0 12px" }}>
+          TEST ÇIKTISI — kalıcı QR adresi (go.&lt;alan-adı&gt;) bu ortamda tanımlı değil. Bu etiketler dağıtım için basılmamalıdır.
+        </p>
+      )}
       {loading && <p>Hazırlanıyor…</p>}
       {error && <p role="alert" style={{ color: colors.danger }}>{error}</p>}
       <div className="qr-grid">

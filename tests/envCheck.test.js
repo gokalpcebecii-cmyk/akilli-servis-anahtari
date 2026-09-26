@@ -33,6 +33,8 @@ function baseProductionEnv(overrides) {
       NEXT_PUBLIC_SUPABASE_ANON_KEY: fakeJwt({ iss: "supabase", ref: PRODUCTION_REF, role: "anon" }),
       SUPABASE_SERVICE_ROLE_KEY: fakeJwt({ iss: "supabase", ref: PRODUCTION_REF, role: "service_role" }),
       CRON_SECRET: "cok-uzun-ve-rastgele-bir-production-secret-degeri",
+      NEXT_PUBLIC_QR_BASE_URL: "https://go.otoiz-pilot.com",
+      OTOIZ_APP_ORIGIN: "https://otoiz-pilot.com",
     },
     overrides
   );
@@ -236,4 +238,54 @@ test("validateBranchRole: main dalı staging rolüyle build edilemez; production
   assert.ok(validateBranchRole({ VERCEL_GIT_COMMIT_REF: "claude/otoiz-pilot-bugfix-01", OTOIZ_DEPLOYMENT_ROLE: "production" }));
   assert.equal(validateBranchRole({ VERCEL_GIT_COMMIT_REF: "main", OTOIZ_DEPLOYMENT_ROLE: "production" }), null);
   assert.equal(validateBranchRole({ VERCEL_GIT_COMMIT_REF: "claude/otoiz-pilot-bugfix-01", OTOIZ_DEPLOYMENT_ROLE: "staging" }), null);
+});
+
+// ---- Aşama 1: kalıcı QR adresi kuralları ----
+const { validateQrUrls } = require("../lib/envCheck");
+
+test("QR: geçerli production QR/uygulama adresi kabul edilir", () => {
+  const r = validateDeploymentEnv(baseProductionEnv());
+  assert.equal(r.ok, true, r.errors.join(" | "));
+});
+
+test("QR: production'da NEXT_PUBLIC_QR_BASE_URL yoksa build durur", () => {
+  const r = validateDeploymentEnv(baseProductionEnv({ NEXT_PUBLIC_QR_BASE_URL: "" }));
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes("NEXT_PUBLIC_QR_BASE_URL")));
+});
+
+test("QR: production'da go. olmayan, http, path'li, vercel.app veya sorgulu adres reddedilir", () => {
+  for (const bad of [
+    "https://otoiz-pilot.com",
+    "http://go.otoiz-pilot.com",
+    "https://go.otoiz-pilot.com/p",
+    "https://go.akilli-servis-anahtari.vercel.app",
+    "https://go.otoiz-pilot.com/?x=1",
+    "not a url",
+  ]) {
+    const errs = validateQrUrls({ NEXT_PUBLIC_QR_BASE_URL: bad, OTOIZ_APP_ORIGIN: "https://otoiz-pilot.com" }, "production");
+    assert.ok(errs.length > 0, `kabul edilmemeliydi: ${bad}`);
+  }
+});
+
+test("QR: sondaki / tek başına kabul edilir", () => {
+  assert.deepEqual(validateQrUrls({ NEXT_PUBLIC_QR_BASE_URL: "https://go.otoiz-pilot.com/", OTOIZ_APP_ORIGIN: "https://otoiz-pilot.com" }, "production"), []);
+});
+
+test("QR: QR adresi varsa OTOIZ_APP_ORIGIN zorunlu; path'li/aynı host/vercel.app reddedilir", () => {
+  const q = "https://go.otoiz-pilot.com";
+  assert.ok(validateQrUrls({ NEXT_PUBLIC_QR_BASE_URL: q }, "production").length > 0);
+  assert.ok(validateQrUrls({ NEXT_PUBLIC_QR_BASE_URL: q, OTOIZ_APP_ORIGIN: "https://otoiz-pilot.com/app" }, "production").length > 0);
+  assert.ok(validateQrUrls({ NEXT_PUBLIC_QR_BASE_URL: q, OTOIZ_APP_ORIGIN: "https://go.otoiz-pilot.com" }, "production").length > 0);
+  assert.ok(validateQrUrls({ NEXT_PUBLIC_QR_BASE_URL: q, OTOIZ_APP_ORIGIN: "https://akilli-servis-anahtari.vercel.app" }, "production").length > 0);
+});
+
+test("QR: staging'de ikisi de isteğe bağlı; tanımlıysa staging path'li adres kabul edilir", () => {
+  assert.deepEqual(validateQrUrls({}, "staging"), []);
+  assert.deepEqual(
+    validateQrUrls({ NEXT_PUBLIC_QR_BASE_URL: "https://akilli-servis-anahtari-staging.vercel.app/r", OTOIZ_APP_ORIGIN: "https://akilli-servis-anahtari-staging.vercel.app" }, "staging"),
+    []
+  );
+  assert.ok(validateQrUrls({ NEXT_PUBLIC_QR_BASE_URL: "http://x.vercel.app/r", OTOIZ_APP_ORIGIN: "https://x.vercel.app" }, "staging").length > 0);
+  assert.equal(validateDeploymentEnv(baseStagingEnv()).ok, true);
 });
