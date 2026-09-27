@@ -5,6 +5,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { Icon } from "@/components/Icon";
+const { parseRecoveryParams } = require("@/lib/emailConfirm");
 
 export default function SifreGuncellePage() {
   const [ready, setReady] = useState(false);
@@ -14,8 +15,21 @@ export default function SifreGuncellePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [pendingToken, setPendingToken] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
+    // Yeni bağlantı biçimi (?token_hash=…&type=recovery): tarayıcıya bağlı
+    // değil, 5 dakikalık PKCE süresi yok. Token burada tüketilmez; kullanıcı
+    // "Devam et"e basınca doğrulanır (e-posta tarayıcılarının bağlantıyı
+    // önceden açıp tek kullanımlık token'ı harcamasını önler).
+    const recovery = parseRecoveryParams(window.location.search);
+    if (recovery) {
+      if (recovery.invalid) setInvalidLink(true);
+      else setPendingToken(recovery.tokenHash);
+      return;
+    }
+
     const supabase = createBrowserSupabase();
 
     // Supabase, sıfırlama bağlantısındaki token'ı otomatik işleyip bir
@@ -41,6 +55,22 @@ export default function SifreGuncellePage() {
       window.clearTimeout(timer);
     };
   }, []);
+
+  async function verifyRecovery() {
+    if (!pendingToken || verifying) return;
+    setVerifying(true);
+    const supabase = createBrowserSupabase();
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: pendingToken, type: "recovery" });
+    setVerifying(false);
+    // Token adres çubuğunda ve geçmişte kalmasın.
+    window.history.replaceState(null, "", window.location.pathname);
+    setPendingToken("");
+    if (error || !data.session) {
+      setInvalidLink(true);
+      return;
+    }
+    setReady(true);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -97,6 +127,21 @@ export default function SifreGuncellePage() {
           <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bağlantı Geçersiz veya Süresi Dolmuş</h1>
           <p style={{ color: colors.textMuted, marginBottom: 20 }}>Lütfen yeni bir şifre sıfırlama bağlantısı isteyin.</p>
           <a href="/hesap/sifremi-unuttum" style={{ color: colors.greenDark, fontWeight: 700 }}>Tekrar Dene</a>
+        </div>
+      </main>
+    );
+  }
+
+  if (pendingToken) {
+    return (
+      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 380, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <OtoizLogo variant="light" size={140} />
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800, marginTop: 14 }}>Şifre Sıfırlama</h1>
+          <p style={{ color: colors.textMuted, marginBottom: 20 }}>Yeni şifreni belirlemek için devam et.</p>
+          <button type="button" data-testid="recovery-continue" onClick={verifyRecovery} disabled={verifying} aria-busy={verifying} style={primaryButtonStyle(verifying)}>
+            {verifying ? "Doğrulanıyor…" : "Devam et"}
+          </button>
         </div>
       </main>
     );

@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { safeNext, confirmRedirectUrl, signupErrorMessage, parseConfirmHash } = require("../lib/emailConfirm");
+const { safeNext, confirmRedirectUrl, signupErrorMessage, parseConfirmHash, parseRecoveryParams } = require("../lib/emailConfirm");
 
 test("safeNext: yalnız site içi yol", () => {
   assert.equal(safeNext("/aktivasyon?t=abc"), "/aktivasyon?t=abc");
@@ -27,4 +27,14 @@ test("signupErrorMessage: ham metin gösterilmez", () => {
   assert.match(signupErrorMessage({ code: "email_address_not_authorized", status: 400 }), /gönderilemedi/);
   assert.match(signupErrorMessage({ status: 500, message: "SMTP boom" }), /gönderilemedi/);
   assert.doesNotMatch(signupErrorMessage({ message: "internal pq error" }), /pq/);
+});
+
+test("parseRecoveryParams: yalnız type=recovery ve biçimi doğru token_hash", () => {
+  const h = "84e6ccf9dbb0d7c6b4c4f0184855499407144198846c6521f8c9af63";
+  assert.deepEqual(parseRecoveryParams(`?token_hash=${h}&type=recovery`), { tokenHash: h, invalid: false });
+  assert.equal(parseRecoveryParams(""), null);
+  assert.equal(parseRecoveryParams("?code=abc"), null);
+  assert.equal(parseRecoveryParams(`?token_hash=${h}&type=signup`).invalid, true);
+  assert.equal(parseRecoveryParams("?token_hash=<script>&type=recovery").invalid, true);
+  assert.equal(parseRecoveryParams("?token_hash=abc&type=recovery").invalid, true);
 });
