@@ -14,7 +14,10 @@ function YazdirInner() {
   const supabase = createBrowserSupabase();
   const params = useSearchParams();
   const batch = params.get("batch") || "";
-  const [items, setItems] = useState<{ code: string; img: string }[]>([]);
+  // Faz 3: ürün partisi (batch_id) → QR altında seri no yazılır, token değil.
+  const batchId = params.get("batch_id") || "";
+  const [title, setTitle] = useState(batch);
+  const [items, setItems] = useState<{ code: string; label: string; img: string }[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +30,10 @@ function YazdirInner() {
         setLoading(false);
         return;
       }
-      const res = await fetch(`/api/admin/qr?filter=all&batch=${encodeURIComponent(batch)}`, {
+      const path = batchId
+        ? `/api/admin/urunler?batch_id=${encodeURIComponent(batchId)}`
+        : `/api/admin/qr?filter=all&batch=${encodeURIComponent(batch)}`;
+      const res = await fetch(path, {
         headers: { Authorization: `Bearer ${t}` },
         cache: "no-store",
       });
@@ -37,19 +43,24 @@ function YazdirInner() {
         setLoading(false);
         return;
       }
-      const codes: any[] = (body?.codes ?? []).filter((c: any) => c.status !== "revoked");
-      const out: { code: string; img: string }[] = [];
+      const codes: { code: string; label: string }[] = batchId
+        ? (body?.products ?? [])
+            .filter((p: any) => ["created", "in_stock", "distributed"].includes(p.status))
+            .map((p: any) => ({ code: p.token, label: p.serial_no }))
+        : (body?.codes ?? []).filter((c: any) => c.status !== "revoked").map((c: any) => ({ code: c.code, label: c.code }));
+      if (batchId && body?.batch?.label) setTitle(body.batch.label);
+      const out: { code: string; label: string; img: string }[] = [];
       for (const c of codes) {
         const url = printableQrUrl(c.code);
         if (!url) continue;
         const img = await QRCode.toDataURL(url, { margin: 1, width: 300, errorCorrectionLevel: "M" });
-        out.push({ code: c.code, img });
+        out.push({ code: c.code, label: c.label, img });
       }
       setItems(out);
       setLoading(false);
     }
     load();
-  }, [batch]);
+  }, [batch, batchId]);
 
   return (
     <main style={{ fontFamily: font, color: colors.textDark, padding: 16, background: "#fff", minHeight: "100vh" }}>
@@ -60,7 +71,7 @@ function YazdirInner() {
       `}</style>
       <div className="no-print" style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 16 }}>
         <a href="/yonetim" style={{ color: colors.greenDark, fontWeight: 700, minHeight: 44, display: "inline-flex", alignItems: "center" }}>← Yönetim</a>
-        <h1 style={{ fontSize: 18, margin: 0 }}>{batch || "QR partisi"} — {items.length} kod</h1>
+        <h1 style={{ fontSize: 18, margin: 0 }}>{title || "QR partisi"} — {items.length} kod</h1>
         <button
           onClick={() => window.print()}
           disabled={items.length === 0}
@@ -79,8 +90,8 @@ function YazdirInner() {
       <div className="qr-grid">
         {items.map((i) => (
           <div key={i.code} className="qr-cell">
-            <img src={i.img} alt={`QR ${i.code}`} style={{ width: "100%", maxWidth: 160, height: "auto" }} />
-            <div style={{ fontFamily: "monospace", fontSize: 13, fontWeight: 700, marginTop: 4, letterSpacing: 0.5 }}>{i.code}</div>
+            <img src={i.img} alt={`QR ${i.label}`} style={{ width: "100%", maxWidth: 160, height: "auto" }} />
+            <div style={{ fontFamily: "monospace", fontSize: 13, fontWeight: 700, marginTop: 4, letterSpacing: 0.5 }}>{i.label}</div>
             <div style={{ fontSize: 10, color: colors.textMuted }}>OTOİZ</div>
           </div>
         ))}

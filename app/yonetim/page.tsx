@@ -9,13 +9,15 @@ import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import UrunlerTab from "./UrunlerTab";
 
-type Tab = "genel" | "kullanicilar" | "qr" | "araclar" | "servisler";
+type Tab = "genel" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "genel", label: "Genel Bakış" },
   { key: "kullanicilar", label: "Kullanıcılar" },
-  { key: "qr", label: "QR Kodları" },
+  { key: "urunler", label: "Ürünler" },
+  { key: "qr", label: "QR Kodları (destek)" },
   { key: "araclar", label: "Araçlar" },
   { key: "servisler", label: "Servisler" },
 ];
@@ -128,7 +130,7 @@ export default function YonetimPage() {
 
   useEffect(() => {
     if (stage !== "ready") return;
-    if (tab === "genel" || tab === "servisler") loadOverview();
+    if (tab === "genel" || tab === "servisler" || (tab === "urunler" && !overview)) loadOverview();
     if (tab === "kullanicilar") loadUsers();
     if (tab === "qr") {
       loadQr();
@@ -396,8 +398,14 @@ export default function YonetimPage() {
         )}
 
         {/* ================= QR KODLARI ================= */}
+        {tab === "urunler" && <UrunlerTab api={api} tenants={tenants} />}
+
         {tab === "qr" && (
           <>
+            <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 12px" }}>
+              Yeni fiziksel ürünler <strong>Ürünler</strong> sekmesinden üretilir ve müşteri tarafından etkinleştirilir. Bu ekrandaki
+              araca atama yalnız <strong>destek / kurtarma</strong> içindir.
+            </p>
             <section style={{ ...cardStyle, marginBottom: 16 }}>
               <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Yeni QR üret</h2>
               <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 12px" }}>
@@ -549,7 +557,7 @@ export default function YonetimPage() {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                         {!q.vehicle && (
                           <button onClick={() => { setAssignCode(q.code); setAssignResults([]); setAssignQuery(""); }} style={smallBtn(colors.surfaceSoft, colors.textDark, colors.border)}>
-                            Araca ata
+                            Araca ata (destek)
                           </button>
                         )}
                         {(q.status === "reserved" || q.status === "reserved_user") && (

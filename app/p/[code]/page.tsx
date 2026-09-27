@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, font } from "@/lib/theme";
+import { colors, font, primaryButtonStyle } from "@/lib/theme";
 import { PublicPassportView, PublicPassportMessage, type PublicPassportData } from "@/components/PublicPassportView";
 
 // Bu sayfa herkese açık olduğundan service role yerine anon key kullanır;
@@ -22,6 +22,7 @@ export default function PassportByCodePage() {
   const params = useParams();
   const code = params.code as string;
   const [status, setStatus] = useState<"loading" | "invalid" | "unassigned" | "ready">("loading");
+  const [activatable, setActivatable] = useState(false);
   const [passport, setPassport] = useState<PublicPassportData | null>(null);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function PassportByCodePage() {
         return;
       }
       if (data.status === "unassigned") {
+        setActivatable(data.activatable === true);
         setStatus("unassigned");
         return;
       }
@@ -49,9 +51,34 @@ export default function PassportByCodePage() {
   if (status === "invalid") {
     return <PublicPassportMessage title="Geçersiz Kod" body="Bu QR kod sistemde tanımlı değil." />;
   }
+  if (status === "unassigned" && activatable) {
+    // Faz 3: yeni ürün (aktivasyon kodlu) → self-aktivasyon. Resolver ve
+    // /p/ adresi değişmez; yalnız bu ekran bir sonraki adımı gösterir.
+    return <ActivatePrompt code={code} />;
+  }
   if (status === "unassigned") {
     return <PublicPassportMessage title="Henüz Eşleştirilmemiş" body="Bu anahtarlık henüz bir araca bağlanmamış." />;
   }
 
   return <PublicPassportView passport={passport!} />;
+}
+
+function ActivatePrompt({ code }: { code: string }) {
+  return (
+    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+      <div style={{ maxWidth: 420, width: "100%", margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+        <h1 style={{ fontSize: 21, color: colors.textDark, fontWeight: 800, marginBottom: 8 }}>Yeni OTOİZ anahtarlığı</h1>
+        <p style={{ color: colors.textMuted, lineHeight: 1.55, margin: "0 0 20px" }}>
+          Bu anahtarlık henüz bir araca bağlı değil. Paketteki aktivasyon kodu ile birkaç adımda aracına bağla.
+        </p>
+        <a
+          href={`/aktivasyon?t=${encodeURIComponent(code)}`}
+          data-testid="activate-cta"
+          style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}
+        >
+          Anahtarlığı etkinleştir
+        </a>
+      </div>
+    </main>
+  );
 }

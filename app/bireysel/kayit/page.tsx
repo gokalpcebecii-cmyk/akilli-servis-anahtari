@@ -1,19 +1,19 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createBrowserSupabase } from "@/lib/supabase";
+import { useSearchParams } from "next/navigation";
 import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { ResendConfirmation } from "@/components/ResendConfirmation";
 
 function BireyselKayitForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
   const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : "/bireysel/araclar";
   const [form, setForm] = useState({ full_name: "", email: "", password: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,33 +21,41 @@ function BireyselKayitForm() {
     setError("");
     setLoading(true);
 
+    // Faz 3.1: hesap e-posta doğrulanana kadar açılmaz; otomatik giriş yok.
     const res = await fetch("/api/bireysel-kayit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, next: redirectTo }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    setLoading(false);
 
     if (!res.ok) {
-      setLoading(false);
       setError(data.error || "Bir hata oluştu.");
       return;
     }
+    setSentTo(form.email.trim().toLowerCase());
+  }
 
-    const supabase = createBrowserSupabase();
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    });
-
-    setLoading(false);
-
-    if (loginError) {
-      router.push("/bireysel/giris");
-      return;
-    }
-
-    router.push(redirectTo);
+  if (sentTo) {
+    return (
+      <main className="otoiz-auth-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, padding: "40px 20px" }}>
+        <div data-testid="check-email" style={{ maxWidth: 380, margin: "0 auto", background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}>
+          <OtoizLogo variant="light" size={140} />
+          <h1 style={{ fontSize: 21, margin: "16px 0 8px", color: colors.textDark, fontWeight: 800 }}>E-postanı kontrol et</h1>
+          <p style={{ color: colors.textDark, lineHeight: 1.55, margin: "0 0 8px" }}>
+            <strong>{sentTo}</strong> adresine bir doğrulama bağlantısı gönderdik. Bağlantıya bastıktan sonra giriş yapabilirsin.
+          </p>
+          <p style={{ color: colors.textMuted, fontSize: 13, lineHeight: 1.5, margin: "0 0 18px" }}>
+            E-posta birkaç dakika içinde gelmezse gereksiz (spam) klasörüne bak.
+          </p>
+          <ResendConfirmation email={sentTo} next={redirectTo} />
+          <p style={{ textAlign: "center", marginTop: 18, fontSize: 13 }}>
+            <a href={`/bireysel/giris${next ? `?next=${encodeURIComponent(redirectTo)}` : ""}`} style={{ color: colors.greenDark, fontWeight: 600 }}>Doğruladım, giriş yap</a>
+          </p>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -87,7 +95,7 @@ function BireyselKayitForm() {
         </form>
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: colors.textDark }}>
-          Zaten hesabınız var mı? <a href="/bireysel/giris" style={{ color: colors.greenDark, fontWeight: 600 }}>Giriş yapın</a>
+          Zaten hesabınız var mı? <a href={`/bireysel/giris${next ? `?next=${encodeURIComponent(redirectTo)}` : ""}`} style={{ color: colors.greenDark, fontWeight: 600 }}>Giriş yapın</a>
         </p>
         <p style={{ textAlign: "center", marginTop: 8, fontSize: 13 }}>
           <a href="/panel/kayit" style={{ color: colors.textMuted }}>İşletme / Servis misiniz?</a>
