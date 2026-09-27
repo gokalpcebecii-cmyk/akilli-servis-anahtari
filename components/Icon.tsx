@@ -182,6 +182,36 @@ export function Icon({
           <path d="M12 7v5l3.5 2" />
         </svg>
       );
+    case "share":
+      // iOS Safari "Paylaş" simgesi: yukarı ok + açık kutu.
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M12 3v12M8 7l4-4 4 4" />
+          <path d="M8 11H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-2" />
+        </svg>
+      );
+    case "plus-square":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <rect x="4" y="4" width="16" height="16" rx="3" />
+          <path d="M12 8v8M8 12h8" />
+        </svg>
+      );
+    case "more-vertical":
+      return (
+        <svg viewBox="0 0 24 24" style={{ ...s, fill: color }}>
+          <circle cx="12" cy="5" r="1.6" />
+          <circle cx="12" cy="12" r="1.6" />
+          <circle cx="12" cy="19" r="1.6" />
+        </svg>
+      );
+    case "download":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M12 4v11M7 10l5 5 5-5" />
+          <path d="M5 20h14" />
+        </svg>
+      );
     case "smartphone":
       return (
         <svg viewBox="0 0 24 24" style={s}>

@@ -9,15 +9,15 @@ import { OtoizLogo } from "@/components/OtoizLogo";
 export default function GirisSecimiPage() {
   return (
     <main
-      className="otoiz-hero-pattern"
       style={{
         position: "relative", overflow: "hidden", minHeight: "100vh",
-        background: `linear-gradient(160deg, ${colors.bg} 0%, ${colors.bgAlt} 55%, ${colors.surfaceDark} 100%)`,
+        // Aşama C: giriş ekranlarıyla aynı antrasit zemin (bkz. AuthShell).
+        background: "var(--otoiz-anthracite)",
         color: colors.textLight, fontFamily: font,
         display: "flex", flexDirection: "column",
       }}
     >
-      <div className="otoiz-reflection" aria-hidden="true" />
+      <div className="otoiz-auth2-bg" aria-hidden="true" />
 
       <div style={{ position: "relative", zIndex: 1, padding: "20px 20px 0" }}>
         <a
@@ -25,7 +25,7 @@ export default function GirisSecimiPage() {
           aria-label="Geri"
           style={{
             display: "inline-flex", alignItems: "center", justifyContent: "center",
-            width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)",
+            width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.08)",
             border: "1px solid rgba(255,255,255,0.14)", color: colors.textLight, textDecoration: "none", fontSize: 18,
           }}
         >

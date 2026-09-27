@@ -3,8 +3,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
-import { OtoizLogo } from "@/components/OtoizLogo";
+import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { AuthShell, AuthShellLoading, AuthFooterLink } from "@/components/AuthShell";
+import { InstallCta } from "@/components/InstallCta";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -94,104 +95,89 @@ function BireyselGirisForm() {
   }
 
   if (checkingSession) {
-    return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
+    return <AuthShellLoading />;
   }
 
+  const kayitHref = `/bireysel/kayit${next ? `?next=${encodeURIComponent(redirectTo)}` : ""}`;
+
   return (
-    <main className="otoiz-auth-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
-      <div
-        className="otoiz-hero-pattern otoiz-auth-hero"
-        style={{ position: "relative", overflow: "hidden", background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 48px" }}
-      >
-        <div className="otoiz-reflection" aria-hidden="true" />
-        <a href="/" style={{ position: "relative", display: "inline-block", marginBottom: 24, fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
-          ← Ana sayfaya dön
-        </a>
-        <div className="otoiz-auth-hero-inner" style={{ position: "relative", maxWidth: 360, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={190} mark="primary" />
-          <div className="otoiz-accent-line" style={{ margin: "12px 0 16px" }} />
-          <h1 style={{ fontSize: 23, marginTop: 0, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Bireysel Giriş</h1>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>
-            Bu alan kendi aracınızı yöneten kullanıcılar içindir. Araçlarınızın bakım geçmişine ve dijital
-            pasaportuna buradan ulaşabilirsiniz.
+    <AuthShell
+      role="bireysel"
+      title="Bireysel Giriş"
+      subtitle="Araçlarınızın bakım geçmişine ve dijital pasaportuna buradan ulaşın."
+      footer={
+        <>
+          <p>
+            Hesabınız yok mu? <AuthFooterLink href={kayitHref} strong>Kayıt olun</AuthFooterLink>
           </p>
-        </div>
-      </div>
-
-      <div className="otoiz-auth-form-wrap" style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
-        <form
-          onSubmit={handleLogin}
-          noValidate
-          style={{ background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}
-        >
-          <label htmlFor="bireysel-email" style={labelStyle}>E-posta</label>
-          <input
-            id="bireysel-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-invalid={!!fieldErrors.email}
-            aria-describedby={fieldErrors.email ? "bireysel-email-err" : undefined}
-            style={{ ...inputStyle, marginBottom: fieldErrors.email ? 4 : 14, borderColor: fieldErrors.email ? colors.danger : colors.border }}
-          />
-          {fieldErrors.email && (
-            <p id="bireysel-email-err" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
-              {fieldErrors.email}
-            </p>
-          )}
-
-          <label htmlFor="bireysel-password" style={labelStyle}>Şifre</label>
-          <input
-            id="bireysel-password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            aria-invalid={!!fieldErrors.password}
-            aria-describedby={fieldErrors.password ? "bireysel-password-err" : undefined}
-            style={{ ...inputStyle, marginBottom: fieldErrors.password ? 4 : 8, borderColor: fieldErrors.password ? colors.danger : colors.border }}
-          />
-          {fieldErrors.password && (
-            <p id="bireysel-password-err" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 8px" }}>
-              {fieldErrors.password}
-            </p>
-          )}
-
-          <div style={{ textAlign: "right", marginBottom: 16 }}>
-            <a href="/hesap/sifremi-unuttum" style={{ fontSize: 12.5, color: colors.textMuted }}>Şifremi unuttum</a>
-          </div>
-
-          {error && (
-            <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
-              {error}
-            </p>
-          )}
-
-          <button type="submit" disabled={loading} aria-busy={loading} style={primaryButtonStyle(loading)}>
-            {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
-          </button>
-        </form>
-        {unconfirmed && (
-          <div style={{ marginTop: 14 }}>
-            <ResendConfirmation email={email.trim().toLowerCase()} next={redirectTo} />
-          </div>
+          <AuthFooterLink href="/panel/login">Servis / İşletme hesabınız mı var?</AuthFooterLink>
+        </>
+      }
+      after={<InstallCta tone="dark" />}
+    >
+      <form onSubmit={handleLogin} noValidate>
+        <label htmlFor="bireysel-email" style={labelStyle}>E-posta</label>
+        <input
+          id="bireysel-email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          aria-invalid={!!fieldErrors.email}
+          aria-describedby={fieldErrors.email ? "bireysel-email-err" : undefined}
+          style={{ ...inputStyle, marginBottom: fieldErrors.email ? 4 : 14, borderColor: fieldErrors.email ? colors.danger : colors.border }}
+        />
+        {fieldErrors.email && (
+          <p id="bireysel-email-err" role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 10px" }}>
+            {fieldErrors.email}
+          </p>
         )}
 
-        <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: colors.textDark }}>
-          Hesabınız yok mu? <a href={`/bireysel/kayit${next ? `?next=${encodeURIComponent(redirectTo)}` : ""}`} style={{ color: colors.greenDark, fontWeight: 600 }}>Kayıt olun</a>
-        </p>
-        <p style={{ textAlign: "center", marginTop: 8, fontSize: 12.5 }}>
-          <a href="/panel/login" style={{ color: colors.textMuted }}>Servis / İşletme hesabınız mı var?</a>
-        </p>
-      </div>
-    </main>
+        <label htmlFor="bireysel-password" style={labelStyle}>Şifre</label>
+        <input
+          id="bireysel-password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          aria-invalid={!!fieldErrors.password}
+          aria-describedby={fieldErrors.password ? "bireysel-password-err" : undefined}
+          style={{ ...inputStyle, marginBottom: fieldErrors.password ? 4 : 2, borderColor: fieldErrors.password ? colors.danger : colors.border }}
+        />
+        {fieldErrors.password && (
+          <p id="bireysel-password-err" role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 2px" }}>
+            {fieldErrors.password}
+          </p>
+        )}
+
+        <div style={{ textAlign: "right", marginBottom: 8 }}>
+          <a href="/hesap/sifremi-unuttum" className="otoiz-auth2-inline-link">Şifremi unuttum</a>
+        </div>
+
+        {error && (
+          <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 14, lineHeight: 1.5 }}>
+            {error}
+          </p>
+        )}
+
+        <button type="submit" disabled={loading} aria-busy={loading} style={primaryButtonStyle(loading)}>
+          {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
+        </button>
+      </form>
+      {unconfirmed && (
+        <div style={{ marginTop: 14 }}>
+          <ResendConfirmation email={email.trim().toLowerCase()} next={redirectTo} />
+        </div>
+      )}
+    </AuthShell>
   );
 }
 
 export default function BireyselGirisPage() {
   return (
-    <Suspense fallback={<main style={{ padding: 24 }}>Yükleniyor…</main>}>
+    <Suspense fallback={<AuthShellLoading />}>
       <BireyselGirisForm />
     </Suspense>
   );

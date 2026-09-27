@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, font, inputStyle, primaryButtonStyle } from "@/lib/theme";
-import { OtoizLogo } from "@/components/OtoizLogo";
+import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { AuthShell, AuthFooterLink } from "@/components/AuthShell";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -54,65 +54,59 @@ export default function SifremiUnuttumPage() {
 
   if (sent) {
     return (
-      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
-        <div style={{ maxWidth: 380, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>E-posta Gönderildi</h1>
-          <p style={{ color: colors.textMuted, lineHeight: 1.6 }}>
-            <strong>{email}</strong> adresine kayıtlıysa, şifre sıfırlama bağlantısı gönderildi. Gelen
-            kutunuzu (ve spam klasörünü) kontrol edin.
-          </p>
-          <a href="/" style={{ fontSize: 13, color: colors.greenDark, fontWeight: 600 }}>← Ana sayfaya dön</a>
-        </div>
-      </main>
+      <AuthShell role="hesap" title="E-posta Gönderildi">
+        <p style={{ color: colors.textMuted, lineHeight: 1.6, margin: "0 0 18px" }}>
+          <strong style={{ color: colors.textDark }}>{email}</strong> adresine kayıtlıysa, şifre sıfırlama bağlantısı gönderildi. Gelen
+          kutunuzu (ve spam klasörünü) kontrol edin.
+        </p>
+        <a href="/" style={{ ...primaryButtonStyle(false), textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          Ana sayfaya dön
+        </a>
+      </AuthShell>
     );
   }
 
   return (
-    <main className="otoiz-auth-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
-      <div className="otoiz-auth-hero" style={{ background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 40px" }}>
-        <a href="/" style={{ display: "inline-block", marginBottom: 24, fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
-          ← Ana sayfaya dön
-        </a>
-        <div className="otoiz-auth-hero-inner" style={{ maxWidth: 360, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={190} mark="primary" />
-          <h1 style={{ fontSize: 23, marginTop: 14, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Şifremi Unuttum</h1>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>
-            Hesabınıza kayıtlı e-posta adresini girin, size şifre sıfırlama bağlantısı gönderelim. Bu
-            akış hem bireysel hem işletme hesapları için geçerlidir.
+    <AuthShell
+      role="hesap"
+      title="Şifremi Unuttum"
+      subtitle="Hesabınıza kayıtlı e-posta adresini girin, size şifre sıfırlama bağlantısı gönderelim. Bireysel ve işletme hesapları için geçerlidir."
+      footer={
+        <p>
+          Şifrenizi hatırladınız mı? <AuthFooterLink href="/bireysel/giris" strong>Giriş yapın</AuthFooterLink>
+        </p>
+      }
+    >
+      <form onSubmit={handleSubmit} noValidate>
+        <label htmlFor="reset-email" style={labelStyle}>E-posta</label>
+        <input
+          id="reset-email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          aria-invalid={!!fieldError}
+          aria-describedby={fieldError ? "reset-email-err" : undefined}
+          style={{ ...inputStyle, marginBottom: fieldError ? 4 : 16, borderColor: fieldError ? colors.danger : colors.border }}
+        />
+        {fieldError && (
+          <p id="reset-email-err" role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 12px" }}>
+            {fieldError}
           </p>
-        </div>
-      </div>
+        )}
 
-      <div className="otoiz-auth-form-wrap" style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
-        <form onSubmit={handleSubmit} noValidate style={{ background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}>
-          <label htmlFor="reset-email" style={{ display: "block", fontSize: 13, fontWeight: 600, color: colors.textMuted, marginBottom: 6 }}>E-posta</label>
-          <input
-            id="reset-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-invalid={!!fieldError}
-            aria-describedby={fieldError ? "reset-email-err" : undefined}
-            style={{ ...inputStyle, marginBottom: fieldError ? 4 : 14, borderColor: fieldError ? colors.danger : colors.border }}
-          />
-          {fieldError && (
-            <p id="reset-email-err" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
-              {fieldError}
-            </p>
-          )}
+        {error && (
+          <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 12 }}>
+            {error}
+          </p>
+        )}
 
-          {error && (
-            <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>
-              {error}
-            </p>
-          )}
-
-          <button type="submit" disabled={loading} aria-busy={loading} style={primaryButtonStyle(loading)}>
-            {loading ? "Gönderiliyor…" : "Sıfırlama Bağlantısı Gönder"}
-          </button>
-        </form>
-      </div>
-    </main>
+        <button type="submit" disabled={loading} aria-busy={loading} style={primaryButtonStyle(loading)}>
+          {loading ? "Gönderiliyor…" : "Sıfırlama Bağlantısı Gönder"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, font, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
-import { OtoizLogo } from "@/components/OtoizLogo";
+import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { AuthShell, AuthShellLoading, AuthFooterLink } from "@/components/AuthShell";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -78,92 +78,74 @@ export default function LoginPage() {
   }
 
   if (checkingSession) {
-    return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
+    return <AuthShellLoading />;
   }
 
   return (
-    <main className="otoiz-auth-shell" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
-      <div
-        className="otoiz-hero-pattern otoiz-auth-hero"
-        style={{ position: "relative", overflow: "hidden", background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, padding: "24px 20px 48px" }}
-      >
-        <div className="otoiz-reflection" aria-hidden="true" />
-        <a href="/" style={{ position: "relative", display: "inline-block", marginBottom: 24, fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
-          ← Ana sayfaya dön
-        </a>
-        <div className="otoiz-auth-hero-inner" style={{ position: "relative", maxWidth: 360, margin: "0 auto" }}>
-          <OtoizLogo variant="dark" size={190} mark="primary" />
-          <div className="otoiz-accent-line" style={{ margin: "12px 0 16px" }} />
-          <h1 style={{ fontSize: 23, marginTop: 0, marginBottom: 6, color: colors.textLight, fontWeight: 800 }}>Servis / İşletme Girişi</h1>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13.5, lineHeight: 1.55, margin: 0 }}>
-            Bu alandan işletmenizin OTOİZ panelinize giriş yapıyorsunuz. Müşteri araçlarını ve servis
-            kayıtlarını buradan yönetebilirsiniz.
+    <AuthShell
+      role="servis"
+      title="Servis / İşletme Girişi"
+      subtitle="İşletmenizin OTOİZ paneline giriş yapın; müşteri araçlarını ve servis kayıtlarını buradan yönetin."
+      footer={
+        <>
+          <p>
+            İşletme hesabınız yok mu? <AuthFooterLink href="/panel/kayit" strong>Kayıt olun</AuthFooterLink>
           </p>
+          <AuthFooterLink href="/bireysel/giris">Bireysel araç sahibi misiniz?</AuthFooterLink>
+        </>
+      }
+    >
+      <form onSubmit={handleLogin} noValidate>
+        <label htmlFor="panel-email" style={labelStyle}>E-posta</label>
+        <input
+          id="panel-email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          aria-invalid={!!fieldErrors.email}
+          aria-describedby={fieldErrors.email ? "panel-email-err" : undefined}
+          style={{ ...inputStyle, marginBottom: fieldErrors.email ? 4 : 14, borderColor: fieldErrors.email ? colors.danger : colors.border }}
+        />
+        {fieldErrors.email && (
+          <p id="panel-email-err" role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 10px" }}>
+            {fieldErrors.email}
+          </p>
+        )}
+
+        <label htmlFor="panel-password" style={labelStyle}>Şifre</label>
+        <input
+          id="panel-password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          aria-invalid={!!fieldErrors.password}
+          aria-describedby={fieldErrors.password ? "panel-password-err" : undefined}
+          style={{ ...inputStyle, marginBottom: fieldErrors.password ? 4 : 2, borderColor: fieldErrors.password ? colors.danger : colors.border }}
+        />
+        {fieldErrors.password && (
+          <p id="panel-password-err" role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 2px" }}>
+            {fieldErrors.password}
+          </p>
+        )}
+
+        <div style={{ textAlign: "right", marginBottom: 8 }}>
+          <a href="/hesap/sifremi-unuttum" className="otoiz-auth2-inline-link">Şifremi unuttum</a>
         </div>
-      </div>
 
-      <div className="otoiz-auth-form-wrap" style={{ maxWidth: 360, margin: "-24px auto 0", padding: "0 20px 40px" }}>
-        <form
-          onSubmit={handleLogin}
-          noValidate
-          style={{ background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}
-        >
-          <label htmlFor="panel-email" style={labelStyle}>E-posta</label>
-          <input
-            id="panel-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-invalid={!!fieldErrors.email}
-            aria-describedby={fieldErrors.email ? "panel-email-err" : undefined}
-            style={{ ...inputStyle, marginBottom: fieldErrors.email ? 4 : 14, borderColor: fieldErrors.email ? colors.danger : colors.border }}
-          />
-          {fieldErrors.email && (
-            <p id="panel-email-err" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
-              {fieldErrors.email}
-            </p>
-          )}
+        {error && (
+          <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 14, lineHeight: 1.5 }}>
+            {error}
+          </p>
+        )}
 
-          <label htmlFor="panel-password" style={labelStyle}>Şifre</label>
-          <input
-            id="panel-password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            aria-invalid={!!fieldErrors.password}
-            aria-describedby={fieldErrors.password ? "panel-password-err" : undefined}
-            style={{ ...inputStyle, marginBottom: fieldErrors.password ? 4 : 8, borderColor: fieldErrors.password ? colors.danger : colors.border }}
-          />
-          {fieldErrors.password && (
-            <p id="panel-password-err" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 8px" }}>
-              {fieldErrors.password}
-            </p>
-          )}
-
-          <div style={{ textAlign: "right", marginBottom: 16 }}>
-            <a href="/hesap/sifremi-unuttum" style={{ fontSize: 12.5, color: colors.textMuted }}>Şifremi unuttum</a>
-          </div>
-
-          {error && (
-            <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
-              {error}
-            </p>
-          )}
-
-          <button type="submit" disabled={loading} aria-busy={loading} style={primaryButtonStyle(loading)}>
-            {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
-          </button>
-        </form>
-
-        <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: colors.textDark }}>
-          İşletme hesabınız yok mu? <a href="/panel/kayit" style={{ color: colors.greenDark, fontWeight: 600 }}>Kayıt olun</a>
-        </p>
-        <p style={{ textAlign: "center", marginTop: 8, fontSize: 12.5 }}>
-          <a href="/bireysel/giris" style={{ color: colors.textMuted }}>Bireysel araç sahibi misiniz?</a>
-        </p>
-      </div>
-    </main>
+        <button type="submit" disabled={loading} aria-busy={loading} style={primaryButtonStyle(loading)}>
+          {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

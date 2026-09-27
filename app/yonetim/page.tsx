@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import UrunlerTab from "./UrunlerTab";
 
 type Tab = "genel" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler";
@@ -236,41 +237,32 @@ export default function YonetimPage() {
 
   // ---------- Giriş / yetki ekranları ----------
   if (stage === "loading") {
-    return <main style={{ padding: 40, textAlign: "center", fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
+    return <AuthShellLoading />;
   }
 
   if (stage === "login" || stage === "forbidden") {
     return (
-      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-        <div style={{ width: "100%", maxWidth: 380 }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
-            <OtoizLogo variant="dark" size={180} mark="primary" />
-          </div>
-          <div style={{ ...cardStyle, padding: 22 }}>
-            <h1 style={{ fontSize: 19, margin: "0 0 4px", color: colors.textDark }}>Yönetim Paneli</h1>
-            <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 18px" }}>Yalnızca OTOİZ platform yöneticisi içindir.</p>
-            {stage === "forbidden" ? (
-              <>
-                <p role="alert" style={{ fontSize: 14, color: colors.danger, marginBottom: 16 }}>
-                  Bu hesabın yönetim paneline erişim yetkisi yok.
-                </p>
-                <button onClick={handleLogout} style={primaryButtonStyle(false)}>Farklı hesapla giriş yap</button>
-              </>
-            ) : (
-              <form onSubmit={handleLogin}>
-                <label style={labelStyle} htmlFor="adm-email">E-posta</label>
-                <input id="adm-email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} />
-                <label style={labelStyle} htmlFor="adm-pass">Şifre</label>
-                <input id="adm-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
-                {loginError && <p role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 12px" }}>{loginError}</p>}
-                <button type="submit" disabled={loggingIn} style={primaryButtonStyle(loggingIn)}>
-                  {loggingIn ? "Giriş yapılıyor…" : "Giriş Yap"}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      </main>
+      <AuthShell role="yonetim" title="Yönetim Paneli" subtitle="Yalnızca OTOİZ platform yöneticisi içindir.">
+        {stage === "forbidden" ? (
+          <>
+            <p role="alert" style={{ fontSize: 14, color: colors.danger, marginBottom: 16 }}>
+              Bu hesabın yönetim paneline erişim yetkisi yok.
+            </p>
+            <button onClick={handleLogout} style={primaryButtonStyle(false)}>Farklı hesapla giriş yap</button>
+          </>
+        ) : (
+          <form onSubmit={handleLogin}>
+            <label style={labelStyle} htmlFor="adm-email">E-posta</label>
+            <input id="adm-email" type="email" inputMode="email" autoCapitalize="none" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
+            <label style={labelStyle} htmlFor="adm-pass">Şifre</label>
+            <input id="adm-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, marginBottom: 16 }} />
+            {loginError && <p role="alert" style={{ color: colors.danger, fontSize: 14, margin: "0 0 12px" }}>{loginError}</p>}
+            <button type="submit" disabled={loggingIn} style={primaryButtonStyle(loggingIn)}>
+              {loggingIn ? "Giriş yapılıyor…" : "Giriş Yap"}
+            </button>
+          </form>
+        )}
+      </AuthShell>
     );
   }
 
