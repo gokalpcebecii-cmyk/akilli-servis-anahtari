@@ -16,7 +16,7 @@ type Tab = "genel" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler"
 const TABS: { key: Tab; label: string }[] = [
   { key: "genel", label: "Genel Bakış" },
   { key: "kullanicilar", label: "Kullanıcılar" },
-  { key: "urunler", label: "Ürünler" },
+  { key: "urunler", label: "Ürünler / Baskı Merkezi" },
   { key: "qr", label: "QR Kodları (destek)" },
   { key: "araclar", label: "Araçlar" },
   { key: "servisler", label: "Servisler" },

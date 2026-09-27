@@ -34,6 +34,38 @@ async function audit(db: any, adminId: string, action: string, targetTable: stri
   });
 }
 
+// Tarayıcı doğrulama raporu: yalnız beklenen alanlar, boyut sınırlı. Kod veya
+// token içermez (problem satırları yalnız seri no taşır).
+function sanitizeClientReport(raw: any) {
+  if (!raw || typeof raw !== "object") return null;
+  const bool = (v: any) => v === true;
+  const num = (v: any) => (Number.isFinite(Number(v)) ? Number(v) : null);
+  const checks: Record<string, any> = {};
+  for (const [k, v] of Object.entries(raw.checks ?? {}).slice(0, 12)) {
+    const c: any = v ?? {};
+    checks[String(k).slice(0, 32)] = {
+      ok: bool(c.ok), passed: num(c.passed), total: num(c.total), count: num(c.count),
+      expected: num(c.expected), actual: num(c.actual),
+    };
+  }
+  const files: Record<string, any> = {};
+  for (const [k, v] of Object.entries(raw.files ?? {}).slice(0, 10)) {
+    const f: any = v ?? {};
+    files[String(k).slice(0, 32)] = { ok: bool(f.ok), size: num(f.size) };
+  }
+  const problems = Array.isArray(raw.problems)
+    ? raw.problems.slice(0, 20).map((p: any) => String(p).replace(/[a-z0-9]{26}/g, "…").slice(0, 160))
+    : [];
+  return {
+    ok: bool(raw.ok) && Object.values(checks).every((c: any) => c.ok) && Object.values(files).every((f: any) => f.ok),
+    scope: raw.scope === "generation" ? "generation" : "reverify",
+    base: typeof raw.base === "string" ? raw.base.slice(0, 80) : null,
+    printable: num(raw.printable),
+    checks, files, problems,
+    measured_at: new Date().toISOString(),
+  };
+}
+
 // GET                      → partiler + durum sayıları
 // GET ?batch_id=<uuid>     → partinin ürünleri (aktivasyon kodu YOK)
 // GET ?serial=OTZ-000123   → tek ürün
@@ -58,7 +90,7 @@ export async function GET(req: NextRequest) {
     for (const t of tenants ?? []) tName[t.id] = t.name;
     let batch = null;
     if (batchId) {
-      const { data: b } = await db.from("product_batches").select("id, label, quantity, default_channel, created_at").eq("id", batchId).maybeSingle();
+      const { data: b } = await db.from("product_batches").select("id, label, quantity, default_channel, created_at, verification, verified_at").eq("id", batchId).maybeSingle();
       batch = b;
     }
     return NextResponse.json({
@@ -82,20 +114,33 @@ export async function GET(req: NextRequest) {
 
   const { data: batches, error } = await db
     .from("product_batches")
-    .select("id, label, quantity, default_channel, created_at")
+    .select("id, label, quantity, default_channel, created_at, verification, verified_at")
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const ids = (batches ?? []).map((b: any) => b.id);
   const counts: Record<string, Record<string, number>> = {};
+  const range: Record<string, { first: string; last: string; channels: Set<string> }> = {};
   if (ids.length > 0) {
-    const { data: rows } = await db.from("qr_keys").select("batch_id, status").in("batch_id", ids);
+    const { data: rows } = await db.from("qr_keys").select("batch_id, status, serial_no, distribution_channel").in("batch_id", ids);
     for (const r of rows ?? []) {
       counts[r.batch_id] = counts[r.batch_id] || {};
       counts[r.batch_id][r.status] = (counts[r.batch_id][r.status] || 0) + 1;
+      const g = (range[r.batch_id] = range[r.batch_id] || { first: r.serial_no, last: r.serial_no, channels: new Set() });
+      if (r.serial_no && r.serial_no < g.first) g.first = r.serial_no;
+      if (r.serial_no && r.serial_no > g.last) g.last = r.serial_no;
+      if (r.distribution_channel) g.channels.add(r.distribution_channel);
     }
   }
-  return NextResponse.json({ batches: (batches ?? []).map((b: any) => ({ ...b, counts: counts[b.id] || {} })) });
+  return NextResponse.json({
+    batches: (batches ?? []).map((b: any) => ({
+      ...b,
+      counts: counts[b.id] || {},
+      serial_first: range[b.id]?.first ?? null,
+      serial_last: range[b.id]?.last ?? null,
+      channels: range[b.id] ? Array.from(range[b.id].channels) : [],
+    })),
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -152,13 +197,26 @@ export async function POST(req: NextRequest) {
       }
       const codeByToken: Record<string, string> = {};
       tokenList.forEach((t, i) => (codeByToken[t] = codeList[i]));
+      // Aşama B: üretim biter bitmez veritabanı doğrulaması (adet, benzersizlik,
+      // seri ↔ token ↔ aktivasyon kodu eşleşmesi). Kodlar yalnız bu anda var.
+      const { data: verification, error: vErr } = await db.rpc("admin_verify_product_batch", {
+        p_batch_id: data?.batch_id,
+        p_tokens: tokenList,
+        p_codes: codeList,
+        p_actor: ctx.userId,
+        p_client: null,
+      });
       const items = (data?.items ?? []).map((it: any) => ({
         id: it.id,
         serial_no: it.serial_no,
         token: it.token,
         activation_code: codeByToken[it.token],
       }));
-      return NextResponse.json({ ok: true, batch_id: data?.batch_id, label, channel, items });
+      return NextResponse.json({
+        ok: true, batch_id: data?.batch_id, label, channel, items,
+        verification: vErr ? null : verification,
+        verification_error: vErr ? vErr.message : null,
+      });
     }
     return NextResponse.json({ error: "Benzersiz kod üretilemedi, tekrar deneyin" }, { status: 500 });
   }
@@ -193,6 +251,58 @@ export async function POST(req: NextRequest) {
       status, channel: patch.distribution_channel ?? null, distributor_tenant_id: tenantId, count: (updated ?? []).length, ids: batchId ? undefined : ids,
     }, tenantId);
     return NextResponse.json({ ok: true, updated: (updated ?? []).length });
+  }
+
+  // ---- Aşama B: tarayıcı doğrulama sonucunu kaydet + veritabanı kontrollerini yeniden çalıştır ----
+  if (action === "verify") {
+    const batchId = typeof body.batch_id === "string" ? body.batch_id : "";
+    if (!batchId) return NextResponse.json({ error: "Parti gerekli" }, { status: 400 });
+    const client = sanitizeClientReport(body.client);
+    const { data, error } = await db.rpc("admin_verify_product_batch", {
+      p_batch_id: batchId, p_tokens: null, p_codes: null, p_actor: ctx.userId, p_client: client,
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, verification: data });
+  }
+
+  // ---- Aşama B: paketleme dosyası kaybolduysa partiye yeni kodlar ----
+  // Yalnız partideki TÜM ürünler hâlâ "created" iken (stoğa alınmamış,
+  // dağıtılmamış, kart basılıp pakete girmemiş) izin verilir; eski kodlar
+  // geçersiz olur. Yeni kodlar yalnız bu yanıtta döner.
+  if (action === "reissue_batch_codes") {
+    const batchId = typeof body.batch_id === "string" ? body.batch_id : "";
+    if (!batchId) return NextResponse.json({ error: "Parti gerekli" }, { status: 400 });
+    const { data: rows, error } = await db
+      .from("qr_keys")
+      .select("id, serial_no, code, status")
+      .eq("batch_id", batchId)
+      .order("serial_no", { ascending: true })
+      .limit(MAX_BATCH);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!rows || rows.length === 0) return NextResponse.json({ error: "Parti bulunamadı" }, { status: 404 });
+    if (rows.some((r: any) => r.status !== "created")) {
+      return NextResponse.json({ error: "Partide stoğa alınmış, dağıtılmış ya da etkinleştirilmiş ürün var. Yeni kod yalnız tek tek (ürün satırından) verilebilir." }, { status: 409 });
+    }
+    const codes = new Set<string>();
+    while (codes.size < rows.length) codes.add(generateActivationCode());
+    const codeList = Array.from(codes);
+    const items: any[] = [];
+    for (let i = 0; i < rows.length; i += 10) {
+      const chunk = rows.slice(i, i + 10);
+      const results = await Promise.all(
+        chunk.map((r: any, k: number) => db.rpc("admin_reissue_activation_code", { p_id: r.id, p_code: codeList[i + k], p_actor: ctx.userId }))
+      );
+      for (let k = 0; k < chunk.length; k++) {
+        const { data, error: e } = results[k];
+        if (e || !data?.ok) return NextResponse.json({ error: `Yeni kod verilemedi (${chunk[k].serial_no}). İşlemi tekrar başlatın.` }, { status: 500 });
+        items.push({ id: chunk[k].id, serial_no: chunk[k].serial_no, token: chunk[k].code, activation_code: codeList[i + k] });
+      }
+    }
+    await audit(db, ctx.userId, "product_batch_codes_reissued", "product_batches", batchId, { count: items.length });
+    const { data: verification } = await db.rpc("admin_verify_product_batch", {
+      p_batch_id: batchId, p_tokens: items.map((x) => x.token), p_codes: codeList, p_actor: ctx.userId, p_client: null,
+    });
+    return NextResponse.json({ ok: true, batch_id: batchId, items, verification });
   }
 
   const id = typeof body.id === "string" ? body.id : "";
