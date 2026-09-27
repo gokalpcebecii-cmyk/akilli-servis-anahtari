@@ -18,6 +18,8 @@ const { qrIssuanceLocked, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
+// 200+ ürünlük partide bcrypt üretimi + doğrulaması ~10 sn sürebilir.
+export const maxDuration = 60;
 
 const MAX_BATCH = 500;
 const CHANNELS = ["internet", "servis", "bayi", "merkez", "bireysel"];
