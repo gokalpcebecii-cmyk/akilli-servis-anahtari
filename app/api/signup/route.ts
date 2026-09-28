@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authClient, appOriginFor } from "@/lib/authSignup";
 import { isRateLimited, rateLimitedResponse } from "@/lib/rateLimit";
+import { createServerSupabase } from "@/lib/supabase";
 const { confirmRedirectUrl, signupErrorMessage } = require("@/lib/emailConfirm");
 const { clientIp, LIMITS } = require("@/lib/rateLimitCore");
 const { SERVICE_COMPLETE_PATH, validateServiceFields, unguessablePassword } = require("@/lib/serviceSignup");
@@ -51,6 +52,20 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Bu e-postayla daha önce açılmış ama DOĞRULANMAMIŞ bir hesap varsa (ör.
+    // başkası bu e-postayla Auth'a doğrudan kendi şifresiyle kayıt açtıysa),
+    // şifresi kimsenin bilmediği yeni bir şifreyle değiştirilir. E-posta
+    // doğrulandığında hesaba yalnız /panel/kayit/tamamla'da şifre belirleyen
+    // e-posta sahibi girebilir.
+    const admin = createServerSupabase();
+    const { data: pendingId, error: lookupError } = await admin.rpc("unconfirmed_auth_user_id", { p_email: email });
+    if (lookupError) {
+      console.error("[otoiz] unconfirmed_auth_user_id hatası:", lookupError.message);
+    } else if (pendingId) {
+      const { error: pwError } = await admin.auth.admin.updateUserById(pendingId as string, { password: unguessablePassword() });
+      if (pwError) console.error("[otoiz] doğrulanmamış hesap şifresi yenilenemedi:", pwError.message);
+    }
+
     const { data, error } = await authClient().auth.signUp({
       email,
       password: unguessablePassword(),
