@@ -10,7 +10,7 @@ function BireyselKayitForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
   const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : "/bireysel/araclar";
-  const [form, setForm] = useState({ full_name: "", email: "", password: "", phone: "" });
+  const [form, setForm] = useState({ full_name: "", email: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -22,6 +22,7 @@ function BireyselKayitForm() {
     setLoading(true);
 
     // Faz 3.1: hesap e-posta doğrulanana kadar açılmaz; otomatik giriş yok.
+    // P0: şifre burada alınmaz, doğrulama bağlantısından sonra belirlenir.
     const res = await fetch("/api/bireysel-kayit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,14 +44,14 @@ function BireyselKayitForm() {
     return (
       <AuthShell role="bireysel" title="E-postanı kontrol et" testId="check-email">
         <p style={{ color: colors.textDark, lineHeight: 1.55, margin: "0 0 8px" }}>
-          <strong>{sentTo}</strong> adresine bir doğrulama bağlantısı gönderdik. Bağlantıya bastıktan sonra giriş yapabilirsin.
+          <strong>{sentTo}</strong> adresine bir doğrulama bağlantısı gönderdik. Bağlantıya basınca şifreni belirleyip devam edeceksin.
         </p>
         <p style={{ color: colors.textMuted, fontSize: 14, lineHeight: 1.5, margin: "0 0 18px" }}>
-          E-posta birkaç dakika içinde gelmezse gereksiz (spam) klasörüne bak.
+          E-posta birkaç dakika içinde gelmezse gereksiz (spam) klasörüne bak. Bu adresle zaten hesabın varsa giriş yapabilir ya da şifreni sıfırlayabilirsin.
         </p>
         <ResendConfirmation email={sentTo} next={redirectTo} />
         <a href={girisHref} style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", marginTop: 14 }}>
-          Doğruladım, giriş yap
+          Zaten hesabım var, giriş yap
         </a>
       </AuthShell>
     );
@@ -76,9 +77,6 @@ function BireyselKayitForm() {
 
         <label htmlFor="kayit-email" style={labelStyle}>E-posta *</label>
         <input id="kayit-email" autoComplete="email" inputMode="email" autoCapitalize="none" style={{ ...inputStyle, marginBottom: 14 }} required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="ornek@mail.com" />
-
-        <label htmlFor="kayit-sifre" style={labelStyle}>Şifre *</label>
-        <input id="kayit-sifre" autoComplete="new-password" style={{ ...inputStyle, marginBottom: 14 }} required type="password" minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="En az 8 karakter" />
 
         <label htmlFor="kayit-tel" style={labelStyle}>Telefon</label>
         <input id="kayit-tel" type="tel" inputMode="tel" autoComplete="tel" style={{ ...inputStyle, marginBottom: 16 }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0555 000 00 00" />

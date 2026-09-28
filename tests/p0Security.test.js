@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const { clientIp, rateKey, LIMITS } = require("../lib/rateLimitCore");
 const { slugifyBusiness, validateServiceFields, unguessablePassword, applicationMessage, SERVICE_COMPLETE_PATH } = require("../lib/serviceSignup");
 const { adminMfaEnforced, tokenAal, isSixDigitCode } = require("../lib/adminMfa");
-const { confirmRedirectUrl } = require("../lib/emailConfirm");
+const { confirmRedirectUrl, completionPathFor, shouldForwardToCompletion, INDIVIDUAL_COMPLETE_PATH } = require("../lib/emailConfirm");
 
 const h = (o) => ({ get: (k) => o[k] ?? null });
 
@@ -76,4 +76,24 @@ test("admin MFA: 6 haneli kod biçimi", () => {
   assert.equal(isSixDigitCode("123 456"), true);
   assert.equal(isSixDigitCode("12345"), false);
   assert.equal(isSixDigitCode("abcdef"), false);
+});
+
+test("son kapılar: doğrulama sonrası şifre belirleme sayfası seçimi", () => {
+  assert.equal(INDIVIDUAL_COMPLETE_PATH, "/bireysel/kayit/tamamla");
+  assert.equal(completionPathFor("/panel/kayit/tamamla"), SERVICE_COMPLETE_PATH);
+  assert.equal(completionPathFor("/panel/dashboard"), SERVICE_COMPLETE_PATH);
+  assert.equal(completionPathFor("/aktivasyon?code=abc"), "/bireysel/kayit/tamamla?next=%2Faktivasyon%3Fcode%3Dabc");
+  assert.equal(completionPathFor(""), "/bireysel/kayit/tamamla?next=%2Fbireysel%2Faraclar");
+  assert.equal(completionPathFor("https://evil.example"), "/bireysel/kayit/tamamla?next=%2Fbireysel%2Faraclar");
+  assert.equal(completionPathFor("//evil.example"), "/bireysel/kayit/tamamla?next=%2Fbireysel%2Faraclar");
+  assert.equal(completionPathFor("/bireysel/kayit/tamamla?next=/x"), "/bireysel/kayit/tamamla?next=%2Fbireysel%2Faraclar");
+});
+
+test("son kapılar: yalnız kayıt doğrulaması şifre sayfasına aktarılır", () => {
+  assert.equal(shouldForwardToCompletion("#access_token=a&refresh_token=b&type=signup"), true);
+  assert.equal(shouldForwardToCompletion("#access_token=a&refresh_token=b"), true);
+  assert.equal(shouldForwardToCompletion("#access_token=a&refresh_token=b&type=recovery"), false);
+  assert.equal(shouldForwardToCompletion("#access_token=a&refresh_token=b&type=email_change"), false);
+  assert.equal(shouldForwardToCompletion("#access_token=a&type=signup"), false);
+  assert.equal(shouldForwardToCompletion("#error=access_denied"), false);
 });
