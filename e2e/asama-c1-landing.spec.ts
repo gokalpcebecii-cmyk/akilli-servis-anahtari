@@ -61,7 +61,7 @@ test.describe("Aşama C.1 landing", () => {
 
   test("hero CTA giriş seçimine gider", async ({ page }, ti) => {
     await page.goto("/");
-    const name = ti.project.name === "mobile-390" ? "Ücretsiz Başlayın" : "Hemen Başla";
+    const name = (page.viewportSize()?.width ?? 0) < 1040 ? "Ücretsiz Başlayın" : "Hemen Başla";
     await page.getByRole("button", { name }).first().click();
     await expect(page).toHaveURL(/\/giris$/);
     await expect(page.getByRole("heading", { name: "Nasıl devam etmek istersiniz?" })).toBeVisible();
