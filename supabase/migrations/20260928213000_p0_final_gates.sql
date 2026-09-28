@@ -185,7 +185,12 @@ begin
   end if;
 
   if tg_op = 'INSERT' then
-    if new.owner_user_id is not null and new.owner_user_id is distinct from auth.uid() then
+    -- Bireysel kullanıcı yalnız kendini sahip yazabilir; servis personeli
+    -- (accept_ownership_transfer'daki kuralla aynı) araç sahibi olamaz.
+    if new.owner_user_id is not null and (
+         new.owner_user_id is distinct from auth.uid()
+         or exists (select 1 from public.staff_users s where s.id = auth.uid())
+       ) then
       raise exception 'owner_change_forbidden' using errcode = '42501';
     end if;
     return new;
