@@ -15,6 +15,7 @@ import { colors, primaryButtonStyle } from "@/lib/theme";
 import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
 const { parseConfirmHash, safeNext } = require("@/lib/emailConfirm");
+const { SERVICE_COMPLETE_PATH } = require("@/lib/serviceSignup");
 
 function Inner() {
   const params = useSearchParams();
@@ -25,6 +26,12 @@ function Inner() {
     function read() {
       if (!window.location.hash) return;
       const r = parseConfirmHash(window.location.hash);
+      // P0: servis kaydında şifre, doğrulama bağlantısının açtığı oturumla
+      // belirlenir. Oturum bilgisi YALNIZ bu sabit site içi sayfaya aktarılır.
+      if (r.ok === true && next === SERVICE_COMPLETE_PATH && window.location.hash.includes("access_token=")) {
+        window.location.replace(SERVICE_COMPLETE_PATH + window.location.hash);
+        return;
+      }
       // Token'lar tarayıcı geçmişinde / ekran görüntüsünde kalmasın.
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
       setState(r.ok === true ? "ok" : r.ok === false ? "error" : "unknown");
@@ -36,10 +43,11 @@ function Inner() {
     return () => window.removeEventListener("hashchange", read);
   }, []);
 
-  const loginHref = `/bireysel/giris?next=${encodeURIComponent(next)}`;
+  const isService = next.startsWith("/panel");
+  const loginHref = isService ? "/panel/login" : `/bireysel/giris?next=${encodeURIComponent(next)}`;
 
   return (
-    <AuthShell role="bireysel">
+    <AuthShell role={isService ? "servis" : "bireysel"}>
       {state === "loading" && <p role="status" style={{ color: colors.textMuted, margin: 0 }}>Kontrol ediliyor…</p>}
       {state === "ok" && (
         <div data-testid="confirm-ok">

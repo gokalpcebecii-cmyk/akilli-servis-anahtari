@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [notStaffAccount, setNotStaffAccount] = useState(false);
+  const [pendingServiceSignup, setPendingServiceSignup] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,6 +34,8 @@ export default function DashboardPage() {
         .single();
 
       if (staffError || !staff?.tenant_id) {
+        // P0: e-postasını doğrulamış ama başvuruyu tamamlamamış servis kaydı.
+        setPendingServiceSignup(session.session.user.user_metadata?.account_type === "service");
         setNotStaffAccount(true);
         setLoading(false);
         return;
@@ -74,6 +77,11 @@ export default function DashboardPage() {
           bireysel giriş sayfasını kullanın; işletme hesabınız yoksa yeni bir tane oluşturabilirsiniz.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 260, margin: "0 auto" }}>
+          {pendingServiceSignup && (
+            <a href="/panel/kayit/tamamla" style={{ padding: "10px 16px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700 }}>
+              İşletme Başvurusunu Tamamla
+            </a>
+          )}
           <a href="/bireysel/giris" style={{ padding: "10px 16px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700 }}>
             Bireysel Girişe Geç
           </a>

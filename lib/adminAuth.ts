@@ -7,9 +7,15 @@
 // anon/authenticated rollerine TAMAMEN kapalıdır (bkz. migration
 // platform_admin_and_qr_reservation) — bir kullanıcı kendini yönetici
 // yapamaz, yönetici listesini okuyamaz.
+//
+// P0 (2026-09-28): yönetici isteklerinde iki adımlı doğrulama (TOTP) zorunlu.
+// Oturum token'ı "aal2" değilse (yalnız şifreyle girilmişse) 403
+// { error: "mfa_required" } döner; panel doğrulayıcı kurulumunu / kod adımını
+// gösterir. Yönetici olmayan hesaplar yine yalnız "forbidden" görür.
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase";
+const { adminMfaEnforced, tokenAal } = require("@/lib/adminMfa");
 
 export type AdminContext = {
   userId: string;
@@ -46,6 +52,11 @@ export async function requireAdmin(req: NextRequest): Promise<AdminContext | Nex
 
   if (!admin) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  // Token getUser ile Auth sunucusunda doğrulandı; içindeki aal güvenilir.
+  if (adminMfaEnforced(process.env) && tokenAal(authHeader) !== "aal2") {
+    return NextResponse.json({ error: "mfa_required" }, { status: 403 });
   }
 
   return { userId: user.id, email: user.email ?? null, db };

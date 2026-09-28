@@ -11,6 +11,7 @@ import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardS
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import UrunlerTab from "./UrunlerTab";
+import { AdminMfa } from "@/components/AdminMfa";
 
 type Tab = "genel" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler";
 
@@ -55,7 +56,8 @@ const TYPE_LABEL: Record<string, string> = { yonetici: "Yönetici", servis: "Ser
 
 export default function YonetimPage() {
   const supabase = createBrowserSupabase();
-  const [stage, setStage] = useState<"loading" | "login" | "forbidden" | "ready">("loading");
+  const [stage, setStage] = useState<"loading" | "login" | "forbidden" | "mfa" | "ready">("loading");
+  const [addingFactor, setAddingFactor] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -120,6 +122,8 @@ export default function YonetimPage() {
       setStage("ready");
     } else if (r.status === 401) {
       setStage("login");
+    } else if (r.status === 403 && r.body?.error === "mfa_required") {
+      setStage("mfa");
     } else {
       setStage("forbidden");
     }
@@ -240,6 +244,14 @@ export default function YonetimPage() {
     return <AuthShellLoading />;
   }
 
+  if (stage === "mfa") {
+    return (
+      <AuthShell role="yonetim" title="İki adımlı doğrulama" subtitle="Yönetim paneline girmek için ikinci adım gerekli.">
+        <AdminMfa mode="gate" onVerified={checkAdmin} onCancel={handleLogout} />
+      </AuthShell>
+    );
+  }
+
   if (stage === "login" || stage === "forbidden") {
     return (
       <AuthShell role="yonetim" title="Yönetim Paneli" subtitle="Yalnızca OTOİZ platform yöneticisi içindir.">
@@ -293,6 +305,7 @@ export default function YonetimPage() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12.5 }}>{adminEmail}</span>
+            <button onClick={() => setAddingFactor(true)} style={{ ...smallBtn("transparent", "rgba(255,255,255,0.8)", "rgba(255,255,255,0.25)"), minHeight: 44 }}>Yedek cihaz ekle</button>
             <button onClick={handleLogout} style={{ ...smallBtn("transparent", "rgba(255,255,255,0.8)", "rgba(255,255,255,0.25)"), minHeight: 44 }}>Çıkış</button>
           </div>
         </div>
@@ -319,6 +332,12 @@ export default function YonetimPage() {
       </nav>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "18px 16px 60px" }}>
+        {addingFactor && (
+          <div style={{ ...cardStyle, padding: 16, marginBottom: 16, maxWidth: 420 }}>
+            <h2 style={{ fontSize: 16, margin: "0 0 10px" }}>Yedek doğrulayıcı cihaz ekle</h2>
+            <AdminMfa mode="add" onVerified={() => { setAddingFactor(false); flash("Yedek doğrulayıcı cihaz eklendi."); }} onCancel={() => setAddingFactor(false)} />
+          </div>
+        )}
         {notice && <div role="status" style={{ background: colors.greenSoft, color: colors.greenDark, padding: "10px 14px", borderRadius: radius.sm, fontWeight: 700, fontSize: 13.5, marginBottom: 14 }}>{notice}</div>}
         {error && <div role="alert" style={{ background: colors.dangerSoft, color: colors.danger, padding: "10px 14px", borderRadius: radius.sm, fontWeight: 700, fontSize: 13.5, marginBottom: 14 }}>{error}</div>}
 

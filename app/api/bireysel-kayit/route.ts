@@ -8,6 +8,8 @@
 import { authClient, appOriginFor } from "@/lib/authSignup";
 const { validatePassword } = require("@/lib/passwordPolicy");
 const { confirmRedirectUrl, signupErrorMessage } = require("@/lib/emailConfirm");
+import { isRateLimited, rateLimitedResponse } from "@/lib/rateLimit";
+const { clientIp, LIMITS } = require("@/lib/rateLimitCore");
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,6 +28,18 @@ export async function POST(req: Request) {
     const pwError = validatePassword(password);
     if (pwError) {
       return Response.json({ error: pwError }, { status: 400 });
+    }
+
+    // P0: kayıt kötüye kullanımına karşı IP ve e-posta başına hız sınırı.
+    const ip = clientIp(req.headers);
+    if (
+      await isRateLimited([
+        { scope: "ind-signup-ip-10m", value: ip, ...LIMITS.signupIp10m },
+        { scope: "ind-signup-ip-day", value: ip, ...LIMITS.signupIpDay },
+        { scope: "ind-signup-email-h", value: email, ...LIMITS.signupEmailHour },
+      ])
+    ) {
+      return rateLimitedResponse();
     }
 
     const { data, error } = await authClient().auth.signUp({

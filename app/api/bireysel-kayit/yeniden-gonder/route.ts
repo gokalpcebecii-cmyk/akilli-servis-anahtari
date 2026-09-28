@@ -4,6 +4,8 @@
 // Supabase Auth uygular (e-posta başına ve saatlik).
 import { authClient, appOriginFor } from "@/lib/authSignup";
 const { confirmRedirectUrl, signupErrorMessage } = require("@/lib/emailConfirm");
+import { isRateLimited, rateLimitedResponse } from "@/lib/rateLimit";
+const { clientIp, LIMITS } = require("@/lib/rateLimitCore");
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -16,6 +18,18 @@ export async function POST(req: Request) {
   }
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   if (!EMAIL_RE.test(email)) return Response.json({ error: "Geçerli bir e-posta adresi girin." }, { status: 400 });
+
+  // P0: yeniden gönderme kötüye kullanımına karşı IP ve e-posta başına sınır
+  // (Supabase Auth'un e-posta başına 60 sn sınırına ek olarak).
+  const ip = clientIp(req.headers);
+  if (
+    await isRateLimited([
+      { scope: "resend-ip-h", value: ip, ...LIMITS.resendIpHour },
+      { scope: "resend-email-h", value: email, ...LIMITS.resendEmailHour },
+    ])
+  ) {
+    return rateLimitedResponse();
+  }
 
   const { error } = await authClient().auth.resend({
     type: "signup",
