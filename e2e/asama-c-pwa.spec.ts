@@ -210,7 +210,8 @@ test.describe("Aşama C — OTOİZ'İ TELEFONA EKLE", () => {
     const cta = page.getByTestId("install-cta");
     await expect(cta).toBeVisible();
     await expect(cta).toHaveAttribute("data-platform", "ios");
-    const btn = cta.getByRole("button", { name: "OTOİZ'İ TELEFONA EKLE" });
+    const btn = cta.getByRole("button", { name: "OTOİZ'İ TELEFONA EKLE — NASIL YAPILIR?", exact: true });
+    await expect(cta).toContainText("2 adım: Paylaş → Ana Ekrana Ekle");
     const box = await btn.boundingBox();
     expect(box!.height).toBeGreaterThanOrEqual(48);
     await btn.click();
@@ -242,6 +243,8 @@ test.describe("Aşama C — OTOİZ'İ TELEFONA EKLE", () => {
     await page.goto("/bireysel/giris");
     const cta = page.getByTestId("install-cta");
     await expect(cta).toHaveAttribute("data-platform", "android");
+    await expect(cta.getByRole("button", { name: "OTOİZ'İ TELEFONA EKLE", exact: true })).toBeVisible();
+    await expect(cta).not.toContainText("NASIL YAPILIR");
     await page.waitForFunction(() => true);
     await page.waitForTimeout(200);
     await cta.getByRole("button", { name: "OTOİZ'İ TELEFONA EKLE" }).click();

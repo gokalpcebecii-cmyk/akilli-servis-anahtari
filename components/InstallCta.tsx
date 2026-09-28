@@ -174,7 +174,11 @@ export function InstallCta({ tone = "dark" }: { tone?: "dark" | "light" }) {
           </span>
           <div>
             <div className="otoiz-install-title">OTOİZ&apos;i ana ekranınıza ekleyin</div>
-            <div className="otoiz-install-sub">Uygulama gibi tek dokunuşla açılır, adres yazmanız gerekmez.</div>
+            <div className="otoiz-install-sub">
+              {platform === "ios"
+                ? "2 adım: Paylaş → Ana Ekrana Ekle"
+                : "Uygulama gibi tek dokunuşla açılır, adres yazmanız gerekmez."}
+            </div>
           </div>
         </div>
         <button
@@ -187,7 +191,8 @@ export function InstallCta({ tone = "dark" }: { tone?: "dark" | "light" }) {
           style={{ fontFamily: font }}
         >
           <Icon name="download" color={colors.textDark} size={20} />
-          OTOİZ&apos;İ TELEFONA EKLE
+          {/* iOS'ta düğme kurulum yapamaz, yalnız yönergeyi açar; metin bunu söyler. */}
+          <span>{platform === "ios" ? "OTOİZ'İ TELEFONA EKLE — NASIL YAPILIR?" : "OTOİZ'İ TELEFONA EKLE"}</span>
         </button>
         <button type="button" onClick={snooze} className="otoiz-install-later" style={{ fontFamily: font }}>
           Şimdi değil
