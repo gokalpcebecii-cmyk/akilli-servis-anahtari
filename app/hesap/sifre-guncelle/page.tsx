@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, inputStyle, labelStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
 import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
+import { AdminMfa } from "@/components/AdminMfa";
 const { parseRecoveryParams } = require("@/lib/emailConfirm");
 
 export default function SifreGuncellePage() {
@@ -16,6 +17,9 @@ export default function SifreGuncellePage() {
   const [done, setDone] = useState(false);
   const [pendingToken, setPendingToken] = useState("");
   const [verifying, setVerifying] = useState(false);
+  // P0: iki adımlı doğrulaması açık hesapta (yönetici) Auth, şifre değişikliği
+  // için e-posta bağlantısına ek olarak doğrulama kodu ister (insufficient_aal).
+  const [needMfa, setNeedMfa] = useState(false);
 
   useEffect(() => {
     // Yeni bağlantı biçimi (?token_hash=…&type=recovery): tarayıcıya bağlı
@@ -85,11 +89,19 @@ export default function SifreGuncellePage() {
       return;
     }
 
+    await savePassword();
+  }
+
+  async function savePassword() {
     setLoading(true);
     const supabase = createBrowserSupabase();
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
 
+    if (error && (error as any).code === "insufficient_aal") {
+      setNeedMfa(true);
+      return;
+    }
     if (error) {
       setError("Şifre güncellenemedi. Bağlantının süresi dolmuş olabilir, tekrar deneyin.");
       return;
@@ -134,6 +146,14 @@ export default function SifreGuncellePage() {
 
   if (!ready) {
     return <AuthShellLoading text="Doğrulanıyor…" />;
+  }
+
+  if (needMfa) {
+    return (
+      <AuthShell role="hesap" title="Doğrulama kodu gerekli" subtitle="Bu hesapta iki adımlı doğrulama açık. Şifreyi değiştirmek için doğrulayıcı uygulamanızdaki kodu girin." backHref={null}>
+        <AdminMfa mode="gate" onVerified={() => { setNeedMfa(false); savePassword(); }} />
+      </AuthShell>
+    );
   }
 
   return (

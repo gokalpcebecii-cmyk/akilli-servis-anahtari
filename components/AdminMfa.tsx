@@ -75,7 +75,14 @@ export function AdminMfa({ mode, onVerified, onCancel }: { mode: "gate" | "add";
     setBusy(false);
     if (error) {
       setCode("");
-      setMsg((error as any).status === 429 ? "Çok fazla deneme. Biraz bekleyip tekrar deneyin." : "Kod hatalı veya süresi geçti. Uygulamadaki güncel kodu girin.");
+      const ec = (error as any).code;
+      setMsg(
+        (error as any).status === 429
+          ? "Çok fazla deneme. Biraz bekleyip tekrar deneyin."
+          : ec === "mfa_ip_address_mismatch"
+            ? "İnternet bağlantınız değişti (ör. Wi-Fi / mobil veri). Uygulamadaki güncel kodu yeniden girin."
+            : "Kod hatalı veya süresi geçti. Uygulamadaki güncel kodu girin."
+      );
       return;
     }
     onVerified();
