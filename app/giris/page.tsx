@@ -64,7 +64,7 @@ export default function GirisSecimiPage() {
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, color: colors.textDark, marginBottom: 6 }}>Bireysel Kullanıcı</div>
             <div style={{ fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>
-              Kendi aracınızı yönetin, geçmişini görüntüleyin, QR/NFC işlemlerini kontrol edin.
+              Kendi aracınızı yönetin, bakım geçmişini görüntüleyin, QR anahtarlığınızla hızlıca erişin.
             </div>
           </a>
 

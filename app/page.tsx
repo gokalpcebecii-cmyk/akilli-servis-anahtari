@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { colors, font } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { BenefitCarousel, type Benefit } from "@/components/BenefitCarousel";
 
 export default function HomePage() {
   const router = useRouter();
@@ -14,26 +15,24 @@ export default function HomePage() {
     router.push("/giris");
   }
 
-  // Desktop hero (referans marketing kompozisyonunun sol kolonu): 4 madde, ikon+başlık+açıklama.
-  const valueProps = [
-    { title: "Tüm Servis Geçmişi", desc: "Tek yerde, her zaman erişilebilir.", icon: "history" },
-    { title: "Doğrulanabilir Kayıtlar", desc: "Güvenilir ve şeffaf veriler.", icon: "shield-check" },
-    { title: "Araç Değerini Koru", desc: "Daha yüksek ikinci el değeri.", icon: "gauge" },
-    { title: "QR / NFC Erişim", desc: "Tek dokunuşla tüm bilgilere ulaşın.", icon: "qr" },
+  // Aşama C.1: fayda kartları bugün production'da gerçekten çalışan
+  // özelliklere göre yeniden yazıldı. "Daha yüksek araç değeri" gibi ispat
+  // gerektiren sonuç vaatleri ve NFC (ilk ürün fazında yok) kaldırıldı.
+  // Aynı 5 kart mobilde kaydırıcıda (BenefitCarousel), desktop'ta hero
+  // sağ kolonunda aynı anda listelenir.
+  const benefits: Benefit[] = [
+    { title: "Bakım geçmişiniz tek yerde", desc: "Servis ve kendi bakım kayıtlarınız tarih ve kilometresiyle bir arada.", icon: "history" },
+    { title: "Servis doğrulamalı kayıtlar", desc: "Servisin girdiği kayıtlar, sizin eklediklerinizden ayrı işaretlenir.", icon: "shield-check" },
+    { title: "QR ile hızlı erişim", desc: "Anahtarlıktaki QR kodu okutun, aracınızın pasaportu açılsın.", icon: "qr" },
+    { title: "Araç devrinde teknik geçmiş korunur", desc: "Araç el değiştirse de bakım geçmişi araçla kalır; kişisel bilgiler devredilmez.", icon: "swap" },
+    { title: "Düzenli ve şeffaf araç geçmişi", desc: "Güncel kilometre, yapılan bakımlar ve sıradaki bakım aynı düzende.", icon: "clipboard" },
   ];
-  // Mobil hero (referansın "LANDING" ekran mockup'ı): 3 madde, ikon+kısa etiket, 3 kolon.
-  const mobileValueProps = [
-    { title: "Güvenli Kayıtlar", icon: "shield" },
-    { title: "Daha Yüksek Araç Değeri", icon: "gauge" },
-    { title: "Her Zaman Erişilebilir", icon: "qr" },
-  ];
-  // Desktop hero'nun alt "güven şeridi" — referanstaki birebir 4 madde.
-  // Mobildeki mobileValueProps'tan bağımsız, yalnızca desktop'ta görünür.
+  // Desktop hero'nun alt "güven şeridi" — yalnızca doğrulanabilir özellikler.
   const trustRow = [
-    { title: "Güvenli", icon: "shield" },
-    { title: "Kolay", icon: "smartphone" },
-    { title: "Zaman Kazandırır", icon: "clock" },
-    { title: "Değer Katar", icon: "diamond" },
+    { title: "Doğrulanmış hesap", icon: "shield" },
+    { title: "QR ile erişim", icon: "qr" },
+    { title: "Servis doğrulamalı", icon: "shield-check" },
+    { title: "Telefona eklenir", icon: "smartphone" },
   ];
   // PILOT FIX 03 (bölüm E — Landing navigasyonu): "Hizmetler"/"Kurumsal"/
   // "İletişim" için sayfada karşılığı olan bir bölüm/rota yok — href="#"
@@ -46,32 +45,36 @@ export default function HomePage() {
   const navLinks = [
     { label: "Ana Sayfa", href: "/", active: true },
     { label: "Nasıl Çalışır?", href: "#nasil-calisir", active: false },
-    { label: "Hizmetler", href: "#hizmetler", active: false },
+    { label: "Özellikler", href: "#hizmetler", active: false },
     { label: "Kurumsal", href: "#kurumsal", active: false },
     { label: "Bireysel", href: "#bireysel", active: false },
     { label: "İletişim", href: "#iletisim", active: false },
   ];
 
+  // Aşama C.1: "Nasıl Çalışır?" bireysel kullanıcının production'daki
+  // gerçek akışını anlatır: /r/<token> → /p/<kod> aktivasyon ekranı →
+  // giriş/kayıt → e-posta doğrulama → /aktivasyon (kod → araç seç/ekle → tamam).
   const steps = [
-    { n: "1", title: "Servis kayıt ekler", desc: "Yetkili servis, yapılan bakım ve parça değişimini sisteme kaydeder." },
-    { n: "2", title: "Araç sahibi görüntüler", desc: "Müşteri tüm servis geçmişini QR üzerinden kolayca görür." },
-    { n: "3", title: "QR ile anında erişim", desc: "Anahtarlıktaki QR kod ile pasaporta hızlıca ulaşılır." },
-    { n: "4", title: "Araç satıldığında devredilir", desc: "Teknik geçmiş korunur, kişisel bilgiler devredilmez." },
+    { n: "1", title: "QR'ı okutun", desc: "Anahtarlıktaki QR kodu telefonunuzun kamerasıyla okutun." },
+    { n: "2", title: "Giriş yapın veya kayıt olun", desc: "Bireysel hesabınızla giriş yapın ya da ücretsiz hesap açın." },
+    { n: "3", title: "E-postanızı doğrulayın", desc: "Kayıtta gönderilen doğrulama bağlantısına dokunun." },
+    { n: "4", title: "Aktivasyon kodunu girin", desc: "Ürün kartınızdaki aktivasyon kodunu yazın." },
+    { n: "5", title: "Aracınızı seçin veya ekleyin", desc: "Kayıtlı aracınızı seçin ya da yeni aracınızı ekleyin." },
+    { n: "6", title: "OTOİZ'i kullanmaya başlayın", desc: "Bakım geçmişiniz ve sıradaki bakımınız artık tek yerde." },
   ];
 
-  // PILOT FIX 03 (bölüm E — Landing içerik doğruluğu): 3 madde gerçek
-  // davranışla uyumlu hale getirildi — (1) araç sahibi de kendi kaydını
-  // ekleyebiliyor, yalnızca servis kaydı "yetkili personel doğrulamalı"
-  // değil; (2) hatırlatma altyapısı gerçek ama kesin/garanti bir "otomatik
-  // uyarı" iddiası pilot için abartılı; (3) "KVKK uyumlu" kanıtlanmamış bir
-  // hukuki/teknik kesinlik iddiası, pilot diline çekildi.
+  // Aşama C.1: yalnızca bugün production'da çalışan bireysel özellikler.
+  // QR iptal/yenileme (PILOT_FLAGS.qrSelfIssuance) kapalı olduğu için
+  // "QR yönetimi" yerine anahtarlığın araca bağlı olması anlatılıyor.
   const features = [
-    { title: "Bakım ve onarım geçmişi", desc: "Her işlem tarih ve açıklamasıyla kayıt altında.", icon: "wrench" },
-    { title: "Kilometre takibi", desc: "Güncel km her ziyarette otomatik güncellenir.", icon: "gauge" },
-    { title: "Sonraki bakım hatırlatması", desc: "Km ve tarih eşiğine göre hatırlatma alt yapısı.", icon: "bell" },
-    { title: "Servis kaydı doğrulaması", desc: "Servis kayıtlarını yalnızca yetkili servis ekler; araç sahibi kendi kaydını da tutabilir.", icon: "check" },
-    { title: "Kişisel veri kontrolü", desc: "Kişisel veriler talep halinde silinir.", icon: "shield" },
-    { title: "Araçla birlikte yaşayan geçmiş", desc: "Sahiplik değişse de teknik geçmiş kalır.", icon: "link" },
+    { title: "Aracınızı görüntüleyin", desc: "Plaka, marka/model, güncel km ve sonraki bakım tek kartta.", icon: "car" },
+    { title: "Bakım geçmişi", desc: "Her kayıt tarih, kilometre ve açıklamasıyla listelenir.", icon: "history" },
+    { title: "Kendi bakım kaydınız", desc: "Kendi yaptırdığınız bakımları da aracınıza ekleyin.", icon: "wrench" },
+    { title: "Servis doğrulamalı kayıtlar", desc: "Servisin girdiği kayıtlar \"Servis Doğrulamalı\", sizin eklediğiniz kayıtlar \"Araç Sahibi Kaydı\" olarak ayrılır.", icon: "shield-check" },
+    { title: "Yaklaşan bakım bilgisi", desc: "Sonraki bakım kilometresi ve tarihi aracınızın kartında görünür.", icon: "bell" },
+    { title: "QR anahtarlık", desc: "Anahtarlığınızdaki QR aracınıza bağlıdır; okutulduğunda pasaport açılır.", icon: "qr" },
+    { title: "Araç devri", desc: "Aracınızı sattığınızda süreli, tek kullanımlık bağlantıyla yeni sahibine devredin.", icon: "swap" },
+    { title: "Telefonunuza ekleyin", desc: "Uygulama mağazası gerekmeden telefonunuzun ana ekranına ekleyin.", icon: "smartphone" },
   ];
 
   const audiencePaths = [
@@ -80,11 +83,13 @@ export default function HomePage() {
       eyebrow: "Kurumsal",
       title: "Servisler ve işletmeler için",
       points: [
-        "Plakayla araç bulun, bakımı 15–20 saniyede kaydedin.",
-        "Sonraki bakım km ve tarihi otomatik önerilir.",
-        "Kendi logonuz ve iletişim bilgilerinizle müşteri pasaportu.",
-        "Yalnızca kendi müşterilerinizi görürsünüz — veriler servisler arasında ayrıdır.",
+        "Kendi servisinizin araç ve müşteri kayıtlarını görün.",
+        "Plakayla aracı bulun, bakımı hızlıca kaydedin; sonraki bakım km ve tarihi otomatik önerilir.",
+        "Girdiğiniz kayıtlar müşteri pasaportunda servis doğrulamalı olarak görünür.",
+        "Size ayrılan QR anahtarlıkları müşteri araçlarıyla eşleştirin; okutulduğunda aracın pasaportu ve servis bilgileriniz açılır.",
+        "Yalnızca kendi kayıtlarınızı görürsünüz; veriler servisler arasında ayrıdır.",
       ],
+      note: "İşletme hesapları OTOİZ onayından sonra kullanıma açılır.",
       primary: { label: "İşletme Kaydı", href: "/panel/kayit" },
       secondary: { label: "İşletme Girişi", href: "/panel/login" },
     },
@@ -93,28 +98,31 @@ export default function HomePage() {
       eyebrow: "Bireysel",
       title: "Araç sahipleri için",
       points: [
-        "Aracınızın tüm bakım geçmişi tek ekranda.",
+        "Aracınızın bakım geçmişi ve sıradaki bakımı tek ekranda.",
         "Kendi yaptırdığınız bakımları da kaydedin.",
-        "NFC + QR anahtarlıkla pasaporta tek dokunuşla ulaşın.",
-        "Aracınızı satarken düzenli bakım geçmişiyle güven verin.",
+        "QR anahtarlığı okutarak aracınızın pasaportuna hızlıca ulaşın.",
+        "Aracınızı sattığınızda teknik geçmişi yeni sahibine devredin.",
       ],
+      note: "",
       primary: { label: "Bireysel Kayıt", href: "/bireysel/kayit" },
       secondary: { label: "Bireysel Giriş", href: "/bireysel/giris" },
     },
   ];
 
   const audience = [
-    { title: "Özel servisler", desc: "Müşteri bağlılığını artırmak isteyen işletmeler.", icon: "tool" },
+    { title: "Özel servisler", desc: "Müşteri araçlarının bakım kayıtlarını düzenli tutmak isteyen işletmeler.", icon: "tool" },
     { title: "Araç sahipleri", desc: "Aracının geçmişini düzenli tutmak isteyenler.", icon: "car" },
-    { title: "İkinci el alıcıları", desc: "Daha güvenli bir satın alma deneyimi isteyenler.", icon: "cart" },
+    { title: "İkinci el alıcıları", desc: "Satıcının paylaştığı bakım geçmişini görmek isteyenler.", icon: "cart" },
   ];
 
-  // Referansın alt bölümündeki 4 kısa fayda kartı (CTA'nın hemen üstünde).
+  // CTA'nın üstündeki 4 kısa kart. Aşama C.1: "Daha Yüksek Değer",
+  // "Daha Sürdürülebilir" gibi ispatlanamayan sonuç vaatleri kaldırıldı;
+  // yerine production'da doğrulanan güvence özellikleri geldi.
   const finalBenefits = [
-    { title: "Daha Güvenli", desc: "Kayıtlar kaybolmaz, daima sizinle.", icon: "shield" },
-    { title: "Daha Yüksek Değer", desc: "Düzenli bakım, yüksek ikinci el değeri.", icon: "gauge" },
-    { title: "Daha Sürdürülebilir", desc: "Bakımlı araç, daha temiz yarınlar.", icon: "link" },
-    { title: "Daha Özgür", desc: "Tüm araç bilgileriniz tek uygulamada.", icon: "check" },
+    { title: "Doğrulanmış hesap", desc: "Giriş için e-posta doğrulaması gerekir.", icon: "shield" },
+    { title: "Telefona eklenir", desc: "Uygulama mağazası gerekmeden ana ekrana ekleyin.", icon: "smartphone" },
+    { title: "Kişisel veri korunur", desc: "Araç devrinde yalnız teknik geçmiş aktarılır.", icon: "user" },
+    { title: "Veriler ayrı tutulur", desc: "Her servis yalnız kendi kayıtlarını görür.", icon: "link" },
   ];
 
   // Referansın alt "ürün vitrini" şeridi — Playwright fixture ile üretilen
@@ -220,12 +228,12 @@ export default function HomePage() {
                 {/* Mobil kırılımı değişmedi; desktop referanstaki birebir
                     3 satırlık kırılımı kullanıyor (ayrı span, CSS ile
                     breakpoint'e göre gösterilip gizleniyor). */}
-                <span className="otoiz-hero-headline-mobile">Otomobiliniz için<br />dijital servis pasaportu.</span>
+                <span className="otoiz-hero-headline-mobile">Aracınız için<br />dijital servis pasaportu.</span>
                 {/* Bu turun talimatı: "'servis pasaportu.' yeşil vurgu
                     taşımalı" — yalnızca desktop varyantında, mobil
                     değişmedi. */}
                 <span className="otoiz-hero-headline-desktop">
-                  Otomobiliniz için
+                  Aracınız için
                   <br />
                   dijital
                   <br />
@@ -233,34 +241,14 @@ export default function HomePage() {
                 </span>
               </h1>
               <p style={{ fontSize: 15.5, opacity: 0.85, lineHeight: 1.6, marginBottom: 26, maxWidth: 380, textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
-                Bakım, kilometre ve servis kayıtlarınızı güvenle saklayın — aracınızın tüm geçmişi tek ekranda.
+                Bakım geçmişi, servis kayıtları ve yaklaşan işlemler tek yerde.
+                OTOİZ ile aracınızın geçmişini düzenli, güvenli ve erişilebilir tutun.
               </p>
 
-              {/* Mobil: referansın LANDING ekranındaki 3 kolonlu kısa ikon+etiket satırı */}
-              <div className="otoiz-hero-benefits-mobile" style={{ display: "flex", marginBottom: 30, maxWidth: 380 }}>
-                {mobileValueProps.map((v, i) => (
-                  <div
-                    key={v.title}
-                    style={{
-                      flex: 1, textAlign: "center", padding: "0 8px",
-                      borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.14)" : "none",
-                    }}
-                  >
-                    <Icon name={v.icon} color={colors.green} size={20} />
-                    <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.85, marginTop: 6, lineHeight: 1.3 }}>{v.title}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Referansın onboarding-carousel nokta göstergesi — yalnızca mobilde, dekoratif */}
-              <div className="otoiz-hero-dots" style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 18 }}>
-                {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    style={{ width: i === 0 ? 16 : 6, height: 6, borderRadius: 999, background: i === 0 ? colors.green : "rgba(255,255,255,0.25)" }}
-                  />
-                ))}
-              </div>
+              {/* Mobil/tablet: gerçek fayda kaydırıcısı (swipe + oklar + aktif
+                  kart noktası). Önceki 3 sabit etiket + dekoratif noktalar
+                  kaydırılamıyordu. Desktop'ta gizli (sağ kolon listesi). */}
+              <BenefitCarousel items={benefits} />
 
               {/* Mobil CTA'lar değişmedi. */}
               <div className="otoiz-hero-cta-col otoiz-hero-cta-mobile" style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, margin: "0 auto" }}>
@@ -331,8 +319,8 @@ export default function HomePage() {
                 altında premium "imza" sloganı. Yalnızca desktop'ta görünür
                 (bkz. .otoiz-hero-benefits-col / .otoiz-hero-signature). */}
             <div className="otoiz-hero-benefits-col">
-              <div className="otoiz-hero-benefits-desktop" style={{ flexDirection: "column", gap: 26, textAlign: "left", marginBottom: 34, maxWidth: 300 }}>
-                {valueProps.map((v) => (
+              <div className="otoiz-hero-benefits-desktop" style={{ flexDirection: "column", gap: 20, textAlign: "left", marginBottom: 30, maxWidth: 300 }}>
+                {benefits.map((v) => (
                   <div key={v.title} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <div
                       style={{
@@ -400,12 +388,12 @@ export default function HomePage() {
         <div className="otoiz-accent-line" style={{ margin: "0 auto 36px" }} />
         <div style={{ textAlign: "center", marginBottom: 40, position: "relative" }}>
           <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: colors.green, fontWeight: 700, marginBottom: 8 }}>
-            4 adımda dijital güvence
+            Bireysel kullanım · 6 adım
           </div>
           <h2 style={{ fontSize: 24, color: colors.textLight, fontWeight: 800, margin: 0 }}>Sistem Nasıl Çalışır?</h2>
         </div>
         <div style={{ maxWidth: 920, margin: "0 auto", position: "relative" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
             {steps.map((s) => (
               <div
                 key={s.n}
@@ -448,7 +436,7 @@ export default function HomePage() {
         <div className="otoiz-reflection" aria-hidden="true" />
         <div className="otoiz-accent-line" style={{ margin: "0 auto 36px" }} />
         <h2 style={{ textAlign: "center", fontSize: 24, marginBottom: 36, color: colors.textLight, fontWeight: 800, position: "relative" }}>
-          Hizmetlerimiz
+          Araç sahipleri için özellikler
         </h2>
         <div style={{ maxWidth: 760, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, position: "relative" }}>
           {features.map((f) => (
@@ -492,7 +480,7 @@ export default function HomePage() {
             >
               <div style={{ fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: colors.green, fontWeight: 700, marginBottom: 6 }}>{p.eyebrow}</div>
               <h2 style={{ fontSize: 22, color: colors.textLight, fontWeight: 800, margin: "0 0 14px" }}>{p.title}</h2>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <ul style={{ listStyle: "none", padding: 0, margin: p.note ? "0 0 12px" : "0 0 22px", display: "flex", flexDirection: "column", gap: 10 }}>
                 {p.points.map((pt) => (
                   <li key={pt} style={{ display: "flex", gap: 10, alignItems: "flex-start", color: "rgba(255,255,255,0.78)", fontSize: 14, lineHeight: 1.5 }}>
                     <span style={{ marginTop: 2 }}><Icon name="check" color={colors.green} size={16} /></span>
@@ -500,6 +488,7 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
+              {p.note && <p style={{ fontSize: 12.5, color: "rgba(255,255,255,0.55)", margin: "0 0 18px", lineHeight: 1.5 }}>{p.note}</p>}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                 <a href={p.primary.href} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "12px 22px", minHeight: 48, background: colors.green, color: colors.textDark, borderRadius: 999, fontWeight: 800, fontSize: 14.5, textDecoration: "none" }}>
                   {p.primary.label}
@@ -563,10 +552,10 @@ export default function HomePage() {
 
         <div style={{ textAlign: "center" }}>
           <h2 style={{ fontSize: 26, marginBottom: 10, color: colors.textLight, fontWeight: 800 }}>
-            Bugünü kaydet. Yarın satarken güven oluştur.
+            Bugünü kaydedin. Aracınızın geçmişi düzenli kalsın.
           </h2>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 30, maxWidth: 440, margin: "0 auto 30px" }}>
-            OTOİZ, aracınızın teknik geçmişini düzenli, taşınabilir ve değerli hale getirir.
+            OTOİZ, aracınızın teknik geçmişini düzenli, erişilebilir ve devredilebilir tutar.
           </p>
           <button
             onClick={goToGirisSecimi}
