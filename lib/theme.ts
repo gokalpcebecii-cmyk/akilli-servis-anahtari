@@ -10,7 +10,7 @@ export const colors = {
   surfaceSoft: "#F4F7F9",
   textDark: "#102033",
   textLight: "#FFFFFF",
-  textMuted: "#6E7B88",
+  textMuted: "#5B6875",
   border: "#E1E7EC",
   green: "#36E86D",
   greenDark: "#16B94E",

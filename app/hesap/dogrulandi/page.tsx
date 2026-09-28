@@ -11,8 +11,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { colors, font, primaryButtonStyle } from "@/lib/theme";
-import { OtoizLogo } from "@/components/OtoizLogo";
+import { colors, primaryButtonStyle } from "@/lib/theme";
+import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
 const { parseConfirmHash, safeNext } = require("@/lib/emailConfirm");
 
@@ -39,39 +39,34 @@ function Inner() {
   const loginHref = `/bireysel/giris?next=${encodeURIComponent(next)}`;
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, padding: "40px 20px" }}>
-      <div style={{ maxWidth: 380, margin: "0 auto", background: colors.surfaceLight, borderRadius: 18, padding: "26px 22px", boxShadow: "0 12px 40px rgba(6,20,33,0.14)" }}>
-        <OtoizLogo variant="light" size={140} />
-        {state === "loading" && <p style={{ color: colors.textMuted }}>Kontrol ediliyor…</p>}
-        {state === "ok" && (
-          <div data-testid="confirm-ok">
-            <h1 style={{ fontSize: 21, margin: "16px 0 8px", color: colors.textDark, fontWeight: 800 }}>E-postan doğrulandı</h1>
-            <p style={{ color: colors.textMuted, lineHeight: 1.55, margin: "0 0 18px" }}>Şimdi giriş yapıp kaldığın yerden devam edebilirsin.</p>
-            <a href={loginHref} style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>Giriş yap</a>
-          </div>
-        )}
-        {(state === "error" || state === "unknown") && (
-          <div data-testid="confirm-error">
-            <h1 style={{ fontSize: 21, margin: "16px 0 8px", color: colors.textDark, fontWeight: 800 }}>
-              {state === "error" ? "Bağlantı geçersiz veya süresi dolmuş" : "Doğrulama bağlantısı"}
-            </h1>
-            <p style={{ color: colors.textMuted, lineHeight: 1.55, margin: "0 0 14px" }}>
-              Hesabın daha önce doğrulandıysa doğrudan giriş yapabilirsin. Doğrulanmadıysa e-posta adresini yazıp yeni bağlantı iste.
-            </p>
-            <ResendConfirmation next={next} />
-            <p style={{ textAlign: "center", marginTop: 16, fontSize: 13 }}>
-              <a href={loginHref} style={{ color: colors.greenDark, fontWeight: 600 }}>Giriş yap</a>
-            </p>
-          </div>
-        )}
-      </div>
-    </main>
+    <AuthShell role="bireysel">
+      {state === "loading" && <p role="status" style={{ color: colors.textMuted, margin: 0 }}>Kontrol ediliyor…</p>}
+      {state === "ok" && (
+        <div data-testid="confirm-ok">
+          <h1 className="otoiz-auth2-title">E-postan doğrulandı</h1>
+          <p className="otoiz-auth2-sub">Şimdi giriş yapıp kaldığın yerden devam edebilirsin.</p>
+          <a href={loginHref} style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>Giriş yap</a>
+        </div>
+      )}
+      {(state === "error" || state === "unknown") && (
+        <div data-testid="confirm-error">
+          <h1 className="otoiz-auth2-title">
+            {state === "error" ? "Bağlantı geçersiz veya süresi dolmuş" : "Doğrulama bağlantısı"}
+          </h1>
+          <p className="otoiz-auth2-sub" style={{ marginBottom: 14 }}>
+            Hesabın daha önce doğrulandıysa doğrudan giriş yapabilirsin. Doğrulanmadıysa e-posta adresini yazıp yeni bağlantı iste.
+          </p>
+          <ResendConfirmation next={next} />
+          <a href={loginHref} style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", marginTop: 12 }}>Giriş yap</a>
+        </div>
+      )}
+    </AuthShell>
   );
 }
 
 export default function DogrulandiPage() {
   return (
-    <Suspense fallback={<main style={{ padding: 24 }}>Yükleniyor…</main>}>
+    <Suspense fallback={<AuthShellLoading />}>
       <Inner />
     </Suspense>
   );

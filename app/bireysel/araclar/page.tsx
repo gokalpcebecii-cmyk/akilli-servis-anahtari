@@ -7,6 +7,8 @@ import { colors, font, radius } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { BottomNav } from "@/components/BottomNav";
+import { InstallCta } from "@/components/InstallCta";
+import { AuthShellLoading } from "@/components/AuthShell";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 const { plateSearchKey, describeMaintenancePlan } = require("@/lib/logic");
@@ -99,7 +101,7 @@ export default function BireyselAraclarPage() {
   const firstName = email ? email.split("@")[0] : "";
 
   if (loading) {
-    return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
+    return <AuthShellLoading />;
   }
 
   return (
@@ -115,28 +117,28 @@ export default function BireyselAraclarPage() {
         <div className="otoiz-reflection" aria-hidden="true" />
         <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <OtoizLogo variant="dark" size={255} />
+            <OtoizLogo variant="dark" size={190} className="otoiz-dash-logo" />
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 onClick={() => router.push("/bireysel/bildirimler")}
                 aria-label="Bildirimler"
                 style={{
-                  position: "relative", width: 34, height: 34, borderRadius: "50%",
+                  position: "relative", width: 44, height: 44, borderRadius: "50%",
                   background: "rgba(255,255,255,0.08)", border: "none", display: "flex",
                   alignItems: "center", justifyContent: "center", cursor: "pointer",
                 }}
               >
-                <Icon name="bell" color={colors.textLight} size={16} />
+                <Icon name="bell" color={colors.textLight} size={18} />
                 {pendingTransfers.length > 0 && (
-                  <span style={{ position: "absolute", top: 5, right: 6, width: 7, height: 7, borderRadius: "50%", background: colors.green }} />
+                  <span style={{ position: "absolute", top: 9, right: 10, width: 7, height: 7, borderRadius: "50%", background: colors.green }} />
                 )}
               </button>
               <button
                 onClick={() => router.push("/bireysel/profil")}
                 aria-label="Profil"
                 style={{
-                  width: 34, height: 34, borderRadius: "50%", background: colors.green, border: "none",
-                  color: colors.textDark, fontWeight: 800, fontSize: 13, cursor: "pointer",
+                  width: 44, height: 44, borderRadius: "50%", background: colors.green, border: "none",
+                  color: colors.textDark, fontWeight: 800, fontSize: 15, cursor: "pointer",
                 }}
               >
                 {firstName ? firstName[0].toUpperCase() : "?"}
@@ -176,7 +178,7 @@ export default function BireyselAraclarPage() {
                 <button
                   onClick={() => handleCancelTransfer(t.transfer_id)}
                   disabled={cancelling === t.transfer_id}
-                  style={{ fontSize: 12, padding: "8px 14px", background: "#fff", border: "1px solid #E8C468", borderRadius: 8, color: "#7a5c10", fontWeight: 600, cursor: "pointer", minHeight: 36 }}
+                  style={{ fontSize: 12, padding: "8px 14px", background: "#fff", border: "1px solid #E8C468", borderRadius: 8, color: "#7a5c10", fontWeight: 600, cursor: "pointer", minHeight: 44 }}
                 >
                   {cancelling === t.transfer_id ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
                 </button>
@@ -186,18 +188,23 @@ export default function BireyselAraclarPage() {
         )}
 
         {vehicles.length === 0 ? (
+          <>
           <div style={{ background: colors.surfaceLight, borderRadius: radius.lg, padding: "40px 20px", textAlign: "center", boxShadow: "0 8px 24px rgba(6,20,33,0.08)" }}>
             <p style={{ color: colors.textMuted, marginBottom: 18, fontSize: 14 }}>Henüz araç eklemediniz.</p>
             <a
               href="/bireysel/araclar/yeni"
-              style={{ display: "inline-block", padding: "12px 22px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, minHeight: 44 }}
+              style={{ display: "inline-flex", alignItems: "center", padding: "12px 22px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, minHeight: 44 }}
             >
               + Yeni Araç Ekle
             </a>
           </div>
+          <InstallCta tone="light" />
+          </>
         ) : (
           <>
             {primary && <VehicleHeroCard vehicle={primary} onClick={() => router.push(`/bireysel/araclar/${primary.id}`)} />}
+
+            <InstallCta tone="light" />
 
             {primary && (
               <section className="otoiz-dashboard-modules" style={{ marginTop: 18, marginBottom: 20, display: "flex", flexDirection: "column", gap: 10 }}>

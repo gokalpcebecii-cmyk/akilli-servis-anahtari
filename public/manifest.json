@@ -1,24 +1,41 @@
 {
-  "name": "OTOİZ — Dijital Araç Servis Pasaportu",
+  "id": "/",
+  "name": "OTOİZ",
   "short_name": "OTOİZ",
-  "description": "Dijital araç servis kaydı ve müşteri sadakat sistemi",
-  "start_url": "/",
+  "description": "OTOİZ — Dijital araç servis pasaportu",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "/bireysel/araclar",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#061421",
-  "theme_color": "#061421",
   "orientation": "portrait",
+  "background_color": "#0F1216",
+  "theme_color": "#0F1216",
+  "categories": ["auto", "utilities"],
   "icons": [
     {
-      "src": "/icon-otoiz-192.png",
+      "src": "/icons/otoiz-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-otoiz-512.png",
+      "src": "/icons/otoiz-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/otoiz-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/otoiz-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
