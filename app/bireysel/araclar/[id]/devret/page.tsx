@@ -11,7 +11,7 @@ const STEPS = [
   { n: 1, title: "Devir Detaylarını Gir", desc: "Devri başlatın, aracın erişimi hesabınızdan kaldırılır." },
   { n: 2, title: "Güvenli Bağlantı Oluştur", desc: "Yalnızca paylaştığınız kişi kullanabilecek, süreli bir bağlantı." },
   { n: 3, title: "Alıcı Kabul Eder", desc: "OTOİZ hesabıyla giriş yapıp bağlantıyı açtığında devir tamamlanır." },
-  { n: 4, title: "Teknik Geçmiş Devam Eder", desc: "Bakım kayıtları ve QR/NFC kodu değişmeden korunur." },
+  { n: 4, title: "Teknik Geçmiş Devam Eder", desc: "Bakım kayıtları ve QR kodu değişmeden korunur." },
 ];
 
 export default function BireyselDevretPage() {

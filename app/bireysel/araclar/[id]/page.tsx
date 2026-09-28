@@ -595,7 +595,7 @@ export default function BireyselVehicleDetailPage() {
       meta: vehicle.muayene_tarihi ? `Son: ${new Date(vehicle.muayene_tarihi).toLocaleDateString("tr-TR")}` : "Bilgi yok",
       tab: "belgeler",
     },
-    { icon: "qr", title: "QR / NFC", meta: qrRevokedAt ? "İptal Edildi" : qrCode ? "Aktif" : "—", tab: "belgeler" },
+    { icon: "qr", title: "QR Anahtarlık", meta: qrRevokedAt ? "İptal Edildi" : qrCode ? "Aktif" : "—", tab: "belgeler" },
     { icon: "user", title: "Sahiplik Bilgileri", meta: "1. sahip (Siz)", tab: "genel", hash: "devir" },
     {
       icon: "bell",
