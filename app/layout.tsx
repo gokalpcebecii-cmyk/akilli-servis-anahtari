@@ -1,5 +1,6 @@
 import "./globals.css";
 import SessionWatch from "@/components/SessionWatch";
+import { SITE_URL } from "@/lib/seo";
 
 // Aşama C: iOS "Ana Ekrana Ekle" açılış ekranları (portre). [dosya, CSS
 // genişlik, CSS yükseklik, piksel oranı] — görseller public/splash/ altında,
@@ -22,6 +23,12 @@ const IOS_SPLASH: [string, number, number, number][] = [
 ];
 
 export const metadata = {
+  // SEO: göreli OG/canonical adresleri kanonik alan adına çözülür. Varsayılan
+  // noindex: yalnız ana sayfa (app/page.tsx) kendi metadata'sıyla
+  // indekslenebilir olur; giriş, kullanıcı, servis, yönetim ve QR/pasaport
+  // sayfaları bu varsayılanı miras alır (bkz. lib/seo.js).
+  metadataBase: new URL(SITE_URL),
+  robots: { index: false, follow: false },
   title: "OTOİZ — Dijital Araç Servis Pasaportu",
   description: "Dijital araç servis kaydı ve müşteri sadakat sistemi",
   applicationName: "OTOİZ",
