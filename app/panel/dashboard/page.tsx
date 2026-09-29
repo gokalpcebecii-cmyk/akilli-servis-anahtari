@@ -1,13 +1,16 @@
 "use client";
 
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, secondaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
-const { plateSearchKey, describeMaintenancePlan } = require("@/lib/logic");
+const { describeMaintenancePlan } = require("@/lib/logic");
+const { plateKeyQuery, keysetOrFilter, PAGE_SIZE } = require("@/lib/pagination");
+
+const VEHICLE_COLS = "id, plate, brand, model, current_km, next_service_km, next_service_date, created_at";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -18,6 +21,12 @@ export default function DashboardPage() {
   const [notStaffAccount, setNotStaffAccount] = useState(false);
   const [pendingServiceSignup, setPendingServiceSignup] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
+  // P1: liste ve arama sunucuda (plate_key) — 50'lik sayfa, "Daha fazla göster".
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [total, setTotal] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const reqSeq = useRef(0);
 
   useEffect(() => {
     async function load() {
@@ -44,17 +53,49 @@ export default function DashboardPage() {
       const { data: tenantRow } = await supabase.from("tenants").select("approval_status").eq("id", staff.tenant_id).maybeSingle();
       setApprovalStatus(tenantRow?.approval_status ?? null);
 
-      const { data: vehicleList } = await supabase
-        .from("vehicles")
-        .select("*")
-        .eq("tenant_id", staff.tenant_id)
-        .order("created_at", { ascending: false });
-
-      setVehicles(vehicleList ?? []);
+      setTenantId(staff.tenant_id);
+      await fetchPage(staff.tenant_id, "", null);
       setLoading(false);
     }
     load();
   }, []);
+
+  // Sunucu tarafı sayfa: (created_at, id) cursor ile sonraki 50 araç.
+  // Eski yanıtlar (hızlı yazarken) yeni aramanın üzerine yazılmaz.
+  async function fetchPage(tid: string, term: string, after: any | null) {
+    const seq = ++reqSeq.current;
+    const key = plateKeyQuery(term);
+    let q = supabase
+      .from("vehicles")
+      .select(VEHICLE_COLS)
+      .eq("tenant_id", tid)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(PAGE_SIZE + 1);
+    if (key) q = q.like("plate_key", `%${key}%`);
+    if (after) q = q.or(keysetOrFilter({ t: after.created_at, id: after.id }));
+    const countQ = after
+      ? null
+      : (key
+          ? supabase.from("vehicles").select("id", { count: "exact", head: true }).eq("tenant_id", tid).like("plate_key", `%${key}%`)
+          : supabase.from("vehicles").select("id", { count: "exact", head: true }).eq("tenant_id", tid));
+    const [{ data }, countRes] = await Promise.all([q, countQ ?? Promise.resolve(null)]);
+    if (seq !== reqSeq.current) return;
+    const rows = data ?? [];
+    setHasMore(rows.length > PAGE_SIZE);
+    setVehicles((prev) => (after ? [...prev, ...rows.slice(0, PAGE_SIZE)] : rows.slice(0, PAGE_SIZE)));
+    if (countRes) setTotal((countRes as any).count ?? null);
+  }
+
+  useEffect(() => {
+    if (!tenantId) return;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      await fetchPage(tenantId, search, null);
+      setSearching(false);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [search]);
 
   async function handleLogout() {
     await supabase.auth.signOut({ scope: "local" });
@@ -63,8 +104,9 @@ export default function DashboardPage() {
 
   // PILOT FIX 03 (madde A2): arama ayraçtan (boşluk/tire) ve büyük/küçük
   // harften tamamen bağımsız çalışsın — "otoiz01" yazan kullanıcı "06 OTOIZ
-  // 01" olarak kayıtlı aracı da bulabilmeli.
-  const filtered = vehicles.filter((v) => plateSearchKey(v.plate).includes(plateSearchKey(search)));
+  // 01" olarak kayıtlı aracı da bulabilmeli. P1: aynı kural veritabanında
+  // (vehicles.plate_key) uygulanır; bütün araçlar içinde arar.
+  const filtered = vehicles;
 
   if (loading) return <main style={{ padding: 24, textAlign: "center", color: colors.textMuted, fontFamily: font }}>Yükleniyor…</main>;
 
@@ -142,7 +184,14 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {filtered.length === 0 && (
+        {total != null && (
+          <p data-testid="arac-sayisi" style={{ color: colors.textMuted, fontSize: 13, margin: "0 0 10px" }}>
+            {search.trim() ? `${total} araç bulundu` : `Toplam ${total} araç`}
+            {filtered.length < total ? ` · ${filtered.length} gösteriliyor` : ""}
+            {searching ? " · aranıyor…" : ""}
+          </p>
+        )}
+        {filtered.length === 0 && !searching && (
           <p style={{ color: colors.textMuted, marginTop: 20 }}>Araç bulunamadı.</p>
         )}
 
@@ -170,6 +219,14 @@ export default function DashboardPage() {
             </li>
           ))}
         </ul>
+        {hasMore && tenantId && (
+          <button
+            onClick={() => fetchPage(tenantId, search, filtered[filtered.length - 1])}
+            style={{ ...secondaryButtonStyle(), marginTop: 14, minHeight: 44 }}
+          >
+            Daha fazla göster
+          </button>
+        )}
       </div>
     </main>
   );

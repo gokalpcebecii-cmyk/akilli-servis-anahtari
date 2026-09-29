@@ -6,10 +6,13 @@ import { authClient, appOriginFor } from "@/lib/authSignup";
 const { confirmRedirectUrl, signupErrorMessage } = require("@/lib/emailConfirm");
 import { isRateLimited, rateLimitedResponse } from "@/lib/rateLimit";
 const { clientIp, LIMITS } = require("@/lib/rateLimitCore");
+import { logAppEvent } from "@/lib/appEvents";
+const { classifyAuthError } = require("@/lib/appEventsCore");
+import { withApiLog } from "@/lib/appEvents";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function POST(req: Request) {
+async function handlePOST(req: Request) {
   let body: any = {};
   try {
     body = await req.json();
@@ -36,6 +39,7 @@ export async function POST(req: Request) {
     email,
     options: { emailRedirectTo: confirmRedirectUrl(appOriginFor(req), body.next) },
   });
+  if (error) await logAppEvent(classifyAuthError(error), "/api/bireysel-kayit/yeniden-gonder", error.status ?? null, { code: (error as any).code ?? null });
   if (error && ((error as any).code === "over_email_send_rate_limit" || error.status === 429)) {
     return Response.json({ error: signupErrorMessage(error) }, { status: 429 });
   }
@@ -44,3 +48,5 @@ export async function POST(req: Request) {
     message: "Bu e-postayla doğrulanmamış bir hesap varsa yeni doğrulama bağlantısı gönderildi. Gelen kutunuzu ve gereksiz klasörünü kontrol edin.",
   });
 }
+
+export const POST = withApiLog("/api/bireysel-kayit/yeniden-gonder", handlePOST);

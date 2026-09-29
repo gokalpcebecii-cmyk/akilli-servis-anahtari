@@ -1,6 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { withApiLog } from "@/lib/appEvents";
 
 // Kritik olaylar (araç oluşturma, sahiplik devri, QR atama/iptal) artık
 // DB tetikleyicileri (log_vehicle_created, log_ownership_transfer,
@@ -13,7 +14,7 @@ const ALLOWED_ACTIONS: Record<string, { targetTable: string }> = {
   "ownership.transfer": { targetTable: "vehicles" },
 };
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   try {
     const authHeader = req.headers.get("authorization");
     const body = await req.json();
@@ -76,3 +77,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "audit_log_failed" }, { status: 500 });
   }
 }
+
+export const POST = withApiLog("/api/audit-log", handlePOST);

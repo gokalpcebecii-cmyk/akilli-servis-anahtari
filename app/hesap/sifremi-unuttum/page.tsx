@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { reportClientEvent } from "@/lib/clientEvent";
 import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
 import { AuthShell, AuthFooterLink } from "@/components/AuthShell";
 
@@ -41,9 +42,11 @@ export default function SifremiUnuttumPage() {
     // döndürse bile aynı "gönderildi" mesajını gösteriyoruz — yalnızca
     // gerçek bağlantı hatasında ayrı bir mesaj veriyoruz.
     try {
-      await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
         redirectTo: `${window.location.origin}/hesap/sifre-guncelle`,
       });
+      // Yanıt yine aynı (hesap varlığı sızdırılmaz); hata yalnız Sistem Sağlığı'na sayılır.
+      if (resetError) reportClientEvent("auth_error", "sifre", (resetError as any).code);
       setLoading(false);
       setSent(true);
     } catch {

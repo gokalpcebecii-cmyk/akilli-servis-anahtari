@@ -7,21 +7,25 @@
 
 import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { reportClientEvent } from "@/lib/clientEvent";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import UrunlerTab from "./UrunlerTab";
 import { AdminMfa } from "@/components/AdminMfa";
+import { SystemHealthTab, AuditLogTab } from "./SaglikTab";
 
-type Tab = "genel" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler";
+type Tab = "genel" | "saglik" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler" | "islem";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "genel", label: "Genel Bakış" },
+  { key: "saglik", label: "Sistem Sağlığı" },
   { key: "kullanicilar", label: "Kullanıcılar" },
   { key: "urunler", label: "Ürünler / Baskı Merkezi" },
   { key: "qr", label: "QR Kodları (destek)" },
   { key: "araclar", label: "Araçlar" },
   { key: "servisler", label: "Servisler" },
+  { key: "islem", label: "İşlem Kaydı" },
 ];
 
 const QR_COUNTS = [10, 20, 30, 100];
@@ -67,6 +71,11 @@ export default function YonetimPage() {
 
   const [overview, setOverview] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [usersMeta, setUsersMeta] = useState<{ total: number | null; active7d: number | null; next: string | null }>({ total: null, active7d: null, next: null });
+  const [userQuery, setUserQuery] = useState("");
+  const [qrNext, setQrNext] = useState<string | null>(null);
+  const [vehiclesMeta, setVehiclesMeta] = useState<{ total: number | null; next: string | null }>({ total: null, next: null });
+  const [loadingMore, setLoadingMore] = useState(false);
   const [qrData, setQrData] = useState<{ batches: string[]; codes: any[] }>({ batches: [], codes: [] });
   const [qrFilter, setQrFilter] = useState("all");
   const [qrBatch, setQrBatch] = useState("");
@@ -136,7 +145,7 @@ export default function YonetimPage() {
   useEffect(() => {
     if (stage !== "ready") return;
     if (tab === "genel" || tab === "servisler" || (tab === "urunler" && !overview)) loadOverview();
-    if (tab === "kullanicilar") loadUsers();
+    if (tab === "kullanicilar") loadUsers(userQuery);
     if (tab === "qr") {
       loadQr();
       if (!overview) loadOverview();
@@ -153,23 +162,41 @@ export default function YonetimPage() {
     if (r.ok) setOverview(r.body);
     else setError(r.body?.error || "Genel bakış yüklenemedi");
   }
-  async function loadUsers() {
-    const r = await api("/api/admin/kullanicilar");
-    if (r.ok) setUsers(r.body.users ?? []);
-    else setError(r.body?.error || "Kullanıcılar yüklenemedi");
+  // P1: listeler sunucuda sayfalanır (50'lik); "Daha fazla göster" sonraki
+  // sayfayı ekler. Arama/filtre her zaman veritabanında çalışır.
+  async function loadUsers(q: string, cursor?: string | null) {
+    const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
+    if (cursor) params.set("cursor", cursor);
+    if (cursor) setLoadingMore(true);
+    const r = await api(`/api/admin/kullanicilar?${params.toString()}`);
+    setLoadingMore(false);
+    if (!r.ok) return setError(r.body?.error || "Kullanıcılar yüklenemedi");
+    setUsers((prev) => (cursor ? [...prev, ...(r.body.users ?? [])] : r.body.users ?? []));
+    setUsersMeta((prev) => ({ total: cursor ? prev.total : r.body.total ?? null, active7d: cursor ? prev.active7d : r.body.active_7d ?? null, next: r.body.next_cursor ?? null }));
   }
-  async function loadQr() {
+  async function loadQr(cursor?: string | null) {
     const params = new URLSearchParams();
     params.set("filter", qrFilter);
     if (qrBatch) params.set("batch", qrBatch);
+    if (cursor) params.set("cursor", cursor);
+    if (cursor) setLoadingMore(true);
     const r = await api(`/api/admin/qr?${params.toString()}`);
-    if (r.ok) setQrData({ batches: r.body.batches ?? [], codes: r.body.codes ?? [] });
-    else setError(r.body?.error || "QR listesi yüklenemedi");
+    setLoadingMore(false);
+    if (!r.ok) return setError(r.body?.error || "QR listesi yüklenemedi");
+    setQrData((prev) => ({ batches: r.body.batches ?? prev.batches, codes: cursor ? [...prev.codes, ...(r.body.codes ?? [])] : r.body.codes ?? [] }));
+    setQrNext(r.body.next_cursor ?? null);
   }
-  async function loadVehicles(q: string) {
-    const r = await api(`/api/admin/araclar?q=${encodeURIComponent(q)}`);
-    if (r.ok) setVehicles(r.body.vehicles ?? []);
-    else setError(r.body?.error || "Araçlar yüklenemedi");
+  async function loadVehicles(q: string, cursor?: string | null) {
+    const params = new URLSearchParams();
+    params.set("q", q);
+    if (cursor) params.set("cursor", cursor);
+    if (cursor) setLoadingMore(true);
+    const r = await api(`/api/admin/araclar?${params.toString()}`);
+    setLoadingMore(false);
+    if (!r.ok) return setError(r.body?.error || "Araçlar yüklenemedi");
+    setVehicles((prev) => (cursor ? [...prev, ...(r.body.vehicles ?? [])] : r.body.vehicles ?? []));
+    setVehiclesMeta((prev) => ({ total: cursor ? prev.total : r.body.total ?? null, next: r.body.next_cursor ?? null }));
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -179,6 +206,7 @@ export default function YonetimPage() {
     const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoggingIn(false);
     if (err) {
+      reportClientEvent("login_failed", "yonetim", (err as any).code);
       setLoginError("E-posta veya şifre hatalı.");
       return;
     }
@@ -386,8 +414,15 @@ export default function YonetimPage() {
           <section style={cardStyle}>
             <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Kullanıcılar ve kullanım</h2>
             <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 12px" }}>
-              Toplam {users.length} kullanıcı · son 7 günde giriş yapan {users.filter((u) => u.last_sign_in_at && Date.now() - new Date(u.last_sign_in_at).getTime() < 7 * 86400000).length}
+              Toplam {usersMeta.total ?? "—"} kullanıcı · son 7 günde giriş yapan {usersMeta.active7d ?? "—"} · en yeni kayıt önce, {users.length} gösteriliyor
             </p>
+            <input
+              value={userQuery}
+              onChange={(e) => { setUserQuery(e.target.value); loadUsers(e.target.value); }}
+              placeholder="E-posta ile ara…"
+              aria-label="E-posta ile ara"
+              style={{ ...inputStyle, marginBottom: 12 }}
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {users.map((u) => (
                 <div key={u.id} style={{ border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: 12, display: "flex", flexWrap: "wrap", gap: "6px 16px", alignItems: "center" }}>
@@ -404,7 +439,13 @@ export default function YonetimPage() {
                   <span style={{ fontSize: 13 }}>🛠 {u.records_created} kayıt{u.last_record_at ? ` (son: ${fmtDate(u.last_record_at)})` : ""}</span>
                 </div>
               ))}
+              {users.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>Kullanıcı bulunamadı.</p>}
             </div>
+            {usersMeta.next && (
+              <button onClick={() => loadUsers(userQuery, usersMeta.next)} disabled={loadingMore} style={{ ...smallBtn(colors.surfaceLight, colors.textDark, colors.border), minHeight: 44, marginTop: 12, width: "100%" }}>
+                {loadingMore ? "Yükleniyor…" : "Daha fazla göster"}
+              </button>
+            )}
           </section>
         )}
 
@@ -528,7 +569,7 @@ export default function YonetimPage() {
 
             <section style={cardStyle}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 12 }}>
-                <h2 style={{ fontSize: 16, margin: 0, marginRight: "auto" }}>Kodlar ({qrData.codes.length})</h2>
+                <h2 style={{ fontSize: 16, margin: 0, marginRight: "auto" }}>Kodlar ({qrData.codes.length}{qrNext ? "+" : ""})</h2>
                 <select value={qrFilter} onChange={(e) => setQrFilter(e.target.value)} style={{ ...inputStyle, width: "auto" }} aria-label="Durum">
                   <option value="all">Tümü</option>
                   <option value="free">Boşta</option>
@@ -620,14 +661,26 @@ export default function YonetimPage() {
                   </div>
                 ))}
               </div>
+              {qrNext && (
+              <button onClick={() => loadQr(qrNext)} disabled={loadingMore} style={{ ...smallBtn(colors.surfaceLight, colors.textDark, colors.border), minHeight: 44, marginTop: 12, width: "100%" }}>
+                {loadingMore ? "Yükleniyor…" : "Daha fazla göster"}
+              </button>
+            )}
             </section>
           </>
         )}
 
+        {/* ================= SİSTEM SAĞLIĞI / İŞLEM KAYDI (P1) ================= */}
+        {tab === "saglik" && <SystemHealthTab api={api} />}
+        {tab === "islem" && <AuditLogTab api={api} />}
+
         {/* ================= ARAÇLAR ================= */}
         {tab === "araclar" && (
           <section style={cardStyle}>
-            <h2 style={{ fontSize: 16, margin: "0 0 10px" }}>Tüm araçlar</h2>
+            <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Tüm araçlar</h2>
+            <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 10px" }}>
+              {vehiclesMeta.total != null ? `${vehiclesMeta.total} araç${vehicleQuery ? " bulundu" : ""} · ` : ""}en yeni önce, {vehicles.length} gösteriliyor
+            </p>
             <input
               value={vehicleQuery}
               onChange={(e) => { setVehicleQuery(e.target.value); loadVehicles(e.target.value); }}
@@ -650,6 +703,11 @@ export default function YonetimPage() {
               ))}
               {vehicles.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>Araç bulunamadı.</p>}
             </div>
+            {vehiclesMeta.next && (
+              <button onClick={() => loadVehicles(vehicleQuery, vehiclesMeta.next)} disabled={loadingMore} style={{ ...smallBtn(colors.surfaceLight, colors.textDark, colors.border), minHeight: 44, marginTop: 12, width: "100%" }}>
+                {loadingMore ? "Yükleniyor…" : "Daha fazla göster"}
+              </button>
+            )}
           </section>
         )}
 

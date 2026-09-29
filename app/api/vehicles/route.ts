@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 const { createVehicle } = require("@/lib/vehicleWrite");
+import { withApiLog } from "@/lib/appEvents";
 
 // PILOT FIX 03 (madde A1) → İKİNCİ düzeltme turu (madde 1) → ÜÇÜNCÜ
 // düzeltme turu (madde 2/3): araç oluşturmanın GERÇEK kayıt katmanı.
@@ -15,7 +16,7 @@ const { createVehicle } = require("@/lib/vehicleWrite");
 // politikalarıyla uyumlu olduğu salt-okunur bir incelemeyle doğrulandı
 // (bkz. o dosyanın başındaki not ve final rapor). Hiçbir DB/RLS/migration
 // değişikliği yapılmadı.
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   try {
     const authHeader = req.headers.get("authorization");
     const body = await req.json();
@@ -32,3 +33,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Beklenmeyen hata" }, { status: 500 });
   }
 }
+
+export const POST = withApiLog("/api/vehicles", handlePOST);

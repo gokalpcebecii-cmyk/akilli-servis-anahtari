@@ -20,13 +20,16 @@ import { createServerSupabase } from "@/lib/supabase";
 const { confirmRedirectUrl, signupErrorMessage } = require("@/lib/emailConfirm");
 const { clientIp, LIMITS } = require("@/lib/rateLimitCore");
 const { SERVICE_COMPLETE_PATH, validateServiceFields, unguessablePassword } = require("@/lib/serviceSignup");
+import { logAppEvent } from "@/lib/appEvents";
+const { classifyAuthError } = require("@/lib/appEventsCore");
+import { withApiLog } from "@/lib/appEvents";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const NEUTRAL_MESSAGE =
   "E-posta adresinize bir doğrulama bağlantısı gönderdik. Bağlantıya tıklayıp şifrenizi belirleyin ve başvurunuzu tamamlayın. Bu e-postayla zaten bir hesabınız varsa giriş yapın.";
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   let body: any;
   try {
     body = await req.json();
@@ -82,6 +85,9 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       const code = (error as any).code;
+      if (!(code === "user_already_exists" || /already registered/i.test(error.message || ""))) {
+        await logAppEvent(classifyAuthError(error), "/api/signup", error.status ?? null, { code: code ?? null });
+      }
       if (code === "over_email_send_rate_limit" || error.status === 429) {
         return NextResponse.json({ error: signupErrorMessage(error) }, { status: 429 });
       }
@@ -101,3 +107,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Beklenmeyen bir hata oluştu" }, { status: 500 });
   }
 }
+
+export const POST = withApiLog("/api/signup", handlePOST);

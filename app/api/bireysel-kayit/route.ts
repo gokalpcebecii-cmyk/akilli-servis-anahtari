@@ -16,10 +16,13 @@ const { unguessablePassword } = require("@/lib/serviceSignup");
 const { confirmRedirectUrl, signupErrorMessage } = require("@/lib/emailConfirm");
 import { isRateLimited, rateLimitedResponse } from "@/lib/rateLimit";
 const { clientIp, LIMITS } = require("@/lib/rateLimitCore");
+import { logAppEvent } from "@/lib/appEvents";
+const { classifyAuthError } = require("@/lib/appEventsCore");
+import { withApiLog } from "@/lib/appEvents";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function POST(req: Request) {
+async function handlePOST(req: Request) {
   try {
     const body = await req.json();
     const { full_name, phone, next } = body;
@@ -63,6 +66,7 @@ export async function POST(req: Request) {
       if (code === "user_already_exists" || /already registered/i.test(error.message || "")) {
         return Response.json({ ok: true, needs_confirmation: true });
       }
+      await logAppEvent(classifyAuthError(error), "/api/bireysel-kayit", error.status ?? null, { code: code ?? null });
       return Response.json({ error: signupErrorMessage(error) }, { status: error.status && error.status >= 500 ? 502 : error.status === 429 ? 429 : 400 });
     }
 
@@ -81,3 +85,5 @@ export async function POST(req: Request) {
     return Response.json({ error: "Sunucu hatası." }, { status: 500 });
   }
 }
+
+export const POST = withApiLog("/api/bireysel-kayit", handlePOST);

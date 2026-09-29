@@ -3,12 +3,13 @@
 // (RLS: public.approved_staff_tenant_ids()). Her karar audit_log'a yazılır.
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, isAdminContext } from "@/lib/adminAuth";
+import { withApiLog } from "@/lib/appEvents";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const ctx = await requireAdmin(req);
   if (!isAdminContext(ctx)) return ctx;
   const db = ctx.db;
@@ -46,3 +47,5 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, status, name: t.name });
 }
+
+export const POST = withApiLog("/api/admin/servisler", handlePOST);

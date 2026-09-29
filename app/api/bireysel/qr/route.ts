@@ -8,6 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase";
 const { normalizeQrCode } = require("@/lib/qrToken");
+import { withApiLog } from "@/lib/appEvents";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -25,7 +26,7 @@ async function currentUser(req: NextRequest) {
 }
 
 // Kullanıcıya tanımlı, henüz bir araca bağlanmamış kodlar.
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   const user = await currentUser(req);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const db = createServerSupabase();
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
 }
 
 // Tanımlı kodu kullanıcının kendi aracına bağla.
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const user = await currentUser(req);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
@@ -128,3 +129,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, code });
 }
+
+export const GET = withApiLog("/api/bireysel/qr", handleGET);
+export const POST = withApiLog("/api/bireysel/qr", handlePOST);

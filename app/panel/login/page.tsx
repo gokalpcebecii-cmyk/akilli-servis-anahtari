@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { reportClientEvent } from "@/lib/clientEvent";
 import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
 import { AuthShell, AuthShellLoading, AuthFooterLink } from "@/components/AuthShell";
 
@@ -62,6 +63,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
       setLoading(false);
       if (error) {
+        reportClientEvent("login_failed", "servis", (error as any).code);
         if (typeof error.status === "number" && error.status >= 500) {
           setError("Sunucuda geçici bir sorun oluştu. Lütfen birazdan tekrar deneyin.");
         } else {

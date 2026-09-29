@@ -12,6 +12,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAnonServerSupabase } from "@/lib/supabase";
 const { NO_STORE_HEADERS, normalizeResolverToken, decide, renderMessagePage } = require("@/lib/qrResolver");
+import { isRateLimited } from "@/lib/rateLimit";
+import { logAppEvent } from "@/lib/appEvents";
+const { clientIp, LIMITS } = require("@/lib/rateLimitCore");
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -27,6 +30,22 @@ async function handle(req: NextRequest, params: { token: string }) {
       status = error ? "error" : String(data);
     } catch {
       status = "error";
+    }
+  }
+
+  // P1: sistem hatası Sistem Sağlığı'na yazılır. Sistemde olmayan kodlar IP
+  // başına sayılır; aşımda 429 (kod tahmini/tarama). Geçerli anahtarlık
+  // okutmaları sayılmaz, veritabanına yazmaz ve hiç sınırlanmaz.
+  if (status === "error") {
+    await logAppEvent("resolver_error", "/r", 503);
+  } else if (status === "not_found") {
+    const limited = await isRateLimited([{ scope: "qr-miss-ip-10m", value: clientIp(req.headers), ...LIMITS.resolverMissIp10m }], { silent: true });
+    if (limited) {
+      await logAppEvent("resolver_rate_limited", "/r", 429);
+      return new NextResponse(
+        renderMessagePage("Çok fazla deneme", "Kısa sürede çok sayıda geçersiz kod okutuldu. Lütfen birkaç dakika sonra tekrar deneyin."),
+        { status: 429, headers: { ...NO_STORE_HEADERS, "Content-Type": "text/html; charset=utf-8", "Retry-After": "600" } }
+      );
     }
   }
 

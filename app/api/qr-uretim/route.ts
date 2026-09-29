@@ -4,8 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { generateQrCode } = require("@/lib/qrToken");
 const { qrIssuanceLocked, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
+import { withApiLog } from "@/lib/appEvents";
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   try {
     // İkinci düzeltme turu (madde 3): bu kapı yalnızca UI'de değil, burada
     // da, herhangi bir auth/DB sorgusu çalışmadan EN BAŞTA uygulanır —
@@ -94,3 +95,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Beklenmeyen hata" }, { status: 500 });
   }
 }
+
+export const POST = withApiLog("/api/qr-uretim", handlePOST);
