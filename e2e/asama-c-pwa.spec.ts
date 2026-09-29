@@ -204,22 +204,22 @@ const BIP_INIT = `(() => {
 })();`;
 
 test.describe("Aşama C — OTOİZ'İ TELEFONA EKLE", () => {
-  test("iPhone: CTA büyük ve görünür, Paylaş → Ana Ekrana Ekle yönergesi; 'Ekledim' sonrası bir daha görünmez", async ({ browser, baseURL }) => {
+  test("iPhone: CTA büyük ve görünür, 3 adımlı sihirbaz; 'Ekledim' sonrası bir daha görünmez", async ({ browser, baseURL }) => {
     const { context, page } = await open(browser, IPHONE, baseURL!);
     await page.goto("/bireysel/giris");
     const cta = page.getByTestId("install-cta");
     await expect(cta).toBeVisible();
     await expect(cta).toHaveAttribute("data-platform", "ios");
-    const btn = cta.getByRole("button", { name: "OTOİZ'İ TELEFONA EKLE — NASIL YAPILIR?", exact: true });
-    await expect(cta).toContainText("2 adım: Paylaş → Ana Ekrana Ekle");
+    const btn = cta.getByRole("button", { name: "OTOİZ’İ iPHONE’A EKLE", exact: true });
     const box = await btn.boundingBox();
     expect(box!.height).toBeGreaterThanOrEqual(48);
     await btn.click();
     const sheet = page.getByTestId("install-sheet-ios");
-    await expect(sheet.getByRole("heading", { name: "iPhone'a ekle" })).toBeVisible();
+    await expect(sheet).toContainText("OTOİZ’i iPhone’a ekleyin");
     await expect(sheet).toContainText("Paylaş");
+    await sheet.getByRole("button", { name: "İleri" }).click();
     await expect(sheet).toContainText("Ana Ekrana Ekle");
-    await expect(sheet).toContainText("Alttaki");
+    await sheet.getByRole("button", { name: "İleri" }).click();
     await sheet.getByRole("button", { name: "Ekledim" }).click();
     await expect(cta).toHaveCount(0);
     await page.reload();
@@ -228,12 +228,12 @@ test.describe("Aşama C — OTOİZ'İ TELEFONA EKLE", () => {
     await context.close();
   });
 
-  test("iPhone Chrome: Safari'de açma notu gösterilir", async ({ browser, baseURL }) => {
+  test("iPhone Chrome: önce Safari'de açma ekranı gösterilir", async ({ browser, baseURL }) => {
     const ua = (IPHONE.userAgent as string).replace(/Version\/[\d.]+/, "CriOS/129.0.0.0");
     expect(ua).toContain("CriOS");
     const { context, page } = await open(browser, { ...IPHONE, userAgent: ua }, baseURL!);
     await page.goto("/bireysel/giris");
-    await page.getByRole("button", { name: "OTOİZ'İ TELEFONA EKLE" }).click();
+    await page.getByRole("button", { name: "OTOİZ’İ iPHONE’A EKLE" }).click();
     await expect(page.getByTestId("install-sheet-ios")).toContainText("Safari");
     await context.close();
   });

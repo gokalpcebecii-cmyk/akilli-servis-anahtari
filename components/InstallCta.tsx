@@ -5,7 +5,10 @@
 // - Android (Chrome/Edge): tarayıcı yükleme penceresi (beforeinstallprompt)
 //   hazırsa doğrudan onu açar; hazır değilse (Samsung Internet, daha önce
 //   reddedilmiş vb.) menüden "Ana ekrana ekle" yönergesini gösterir.
-// - iOS: Safari'de Paylaş → Ana Ekrana Ekle → Ekle yönergesi.
+// - iOS: "OTOİZ'İ iPHONE'A EKLE" → premium 3 adımlı sihirbaz
+//   (components/IosInstallWizard.tsx). Safari dışında (uygulama içi tarayıcı,
+//   Chrome vb.) önce "Safari'de açın" ekranı. Apple tek dokunuşla kurulumu
+//   yasaklar; sihirbaz kurulum yapıyormuş gibi davranmaz.
 // - Masaüstü: gösterilmez.
 // - Uygulama olarak açıldıysa (display-mode: standalone / navigator.standalone),
 //   yüklendi bilgisi alındıysa (appinstalled, pencerede "Yükle", iOS'ta
@@ -15,6 +18,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { colors, font } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
+import { IosInstallWizard, type IosEnv } from "@/components/IosInstallWizard";
+
+const { classifyIosBrowser } = require("@/lib/iosInstall");
 
 type Platform = "ios" | "android" | "other";
 type Deferred = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
@@ -162,12 +168,17 @@ export function InstallCta({ tone = "dark" }: { tone?: "dark" | "light" }) {
   if (!mounted || hidden) return null;
 
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-  const iosNonSafari = platform === "ios" && /CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
   const isIpad = platform === "ios" && !/iPhone|iPod/i.test(ua);
+  const iosEnv: IosEnv | null = platform === "ios" ? classifyIosBrowser(ua) : null;
 
   return (
     <>
-      <div className={`otoiz-install otoiz-install-${tone}`} data-testid="install-cta" data-platform={platform}>
+      <div
+        className={`otoiz-install otoiz-install-${tone}`}
+        data-testid="install-cta"
+        data-platform={platform}
+        data-ios-browser={iosEnv?.kind}
+      >
         <div className="otoiz-install-head">
           <span className="otoiz-install-icon" aria-hidden="true">
             <Icon name="smartphone" color={colors.green} size={22} />
@@ -175,8 +186,10 @@ export function InstallCta({ tone = "dark" }: { tone?: "dark" | "light" }) {
           <div>
             <div className="otoiz-install-title">OTOİZ&apos;i ana ekranınıza ekleyin</div>
             <div className="otoiz-install-sub">
-              {platform === "ios"
-                ? "2 adım: Paylaş → Ana Ekrana Ekle"
+              {iosEnv
+                ? iosEnv.kind === "safari"
+                  ? "3 kısa adım. Sonra uygulama gibi tek dokunuşla açılır."
+                  : "Ekleme Safari’de yapılır. Dokunun, adım adım gösterelim."
                 : "Uygulama gibi tek dokunuşla açılır, adres yazmanız gerekmez."}
             </div>
           </div>
@@ -191,93 +204,60 @@ export function InstallCta({ tone = "dark" }: { tone?: "dark" | "light" }) {
           style={{ fontFamily: font }}
         >
           <Icon name="download" color={colors.textDark} size={20} />
-          {/* iOS'ta düğme kurulum yapamaz, yalnız yönergeyi açar; metin bunu söyler. */}
-          <span>{platform === "ios" ? "OTOİZ'İ TELEFONA EKLE — NASIL YAPILIR?" : "OTOİZ'İ TELEFONA EKLE"}</span>
+          {/* iOS'ta düğme kurulum yapamaz, yalnız kurulum sihirbazını açar. */}
+          <span>{platform === "ios" ? (isIpad ? "OTOİZ’İ iPAD’E EKLE" : "OTOİZ’İ iPHONE’A EKLE") : "OTOİZ'İ TELEFONA EKLE"}</span>
         </button>
         <button type="button" onClick={snooze} className="otoiz-install-later" style={{ fontFamily: font }}>
           Şimdi değil
         </button>
       </div>
 
-      {sheet && (
+      {sheet && iosEnv && (
+        <IosInstallWizard env={iosEnv} isIpad={isIpad} onClose={closeSheet} onAdded={markAdded} onSnooze={snooze} />
+      )}
+
+      {sheet && !iosEnv && (
         <div className="otoiz-install-backdrop" onClick={closeSheet}>
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="otoiz-install-sheet-title"
             className="otoiz-install-sheet"
-            data-testid={platform === "ios" ? "install-sheet-ios" : "install-sheet-android"}
+            data-testid="install-sheet-android"
             onClick={(e) => e.stopPropagation()}
             style={{ fontFamily: font }}
           >
             <div className="otoiz-install-sheet-head">
-              <h2 id="otoiz-install-sheet-title">
-                {platform === "ios" ? (isIpad ? "iPad'e ekle" : "iPhone'a ekle") : "Android telefona ekle"}
-              </h2>
+              <h2 id="otoiz-install-sheet-title">Android telefona ekle</h2>
               <button ref={closeRef} type="button" onClick={closeSheet} aria-label="Kapat" className="otoiz-install-close">
                 <Icon name="close" color={colors.textDark} size={20} />
               </button>
             </div>
 
-            {platform === "ios" ? (
-              <ol className="otoiz-install-steps">
-                <li>
-                  <span className="otoiz-install-step-no">1</span>
-                  <span>
-                    {iosNonSafari ? "Adres çubuğundaki " : isIpad ? "Sağ üstteki " : "Alttaki "}
-                    <strong className="otoiz-install-kbd">
-                      <Icon name="share" color={colors.textDark} size={16} /> Paylaş
-                    </strong>{" "}
-                    simgesine dokunun.
-                  </span>
-                </li>
-                <li>
-                  <span className="otoiz-install-step-no">2</span>
-                  <span>
-                    Listeyi kaydırıp{" "}
-                    <strong className="otoiz-install-kbd">
-                      <Icon name="plus-square" color={colors.textDark} size={16} /> Ana Ekrana Ekle
-                    </strong>{" "}
-                    seçeneğine dokunun.
-                  </span>
-                </li>
-                <li>
-                  <span className="otoiz-install-step-no">3</span>
-                  <span>
-                    Sağ üstteki <strong>Ekle</strong>&apos;ye dokunun. OTOİZ simgesi ana ekranınızda görünür.
-                  </span>
-                </li>
-              </ol>
-            ) : (
-              <ol className="otoiz-install-steps">
-                <li>
-                  <span className="otoiz-install-step-no">1</span>
-                  <span>
-                    Tarayıcının sağ üstündeki{" "}
-                    <strong className="otoiz-install-kbd">
-                      <Icon name="more-vertical" color={colors.textDark} size={16} /> menü
-                    </strong>{" "}
-                    simgesine dokunun (Samsung İnternet&apos;te alttaki ☰).
-                  </span>
-                </li>
-                <li>
-                  <span className="otoiz-install-step-no">2</span>
-                  <span>
-                    <strong>Uygulamayı yükle</strong> ya da <strong>Ana ekrana ekle</strong> seçeneğine dokunun.
-                  </span>
-                </li>
-                <li>
-                  <span className="otoiz-install-step-no">3</span>
-                  <span>
-                    <strong>Yükle</strong> / <strong>Ekle</strong> ile onaylayın. OTOİZ simgesi ana ekranınızda görünür.
-                  </span>
-                </li>
-              </ol>
-            )}
-
-            {iosNonSafari && (
-              <p className="otoiz-install-note">Seçenek görünmüyorsa bu sayfayı Safari&apos;de açıp aynı adımları izleyin.</p>
-            )}
+            <ol className="otoiz-install-steps">
+              <li>
+                <span className="otoiz-install-step-no">1</span>
+                <span>
+                  Tarayıcının sağ üstündeki{" "}
+                  <strong className="otoiz-install-kbd">
+                    <Icon name="more-vertical" color={colors.textDark} size={16} /> menü
+                  </strong>{" "}
+                  simgesine dokunun (Samsung İnternet&apos;te alttaki ☰).
+                </span>
+              </li>
+              <li>
+                <span className="otoiz-install-step-no">2</span>
+                <span>
+                  <strong>Uygulamayı yükle</strong> ya da <strong>Ana ekrana ekle</strong> seçeneğine dokunun.
+                </span>
+              </li>
+              <li>
+                <span className="otoiz-install-step-no">3</span>
+                <span>
+                  <strong>Yükle</strong> / <strong>Ekle</strong> ile onaylayın. OTOİZ simgesi ana ekranınızda görünür.
+                </span>
+              </li>
+            </ol>
 
             <button type="button" onClick={markAdded} className="otoiz-install-btn" style={{ fontFamily: font }}>
               <Icon name="check" color={colors.textDark} size={20} />
