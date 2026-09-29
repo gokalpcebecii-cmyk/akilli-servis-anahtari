@@ -12,7 +12,7 @@
 // açılır.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { colors, inputStyle, labelStyle } from "@/lib/theme";
+import { colors, font, inputStyle, labelStyle } from "@/lib/theme";
 const { findBrand, modelsFor, findModel, pickerState, searchNames } = require("@/lib/vehicleCatalogSearch");
 
 type Brand = { name: string; models: string[] };
@@ -168,6 +168,7 @@ function PickerSheet({
         inset: 0,
         zIndex: 1000,
         background: "rgba(15,18,22,0.55)",
+        fontFamily: font,
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
