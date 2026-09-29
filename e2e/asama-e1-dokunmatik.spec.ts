@@ -14,10 +14,12 @@ const OWNER_ID = "e1e1e1e1-2222-4000-8000-000000000001";
 // iOS'un "kelime sınırına yapış" davranışını taklit eder.
 async function simulateWordSnap(page: Page) {
   await page.evaluate(() => {
-    document.addEventListener("pointerup", (e) => {
-      const el = e.target as HTMLInputElement;
-      if (!el || (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA")) return;
-      setTimeout(() => {
+    document.addEventListener("touchend", () => {
+      // iPhone imleci dokunuştan hemen sonra VE çift dokunuş beklemesinden
+      // sonra (~420 ms) kelime sınırına koyar; ikisi de taklit edilir.
+      const snapLater = (delay: number) => setTimeout(() => {
+        const el = document.activeElement as HTMLInputElement;
+        if (!el || (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA")) return;
         const v = el.value;
         const at = el.selectionStart ?? v.length;
         // en yakın kelime sınırı (harf/rakam olmayan karakter ya da uç)
@@ -30,7 +32,9 @@ async function simulateWordSnap(page: Page) {
         try {
           el.setSelectionRange(snap, snap);
         } catch {}
-      }, 20);
+      }, delay);
+      snapLater(20);
+      snapLater(420);
     });
   });
 }
@@ -49,7 +53,7 @@ async function tapAtChar(page: Page, input: Locator, k: number) {
     return { x, y: r.top + r.height / 2 };
   }, k);
   await page.touchscreen.tap(pt.x, pt.y);
-  await page.waitForTimeout(450);
+  await page.waitForTimeout(1000);
 }
 
 async function caret(input: Locator) {
@@ -75,6 +79,25 @@ test("E-posta: ortadaki harfe dokununca imleç tam oraya gelir ve yazılan harf 
   await page.keyboard.type("Y");
   await expect(email).toHaveValue("gokYalp.ceXbeci@gmail.com");
 });
+
+for (const [path, id] of [
+  ["/bireysel/giris", "#bireysel-email"],
+  ["/panel/login", "#panel-email"],
+] as const) {
+  test(`Giriş ekranı ${path}: e-postada ortadaki harfe dokunup ekleme`, async ({ page }) => {
+    await page.goto(path);
+    const email = page.locator(id);
+    await email.fill("gokalpcebecii1@gmail.com");
+    await page.locator('input[type="password"]').first().click();
+    await simulateWordSnap(page);
+    // "gokalpce|becii1" → 8
+    await tapAtChar(page, email, 8);
+    await expect(email).toBeFocused();
+    expect(await caret(email)).toEqual([8, 8]);
+    await page.keyboard.type("Z");
+    await expect(email).toHaveValue("gokalpceZbecii1@gmail.com");
+  });
+}
 
 test("E-posta alanı e-posta klavyesi açar ve imleç seçimini destekler", async ({ page }) => {
   await page.goto("/bireysel/kayit");
