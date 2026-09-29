@@ -107,3 +107,33 @@ test("P1 hız sınırları tanımlı ve makul", () => {
     assert.ok(LIMITS[k].max > 0 && LIMITS[k].windowSeconds > 0, k);
   }
 });
+
+// DÜZELTME 01 — Yönetim > Araçlar toplam sayacı
+const { vehicleCountView } = require("../lib/vehicleCount");
+
+test("araç sayacı: aramasız toplam belirgin ve tr-TR biçimli (5K/25K)", () => {
+  assert.equal(vehicleCountView({ allTotal: 6, matchTotal: 6, shown: 6, query: "", loading: false }).headline, "6");
+  const v5 = vehicleCountView({ allTotal: 5000, matchTotal: 5000, shown: 50, query: "", loading: false });
+  assert.equal(v5.headline, "5.000");
+  assert.equal(v5.detail, "en yeni önce · 50 gösteriliyor");
+  const v25 = vehicleCountView({ allTotal: 25009, matchTotal: 25009, shown: 100, query: "", loading: false });
+  assert.equal(v25.headline, "25.009");
+  assert.match(v25.detail, /100 gösteriliyor/);
+});
+
+test("araç sayacı: aramada genel toplam kalır, eşleşen sayı ayrıca yazılır", () => {
+  const v = vehicleCountView({ allTotal: 25009, matchTotal: 1234, shown: 50, query: " 34 test ", loading: false });
+  assert.equal(v.headline, "25.009");
+  assert.equal(v.searching, true);
+  assert.equal(v.detail, "“34 test” için 1.234 sonuç · 50 gösteriliyor");
+  const none = vehicleCountView({ allTotal: 6, matchTotal: 0, shown: 0, query: "ZZZ", loading: false });
+  assert.equal(none.detail, "“ZZZ” için 0 sonuç · 0 gösteriliyor");
+});
+
+test("araç sayacı: yüklenirken ve toplam alınamadığında boş kalmaz", () => {
+  assert.equal(vehicleCountView({ allTotal: null, matchTotal: null, shown: 0, query: "", loading: true }).headline, "…");
+  assert.equal(vehicleCountView({ allTotal: 6, matchTotal: null, shown: 0, query: "34", loading: true }).detail, "Aranıyor…");
+  const err = vehicleCountView({ allTotal: null, matchTotal: null, shown: 0, query: "", loading: false });
+  assert.equal(err.headline, "—");
+  assert.match(err.detail, /alınamadı/);
+});
