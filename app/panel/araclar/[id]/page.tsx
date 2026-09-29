@@ -696,7 +696,7 @@ export default function VehicleDetailPage() {
                       fontFamily: "inherit",
                     }}
                   >
-                    {active ? "✓ " : ""}
+                    {active && <span aria-hidden="true">✓ </span>}
                     {item.label}
                   </button>
                 );
