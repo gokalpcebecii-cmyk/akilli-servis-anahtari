@@ -19,6 +19,8 @@ function appOrigin() {
   return String(process.env.OTOIZ_APP_ORIGIN || "").trim().replace(/\/+$/, "") || null;
 }
 
+const { robotsHeaderRules } = require("./lib/seo");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Aşama 1: resolver (/r/<token>/) hiçbir aşamada 301/308 üretmemeli.
@@ -26,6 +28,11 @@ const nextConfig = {
   // tüm yollar için birebir aynı kurallarla (Next'in dahili kuralları)
   // geri eklenir; resolver'da sondaki "/" beforeFiles rewrite ile atılır.
   skipTrailingSlashRedirect: true,
+  // SEO: ana sayfa dışındaki her yol X-Robots-Tag: noindex alır (yalnız
+  // yanıt başlığı; yönlendirme/rewrite kurallarına dokunmaz). Bkz. lib/seo.js.
+  async headers() {
+    return robotsHeaderRules(process.env, permanentQrHost());
+  },
   async redirects() {
     const rules = [
       {
