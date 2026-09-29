@@ -1,5 +1,6 @@
 import { test, expect, Page } from "@playwright/test";
 import { installMockSession, mockSupabaseRest } from "./fixtures/mockAuth";
+import { pickBrandModel } from "./fixtures/brandModel";
 
 // Bu formdaki <label>/<input> çiftleri `for`/`id` ile ilişkilendirilmemiş
 // (düz kardeş öğeler) — getByLabel çalışmaz. Etiketin TAM metnine göre
@@ -112,14 +113,14 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
   test("4. Sonraki Bakım (tarih) input ilk açılışta boş (Özel plan seçildiğinde)", async ({ page, baseURL }) => {
     await setupNewVehicleForm(page, baseURL!);
     await selectCustomPlan(page);
-    const dateInput = page.locator('input[type="date"]');
+    const dateInput = page.locator('input[data-field="next_service_date"]');
     await expect(dateInput).toHaveValue("");
   });
 
   test("5. 2027-03-20 seçilebiliyor (Özel plan)", async ({ page, baseURL }) => {
     await setupNewVehicleForm(page, baseURL!);
     await selectCustomPlan(page);
-    const dateInput = page.locator('input[type="date"]');
+    const dateInput = page.locator('input[data-field="next_service_date"]');
     await dateInput.fill("2027-03-20");
     await expect(dateInput).toHaveValue("2027-03-20");
   });
@@ -127,7 +128,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
   test("6. Geçmiş tarih min ile engelleniyor (min = bugün, ISO YYYY-MM-DD, Özel plan)", async ({ page, baseURL }) => {
     await setupNewVehicleForm(page, baseURL!);
     await selectCustomPlan(page);
-    const dateInput = page.locator('input[type="date"]');
+    const dateInput = page.locator('input[data-field="next_service_date"]');
     const today = new Date().toISOString().slice(0, 10);
     await expect(dateInput).toHaveAttribute("min", today);
   });
@@ -147,13 +148,12 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
       tenant_id: null,
     });
     await fieldByLabel(page, "Plaka").fill("34 XY 999");
-    await fieldByLabel(page, "Marka").fill("Toyota");
-    await fieldByLabel(page, "Model").fill("Corolla");
+    await pickBrandModel(page, "Toyota", "Corolla");
     await fieldByLabel(page, "Model Yılı").fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("52430");
     await selectCustomPlan(page);
     await page.getByPlaceholder("Opsiyonel").pressSequentially("60000");
-    await page.locator('input[type="date"]').fill("2027-03-20");
+    await page.locator('input[data-field="next_service_date"]').fill("2027-03-20");
 
     await page.getByRole("button", { name: "Aracı Oluştur" }).click();
     await expect(page).toHaveURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}$`));
@@ -174,8 +174,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
       tenant_id: null,
     });
     await fieldByLabel(page, "Plaka").fill("34 XY 999");
-    await fieldByLabel(page, "Marka").fill("Toyota");
-    await fieldByLabel(page, "Model").fill("Corolla");
+    await pickBrandModel(page, "Toyota", "Corolla");
     await fieldByLabel(page, "Model Yılı").fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("52430");
     // planType varsayılan olarak "default" — hiçbir çipe basılmadan submit.
@@ -186,8 +185,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
   test("8. Boş/geçersiz kilometre ile submit engelleniyor (regresyon: mevcut oluşturma akışı korunuyor)", async ({ page, baseURL }) => {
     await setupNewVehicleForm(page, baseURL!);
     await fieldByLabel(page, "Plaka").fill("34 ZZ 111");
-    await fieldByLabel(page, "Marka").fill("Fiat");
-    await fieldByLabel(page, "Model").fill("Egea");
+    await pickBrandModel(page, "Fiat", "Egea");
     await fieldByLabel(page, "Model Yılı").fill("2020");
     // Güncel Kilometre kasıtlı olarak boş bırakılıyor — yalnızca bu alanı izole test ediyoruz.
 

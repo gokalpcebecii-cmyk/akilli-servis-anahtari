@@ -10,6 +10,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { reportClientEvent } from "@/lib/clientEvent";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import UrunlerTab from "./UrunlerTab";
 import { AdminMfa } from "@/components/AdminMfa";
@@ -306,7 +307,7 @@ export default function YonetimPage() {
         ) : (
           <form onSubmit={handleLogin}>
             <label style={labelStyle} htmlFor="adm-email">E-posta</label>
-            <input id="adm-email" type="email" inputMode="email" autoCapitalize="none" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
+            <input autoCorrect="off" spellCheck={false} id="adm-email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin" inputMode="email" autoCapitalize="none" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
             <label style={labelStyle} htmlFor="adm-pass">Şifre</label>
             <input id="adm-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, marginBottom: 16 }} />
             {loginError && <p role="alert" style={{ color: colors.danger, fontSize: 14, margin: "0 0 12px" }}>{loginError}</p>}
@@ -533,9 +534,9 @@ export default function YonetimPage() {
             <section style={{ ...cardStyle, marginBottom: 16 }}>
               <h2 style={{ fontSize: 16, margin: "0 0 10px" }}>Bireysel müşteriye QR tanımla (bireysel satış)</h2>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                <input type="email" placeholder="Müşterinin OTOİZ e-postası" aria-label="Müşteri e-postası" value={userEmailInput}
+                <input autoCorrect="off" spellCheck={false} autoCapitalize="none" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin" inputMode="email" placeholder="Müşterinin OTOİZ e-postası" aria-label="Müşteri e-postası" value={userEmailInput}
                   onChange={(e) => setUserEmailInput(e.target.value)} style={{ ...inputStyle, maxWidth: 300 }} />
-                <input placeholder="Hesap kodu" aria-label="Müşteri hesap kodu" value={userAccountCode}
+                <CaretSafeInput placeholder="Hesap kodu" autoCapitalize="characters" autoCorrect="off" spellCheck={false} aria-label="Müşteri hesap kodu" value={userAccountCode}
                   onChange={(e) => setUserAccountCode(e.target.value.toUpperCase())} style={{ ...inputStyle, width: 140, letterSpacing: 1.5, fontWeight: 800 }} />
                 <input type="number" inputMode="numeric" min={1} max={20} placeholder="Adet" aria-label="Adet" value={userCount}
                   onChange={(e) => setUserCount(e.target.value ? Number(e.target.value) : "")} style={{ ...inputStyle, width: 90 }} />

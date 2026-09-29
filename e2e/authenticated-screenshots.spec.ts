@@ -117,7 +117,7 @@ test.describe("Authenticated ekranlar — mock fixture ile gerçek render (bkz. 
     await page.goto(`/panel/araclar/${VEHICLE_ID}`);
     await page.getByText("34 ABC 123").first().waitFor();
 
-    for (const label of ["Motor Yağı", "Ön Balata", "Diğer"]) {
+    for (const label of ["Motor Yağı", "Fren Balatası", "Diğer"]) {
       const box = await page.getByText(label, { exact: true }).first().boundingBox();
       expect(box?.height ?? 0, `${label} chip yüksekliği`).toBeGreaterThanOrEqual(44);
     }

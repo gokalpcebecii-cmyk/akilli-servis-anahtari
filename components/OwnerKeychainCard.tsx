@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
 
-export default function OwnerKeychainCard({ vehicleId }: { vehicleId: string }) {
+export default function OwnerKeychainCard({ vehicleId, onStatus }: { vehicleId: string; onStatus?: (active: boolean) => void }) {
   const supabase = createBrowserSupabase();
   const [loading, setLoading] = useState(true);
   const [activeCode, setActiveCode] = useState<string | null>(null);
@@ -32,6 +32,7 @@ export default function OwnerKeychainCard({ vehicleId }: { vehicleId: string }) 
       .is("revoked_at", null)
       .maybeSingle();
     setActiveCode(active?.code ?? null);
+    onStatus?.(!!active);
     if (!active) {
       try {
         const res = await fetch("/api/bireysel/qr", { headers: await authHeader(), cache: "no-store" });

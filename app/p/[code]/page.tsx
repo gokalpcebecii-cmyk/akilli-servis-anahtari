@@ -60,7 +60,47 @@ export default function PassportByCodePage() {
     return <PublicPassportMessage title="Henüz Eşleştirilmemiş" body="Bu anahtarlık henüz bir araca bağlanmamış." />;
   }
 
-  return <PublicPassportView passport={passport!} />;
+  return (
+    <>
+      <ViewerShortcut code={code} />
+      <PublicPassportView passport={passport!} />
+    </>
+  );
+}
+
+// Aşama E — "Plaka / QR → KM → işlemler → Kaydet": anahtarlığı okutan kişi
+// giriş yapmış ONAYLI servis personeli ya da araç sahibiyse, pasaportun
+// üstünde tek dokunuşluk kısayol çıkar. Yetkisiz/anonim ziyaretçi için
+// hiçbir şey değişmez (RPC null döner, istek bile yalnız oturum varsa gider).
+function ViewerShortcut({ code }: { code: string }) {
+  const [target, setTarget] = useState<{ href: string; label: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const supabase = createBrowserSupabase();
+      const { data: s } = await supabase.auth.getSession();
+      if (!s.session) return;
+      const { data } = await supabase.rpc("vehicle_for_qr_viewer", { p_code: code });
+      if (!alive || !data || typeof data !== "object" || Array.isArray(data) || !data.vehicle_id) return;
+      if (data.role === "service") setTarget({ href: `/panel/araclar/${data.vehicle_id}`, label: "Hızlı Bakım Kaydı Gir" });
+      else if (data.role === "owner") setTarget({ href: `/bireysel/araclar/${data.vehicle_id}`, label: "Aracımı Aç" });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [code]);
+  if (!target) return null;
+  return (
+    <div style={{ position: "sticky", top: 0, zIndex: 20, background: colors.surfaceDark, padding: "10px 16px", fontFamily: font }}>
+      <a
+        href={target.href}
+        data-testid="qr-kisayol"
+        style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", maxWidth: 520, margin: "0 auto" }}
+      >
+        {target.label}
+      </a>
+    </div>
+  );
 }
 
 function ActivatePrompt({ code }: { code: string }) {

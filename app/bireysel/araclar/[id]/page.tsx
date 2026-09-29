@@ -4,16 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { fetchVehicleRecords } from "@/lib/vehicleRecords";
-import { RevisionHistory, useRecordRevisions } from "@/components/RevisionHistory";
+import { fetchStatusRecords } from "@/lib/vehicleRecords";
+import { VehicleStatusPanel, StatusPill } from "@/components/VehicleStatusPanel";
+import { VehicleTimeline } from "@/components/VehicleTimeline";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, dangerOutlineButtonStyle, badgeStyle, cardStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 import OwnerQuickVisit from "@/components/OwnerQuickVisit";
 import OwnerKeychainCard from "@/components/OwnerKeychainCard";
+import { CaretSafeInput } from "@/components/CaretSafeInput";
+import { BrandModelPicker } from "@/components/BrandModelPicker";
+import { DocDatesFields, DOC_DATE_FIELDS } from "@/components/DocDatesFields";
 const { printableQrUrl } = require("@/lib/qrUrl");
 
+const { ITEM_LABELS } = require("@/lib/maintenanceItems");
+const { dateDueStatus, fmtDate } = require("@/lib/vehicleStatus");
 const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan, todayIsoIstanbul } = require("@/lib/logic");
 
 // Yeni araç akışındaki otomatik bakım planı seçenekleri (PILOT FIX 03 madde B).
@@ -38,6 +44,9 @@ const MAINTENANCE_ITEMS = [
   { key: "fren_diski", label: "Fren Diski" },
   { key: "buji", label: "Buji" },
   { key: "silecek", label: "Silecek" },
+  { key: "yakit_filtresi", label: "Yakıt Filtresi" },
+  { key: "sanziman_yagi", label: "Şanzıman Yağı" },
+  { key: "antifriz", label: "Antifriz" },
 ];
 // Eski/tek parça fren kaydı: geriye dönük uyumluluk için yalnızca gerçekten
 // kayıtlı olduğu araçlarda gösterilir, yeni kayıtlar için sunulmaz.
@@ -53,20 +62,7 @@ const TOP_QUICK_ITEMS = MAINTENANCE_ITEMS.slice(0, 6);
 // Bir işlem daha önce hiç periyot almadıysa tek dokunuşla eklemede
 // kullanılacak makul varsayılan (madde D: "varsayılan periyotla tek
 // dokunuşla ekleme").
-const DEFAULT_ITEM_INTERVALS: Record<string, number> = {
-  motor_yagi: 10000,
-  yag_filtresi: 10000,
-  hava_filtresi: 15000,
-  polen_filtresi: 15000,
-  fren_on_balata: 20000,
-  fren_arka_balata: 20000,
-  triger_seti: 60000,
-  aku: 30000,
-  lastik: 40000,
-  fren_diski: 60000,
-  buji: 30000,
-  silecek: 20000,
-};
+const DEFAULT_ITEM_INTERVALS: Record<string, number> = require("@/lib/maintenanceItems").DEFAULT_INTERVALS;
 
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
 // temizlenir (örn. "052430" yazılamaz). Negatif değer zaten mümkün değil
@@ -100,13 +96,18 @@ export default function BireyselVehicleDetailPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [vehicle, setVehicle] = useState<any>(
-    isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "", notes: "" } : null
+    isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "", notes: "", muayene_tarihi: "", kasko_bitis: "", trafik_sigortasi_bitis: "" } : null
   );
-  const [records, setRecords] = useState<any[]>([]);
-  // P1: geçmiş 50'lik sayfalar; servis düzeltmeleri sade "düzeltildi" notuyla.
-  const [recordCount, setRecordCount] = useState<number | null>(null);
-  const [revisionReload, setRevisionReload] = useState(0);
-  const revisions = useRecordRevisions(supabase, params.id as string, revisionReload);
+  // Aşama E: geçmiş = zaman çizelgesi (vehicle_timeline RPC, 20'lik sayfa).
+  // Araç sahibi servis düzeltmelerini yalnız sade "sonradan düzeltildi"
+  // notuyla görür (teknik audit ayrıntısı yok).
+  const [timelineReload, setTimelineReload] = useState(0);
+  const [statusRecords, setStatusRecords] = useState<{ lastMuayene: any; lastDetailing: any }>({ lastMuayene: null, lastDetailing: null });
+  const [sourceCounts, setSourceCounts] = useState<{ service: number | null; owner: number | null }>({ service: null, owner: null });
+  const [qrActive, setQrActive] = useState<boolean | null>(null);
+  const [showAddRecord, setShowAddRecord] = useState(false);
+  const [addingRecord, setAddingRecord] = useState(false);
+  const addRecordRef = useRef(false);
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
   const [intervalInputs, setIntervalInputs] = useState<Record<string, string>>({});
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -170,9 +171,7 @@ export default function BireyselVehicleDetailPage() {
       // otomatik dolar ve düzenlenebilir kalır (madde D).
       if (v?.current_km != null) setNewRecord((prev) => ({ ...prev, km_at_service: String(v.current_km) }));
 
-      const { rows: r, count: rc } = await fetchVehicleRecords(supabase, params.id as string);
-      setRecords(r);
-      setRecordCount(rc);
+      await loadStatusData();
 
       const { data: mi } = await supabase
         .from("maintenance_items")
@@ -267,11 +266,21 @@ export default function BireyselVehicleDetailPage() {
     setMaintenanceItems(mi ?? []);
   }
 
+  // Servis doğrulamalı / bireysel kayıt sayıları + son muayene/detailing.
+  async function loadStatusData() {
+    const head = () => supabase.from("maintenance_records").select("id", { count: "exact", head: true }).eq("vehicle_id", params.id);
+    const [sr, svc, own] = await Promise.all([
+      fetchStatusRecords(supabase, params.id as string),
+      head().not("tenant_id", "is", null),
+      head().is("tenant_id", null),
+    ]);
+    setStatusRecords(sr);
+    setSourceCounts({ service: (svc as any)?.count ?? null, owner: (own as any)?.count ?? null });
+  }
+
   async function refreshRecords() {
-    const { rows: r, count: rc } = await fetchVehicleRecords(supabase, params.id as string);
-    setRecords(r);
-    setRecordCount(rc);
-    setRevisionReload((n) => n + 1);
+    setTimelineReload((n) => n + 1);
+    await loadStatusData();
   }
 
   function focusFirstError(errors: Record<string, string>) {
@@ -356,6 +365,9 @@ export default function BireyselVehicleDetailPage() {
             current_km: vehicle.current_km,
             next_service_km: plan.nextServiceKm,
             next_service_date: plan.nextServiceDate,
+            muayene_tarihi: vehicle.muayene_tarihi || null,
+            kasko_bitis: vehicle.kasko_bitis || null,
+            trafik_sigortasi_bitis: vehicle.trafik_sigortasi_bitis || null,
           }),
         });
         json = await res.json();
@@ -398,6 +410,9 @@ export default function BireyselVehicleDetailPage() {
           current_km: normalized.current_km,
           next_service_km: nextServiceKmValue,
           next_service_date: vehicle.next_service_date || null,
+          muayene_tarihi: vehicle.muayene_tarihi || null,
+          kasko_bitis: vehicle.kasko_bitis || null,
+          trafik_sigortasi_bitis: vehicle.trafik_sigortasi_bitis || null,
           notes: vehicle.notes || null,
           updated_at: new Date().toISOString(),
         })
@@ -514,6 +529,8 @@ export default function BireyselVehicleDetailPage() {
   }
 
   async function handleAddRecord() {
+    // Çift tıklama tek kayıt üretsin (senkron ref kilidi).
+    if (addRecordRef.current) return;
     // PILOT FIX 03 (bölüm D): boş formda sessiz başarısızlık yerine
     // alan bazlı hata.
     if (!newRecord.description.trim()) {
@@ -521,29 +538,42 @@ export default function BireyselVehicleDetailPage() {
       return;
     }
     setRecordError("");
+    addRecordRef.current = true;
+    setAddingRecord(true);
 
-    const enteredKm = newRecord.km_at_service ? Number(newRecord.km_at_service) : null;
+    try {
+      const enteredKm = newRecord.km_at_service ? Number(newRecord.km_at_service) : null;
+      const costNum = newRecord.cost ? Number(newRecord.cost) : null;
 
-    await supabase.from("maintenance_records").insert({
-      vehicle_id: params.id,
-      tenant_id: null,
-      description: newRecord.description.trim(),
-      km_at_service: enteredKm,
-      cost: newRecord.cost ? Number(newRecord.cost) : null,
-      created_by: userId,
-    });
+      const { error: insertError } = await supabase.from("maintenance_records").insert({
+        vehicle_id: params.id,
+        tenant_id: null,
+        description: newRecord.description.trim(),
+        km_at_service: enteredKm,
+        cost: costNum != null && !Number.isNaN(costNum) ? costNum : null,
+        created_by: userId,
+      });
+      if (insertError) {
+        setRecordError("Kayıt eklenemedi. Lütfen tekrar deneyin.");
+        return;
+      }
 
-    // Daha yüksek km kaydı aracın güncel kilometresini yükseltebilir;
-    // geçmişe dönük daha düşük bir kayıt güncel km'yi ASLA düşürmez.
-    const raisedKm = enteredKm != null && enteredKm > (vehicle.current_km ?? 0);
-    if (raisedKm) {
-      await supabase.from("vehicles").update({ current_km: enteredKm, updated_at: new Date().toISOString() }).eq("id", params.id);
-      setVehicle((prev: any) => ({ ...prev, current_km: enteredKm }));
+      // Daha yüksek km kaydı aracın güncel kilometresini yükseltebilir;
+      // geçmişe dönük daha düşük bir kayıt güncel km'yi ASLA düşürmez.
+      const raisedKm = enteredKm != null && enteredKm > (vehicle.current_km ?? 0);
+      if (raisedKm) {
+        await supabase.from("vehicles").update({ current_km: enteredKm, updated_at: new Date().toISOString() }).eq("id", params.id);
+        setVehicle((prev: any) => ({ ...prev, current_km: enteredKm }));
+      }
+
+      await refreshRecords();
+      const nextKm = raisedKm ? enteredKm : vehicle.current_km;
+      setNewRecord({ description: "", km_at_service: nextKm != null ? String(nextKm) : "", cost: "" });
+      setShowAddRecord(false);
+    } finally {
+      addRecordRef.current = false;
+      setAddingRecord(false);
     }
-
-    await refreshRecords();
-    const nextKm = raisedKm ? enteredKm : vehicle.current_km;
-    setNewRecord({ description: "", km_at_service: nextKm != null ? String(nextKm) : "", cost: "" });
   }
 
   if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
@@ -575,52 +605,6 @@ export default function BireyselVehicleDetailPage() {
     if (!item || !item.last_service_date) return null;
     const isToday = item.last_service_date === todayIsoIstanbul();
     return { date: item.last_service_date, isToday };
-  }
-
-  // "Kilometre Kayıtları": ayrı bir tablo eklemeden, km bilgisi taşıyan
-  // mevcut bakım kayıtlarından türetilen kronolojik bir km listesi.
-  const kmTimeline = records.filter((r) => r.km_at_service != null);
-
-  // Genel Bakış özet satırları — hepsi gerçek, zaten yüklenmiş veriden
-  // türetilir; yeni bir sorgu veya iş mantığı eklenmez.
-  const trackedPartsCount = maintenanceItems.filter((m) => m.last_service_date).length;
-  const nextUpcoming = [...MAINTENANCE_ITEMS, LEGACY_ITEM]
-    .map((item) => ({ item, status: getUpcomingStatus(item.key) }))
-    .find((x) => x.status && (x.status.kind === "danger" || x.status.kind === "warning"));
-  const summaryRows: { icon: string; title: string; meta: string; tab: "genel" | "gecmis" | "belgeler"; hash?: string }[] = [
-    { icon: "history", title: "Servis Geçmişi", meta: `${recordCount ?? records.length} kayıt`, tab: "gecmis" },
-    { icon: "wrench", title: "Parça Değişimleri", meta: `${trackedPartsCount} kayıt`, tab: "genel", hash: "parca" },
-    {
-      icon: "clipboard",
-      title: "Muayene Bilgileri",
-      meta: vehicle.muayene_tarihi ? `Son: ${new Date(vehicle.muayene_tarihi).toLocaleDateString("tr-TR")}` : "Bilgi yok",
-      tab: "belgeler",
-    },
-    { icon: "qr", title: "QR Anahtarlık", meta: qrRevokedAt ? "İptal Edildi" : qrCode ? "Aktif" : "—", tab: "belgeler" },
-    { icon: "user", title: "Sahiplik Bilgileri", meta: "1. sahip (Siz)", tab: "genel", hash: "devir" },
-    {
-      icon: "bell",
-      title: "Yaklaşan Bakım",
-      // PILOT FIX 03 (madde A4): parça bazlı acil durum varsa o öncelikli;
-      // yoksa aracın KENDİ sonraki bakım planı (next_service_km/_date)
-      // burada da dikkate alınır — aksi halde bu satır "Planlı bakım yok"
-      // derken hemen altında "Sonraki bakım: 62.430 km" görünebiliyordu
-      // (aynı ekranda birbirini yalanlayan iki farklı sinyal, canlı testte
-      // bulunan hata). Artık ikisi de describeMaintenancePlan/tek kaynaktan.
-      meta: nextUpcoming
-        ? nextUpcoming.status!.label
-        : describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).label,
-      tab: "genel",
-      hash: "parca",
-    },
-  ];
-
-  function goToSummaryRow(row: (typeof summaryRows)[number]) {
-    setActiveTab(row.tab);
-    if (row.hash === "parca") setShowQuickEntry(true);
-    if (row.hash) {
-      window.setTimeout(() => document.getElementById(row.hash!)?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
-    }
   }
 
   return (
@@ -665,8 +649,11 @@ export default function BireyselVehicleDetailPage() {
         {(isNew || editingVehicle) && (
           <section style={cardStyle}>
             <label style={labelStyle}>Plaka</label>
-            <input
+            <CaretSafeInput
               data-field="plate"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
               aria-describedby={fieldErrors.plate ? "err-plate" : undefined}
               aria-invalid={!!fieldErrors.plate}
               style={{ ...inputStyle, marginBottom: fieldErrors.plate ? 4 : 10, borderColor: fieldErrors.plate ? colors.danger : colors.border }}
@@ -678,51 +665,26 @@ export default function BireyselVehicleDetailPage() {
                 {fieldErrors.plate}
               </p>
             )}
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Marka</label>
-                <input
-                  data-field="brand"
-                  aria-describedby={fieldErrors.brand ? "err-brand" : undefined}
-                  aria-invalid={!!fieldErrors.brand}
-                  style={{ ...inputStyle, marginBottom: fieldErrors.brand ? 4 : 10, borderColor: fieldErrors.brand ? colors.danger : colors.border }}
-                  value={vehicle.brand || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })}
-                />
-                {fieldErrors.brand && (
-                  <p id="err-brand" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
-                    {fieldErrors.brand}
-                  </p>
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Model</label>
-                <input
-                  data-field="model"
-                  aria-describedby={fieldErrors.model ? "err-model" : undefined}
-                  aria-invalid={!!fieldErrors.model}
-                  style={{ ...inputStyle, marginBottom: fieldErrors.model ? 4 : 10, borderColor: fieldErrors.model ? colors.danger : colors.border }}
-                  value={vehicle.model || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })}
-                />
-                {fieldErrors.model && (
-                  <p id="err-model" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
-                    {fieldErrors.model}
-                  </p>
-                )}
-              </div>
-            </div>
+            <BrandModelPicker
+              idPrefix="arac"
+              brand={vehicle.brand || ""}
+              model={vehicle.model || ""}
+              errors={{ brand: fieldErrors.brand, model: fieldErrors.model }}
+              onChange={(next) => setVehicle({ ...vehicle, ...next })}
+            />
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Model Yılı</label>
                 <input
                   data-field="year"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
                   aria-describedby={fieldErrors.year ? "err-year" : undefined}
                   aria-invalid={!!fieldErrors.year}
                   style={{ ...inputStyle, marginBottom: fieldErrors.year ? 4 : 10, borderColor: fieldErrors.year ? colors.danger : colors.border }}
                   value={vehicle.year || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })}
+                  onChange={(e) => setVehicle({ ...vehicle, year: e.target.value.replace(/\D/g, "").slice(0, 4) })}
                 />
                 {fieldErrors.year && (
                   <p id="err-year" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
@@ -732,7 +694,7 @@ export default function BireyselVehicleDetailPage() {
               </div>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Güncel Kilometre</label>
-                <input
+                <CaretSafeInput caretChars="digits"
                   data-field="current_km"
                   type="text"
                   inputMode="numeric"
@@ -751,6 +713,12 @@ export default function BireyselVehicleDetailPage() {
                 )}
               </div>
             </div>
+
+            <DocDatesFields
+              idPrefix="arac"
+              value={vehicle}
+              onChange={(key, v) => setVehicle({ ...vehicle, [key]: v })}
+            />
 
             {isNew ? (
               // PILOT FIX 03 madde B: yeni araç akışında bakım planı elle
@@ -794,7 +762,7 @@ export default function BireyselVehicleDetailPage() {
                 {planType === "custom" && (
                   <>
                     <label style={labelStyle}>Sonraki Bakım (km)</label>
-                    <input
+                    <CaretSafeInput caretChars="digits"
                       data-field="next_service_km"
                       type="text"
                       inputMode="numeric"
@@ -833,7 +801,7 @@ export default function BireyselVehicleDetailPage() {
             ) : (
               <>
                 <label style={labelStyle}>Sonraki Bakım (km)</label>
-                <input
+                <CaretSafeInput caretChars="digits"
                   data-field="next_service_km"
                   type="text"
                   inputMode="numeric"
@@ -881,7 +849,7 @@ export default function BireyselVehicleDetailPage() {
               {(
                 [
                   { key: "genel", label: "Genel Bakış" },
-                  { key: "gecmis", label: "Geçmiş" },
+                  { key: "gecmis", label: "Zaman Çizelgesi" },
                   { key: "belgeler", label: "Belgeler" },
                 ] as const
               ).map((t) => (
@@ -901,42 +869,39 @@ export default function BireyselVehicleDetailPage() {
             </nav>
 
             {activeTab === "genel" && (
-              <section style={cardStyle}>
-                <SectionHeader icon="clipboard" title="Genel Bakış" />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-                  <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KİLOMETRE</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: colors.textDark, letterSpacing: 0.2 }}>
-                      {vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"}
-                      <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
-                    </div>
+              <div data-testid="bireysel-ozet" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Aşama E: ilk bakışta araç, km, yaklaşan bakım, kayıt kaynakları, QR. */}
+                <section style={{ ...cardStyle, padding: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+                    <MiniStat label="Servis doğrulamalı" value={sourceCounts.service != null ? String(sourceCounts.service) : "—"} tone={colors.greenDark} />
+                    <MiniStat label="Bireysel kayıt" value={sourceCounts.owner != null ? String(sourceCounts.owner) : "—"} tone="#2D5A8A" />
+                    <MiniStat
+                      label="QR durumu"
+                      value={qrRevokedAt ? "İptal" : qrActive || qrCode ? "Aktif" : qrActive === false ? "Bağlı değil" : "—"}
+                      tone={qrRevokedAt ? colors.danger : qrActive || qrCode ? colors.greenDark : colors.textMuted}
+                    />
                   </div>
-                  <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>PASAPORT DURUMU</div>
-                    <span style={badgeStyle(qrRevokedAt ? "danger" : "success")}>{qrRevokedAt ? "Pasif" : "Aktif"}</span>
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {summaryRows.map((row) => (
-                    <button
-                      key={row.title}
-                      onClick={() => goToSummaryRow(row)}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 12, background: "none", border: "none",
-                        borderBottom: `1px solid ${colors.border}`, padding: "12px 2px", cursor: "pointer",
-                        fontFamily: font, textAlign: "left", width: "100%", minHeight: 44,
-                      }}
-                    >
-                      <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "50%", background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <Icon name={row.icon} color={colors.greenDark} size={16} />
-                      </div>
-                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: colors.textDark }}>{row.title}</span>
-                      <span style={{ fontSize: 12, color: colors.textMuted }}>{row.meta}</span>
-                      <Icon name="chevron-right" color={colors.textMuted} size={16} />
-                    </button>
-                  ))}
-                </div>
-              </section>
+                </section>
+                <VehicleStatusPanel
+                  vehicle={vehicle}
+                  items={maintenanceItems}
+                  labels={ITEM_LABELS}
+                  lastMuayene={statusRecords.lastMuayene}
+                  lastDetailing={statusRecords.lastDetailing}
+                />
+                <VehicleTimeline
+                  supabase={supabase}
+                  vehicleId={params.id as string}
+                  audience="bireysel"
+                  reloadKey={timelineReload}
+                  preview={5}
+                  title="Son İşlemler"
+                  onShowAll={() => {
+                    setActiveTab("gecmis");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                />
+              </div>
             )}
 
             {/* 2026-09-23: bireysel satış — servis panelindeki gibi hızlı bakım
@@ -955,21 +920,12 @@ export default function BireyselVehicleDetailPage() {
                     await refreshRecords();
                   }}
                 />
-                <OwnerKeychainCard vehicleId={vehicle.id} />
+                <OwnerKeychainCard vehicleId={vehicle.id} onStatus={setQrActive} />
               </div>
             )}
 
             <section id="parca" style={{ ...cardStyle, display: activeTab === "genel" ? "block" : "none" }}>
-              <SectionHeader icon="wrench" title="Bakım Durumu Özeti" />
-              {/* describeMaintenancePlan: tek kaynak — bu satırla üstteki
-                  "Yaklaşan Bakım" özet satırı hiçbir zaman birbirini
-                  yalanlamaz (bkz. madde A4 yorum notu). */}
-              {describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).hasPlan && (
-                <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 14px", marginBottom: 12, fontSize: 13, color: colors.textDark }}>
-                  Sonraki bakım:{" "}
-                  {describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).label}
-                </div>
-              )}
+              <SectionHeader icon="wrench" title="Parça Durumu" />
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
                 {[...MAINTENANCE_ITEMS, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM.key) ? [LEGACY_ITEM] : [])].map((item) => {
                   const s = getUpcomingStatus(item.key);
@@ -1121,10 +1077,11 @@ export default function BireyselVehicleDetailPage() {
                         })}
                       </div>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         placeholder="veya kendi sayını yaz"
                         value={currentValue}
-                        onChange={(e) => handleIntervalInputChange(item.key, e.target.value)}
+                        onChange={(e) => handleIntervalInputChange(item.key, e.target.value.replace(/\D/g, ""))}
                         onBlur={() => handleIntervalBlur(item.key)}
                         disabled={isSavingInterval}
                         style={{ ...inputStyle, padding: "7px 9px", fontSize: 12 }}
@@ -1138,47 +1095,33 @@ export default function BireyselVehicleDetailPage() {
               )}
             </section>
 
-            <section id="kilometre" style={{ ...cardStyle, display: activeTab === "genel" ? "block" : "none" }}>
-              <SectionHeader icon="gauge" title="Kilometre Kayıtları" />
-              <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "14px", marginBottom: 14, textAlign: "center" }}>
-                <div style={{ fontSize: 10.5, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KİLOMETRE</div>
-                <div style={{ fontSize: 24, fontWeight: 800, color: colors.textDark }}>
-                  {vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"} km
-                </div>
-              </div>
-              {kmTimeline.length === 0 ? (
-                <p style={{ fontSize: 13, color: colors.textMuted }}>Henüz km bilgisi içeren bir kayıt yok.</p>
-              ) : (
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-                  {kmTimeline.slice(0, 8).map((r) => (
-                    <li key={r.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "6px 0", borderBottom: `1px solid ${colors.border}` }}>
-                      <span style={{ color: colors.textMuted }}>{new Date(r.service_date).toLocaleDateString("tr-TR")}</span>
-                      <span style={{ fontWeight: 700, color: colors.textDark }}>{Number(r.km_at_service).toLocaleString("tr-TR")} km</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
             <section id="muayene" style={{ ...cardStyle, display: activeTab === "belgeler" ? "block" : "none" }}>
-              <SectionHeader icon="clipboard" title="Muayene Bilgileri" />
-              {(vehicle.muayene_tarihi || vehicle.trafik_sigortasi_bitis || vehicle.kasko_bitis) ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-                  {vehicle.muayene_tarihi && (
-                    <InfoRow label="Muayene Tarihi" value={new Date(vehicle.muayene_tarihi).toLocaleDateString("tr-TR")} />
-                  )}
-                  {vehicle.trafik_sigortasi_bitis && (
-                    <InfoRow label="Trafik Sigortası Bitiş" value={new Date(vehicle.trafik_sigortasi_bitis).toLocaleDateString("tr-TR")} />
-                  )}
-                  {vehicle.kasko_bitis && (
-                    <InfoRow label="Kasko Bitiş" value={new Date(vehicle.kasko_bitis).toLocaleDateString("tr-TR")} />
-                  )}
-                </div>
-              ) : (
-                <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 12 }}>
-                  Muayene/sigorta tarihleriniz henüz servis kaydına girilmemiş. Yetkili servisiniz bu bilgileri ekleyebilir.
-                </p>
-              )}
+              <SectionHeader icon="clipboard" title="Muayene ve Sigorta" />
+              <div data-testid="belge-ozet" style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                {DOC_DATE_FIELDS.map((f) => {
+                  const v = vehicle[f.key];
+                  const st = dateDueStatus(v, todayIsoIstanbul());
+                  return (
+                    <div key={f.key} data-testid={`belge-satir-${f.key}`} data-level={st.level} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: colors.surfaceSoft, borderRadius: radius.sm, padding: "9px 12px" }}>
+                      <span style={{ minWidth: 0 }}>
+                        <span style={{ display: "block", fontSize: 12.5, color: colors.textMuted }}>{f.label}</span>
+                        <span style={{ display: "block", fontSize: 13.5, fontWeight: 800, color: colors.textDark }}>{v ? fmtDate(v) : "Tarih girilmedi"}</span>
+                      </span>
+                      <StatusPill level={st.level} />
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingVehicle(true);
+                  window.setTimeout(() => document.querySelector<HTMLElement>('[data-field="muayene_tarihi"]')?.focus(), 50);
+                }}
+                style={{ ...primaryButtonStyle(false), marginBottom: 16 }}
+              >
+                Tarihleri Güncelle
+              </button>
               <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 12 }}>
                 Ek not eklemek isterseniz (örn. poliçe numarası) aşağıya serbest metin olarak yazabilirsiniz.
               </p>
@@ -1270,75 +1213,67 @@ export default function BireyselVehicleDetailPage() {
               </a>
             </section>
 
-            <section id="servis-gecmisi" style={{ ...cardStyle, display: activeTab === "gecmis" ? "block" : "none" }}>
-              <SectionHeader icon="history" title="Servis Geçmişi" />
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Diğer Bakım Kaydı (serbest not)</h3>
-              <input
-                placeholder="Yapılan işlem (örn. Genel bakım, lastik rotasyonu)"
-                aria-invalid={!!recordError}
-                aria-describedby={recordError ? "record-desc-err" : undefined}
-                style={{ ...inputStyle, marginBottom: recordError ? 4 : 8, borderColor: recordError ? colors.danger : colors.border }}
-                value={newRecord.description}
-                onChange={(e) => {
-                  setNewRecord({ ...newRecord, description: e.target.value });
-                  if (recordError) setRecordError("");
-                }}
-              />
-              {recordError && (
-                <p id="record-desc-err" role="alert" style={{ color: colors.danger, fontSize: 12, margin: "0 0 8px" }}>
-                  {recordError}
-                </p>
-              )}
-              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                <input
-                  type="text" inputMode="numeric" placeholder="Km" style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
-                  value={formatKmInput(newRecord.km_at_service)}
-                  onChange={(e) => setNewRecord({ ...newRecord, km_at_service: sanitizeKmInput(e.target.value) })}
-                />
-                <input
-                  type="number" placeholder="Ücret (₺)" style={inputStyle}
-                  value={newRecord.cost}
-                  onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value })}
-                />
-              </div>
-              <button
-                onClick={handleAddRecord}
-                disabled={!newRecord.description.trim()}
-                style={{ ...primaryButtonStyle(!newRecord.description.trim()), width: "auto", padding: "10px 20px", marginBottom: 20 }}
-              >
-                Kaydı Ekle
-              </button>
-
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8 }}>Geçmiş</h3>
-              {records.length === 0 ? (
-                <p style={{ fontSize: 13, color: colors.textMuted }}>Henüz kayıt yok.</p>
-              ) : (
-                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                  {records.map((r) => (
-                    <li key={r.id} style={{ borderBottom: `1px solid ${colors.border}`, padding: "10px 0", fontSize: 13.5 }}>
-                      <div style={{ color: colors.textDark, marginBottom: 4 }}>
-                        {new Date(r.service_date).toLocaleDateString("tr-TR")} — {r.description} {r.km_at_service ? `(${r.km_at_service} km)` : ""}
-                      </div>
-                      <span style={badgeStyle(r.tenant_id ? "success" : "neutral")}>
-                        {r.tenant_id ? "Servis Doğrulamalı Kayıt" : "Araç Sahibi Kaydı"}
-                      </span>
-                      <RevisionHistory revisions={revisions[r.id]} audience="bireysel" />
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {recordCount != null && records.length < recordCount && (
+            <div id="servis-gecmisi" style={{ display: activeTab === "gecmis" ? "flex" : "none", flexDirection: "column", gap: 14 }}>
+              <section style={cardStyle}>
                 <button
-                  onClick={async () => {
-                    const { rows } = await fetchVehicleRecords(supabase, params.id as string, records.length);
-                    setRecords((prev) => [...prev, ...rows]);
+                  type="button"
+                  onClick={() => setShowAddRecord((v) => !v)}
+                  aria-expanded={showAddRecord}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "none",
+                    padding: 0, cursor: "pointer", fontFamily: font, fontSize: 14, fontWeight: 800, color: colors.textDark, minHeight: 44,
                   }}
-                  style={{ marginTop: 10, width: "100%", minHeight: 44, border: `1px solid ${colors.border}`, borderRadius: radius.sm, background: colors.surfaceLight, cursor: "pointer", fontWeight: 700 }}
                 >
-                  Daha fazla kayıt göster ({records.length} / {recordCount})
+                  Kendi kaydını ekle (serbest not)
+                  <Icon name={showAddRecord ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={16} />
                 </button>
+                {showAddRecord && (
+                  <div style={{ marginTop: 10 }}>
+                    <p style={{ fontSize: 12, color: colors.textMuted, margin: "0 0 10px" }}>
+                      Bu kayıt &quot;Bireysel Kayıt&quot; olarak görünür; servis doğrulamalı kayıtlardan ayrı gösterilir.
+                    </p>
+                    <input
+                      placeholder="Yapılan işlem (örn. Araç muayenesi, Seramik kaplama)"
+                      aria-invalid={!!recordError}
+                      aria-describedby={recordError ? "record-desc-err" : undefined}
+                      style={{ ...inputStyle, marginBottom: recordError ? 4 : 8, borderColor: recordError ? colors.danger : colors.border }}
+                      value={newRecord.description}
+                      onChange={(e) => {
+                        setNewRecord({ ...newRecord, description: e.target.value });
+                        if (recordError) setRecordError("");
+                      }}
+                    />
+                    {recordError && (
+                      <p id="record-desc-err" role="alert" style={{ color: colors.danger, fontSize: 12, margin: "0 0 8px" }}>
+                        {recordError}
+                      </p>
+                    )}
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                      <CaretSafeInput caretChars="digits"
+                        type="text" inputMode="numeric" placeholder="Km" aria-label="Kilometre" style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3, minWidth: 0 }}
+                        value={formatKmInput(newRecord.km_at_service)}
+                        onChange={(e) => setNewRecord({ ...newRecord, km_at_service: sanitizeKmInput(e.target.value) })}
+                      />
+                      <CaretSafeInput caretChars="digits"
+                        type="text" inputMode="decimal" placeholder="Ücret (₺)" aria-label="Ücret" style={{ ...inputStyle, minWidth: 0 }}
+                        value={newRecord.cost}
+                        onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".") })}
+                      />
+                    </div>
+                    <button
+                      onClick={handleAddRecord}
+                      disabled={!newRecord.description.trim() || addingRecord}
+                      style={{ ...primaryButtonStyle(!newRecord.description.trim() || addingRecord), width: "100%" }}
+                    >
+                      {addingRecord ? "Kaydediliyor…" : "Kaydı Ekle"}
+                    </button>
+                  </div>
+                )}
+              </section>
+              {activeTab === "gecmis" && (
+                <VehicleTimeline supabase={supabase} vehicleId={params.id as string} audience="bireysel" reloadKey={timelineReload} />
               )}
-            </section>
+            </div>
           </>
         )}
       </div>
@@ -1362,6 +1297,15 @@ function SectionHeader({ icon, title, center = false }: { icon: string; title: s
         <Icon name={icon} color={colors.greenDark} size={15} />
       </div>
       <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.textDark, margin: 0 }}>{title}</h2>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "8px 10px", minWidth: 0 }}>
+      <div style={{ fontSize: 10.5, fontWeight: 700, color: colors.textMuted, lineHeight: 1.2 }}>{label}</div>
+      <div style={{ fontSize: 17, fontWeight: 900, color: tone, marginTop: 2, overflowWrap: "anywhere" }}>{value}</div>
     </div>
   );
 }

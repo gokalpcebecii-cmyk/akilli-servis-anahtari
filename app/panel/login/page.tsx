@@ -99,9 +99,9 @@ export default function LoginPage() {
     >
       <form onSubmit={handleLogin} noValidate>
         <label htmlFor="panel-email" style={labelStyle}>E-posta</label>
-        <input
+        <input autoCorrect="off" spellCheck={false}
           id="panel-email"
-          type="email"
+          type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin"
           inputMode="email"
           autoComplete="email"
           autoCapitalize="none"

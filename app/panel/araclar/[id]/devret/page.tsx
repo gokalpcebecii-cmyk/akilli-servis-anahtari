@@ -146,7 +146,7 @@ export default function OwnershipTransferPage() {
       <input placeholder="Ad Soyad" style={{ ...inputStyle, marginBottom: 10 }} value={newOwner.full_name} onChange={(e) => setNewOwner({ ...newOwner, full_name: e.target.value })} />
       <input placeholder="Telefon" style={{ ...inputStyle, marginBottom: 10 }} value={newOwner.phone} onChange={(e) => setNewOwner({ ...newOwner, phone: e.target.value })} />
       <input placeholder="E-posta (opsiyonel)" style={{ ...inputStyle, marginBottom: 10 }} value={newOwner.email} onChange={(e) => setNewOwner({ ...newOwner, email: e.target.value })} />
-      <input type="number" placeholder="Devir anındaki kilometre" style={{ ...inputStyle, marginBottom: 10 }} value={kmAtTransfer} onChange={(e) => setKmAtTransfer(e.target.value)} />
+      <input type="text" inputMode="numeric" placeholder="Devir anındaki kilometre" style={{ ...inputStyle, marginBottom: 10 }} value={kmAtTransfer} onChange={(e) => setKmAtTransfer(e.target.value.replace(/\D/g, ""))} />
 
       <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: colors.textMuted, margin: "12px 0" }}>
         <input type="checkbox" checked={confirmErase} onChange={(e) => setConfirmErase(e.target.checked)} style={{ marginTop: 3 }} />
