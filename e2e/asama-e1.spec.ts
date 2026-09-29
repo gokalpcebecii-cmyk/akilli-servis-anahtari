@@ -1,5 +1,6 @@
 import { test, expect, Page } from "@playwright/test";
 import { installMockSession, mockSupabaseRest } from "./fixtures/mockAuth";
+import { pickBrand, pickModel, pickBrandModel, closeSheet } from "./fixtures/brandModel";
 
 // OTOİZ Aşama E.1 — Sonraki Muayene / Kasko / Zorunlu Trafik Sigortası
 // tarihleri ve durumları, marka → model seçimi (Diğer / Elle gir), mevcut
@@ -182,18 +183,32 @@ test.describe("Aşama E.1 — marka → model", () => {
     return { posts };
   }
 
-  test("Yeni araç: marka seç → model listesi gelir; listede yoksa Diğer / Elle gir", async ({ page, baseURL }, info) => {
+  test("Yeni araç: liste sunucudan yüklenir; marka seç → model paneli açılır; arama; listede yoksa Diğer / Elle gir", async ({ page, baseURL }, info) => {
     const { posts } = await setupNew(page, baseURL!);
-    const model = page.getByLabel("Model", { exact: true });
+    await expect(page.getByTestId("marka-model")).toHaveAttribute("data-katalog", "ready");
+    const model = page.locator("#arac-model");
     await expect(model).toBeDisabled();
-    await page.getByLabel("Marka", { exact: true }).selectOption("Fiat");
-    await expect(model).toBeEnabled();
-    const opts = await model.locator("option").allTextContents();
-    expect(opts).toContain("Egea");
-    expect(opts).toContain("Diğer / Elle gir");
-    await model.selectOption({ label: "Diğer / Elle gir" });
+    await expect(model).toHaveText(/Önce marka seçin/);
+    await page.locator("#arac-brand").click();
+    const bs = page.getByRole("dialog", { name: "Marka seçin" });
+    await expect(bs).toBeVisible();
+    await noHorizontalOverflow(page);
+    await shot(page, `e1-marka-paneli-${info.project.name}`);
+    // arama: "fi" → Fiat
+    await bs.getByPlaceholder("Marka ara").fill("fi");
+    await expect(bs.getByRole("button", { name: "Fiat", exact: true })).toBeVisible();
+    await expect(bs.getByRole("button", { name: "Toyota", exact: true })).toHaveCount(0);
+    await bs.getByRole("button", { name: "Fiat", exact: true }).click();
+    // model paneli kendiliğinden, Fiat modelleriyle açılır
+    const ms = page.getByRole("dialog", { name: "Fiat modeli seçin" });
+    await expect(ms).toBeVisible();
+    await expect(ms.getByRole("button", { name: "Egea", exact: true })).toBeVisible();
+    await expect(ms.getByRole("button", { name: "Diğer / Elle gir" })).toBeVisible();
+    await shot(page, `e1-model-paneli-${info.project.name}`);
+    await ms.getByRole("button", { name: "Diğer / Elle gir" }).click();
     const manual = page.locator("#arac-model");
     await expect(manual).toHaveJSProperty("tagName", "INPUT");
+    await expect(manual).toBeFocused();
     await manual.fill("Tipo");
     await page.locator('[data-field="plate"]').fill("34 E1 001");
     await page.locator('[data-field="year"]').fill("2021");
@@ -209,10 +224,29 @@ test.describe("Aşama E.1 — marka → model", () => {
     expect(posts[0].muayene_tarihi).toBeNull();
   });
 
-  test("Yeni araç: marka listede yoksa Diğer / Elle gir ile marka ve model yazılır", async ({ page, baseURL }) => {
+  test("Yeni araç: Fiat → Egea seçimi kaydedilir", async ({ page, baseURL }) => {
     const { posts } = await setupNew(page, baseURL!);
-    await page.getByLabel("Marka", { exact: true }).selectOption({ label: "Diğer / Elle gir" });
-    await page.locator("#arac-brand").fill("Anadol");
+    await pickBrandModel(page, "Fiat", "Egea");
+    await expect(page.locator("#arac-brand")).toHaveText(/Fiat/);
+    await expect(page.locator("#arac-model")).toHaveText(/Egea/);
+    await page.locator('[data-field="plate"]').fill("34 E1 004");
+    await page.locator('[data-field="year"]').fill("2022");
+    await page.getByPlaceholder("Örn. 52430").pressSequentially("84200");
+    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
+    await expect.poll(() => posts.length).toBe(1);
+    expect(posts[0].brand).toBe("Fiat");
+    expect(posts[0].model).toBe("Egea");
+    expect(String(posts[0].current_km)).toBe("84200");
+  });
+
+  test("Arama sonuç vermezse yazılan değer elle girilir", async ({ page, baseURL }) => {
+    const { posts } = await setupNew(page, baseURL!);
+    await page.locator("#arac-brand").click();
+    const bs = page.getByRole("dialog", { name: "Marka seçin" });
+    await bs.getByPlaceholder("Marka ara").fill("Anadol");
+    await expect(bs.getByText("“Anadol” listede bulunamadı.")).toBeVisible();
+    await bs.getByRole("button", { name: "“Anadol” olarak elle gir" }).click();
+    await expect(page.locator("#arac-brand")).toHaveValue("Anadol");
     await page.locator("#arac-model").fill("A1");
     await page.locator('[data-field="plate"]').fill("34 E1 002");
     await page.locator('[data-field="year"]').fill("1975");
@@ -223,12 +257,44 @@ test.describe("Aşama E.1 — marka → model", () => {
     expect(posts[0].model).toBe("A1");
   });
 
+  test("Liste yüklenemezse hata ve Tekrar dene; ikinci denemede liste gelir", async ({ page, baseURL }) => {
+    let calls = 0;
+    await page.route("**/api/arac-katalogu", async (route) => {
+      calls++;
+      if (calls === 1) return route.fulfill({ status: 503, body: "hata" });
+      return route.fallback();
+    });
+    await setupNew(page, baseURL!);
+    await expect(page.getByTestId("marka-model")).toHaveAttribute("data-katalog", "error");
+    await page.locator("#arac-brand").click();
+    const bs = page.getByRole("dialog", { name: "Marka seçin" });
+    await expect(bs.getByText("Liste yüklenemedi.", { exact: false })).toBeVisible();
+    await bs.getByRole("button", { name: "Tekrar dene" }).click();
+    await expect(bs.getByRole("button", { name: "Fiat", exact: true })).toBeVisible();
+    expect(calls).toBe(2);
+  });
+
+  test("Liste yüklenirken yükleniyor durumu görünür", async ({ page, baseURL }) => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    await page.route("**/api/arac-katalogu", async (route) => {
+      await gate;
+      return route.fallback();
+    });
+    await setupNew(page, baseURL!);
+    await page.locator("#arac-brand").click();
+    const bs = page.getByRole("dialog", { name: "Marka seçin" });
+    await expect(bs.getByRole("status")).toHaveText("Liste yükleniyor…");
+    release();
+    await expect(bs.getByRole("button", { name: "Fiat", exact: true })).toBeVisible();
+  });
+
   test("Marka değişince eski model temizlenir; boş model kaydı engellenir", async ({ page, baseURL }) => {
     const { posts } = await setupNew(page, baseURL!);
-    await page.getByLabel("Marka", { exact: true }).selectOption("Fiat");
-    await page.getByLabel("Model", { exact: true }).selectOption("Egea");
-    await page.getByLabel("Marka", { exact: true }).selectOption("Renault");
-    await expect(page.getByLabel("Model", { exact: true })).toHaveValue("");
+    await pickBrandModel(page, "Fiat", "Egea");
+    await pickBrand(page, "Renault");
+    await closeSheet(page);
+    await expect(page.locator("#arac-model")).toHaveText(/Model seçin/);
     await page.locator('[data-field="plate"]').fill("34 E1 003");
     await page.locator('[data-field="year"]').fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("1000");
@@ -242,6 +308,8 @@ test.describe("Aşama E.1 — marka → model", () => {
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}`);
     await page.getByTestId("arac-durumu").waitFor();
     await page.getByRole("button", { name: "Düzenle" }).click();
+    await expect(page.getByTestId("marka-model")).toHaveAttribute("data-katalog", "ready");
+    await expect(page.locator("#arac-brand")).toHaveJSProperty("tagName", "INPUT");
     await expect(page.locator("#arac-brand")).toHaveValue("Anadol");
     await expect(page.locator("#arac-model")).toHaveValue("A1 Özel");
     await page.getByRole("button", { name: "Kaydet", exact: true }).click();
@@ -255,7 +323,8 @@ test.describe("Aşama E.1 — marka → model", () => {
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}`);
     await page.getByTestId("arac-durumu").waitFor();
     await page.getByRole("button", { name: "Düzenle" }).click();
-    await expect(page.getByLabel("Marka", { exact: true })).toHaveValue("Fiat");
+    await expect(page.getByTestId("marka-model")).toHaveAttribute("data-katalog", "ready");
+    await expect(page.locator("#arac-brand")).toHaveText(/Fiat/);
     await expect(page.locator("#arac-model")).toHaveValue("Egea 1.4 Fire Urban");
     await page.getByRole("button", { name: "Kaydet", exact: true }).click();
     await expect.poll(() => patches.length).toBe(1);

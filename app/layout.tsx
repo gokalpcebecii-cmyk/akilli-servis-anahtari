@@ -1,5 +1,6 @@
 import "./globals.css";
 import SessionWatch from "@/components/SessionWatch";
+import TouchCaretFix from "@/components/TouchCaretFix";
 import { SITE_URL } from "@/lib/seo";
 
 // Aşama C: iOS "Ana Ekrana Ekle" açılış ekranları (portre). [dosya, CSS
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="tr">
       <body>
         <SessionWatch />
+        <TouchCaretFix />
         {children}
       </body>
     </html>

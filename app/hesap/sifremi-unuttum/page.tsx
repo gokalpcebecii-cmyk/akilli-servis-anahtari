@@ -84,7 +84,7 @@ export default function SifremiUnuttumPage() {
         <label htmlFor="reset-email" style={labelStyle}>E-posta</label>
         <input autoCorrect="off" spellCheck={false}
           id="reset-email"
-          type="email"
+          type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin"
           inputMode="email"
           autoComplete="email"
           autoCapitalize="none"

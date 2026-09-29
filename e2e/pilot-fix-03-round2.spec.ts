@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { installMockSession, mockSupabaseRest } from "./fixtures/mockAuth";
+import { pickBrandModel } from "./fixtures/brandModel";
 
 // İkinci düzeltme turu — güvenlik/kabul testleri.
 // Bu dosya PILOT FIX 03'ün ilk turunda eksik kalan/yeni bulunan
@@ -108,8 +109,7 @@ test.describe("İkinci düzeltme turu — madde 2: çift gönderim tek araç olu
       .filter({ hasText: /^Plaka$/ })
       .locator("xpath=following-sibling::input[1]")
       .fill("34 CC 111");
-    await page.getByLabel("Marka", { exact: true }).selectOption("Fiat");
-    await page.getByLabel("Model", { exact: true }).selectOption("Egea");
+    await pickBrandModel(page, "Fiat", "Egea");
     await page
       .locator("label")
       .filter({ hasText: /^Model Yılı$/ })

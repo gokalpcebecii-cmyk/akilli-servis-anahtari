@@ -1,5 +1,6 @@
 import { test, expect, Page } from "@playwright/test";
 import { installMockSession, mockSupabaseRest } from "./fixtures/mockAuth";
+import { pickBrandModel } from "./fixtures/brandModel";
 
 // Bu formdaki <label>/<input> çiftleri `for`/`id` ile ilişkilendirilmemiş
 // (düz kardeş öğeler) — getByLabel çalışmaz. Etiketin TAM metnine göre
@@ -147,8 +148,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
       tenant_id: null,
     });
     await fieldByLabel(page, "Plaka").fill("34 XY 999");
-    await page.getByLabel("Marka", { exact: true }).selectOption("Toyota");
-    await page.getByLabel("Model", { exact: true }).selectOption("Corolla");
+    await pickBrandModel(page, "Toyota", "Corolla");
     await fieldByLabel(page, "Model Yılı").fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("52430");
     await selectCustomPlan(page);
@@ -174,8 +174,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
       tenant_id: null,
     });
     await fieldByLabel(page, "Plaka").fill("34 XY 999");
-    await page.getByLabel("Marka", { exact: true }).selectOption("Toyota");
-    await page.getByLabel("Model", { exact: true }).selectOption("Corolla");
+    await pickBrandModel(page, "Toyota", "Corolla");
     await fieldByLabel(page, "Model Yılı").fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("52430");
     // planType varsayılan olarak "default" — hiçbir çipe basılmadan submit.
@@ -186,8 +185,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
   test("8. Boş/geçersiz kilometre ile submit engelleniyor (regresyon: mevcut oluşturma akışı korunuyor)", async ({ page, baseURL }) => {
     await setupNewVehicleForm(page, baseURL!);
     await fieldByLabel(page, "Plaka").fill("34 ZZ 111");
-    await page.getByLabel("Marka", { exact: true }).selectOption("Fiat");
-    await page.getByLabel("Model", { exact: true }).selectOption("Egea");
+    await pickBrandModel(page, "Fiat", "Egea");
     await fieldByLabel(page, "Model Yılı").fill("2020");
     // Güncel Kilometre kasıtlı olarak boş bırakılıyor — yalnızca bu alanı izole test ediyoruz.
 

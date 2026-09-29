@@ -677,12 +677,14 @@ export default function BireyselVehicleDetailPage() {
                 <label style={labelStyle}>Model Yılı</label>
                 <input
                   data-field="year"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
                   aria-describedby={fieldErrors.year ? "err-year" : undefined}
                   aria-invalid={!!fieldErrors.year}
                   style={{ ...inputStyle, marginBottom: fieldErrors.year ? 4 : 10, borderColor: fieldErrors.year ? colors.danger : colors.border }}
                   value={vehicle.year || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })}
+                  onChange={(e) => setVehicle({ ...vehicle, year: e.target.value.replace(/\D/g, "").slice(0, 4) })}
                 />
                 {fieldErrors.year && (
                   <p id="err-year" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
@@ -1075,10 +1077,11 @@ export default function BireyselVehicleDetailPage() {
                         })}
                       </div>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         placeholder="veya kendi sayını yaz"
                         value={currentValue}
-                        onChange={(e) => handleIntervalInputChange(item.key, e.target.value)}
+                        onChange={(e) => handleIntervalInputChange(item.key, e.target.value.replace(/\D/g, ""))}
                         onBlur={() => handleIntervalBlur(item.key)}
                         disabled={isSavingInterval}
                         style={{ ...inputStyle, padding: "7px 9px", fontSize: 12 }}

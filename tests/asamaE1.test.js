@@ -141,3 +141,32 @@ test("API: belge tarihi gönderilmeyen eski istemci aynen çalışır (tarihler 
   assert.equal(c.payload.muayene_tarihi, null);
   assert.equal(c.payload.brand, "Fiat");
 });
+
+// ---- Telefon testi düzeltmesi: katalog arama ve eşleştirme
+const S = require("../lib/vehicleCatalogSearch");
+const { CATALOG_LIST } = require("../lib/vehicleCatalog");
+
+test("Katalog: büyük harf ve Türkçe/aksan farkı eşleşir (FIAT, citroen, mercedes benz)", () => {
+  assert.equal(findBrand("FIAT"), "Fiat");
+  assert.ok(modelsFor("FIAT").includes("Egea"));
+  assert.equal(findBrand("citroen"), "Citroën");
+  assert.equal(findBrand("mercedes benz"), "Mercedes-Benz");
+  assert.deepEqual(pickerState("FIAT", "EGEA"), { brandMode: "list", brand: "Fiat", modelMode: "list", model: "Egea" });
+});
+
+test("Katalog araması: baştan eşleşen önce, sonra içinde geçen; boş arama tüm liste", () => {
+  const names = CATALOG_LIST.map((b) => b.name);
+  assert.deepEqual(S.searchNames(names, "fi"), ["Fiat"]);
+  assert.deepEqual(S.searchNames(modelsFor("Fiat"), "eg"), ["Egea", "Egea Cross"]);
+  assert.equal(S.searchNames(names, "").length, names.length);
+  assert.deepEqual(S.searchNames(names, "anadol"), []);
+  const r = S.searchNames(names, "ro");
+  assert.ok(r.includes("Land Rover") && r.includes("Citroën"));
+});
+
+test("Katalog API biçimi: her markanın boş olmayan model listesi var; Fiat → Egea", () => {
+  assert.ok(CATALOG_LIST.length >= 30);
+  for (const b of CATALOG_LIST) assert.ok(b.name && Array.isArray(b.models) && b.models.length > 0, b.name);
+  assert.ok(S.modelsFor(CATALOG_LIST, "Fiat").includes("Egea"));
+  assert.deepEqual(S.pickerState(CATALOG_LIST, "Anadol", "A1"), { brandMode: "manual", brand: "Anadol", modelMode: "manual", model: "A1" });
+});

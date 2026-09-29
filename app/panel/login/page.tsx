@@ -101,7 +101,7 @@ export default function LoginPage() {
         <label htmlFor="panel-email" style={labelStyle}>E-posta</label>
         <input autoCorrect="off" spellCheck={false}
           id="panel-email"
-          type="email"
+          type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin"
           inputMode="email"
           autoComplete="email"
           autoCapitalize="none"

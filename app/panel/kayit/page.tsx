@@ -85,7 +85,7 @@ export default function SignupPage() {
         <input id="isletme-ad" autoComplete="organization" style={{ ...inputStyle, marginBottom: 14 }} required value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} placeholder="Örn: Yılmaz Oto Servis" />
 
         <label htmlFor="isletme-email" style={labelStyle}>E-posta *</label>
-        <input autoCorrect="off" spellCheck={false} id="isletme-email" autoComplete="email" inputMode="email" autoCapitalize="none" style={{ ...inputStyle, marginBottom: 14 }} required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="ornek@mail.com" />
+        <input autoCorrect="off" spellCheck={false} id="isletme-email" autoComplete="email" inputMode="email" autoCapitalize="none" style={{ ...inputStyle, marginBottom: 14 }} required type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="ornek@mail.com" />
 
         <label htmlFor="isletme-tel" style={labelStyle}>Telefon</label>
         <input id="isletme-tel" type="tel" inputMode="tel" autoComplete="tel" style={{ ...inputStyle, marginBottom: 14 }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0312 000 00 00" />

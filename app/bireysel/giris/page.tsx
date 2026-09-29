@@ -121,7 +121,7 @@ function BireyselGirisForm() {
         <label htmlFor="bireysel-email" style={labelStyle}>E-posta</label>
         <input autoCorrect="off" spellCheck={false}
           id="bireysel-email"
-          type="email"
+          type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin"
           inputMode="email"
           autoComplete="email"
           autoCapitalize="none"

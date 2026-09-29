@@ -31,7 +31,7 @@ export function ResendConfirmation({ email: initialEmail, next }: { email?: stri
   return (
     <div data-testid="resend-confirmation">
       {!initialEmail && (
-        <input autoCorrect="off" spellCheck={false} autoCapitalize="none" type="email" aria-label="E-posta" placeholder="ornek@mail.com" value={email} onChange={(e) => setEmail(e.target.value)}
+        <input autoCorrect="off" spellCheck={false} autoCapitalize="none" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin" inputMode="email" aria-label="E-posta" placeholder="ornek@mail.com" value={email} onChange={(e) => setEmail(e.target.value)}
           style={{ ...inputStyle, marginBottom: 10 }} />
       )}
       <button type="button" onClick={resend} disabled={busy || !email.includes("@")}

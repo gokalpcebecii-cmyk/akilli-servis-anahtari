@@ -537,11 +537,13 @@ export default function VehicleDetailPage() {
                   <label style={labelStyle}>Model Yılı</label>
                   <input
                     data-field="year"
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
                     aria-invalid={!!fieldErrors.year}
                     style={{ ...inputStyle, marginBottom: fieldErrors.year ? 4 : 14, borderColor: fieldErrors.year ? colors.danger : colors.border }}
                     value={vehicle.year || ""}
-                    onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })}
+                    onChange={(e) => setVehicle({ ...vehicle, year: e.target.value.replace(/\D/g, "").slice(0, 4) })}
                   />
                   {fieldErrors.year && <p role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "-10px 0 14px" }}>{fieldErrors.year}</p>}
                 </div>
@@ -566,11 +568,13 @@ export default function VehicleDetailPage() {
                 <label style={labelStyle}>Model Yılı</label>
                 <input
                   data-field="year"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
                   aria-invalid={!!fieldErrors.year}
                   style={{ ...inputStyle, marginBottom: fieldErrors.year ? 4 : 14, borderColor: fieldErrors.year ? colors.danger : colors.border }}
                   value={vehicle.year || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })}
+                  onChange={(e) => setVehicle({ ...vehicle, year: e.target.value.replace(/\D/g, "").slice(0, 4) })}
                 />
                 {fieldErrors.year && <p role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "-10px 0 14px" }}>{fieldErrors.year}</p>}
               </>

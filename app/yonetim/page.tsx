@@ -307,7 +307,7 @@ export default function YonetimPage() {
         ) : (
           <form onSubmit={handleLogin}>
             <label style={labelStyle} htmlFor="adm-email">E-posta</label>
-            <input autoCorrect="off" spellCheck={false} id="adm-email" type="email" inputMode="email" autoCapitalize="none" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
+            <input autoCorrect="off" spellCheck={false} id="adm-email" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin" inputMode="email" autoCapitalize="none" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, marginBottom: 14 }} />
             <label style={labelStyle} htmlFor="adm-pass">Şifre</label>
             <input id="adm-pass" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ ...inputStyle, marginBottom: 16 }} />
             {loginError && <p role="alert" style={{ color: colors.danger, fontSize: 14, margin: "0 0 12px" }}>{loginError}</p>}
@@ -534,7 +534,7 @@ export default function YonetimPage() {
             <section style={{ ...cardStyle, marginBottom: 16 }}>
               <h2 style={{ fontSize: 16, margin: "0 0 10px" }}>Bireysel müşteriye QR tanımla (bireysel satış)</h2>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                <input autoCorrect="off" spellCheck={false} autoCapitalize="none" type="email" placeholder="Müşterinin OTOİZ e-postası" aria-label="Müşteri e-postası" value={userEmailInput}
+                <input autoCorrect="off" spellCheck={false} autoCapitalize="none" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin" inputMode="email" placeholder="Müşterinin OTOİZ e-postası" aria-label="Müşteri e-postası" value={userEmailInput}
                   onChange={(e) => setUserEmailInput(e.target.value)} style={{ ...inputStyle, maxWidth: 300 }} />
                 <CaretSafeInput placeholder="Hesap kodu" autoCapitalize="characters" autoCorrect="off" spellCheck={false} aria-label="Müşteri hesap kodu" value={userAccountCode}
                   onChange={(e) => setUserAccountCode(e.target.value.toUpperCase())} style={{ ...inputStyle, width: 140, letterSpacing: 1.5, fontWeight: 800 }} />
