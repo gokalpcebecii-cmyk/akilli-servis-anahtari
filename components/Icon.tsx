@@ -205,6 +205,49 @@ export function Icon({
           <circle cx="12" cy="19" r="1.6" />
         </svg>
       );
+    case "more-horizontal":
+      return (
+        <svg viewBox="0 0 24 24" style={{ ...s, fill: color }}>
+          <circle cx="5" cy="12" r="1.6" />
+          <circle cx="12" cy="12" r="1.6" />
+          <circle cx="19" cy="12" r="1.6" />
+        </svg>
+      );
+    case "chevron-left":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      );
+    case "copy":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <rect x="9" y="9" width="11" height="11" rx="2" />
+          <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+        </svg>
+      );
+    case "compass":
+      // Safari simgesi yerine sade pusula (marka logosu kullanılmaz).
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="m15.5 8.5-2 5-5 2 2-5 5-2Z" />
+        </svg>
+      );
+    case "book":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Z" />
+          <path d="M4 19a2 2 0 0 1 2-2h13" />
+        </svg>
+      );
+    case "tabs":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <rect x="4" y="8" width="12" height="12" rx="2" />
+          <path d="M8 4h10a2 2 0 0 1 2 2v10" />
+        </svg>
+      );
     case "download":
       return (
         <svg viewBox="0 0 24 24" style={s}>

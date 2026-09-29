@@ -1115,6 +1115,415 @@ a:focus-visible {
   }
 }
 
+/* ============ iPhone premium kurulum sihirbazı (components/IosInstallWizard.tsx) ============
+   Koyu antrasit zemin, temiz kartlar, ≥ 48px dokunma alanı; animasyon yok. */
+.otoiz-iw-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(4, 6, 9, 0.72);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.otoiz-iw-sheet {
+  width: 100%;
+  max-width: 480px;
+  max-height: 94vh;
+  max-height: 94dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: linear-gradient(180deg, var(--otoiz-anthracite-2) 0%, var(--otoiz-anthracite) 60%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 -20px 48px rgba(0, 0, 0, 0.45);
+}
+.otoiz-iw-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.otoiz-iw-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+.otoiz-iw-headtext {
+  flex: 1;
+  min-width: 0;
+}
+.otoiz-iw-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--otoiz-green);
+}
+.otoiz-iw-brand {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.otoiz-iw-close {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.otoiz-iw-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.otoiz-iw-progress {
+  display: flex;
+  gap: 6px;
+}
+.otoiz-iw-dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.otoiz-iw-dot-on {
+  background: var(--otoiz-green);
+}
+.otoiz-iw-card {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.otoiz-iw-stephead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.otoiz-iw-no {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 16px;
+  background: rgba(54, 232, 109, 0.12);
+  border: 1.5px solid rgba(54, 232, 109, 0.55);
+  color: var(--otoiz-green);
+  font-size: 30px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.otoiz-iw-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.3px;
+}
+.otoiz-iw-title {
+  margin: 2px 0 0;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.3;
+  outline: none;
+}
+.otoiz-iw-text {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.86);
+}
+.otoiz-iw-note {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+.otoiz-iw-mock {
+  border-radius: 16px;
+  background: #0a0c0f;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.otoiz-iw-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #23272e;
+}
+.otoiz-iw-url {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.otoiz-iw-hit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 2px solid var(--otoiz-green);
+  box-shadow: 0 0 0 4px rgba(54, 232, 109, 0.16);
+}
+.otoiz-iw-hit-text {
+  padding: 0 12px;
+  color: var(--otoiz-green);
+  font-weight: 800;
+}
+.otoiz-iw-list {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #23272e;
+}
+.otoiz-iw-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.otoiz-iw-row:first-child {
+  border-top: none;
+}
+.otoiz-iw-row-hit {
+  color: #fff;
+  font-weight: 700;
+  background: rgba(54, 232, 109, 0.1);
+  box-shadow: inset 0 0 0 2px var(--otoiz-green);
+  border-radius: 10px;
+}
+.otoiz-iw-addbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+.otoiz-iw-addtitle {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+.otoiz-iw-app {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #23272e;
+  font-weight: 700;
+  font-size: 15px;
+}
+.otoiz-iw-app img {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+.otoiz-iw-safari-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(54, 232, 109, 0.12);
+  border: 1.5px solid rgba(54, 232, 109, 0.55);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.otoiz-iw-mini {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.86);
+}
+.otoiz-iw-mini li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.otoiz-iw-mini-no {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--otoiz-green);
+  font-weight: 800;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.otoiz-iw-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.otoiz-iw-row2 {
+  display: flex;
+  gap: 8px;
+}
+.otoiz-iw-row2 > * {
+  flex: 1;
+}
+.otoiz-iw-primary {
+  width: 100%;
+  min-height: 56px;
+  border: none;
+  border-radius: 14px;
+  background: var(--otoiz-green);
+  color: var(--otoiz-text-dark);
+  font-size: 16.5px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+.otoiz-iw-secondary {
+  min-height: 50px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.otoiz-iw-quiet {
+  align-self: center;
+  min-height: 44px;
+  padding: 0 16px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.otoiz-iw-status {
+  margin: 0;
+  font-size: 13.5px;
+  color: #ffb4a8;
+  text-align: center;
+}
+.otoiz-iw-status:empty {
+  display: none;
+}
+.otoiz-iw-sheet :focus-visible {
+  outline: 2.5px solid var(--otoiz-green);
+  outline-offset: 2px;
+}
+/* Kısa ekranlarda (iPhone SE) eylem düğmeleri her zaman görünür kalır;
+   yalnız adım kartı kendi içinde kayar. */
+.otoiz-iw-sheet {
+  overflow: hidden;
+}
+.otoiz-iw-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.otoiz-iw-card {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.otoiz-iw-card > *,
+.otoiz-iw-actions,
+.otoiz-iw-progress,
+.otoiz-iw-head {
+  flex-shrink: 0;
+}
+@media (max-height: 700px) {
+  .otoiz-iw-sheet {
+    gap: 10px;
+    padding-top: 12px;
+  }
+  .otoiz-iw-body {
+    gap: 10px;
+  }
+  .otoiz-iw-card {
+    gap: 10px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+  .otoiz-iw-mock {
+    padding: 10px;
+  }
+  .otoiz-iw-row {
+    padding: 8px 12px;
+  }
+  .otoiz-iw-text {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .otoiz-iw-primary {
+    min-height: 52px;
+  }
+  .otoiz-iw-secondary {
+    min-height: 48px;
+  }
+}
+@media (max-width: 340px) {
+  .otoiz-iw-sheet {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .otoiz-iw-card {
+    padding: 14px 12px;
+  }
+  .otoiz-iw-title {
+    font-size: 17.5px;
+  }
+}
+@media (min-width: 641px) {
+  .otoiz-iw-backdrop {
+    align-items: center;
+  }
+  .otoiz-iw-sheet {
+    border-radius: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
 /* Aşama C: ana ekrana eklenmiş uygulamada (iOS black-translucent durum
    çubuğu) içerik saat/pil satırının altına girmesin; o şerit koyu kalır. */
 @media (display-mode: standalone) {
