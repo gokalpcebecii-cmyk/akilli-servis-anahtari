@@ -9,7 +9,7 @@ import { pickBrandModel } from "./fixtures/brandModel";
 function fieldByLabel(page: Page, exactLabelText: string) {
   return page
     .locator("label")
-    .filter({ hasText: new RegExp(`^${exactLabelText}( \\(isteğe bağlı\\))?$`) })
+    .filter({ hasText: new RegExp(`^${exactLabelText}$`) })
     .locator("xpath=following-sibling::input[1]");
 }
 

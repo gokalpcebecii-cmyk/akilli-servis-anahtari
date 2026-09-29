@@ -640,7 +640,7 @@ export default function BireyselVehicleDetailPage() {
           {isNew ? (
             <>
               <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.text, margin: "10px 0 6px" }}>Yeni Araç</h1>
-              <p style={{ fontSize: 14.5, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>Plaka, marka ve kilometreyi girin; tarihleri sonra da ekleyebilirsiniz.</p>
+              <p style={{ fontSize: 14.5, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>Plaka, marka, model, model yılı ve kilometreyi girin; tarihleri sonra da ekleyebilirsiniz.</p>
             </>
           ) : (
             <>
@@ -729,7 +729,7 @@ export default function BireyselVehicleDetailPage() {
 
             <FormGroupTitle>Diğer Bilgiler</FormGroupTitle>
             <div style={{ marginBottom: 16 }}>
-              <label htmlFor="arac-year" style={labelStyle}>Model Yılı <span style={{ color: colors.textFaint, fontWeight: 500 }}>(isteğe bağlı)</span></label>
+              <label htmlFor="arac-year" style={labelStyle}>Model Yılı</label>
               <input
                 id="arac-year"
                 data-field="year"

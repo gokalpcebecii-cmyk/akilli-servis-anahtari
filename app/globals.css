@@ -1735,6 +1735,10 @@ select:disabled {
   opacity: 0.55;
 }
 button {
+  /* Koyu zeminde renk verilmemiş butonlar tarayıcı varsayılanı siyah yazıyla
+     kalmasın: yazı rengi bulunduğu yüzeyden gelir. */
+  color: inherit;
+  font-family: inherit;
   -webkit-tap-highlight-color: transparent;
   transition: opacity 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
 }

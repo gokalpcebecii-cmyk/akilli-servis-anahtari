@@ -409,6 +409,10 @@ export default function VehicleDetailPage() {
           setSubmitError("Güncel kilometre, kayıtlı son kilometreden düşük olamaz.");
         } else if (msg.includes("forbidden") || (rpcError as any).code === "42501") {
           setSubmitError("Bu araca kayıt yetkiniz yok ya da işletmeniz henüz onaylanmadı.");
+        } else if (/failed to fetch|networkerror|load failed|fetch failed/i.test(msg)) {
+          // Bağlantı koptu: istek sunucuya ulaşmış olabilir, "hiçbir
+          // değişiklik kaydedilmedi" denemez.
+          setSubmitError("Beklenmeyen bir bağlantı hatası oluştu." + RETRY_MESSAGE);
         } else {
           setSubmitError("Kayıt yapılamadı; hiçbir değişiklik kaydedilmedi." + RETRY_MESSAGE);
         }

@@ -104,6 +104,8 @@ export function AuditLogTab({ api }: { api: Api }) {
   const [rows, setRows] = useState<any[]>([]);
   const [next, setNext] = useState<string | null>(null);
   const [action, setAction] = useState("");
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -124,19 +126,59 @@ export function AuditLogTab({ api }: { api: Api }) {
     load();
   }, [action]);
 
+  const isFeedback = action === "user_feedback";
+  const needle = q.trim().toLocaleLowerCase("tr-TR");
+  const shown = !isFeedback
+    ? rows
+    : rows.filter((r) => {
+        if (cat && r.detail?.category !== cat) return false;
+        if (!needle) return true;
+        const hay = [r.detail?.message, r.actor_email, feedbackLabel(r.detail?.screen, FEEDBACK_SCREENS), feedbackLabel(r.detail?.category, FEEDBACK_CATEGORIES)]
+          .join(" ")
+          .toLocaleLowerCase("tr-TR");
+        return hay.includes(needle);
+      });
+
   return (
     <section style={{ ...cardStyle, fontFamily: font }} aria-label="İşlem Kaydı">
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <h2 style={{ fontSize: 16, margin: 0, marginRight: "auto" }}>İşlem Kaydı</h2>
+        <button
+          type="button"
+          onClick={() => setAction(isFeedback ? "" : "user_feedback")}
+          aria-pressed={isFeedback}
+          style={{ minHeight: 44, padding: "0 14px", borderRadius: radius.md, cursor: "pointer", fontFamily: font, fontWeight: 700, fontSize: 13.5, border: `1px solid ${isFeedback ? colors.green : colors.border}`, background: isFeedback ? colors.greenSoft : colors.surfaceRaised, color: isFeedback ? colors.greenLight : colors.text }}
+        >
+          Görüşler
+        </button>
         <select value={action} onChange={(e) => setAction(e.target.value)} aria-label="İşlem türü" style={{ ...inputStyle, width: "auto", maxWidth: 280 }}>
           <option value="">Tüm işlemler</option>
           {Object.keys(ACTION_LABELS).map((k) => <option key={k} value={k}>{ACTION_LABELS[k]}</option>)}
         </select>
       </div>
-      <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 10px" }}>En yeni önce. Kayıtlar değiştirilemez ve silinemez.</p>
+      {isFeedback && (
+        <div data-testid="gorus-filtre" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Görüşlerde ara: metin, e-posta, ekran"
+            aria-label="Görüşlerde ara"
+            style={{ ...inputStyle, flex: "1 1 240px", width: "auto" }}
+          />
+          <select value={cat} onChange={(e) => setCat(e.target.value)} aria-label="Konu" style={{ ...inputStyle, width: "auto", maxWidth: 220 }}>
+            <option value="">Tüm konular</option>
+            {FEEDBACK_CATEGORIES.map((c: any) => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+        </div>
+      )}
+      <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 10px" }}>
+        En yeni önce. Kayıtlar değiştirilemez ve silinemez.
+        {isFeedback && ` ${shown.length} görüş gösteriliyor; arama yüklenen kayıtlarda yapılır, eskiler için "Daha fazla göster".`}
+      </p>
       {error && <p role="alert" style={{ color: colors.danger, fontWeight: 700 }}>{error}</p>}
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {rows.map((r) => (
+        {shown.map((r) => (
           <div key={r.id} style={{ display: "flex", flexWrap: "wrap", gap: "2px 12px", alignItems: "baseline", borderBottom: `1px solid ${colors.border}`, padding: "6px 0" }}>
             <span style={{ fontSize: 12, color: colors.textMuted, minWidth: 128 }}>{fmt(r.created_at)}</span>
             <strong style={{ fontSize: 13.5, flex: "1 1 200px" }}>{actionLabel(r.action)}</strong>
@@ -144,15 +186,18 @@ export function AuditLogTab({ api }: { api: Api }) {
             <span style={{ fontSize: 12, color: colors.textMuted, wordBreak: "break-all" }}>{r.actor_email ?? ""}</span>
             {r.action === "user_feedback" && r.detail?.message && (
               <div data-testid="gorus-kaydi" style={{ flexBasis: "100%", fontSize: 13.5, color: colors.text, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "10px 12px", marginTop: 4, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-                <span style={{ display: "block", fontSize: 12, color: colors.textMuted, marginBottom: 4 }}>
-                  {feedbackLabel(r.detail.category, FEEDBACK_CATEGORIES)} · {feedbackLabel(r.detail.screen, FEEDBACK_SCREENS)}
+                <span style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, fontSize: 12, color: colors.textMuted, marginBottom: 6 }}>
+                  <span data-testid="gorus-konu" style={{ fontWeight: 700, color: colors.info, background: colors.infoSoft, borderRadius: 999, padding: "2px 10px" }}>
+                    {feedbackLabel(r.detail.category, FEEDBACK_CATEGORIES) || "Konu yok"}
+                  </span>
+                  <span data-testid="gorus-ekran">Ekran: {feedbackLabel(r.detail.screen, FEEDBACK_SCREENS) || "—"}</span>
                 </span>
                 {String(r.detail.message)}
               </div>
             )}
           </div>
         ))}
-        {!loading && rows.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>Kayıt yok.</p>}
+        {!loading && shown.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>{isFeedback && rows.length > 0 ? "Aramaya uyan görüş yok." : "Kayıt yok."}</p>}
       </div>
       {next && (
         <button onClick={() => load(next)} disabled={loading} style={{ marginTop: 12, width: "100%", minHeight: 44, border: `1px solid ${colors.border}`, borderRadius: radius.sm, background: colors.surfaceLight, cursor: "pointer", fontWeight: 700 }}>
