@@ -8,6 +8,7 @@
 // ("Kullanıcı Kaydı") yazılır — servis doğrulamalı kayıt gibi görünmez.
 import { useRef, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
 
 const { isValidCurrentKmUpdate, computeAutoNextServicePlan, todayIsoIstanbul } = require("@/lib/logic");
@@ -136,7 +137,8 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
       <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.textDark, margin: "0 0 12px" }}>Hızlı Bakım Kaydı</h2>
 
       <label style={labelStyle} htmlFor="owner-quick-km">Güncel Kilometre</label>
-      <input
+      <CaretSafeInput
+        caretChars="digits"
         id="owner-quick-km"
         inputMode="numeric"
         value={km ? Number(km).toLocaleString("tr-TR") : ""}

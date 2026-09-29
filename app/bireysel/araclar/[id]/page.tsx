@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { fetchStatusRecords } from "@/lib/vehicleRecords";
-import { VehicleStatusPanel } from "@/components/VehicleStatusPanel";
+import { VehicleStatusPanel, StatusPill } from "@/components/VehicleStatusPanel";
 import { VehicleTimeline } from "@/components/VehicleTimeline";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, dangerOutlineButtonStyle, badgeStyle, cardStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
@@ -13,9 +13,13 @@ import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 import OwnerQuickVisit from "@/components/OwnerQuickVisit";
 import OwnerKeychainCard from "@/components/OwnerKeychainCard";
+import { CaretSafeInput } from "@/components/CaretSafeInput";
+import { BrandModelPicker } from "@/components/BrandModelPicker";
+import { DocDatesFields, DOC_DATE_FIELDS } from "@/components/DocDatesFields";
 const { printableQrUrl } = require("@/lib/qrUrl");
 
 const { ITEM_LABELS } = require("@/lib/maintenanceItems");
+const { dateDueStatus, fmtDate } = require("@/lib/vehicleStatus");
 const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan, todayIsoIstanbul } = require("@/lib/logic");
 
 // Yeni araç akışındaki otomatik bakım planı seçenekleri (PILOT FIX 03 madde B).
@@ -92,7 +96,7 @@ export default function BireyselVehicleDetailPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [vehicle, setVehicle] = useState<any>(
-    isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "", notes: "" } : null
+    isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "", notes: "", muayene_tarihi: "", kasko_bitis: "", trafik_sigortasi_bitis: "" } : null
   );
   // Aşama E: geçmiş = zaman çizelgesi (vehicle_timeline RPC, 20'lik sayfa).
   // Araç sahibi servis düzeltmelerini yalnız sade "sonradan düzeltildi"
@@ -361,6 +365,9 @@ export default function BireyselVehicleDetailPage() {
             current_km: vehicle.current_km,
             next_service_km: plan.nextServiceKm,
             next_service_date: plan.nextServiceDate,
+            muayene_tarihi: vehicle.muayene_tarihi || null,
+            kasko_bitis: vehicle.kasko_bitis || null,
+            trafik_sigortasi_bitis: vehicle.trafik_sigortasi_bitis || null,
           }),
         });
         json = await res.json();
@@ -403,6 +410,9 @@ export default function BireyselVehicleDetailPage() {
           current_km: normalized.current_km,
           next_service_km: nextServiceKmValue,
           next_service_date: vehicle.next_service_date || null,
+          muayene_tarihi: vehicle.muayene_tarihi || null,
+          kasko_bitis: vehicle.kasko_bitis || null,
+          trafik_sigortasi_bitis: vehicle.trafik_sigortasi_bitis || null,
           notes: vehicle.notes || null,
           updated_at: new Date().toISOString(),
         })
@@ -639,8 +649,11 @@ export default function BireyselVehicleDetailPage() {
         {(isNew || editingVehicle) && (
           <section style={cardStyle}>
             <label style={labelStyle}>Plaka</label>
-            <input
+            <CaretSafeInput
               data-field="plate"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
               aria-describedby={fieldErrors.plate ? "err-plate" : undefined}
               aria-invalid={!!fieldErrors.plate}
               style={{ ...inputStyle, marginBottom: fieldErrors.plate ? 4 : 10, borderColor: fieldErrors.plate ? colors.danger : colors.border }}
@@ -652,40 +665,13 @@ export default function BireyselVehicleDetailPage() {
                 {fieldErrors.plate}
               </p>
             )}
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Marka</label>
-                <input
-                  data-field="brand"
-                  aria-describedby={fieldErrors.brand ? "err-brand" : undefined}
-                  aria-invalid={!!fieldErrors.brand}
-                  style={{ ...inputStyle, marginBottom: fieldErrors.brand ? 4 : 10, borderColor: fieldErrors.brand ? colors.danger : colors.border }}
-                  value={vehicle.brand || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })}
-                />
-                {fieldErrors.brand && (
-                  <p id="err-brand" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
-                    {fieldErrors.brand}
-                  </p>
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Model</label>
-                <input
-                  data-field="model"
-                  aria-describedby={fieldErrors.model ? "err-model" : undefined}
-                  aria-invalid={!!fieldErrors.model}
-                  style={{ ...inputStyle, marginBottom: fieldErrors.model ? 4 : 10, borderColor: fieldErrors.model ? colors.danger : colors.border }}
-                  value={vehicle.model || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })}
-                />
-                {fieldErrors.model && (
-                  <p id="err-model" role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>
-                    {fieldErrors.model}
-                  </p>
-                )}
-              </div>
-            </div>
+            <BrandModelPicker
+              idPrefix="arac"
+              brand={vehicle.brand || ""}
+              model={vehicle.model || ""}
+              errors={{ brand: fieldErrors.brand, model: fieldErrors.model }}
+              onChange={(next) => setVehicle({ ...vehicle, ...next })}
+            />
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Model Yılı</label>
@@ -706,7 +692,7 @@ export default function BireyselVehicleDetailPage() {
               </div>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Güncel Kilometre</label>
-                <input
+                <CaretSafeInput caretChars="digits"
                   data-field="current_km"
                   type="text"
                   inputMode="numeric"
@@ -725,6 +711,12 @@ export default function BireyselVehicleDetailPage() {
                 )}
               </div>
             </div>
+
+            <DocDatesFields
+              idPrefix="arac"
+              value={vehicle}
+              onChange={(key, v) => setVehicle({ ...vehicle, [key]: v })}
+            />
 
             {isNew ? (
               // PILOT FIX 03 madde B: yeni araç akışında bakım planı elle
@@ -768,7 +760,7 @@ export default function BireyselVehicleDetailPage() {
                 {planType === "custom" && (
                   <>
                     <label style={labelStyle}>Sonraki Bakım (km)</label>
-                    <input
+                    <CaretSafeInput caretChars="digits"
                       data-field="next_service_km"
                       type="text"
                       inputMode="numeric"
@@ -807,7 +799,7 @@ export default function BireyselVehicleDetailPage() {
             ) : (
               <>
                 <label style={labelStyle}>Sonraki Bakım (km)</label>
-                <input
+                <CaretSafeInput caretChars="digits"
                   data-field="next_service_km"
                   type="text"
                   inputMode="numeric"
@@ -1101,24 +1093,32 @@ export default function BireyselVehicleDetailPage() {
             </section>
 
             <section id="muayene" style={{ ...cardStyle, display: activeTab === "belgeler" ? "block" : "none" }}>
-              <SectionHeader icon="clipboard" title="Muayene Bilgileri" />
-              {(vehicle.muayene_tarihi || vehicle.trafik_sigortasi_bitis || vehicle.kasko_bitis) ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-                  {vehicle.muayene_tarihi && (
-                    <InfoRow label="Sonraki Muayene" value={new Date(vehicle.muayene_tarihi).toLocaleDateString("tr-TR")} />
-                  )}
-                  {vehicle.trafik_sigortasi_bitis && (
-                    <InfoRow label="Trafik Sigortası Bitiş" value={new Date(vehicle.trafik_sigortasi_bitis).toLocaleDateString("tr-TR")} />
-                  )}
-                  {vehicle.kasko_bitis && (
-                    <InfoRow label="Kasko Bitiş" value={new Date(vehicle.kasko_bitis).toLocaleDateString("tr-TR")} />
-                  )}
-                </div>
-              ) : (
-                <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 12 }}>
-                  Muayene/sigorta tarihleriniz henüz servis kaydına girilmemiş. Yetkili servisiniz bu bilgileri ekleyebilir.
-                </p>
-              )}
+              <SectionHeader icon="clipboard" title="Muayene ve Sigorta" />
+              <div data-testid="belge-ozet" style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                {DOC_DATE_FIELDS.map((f) => {
+                  const v = vehicle[f.key];
+                  const st = dateDueStatus(v, todayIsoIstanbul());
+                  return (
+                    <div key={f.key} data-testid={`belge-satir-${f.key}`} data-level={st.level} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: colors.surfaceSoft, borderRadius: radius.sm, padding: "9px 12px" }}>
+                      <span style={{ minWidth: 0 }}>
+                        <span style={{ display: "block", fontSize: 12.5, color: colors.textMuted }}>{f.label}</span>
+                        <span style={{ display: "block", fontSize: 13.5, fontWeight: 800, color: colors.textDark }}>{v ? fmtDate(v) : "Tarih girilmedi"}</span>
+                      </span>
+                      <StatusPill level={st.level} />
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingVehicle(true);
+                  window.setTimeout(() => document.querySelector<HTMLElement>('[data-field="muayene_tarihi"]')?.focus(), 50);
+                }}
+                style={{ ...primaryButtonStyle(false), marginBottom: 16 }}
+              >
+                Tarihleri Güncelle
+              </button>
               <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 12 }}>
                 Ek not eklemek isterseniz (örn. poliçe numarası) aşağıya serbest metin olarak yazabilirsiniz.
               </p>
@@ -1246,12 +1246,12 @@ export default function BireyselVehicleDetailPage() {
                       </p>
                     )}
                     <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                      <input
+                      <CaretSafeInput caretChars="digits"
                         type="text" inputMode="numeric" placeholder="Km" aria-label="Kilometre" style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3, minWidth: 0 }}
                         value={formatKmInput(newRecord.km_at_service)}
                         onChange={(e) => setNewRecord({ ...newRecord, km_at_service: sanitizeKmInput(e.target.value) })}
                       />
-                      <input
+                      <CaretSafeInput caretChars="digits"
                         type="text" inputMode="decimal" placeholder="Ücret (₺)" aria-label="Ücret" style={{ ...inputStyle, minWidth: 0 }}
                         value={newRecord.cost}
                         onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".") })}

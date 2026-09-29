@@ -119,7 +119,7 @@ function BireyselGirisForm() {
     >
       <form onSubmit={handleLogin} noValidate>
         <label htmlFor="bireysel-email" style={labelStyle}>E-posta</label>
-        <input
+        <input autoCorrect="off" spellCheck={false}
           id="bireysel-email"
           type="email"
           inputMode="email"

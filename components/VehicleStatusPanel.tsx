@@ -78,14 +78,16 @@ export function VehicleStatusPanel({
       <section data-testid="arac-durumu" aria-label="Araç durumu" style={{ ...cardStyle, padding: compact ? 14 : 16 }}>
         <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.textDark, margin: "0 0 12px" }}>Araç Durumu</h2>
         <div className="otoiz-status-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
-          {main.map((c: any) => {
+          {main.map((c: any, i: number) => {
             const t = STATUS_TONE[c.level] ?? STATUS_TONE.none;
+            // Tek sayıda kart varsa sonuncusu tam genişlik (boş hücre kalmasın).
+            const span = main.length % 2 === 1 && i === main.length - 1;
             return (
               <div
                 key={c.key}
                 data-testid={`durum-${c.key}`}
                 data-level={c.level}
-                style={{ background: t.bg, borderRadius: radius.md, padding: "10px 12px", minWidth: 0, borderLeft: `4px solid ${t.dot}` }}
+                style={{ background: t.bg, borderRadius: radius.md, padding: "10px 12px", minWidth: 0, borderLeft: `4px solid ${t.dot}`, gridColumn: span ? "1 / -1" : undefined }}
               >
                 <div style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted }}>{c.title}</div>
                 <div style={{ fontSize: 15, fontWeight: 900, color: t.fg, marginTop: 2, overflowWrap: "anywhere" }}>{c.value}</div>

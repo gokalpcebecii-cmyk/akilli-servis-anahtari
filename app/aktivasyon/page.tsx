@@ -17,6 +17,8 @@ import { useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, labelStyle, primaryButtonStyle, secondaryButtonStyle, cardStyle, radius } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { CaretSafeInput } from "@/components/CaretSafeInput";
+import { BrandModelPicker } from "@/components/BrandModelPicker";
 const { isQrToken } = require("@/lib/qrUrl");
 const { normalizeActivationCode, isActivationCode, formatActivationCode, normalizeSerial, activationErrorMessage } = require("@/lib/activationCode");
 
@@ -183,7 +185,7 @@ function AktivasyonInner() {
             </>
           )}
           <label style={labelStyle} htmlFor="akt-kod">Aktivasyon kodu</label>
-          <input
+          <CaretSafeInput
             id="akt-kod"
             value={code}
             onChange={(e) => setCode(formatActivationCode(e.target.value).slice(0, 14))}
@@ -223,25 +225,16 @@ function AktivasyonInner() {
           {adding && (
             <div style={{ background: colors.surfaceSoft, borderRadius: radius.md, padding: 12, marginBottom: 12 }}>
               <label style={labelStyle} htmlFor="nv-plate">Plaka</label>
-              <input id="nv-plate" value={nv.plate} onChange={(e) => setNv({ ...nv, plate: e.target.value })} placeholder="34 ABC 123" autoCapitalize="characters" style={{ ...inputStyle, marginBottom: 10 }} />
-              <div style={{ display: "flex", gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={labelStyle} htmlFor="nv-brand">Marka</label>
-                  <input id="nv-brand" value={nv.brand} onChange={(e) => setNv({ ...nv, brand: e.target.value })} style={{ ...inputStyle, marginBottom: 10 }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={labelStyle} htmlFor="nv-model">Model</label>
-                  <input id="nv-model" value={nv.model} onChange={(e) => setNv({ ...nv, model: e.target.value })} style={{ ...inputStyle, marginBottom: 10 }} />
-                </div>
-              </div>
+              <CaretSafeInput id="nv-plate" autoCorrect="off" spellCheck={false} value={nv.plate} onChange={(e) => setNv({ ...nv, plate: e.target.value })} placeholder="34 ABC 123" autoCapitalize="characters" style={{ ...inputStyle, marginBottom: 10 }} />
+              <BrandModelPicker idPrefix="nv" brand={nv.brand} model={nv.model} onChange={(next) => setNv({ ...nv, ...next })} />
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle} htmlFor="nv-year">Model yılı</label>
-                  <input id="nv-year" inputMode="numeric" value={nv.year} onChange={(e) => setNv({ ...nv, year: e.target.value.replace(/\D/g, "") })} style={inputStyle} />
+                  <CaretSafeInput caretChars="digits" id="nv-year" inputMode="numeric" value={nv.year} onChange={(e) => setNv({ ...nv, year: e.target.value.replace(/\D/g, "") })} style={inputStyle} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle} htmlFor="nv-km">Güncel km</label>
-                  <input id="nv-km" inputMode="numeric" value={nv.current_km} onChange={(e) => setNv({ ...nv, current_km: e.target.value.replace(/\D/g, "") })} style={inputStyle} />
+                  <CaretSafeInput caretChars="digits" id="nv-km" inputMode="numeric" value={nv.current_km} onChange={(e) => setNv({ ...nv, current_km: e.target.value.replace(/\D/g, "") })} style={inputStyle} />
                 </div>
               </div>
               {vehicles.length > 0 && (

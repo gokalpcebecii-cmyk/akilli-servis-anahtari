@@ -682,7 +682,12 @@ a:focus-visible {
   min-height: 100dvh;
   background: var(--otoiz-anthracite);
   color: #fff;
+  /* Aşama E.1: "hidden" bu kabuğu ayrı bir kaydırma kutusuna çeviriyordu;
+     iPhone Safari'de klavye açılıp sayfa kaydığında imleç yazılan yerden
+     kopuyordu. "clip" taşmayı yine keser ama kaydırma kutusu oluşturmaz
+     (eski tarayıcılar "hidden" satırında kalır). */
   overflow-x: hidden;
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -1680,5 +1685,13 @@ a:focus-visible {
   }
   .otoiz-status-grid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* Aşama E.1: marka → model seçimi dar ekranda alt alta. */
+@media (max-width: 360px) {
+  .otoiz-brand-model {
+    flex-direction: column !important;
+    gap: 10px !important;
   }
 }

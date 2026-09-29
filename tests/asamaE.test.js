@@ -98,7 +98,7 @@ test("kayıt kategorisi (yalnız görsel etiket)", () => {
 
 test("Araç Durumu: boş veri → tüm kartlar GRİ", () => {
   const { cards } = buildVehicleStatus({ vehicle: { current_km: 1000 }, items: [], labels: ITEM_LABELS, today: T });
-  assert.deepEqual(cards.map((c) => c.key), ["bakim", "muayene", "detailing", "belgeler", "yaklasan"]);
+  assert.deepEqual(cards.map((c) => c.key), ["bakim", "muayene", "trafik", "kasko", "detailing", "yaklasan"]);
   for (const c of cards) assert.equal(c.level, "none", c.key);
 });
 
@@ -114,7 +114,8 @@ test("Araç Durumu: gecikmiş bakım + yaklaşan muayene + sigorta → yaklaşan
   assert.equal(byKey.bakim.level, "late");
   assert.equal(byKey.muayene.level, "soon");
   assert.equal(byKey.detailing.level, "soon");
-  assert.equal(byKey.belgeler.level, "ok");
+  assert.equal(byKey.trafik.level, "ok");
+  assert.equal(byKey.kasko.level, "none");
   assert.equal(byKey.yaklasan.level, "late");
   assert.equal(upcoming[0].level, "late");
   assert.ok(upcoming.some((u) => u.title === "Motor Yağı"));

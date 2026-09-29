@@ -10,6 +10,9 @@ import { VehicleStatusPanel } from "@/components/VehicleStatusPanel";
 import { VehicleTimeline } from "@/components/VehicleTimeline";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { CaretSafeInput } from "@/components/CaretSafeInput";
+import { BrandModelPicker } from "@/components/BrandModelPicker";
+import { DocDatesFields } from "@/components/DocDatesFields";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { printableQrUrl, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
 
@@ -62,7 +65,7 @@ export default function VehicleDetailPage() {
   const supabase = createBrowserSupabase();
 
   const [vehicle, setVehicle] = useState<any>(
-    isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "" } : null
+    isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "", muayene_tarihi: "", kasko_bitis: "", trafik_sigortasi_bitis: "" } : null
   );
   // Aşama E: geçmiş = zaman çizelgesi (20'lik sayfalar, vehicle_timeline RPC);
   // düzeltme geçmişi ayrı RPC'den (servis: revizyon ayrıntısı).
@@ -209,6 +212,9 @@ export default function VehicleDetailPage() {
             current_km: vehicle.current_km,
             next_service_km: plan.nextServiceKm,
             next_service_date: plan.nextServiceDate,
+            muayene_tarihi: vehicle.muayene_tarihi || null,
+            kasko_bitis: vehicle.kasko_bitis || null,
+            trafik_sigortasi_bitis: vehicle.trafik_sigortasi_bitis || null,
           }),
         });
         json = await res.json();
@@ -239,18 +245,26 @@ export default function VehicleDetailPage() {
     } else {
       savingRef.current = true;
       setSavingVehicle(true);
-      await supabase
+      const { error: updateError } = await supabase
         .from("vehicles")
         .update({
           plate: vehicle.plate,
           brand: vehicle.brand,
           model: vehicle.model,
           year: vehicle.year || null,
+          muayene_tarihi: vehicle.muayene_tarihi || null,
+          kasko_bitis: vehicle.kasko_bitis || null,
+          trafik_sigortasi_bitis: vehicle.trafik_sigortasi_bitis || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", params.id);
       savingRef.current = false;
       setSavingVehicle(false);
+      if (updateError) {
+        // Düzenleme ekranı açık kalır; başarı izlenimi verilmez.
+        alert("Kaydedilemedi. Lütfen sayfayı yenileyip tekrar deneyin.");
+        return;
+      }
       setEditingVehicle(false);
     }
   }
@@ -499,38 +513,24 @@ export default function VehicleDetailPage() {
         {(isNew || editingVehicle) && (
           <section className="otoiz-servis-area-edit otoiz-vehicle-shell" style={{ ...cardStyle, margin: "0 auto" }}>
             <label style={labelStyle}>Plaka</label>
-            <input
+            <CaretSafeInput
               data-field="plate"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
               aria-invalid={!!fieldErrors.plate}
               style={{ ...inputStyle, marginBottom: fieldErrors.plate ? 4 : 10, borderColor: fieldErrors.plate ? colors.danger : colors.border }}
               value={vehicle.plate}
               onChange={(e) => setVehicle({ ...vehicle, plate: e.target.value.toUpperCase() })}
             />
             {fieldErrors.plate && <p role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>{fieldErrors.plate}</p>}
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Marka</label>
-                <input
-                  data-field="brand"
-                  aria-invalid={!!fieldErrors.brand}
-                  style={{ ...inputStyle, marginBottom: fieldErrors.brand ? 4 : 10, borderColor: fieldErrors.brand ? colors.danger : colors.border }}
-                  value={vehicle.brand || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, brand: e.target.value })}
-                />
-                {fieldErrors.brand && <p role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>{fieldErrors.brand}</p>}
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>Model</label>
-                <input
-                  data-field="model"
-                  aria-invalid={!!fieldErrors.model}
-                  style={{ ...inputStyle, marginBottom: fieldErrors.model ? 4 : 10, borderColor: fieldErrors.model ? colors.danger : colors.border }}
-                  value={vehicle.model || ""}
-                  onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })}
-                />
-                {fieldErrors.model && <p role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "0 0 10px" }}>{fieldErrors.model}</p>}
-              </div>
-            </div>
+            <BrandModelPicker
+              idPrefix="servis-arac"
+              brand={vehicle.brand || ""}
+              model={vehicle.model || ""}
+              errors={{ brand: fieldErrors.brand, model: fieldErrors.model }}
+              onChange={(next) => setVehicle({ ...vehicle, ...next })}
+            />
             {isNew ? (
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ flex: 1 }}>
@@ -547,7 +547,7 @@ export default function VehicleDetailPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle}>Güncel Kilometre</label>
-                  <input
+                  <CaretSafeInput caretChars="digits"
                     data-field="current_km"
                     type="text"
                     inputMode="numeric"
@@ -575,6 +575,12 @@ export default function VehicleDetailPage() {
                 {fieldErrors.year && <p role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "-10px 0 14px" }}>{fieldErrors.year}</p>}
               </>
             )}
+
+            <DocDatesFields
+              idPrefix="servis-arac"
+              value={vehicle}
+              onChange={(key, v) => setVehicle({ ...vehicle, [key]: v })}
+            />
 
             {isNew && (
               <>
@@ -615,7 +621,7 @@ export default function VehicleDetailPage() {
                   <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                     <div style={{ flex: 1 }}>
                       <label style={{ fontSize: 12, color: colors.textMuted }}>Sonraki Bakım (km)</label>
-                      <input
+                      <CaretSafeInput caretChars="digits"
                         data-field="next_service_km"
                         type="text"
                         inputMode="numeric"
@@ -657,7 +663,7 @@ export default function VehicleDetailPage() {
             {/* Aşama E — 15–20 sn akış: 1 KM → 2 işlemler → 3 sonraki bakım → KAYDET.
                 Normal bakımda klavye yalnız km için açılır; geri kalan her şey dokunuş. */}
             <StepLabel n={1} text="Güncel Kilometre" />
-            <input
+            <CaretSafeInput caretChars="digits"
               type="text"
               inputMode="numeric"
               enterKeyHint="done"
@@ -769,7 +775,7 @@ export default function VehicleDetailPage() {
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <label style={{ fontSize: 12, color: colors.textMuted }}>Sonraki bakım (km)</label>
-                  <input
+                  <CaretSafeInput caretChars="digits"
                     type="text"
                     inputMode="numeric"
                     style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
