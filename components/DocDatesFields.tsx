@@ -4,7 +4,7 @@
 // Bitiş tarihleri. Her alanın yanında anlık durum: 30 gün ve daha az kaldıysa
 // SARI, tarih geçtiyse KIRMIZI, tarih yoksa GRİ. Veritabanı kolonları
 // (muayene_tarihi, kasko_bitis, trafik_sigortasi_bitis) değişmedi.
-import { colors, inputStyle, labelStyle } from "@/lib/theme";
+import { colors, inputStyle, labelStyle, helperStyle } from "@/lib/theme";
 import { StatusPill } from "@/components/VehicleStatusPanel";
 const { dateDueStatus, fmtDate } = require("@/lib/vehicleStatus");
 const { todayIsoIstanbul } = require("@/lib/logic");
@@ -28,15 +28,15 @@ export function DocDatesFields({
 }) {
   const today = todayIsoIstanbul();
   return (
-    <fieldset data-testid="belge-tarihleri" style={{ border: "none", padding: 0, margin: "4px 0 12px" }}>
-      <legend style={{ ...labelStyle, fontSize: 13.5, fontWeight: 800, color: colors.textDark, marginBottom: 8, padding: 0 }}>Muayene ve Sigorta Tarihleri</legend>
+    <fieldset data-testid="belge-tarihleri" style={{ border: "none", padding: 0, margin: "4px 0 16px", minWidth: 0 }}>
+      <legend style={{ width: "100%", fontSize: 12.5, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", color: colors.textFaint, margin: "0 0 12px", padding: "0 0 8px", borderBottom: `1px solid ${colors.border}` }}>Muayene ve Sigorta Tarihleri</legend>
       {DOC_DATE_FIELDS.map((f) => {
         const v = (value as any)[f.key] || "";
         const st = dateDueStatus(v, today);
         const id = `${idPrefix}-${f.key}`;
         return (
-          <div key={f.key} style={{ marginBottom: 10 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div key={f.key} style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <label htmlFor={id} style={{ ...labelStyle, margin: 0 }}>
                 {f.label}
               </label>
@@ -58,14 +58,14 @@ export function DocDatesFields({
                   type="button"
                   aria-label={`${f.label} tarihini sil`}
                   onClick={() => onChange(f.key, "")}
-                  style={{ minWidth: 44, minHeight: 44, borderRadius: 10, border: `1px solid ${colors.border}`, background: colors.surfaceLight, color: colors.textMuted, fontSize: 18, cursor: "pointer" }}
+                  style={{ minWidth: 52, minHeight: 52, borderRadius: 14, border: `1px solid ${colors.border}`, background: colors.surfaceRaised, color: colors.textMuted, fontSize: 20, cursor: "pointer" }}
                 >
                   ×
                 </button>
               )}
             </div>
             {st.level !== "none" && (
-              <div style={{ fontSize: 11.5, color: colors.textMuted, marginTop: 3 }}>
+              <div style={{ ...helperStyle, color: colors.textMuted }}>
                 {fmtDate(v)} · {st.daysLeft === 0 ? "bugün" : st.daysLeft < 0 ? `${Math.abs(st.daysLeft)} gün geçti` : `${st.daysLeft} gün kaldı`}
               </div>
             )}

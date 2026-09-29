@@ -1,69 +1,106 @@
-// OTOİZ Final Visual System — tek kaynak (source of truth) renk/stil token'ları.
-// Bütün sayfalar rengi burada tanımlı sabitlerden alır; hex kodları
-// dosyalarda tekrar tekrar elle yazılmaz.
+// OTOİZ Kapalı Tasarım Sistemi (pilot öncesi son cila) — tek kaynak renk/stil
+// token'ları. Ağırlıklı koyu premium yüzeyler; hex kodları sayfalarda tekrar
+// tekrar elle yazılmaz. Eski token adları (surfaceLight, textDark …) geriye
+// dönük uyum için korunur ama artık koyu sistemin karşılığını taşır:
+//   surfaceLight = kart yüzeyi, surfaceSoft = kart içi yükselti,
+//   textDark = ana yazı, textMuted = ikincil yazı.
 
 export const colors = {
-  bg: "#061421",
-  bgAlt: "#081B2A",
-  surfaceDark: "#0C2032",
-  surfaceLight: "#FFFFFF",
-  surfaceSoft: "#F4F7F9",
-  textDark: "#102033",
-  textLight: "#FFFFFF",
-  textMuted: "#5B6875",
-  border: "#E1E7EC",
-  green: "#36E86D",
-  greenDark: "#16B94E",
-  greenSoft: "#E6FAEE",
-  danger: "#C0392B",
-  dangerSoft: "#FDECEA",
-  warning: "#B8860B",
-  warningSoft: "#FFF8E6",
-  neutralSoft: "#EEF1F3",
+  bg: "#0F1115", // ana arka plan
+  bgAlt: "#151922", // ikincil arka plan
+  surfaceDark: "#181D27", // kart yüzeyi (koyu başlık alanları)
+  surface: "#181D27", // kart yüzeyi
+  surfaceRaised: "#1F2531", // kart iç yükselti yüzeyi
+  surfaceLight: "#181D27", // (eski ad) kart yüzeyi
+  surfaceSoft: "#1F2531", // (eski ad) kart içi yükselti
+  white: "#FFFFFF", // yalnız QR görseli gibi seçili açık yüzeyler
+  textDark: "#F5F7FA", // (eski ad) ana yazı
+  text: "#F5F7FA", // ana yazı
+  textLight: "#F5F7FA",
+  textMuted: "#A9B3C1", // ikincil yazı
+  textFaint: "#7F8896", // soluk yazı
+  border: "#2D3542",
+  green: "#22C55E", // ana vurgu / marka yeşili
+  greenLight: "#86EFAC", // açık vurgu yeşili (koyu zeminde yazı/ikon)
+  greenDark: "#86EFAC", // (eski ad) koyu zeminde yeşil yazı/ikon
+  greenSoft: "rgba(34,197,94,0.14)",
+  onAccent: "#0F1115", // dolu yeşil/sarı üstündeki koyu metin
+  danger: "#EF5350",
+  dangerSoft: "rgba(239,83,80,0.14)",
+  warning: "#F5C451",
+  warningSoft: "rgba(245,196,81,0.14)",
+  info: "#60A5FA",
+  infoSoft: "rgba(96,165,250,0.14)",
+  gray: "#8B95A7",
+  neutralSoft: "rgba(139,149,167,0.16)",
 } as const;
 
-export const font = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+export const font = "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
+// Ana kart 18 · küçük kart / buton / input 14.
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  sm: 12,
+  md: 14,
+  lg: 18,
+  xl: 18,
   pill: 999,
+};
+
+export const shadow = {
+  card: "0 1px 0 rgba(255,255,255,0.03) inset, 0 10px 28px rgba(0,0,0,0.28)",
+  soft: "0 6px 18px rgba(0,0,0,0.22)",
 };
 
 export const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "12px 14px",
-  borderRadius: radius.sm,
+  minHeight: 52,
+  padding: "13px 16px",
+  borderRadius: radius.md,
   border: `1px solid ${colors.border}`,
   fontSize: 16,
-  color: colors.textDark,
-  background: colors.surfaceLight,
+  color: colors.text,
+  background: colors.bgAlt,
   fontFamily: font,
+  colorScheme: "dark",
+  outline: "none",
 };
 
 export const labelStyle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 13.5,
   fontWeight: 600,
   color: colors.textMuted,
   display: "block",
-  marginBottom: 6,
+  marginBottom: 8,
+};
+
+export const helperStyle: React.CSSProperties = {
+  fontSize: 12.5,
+  color: colors.textFaint,
+  margin: "6px 0 0",
+  lineHeight: 1.45,
+};
+
+export const errorTextStyle: React.CSSProperties = {
+  color: colors.danger,
+  fontSize: 13,
+  fontWeight: 600,
+  margin: "6px 0 0",
+  lineHeight: 1.4,
 };
 
 export function primaryButtonStyle(disabled = false): React.CSSProperties {
   return {
     width: "100%",
     padding: "14px 20px",
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     border: "none",
-    background: disabled ? "#A8EFC1" : colors.green,
-    color: colors.textDark,
+    background: disabled ? "rgba(34,197,94,0.45)" : colors.green,
+    color: colors.onAccent,
     fontWeight: 800,
-    fontSize: 15,
+    fontSize: 16,
     cursor: disabled ? "wait" : "pointer",
     fontFamily: font,
-    minHeight: 48,
+    minHeight: 52,
   };
 }
 
@@ -71,56 +108,63 @@ export function secondaryButtonStyle(): React.CSSProperties {
   return {
     width: "100%",
     padding: "13px 20px",
-    borderRadius: radius.sm,
-    border: `1.5px solid ${colors.border}`,
-    background: colors.surfaceLight,
-    color: colors.textDark,
+    borderRadius: radius.md,
+    border: `1px solid ${colors.border}`,
+    background: colors.surfaceRaised,
+    color: colors.text,
     fontWeight: 700,
-    fontSize: 14,
+    fontSize: 15,
     cursor: "pointer",
     fontFamily: font,
-    minHeight: 48,
+    minHeight: 52,
   };
 }
 
 export function dangerOutlineButtonStyle(disabled = false): React.CSSProperties {
   return {
     padding: "10px 18px",
-    borderRadius: radius.sm,
-    border: `1.5px solid ${colors.danger}`,
-    background: colors.surfaceLight,
+    borderRadius: radius.md,
+    border: `1px solid ${colors.danger}`,
+    background: "transparent",
     color: colors.danger,
     fontWeight: 700,
-    fontSize: 13.5,
+    fontSize: 14,
     cursor: disabled ? "wait" : "pointer",
     fontFamily: font,
-    minHeight: 44,
+    minHeight: 48,
   };
 }
 
 export const cardStyle: React.CSSProperties = {
-  background: colors.surfaceLight,
+  background: colors.surface,
   borderRadius: radius.lg,
   border: `1px solid ${colors.border}`,
   padding: 18,
+  boxShadow: shadow.card,
+  color: colors.text,
 };
 
-export function badgeStyle(kind: "success" | "warning" | "danger" | "neutral"): React.CSSProperties {
+// Durum rozetleri: Uygun yeşil dolu + koyu metin, Yaklaşıyor sarı dolu + koyu
+// metin, Gecikti kırmızı dolu + beyaz metin, Veri yok gri tonlu.
+export function badgeStyle(kind: "success" | "warning" | "danger" | "neutral" | "info"): React.CSSProperties {
   const map = {
-    success: { color: colors.greenDark, bg: colors.greenSoft },
-    warning: { color: colors.warning, bg: colors.warningSoft },
-    danger: { color: colors.danger, bg: colors.dangerSoft },
-    neutral: { color: colors.textMuted, bg: colors.neutralSoft },
+    success: { color: colors.onAccent, bg: colors.green, border: colors.green },
+    warning: { color: colors.onAccent, bg: colors.warning, border: colors.warning },
+    danger: { color: "#FFFFFF", bg: colors.danger, border: colors.danger },
+    neutral: { color: colors.textMuted, bg: colors.neutralSoft, border: "transparent" },
+    info: { color: colors.info, bg: colors.infoSoft, border: "transparent" },
   } as const;
   const c = map[kind];
   return {
     display: "inline-block",
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: 700,
     color: c.color,
     background: c.bg,
-    padding: "4px 11px",
+    border: `1px solid ${c.border}`,
+    padding: "3px 10px",
     borderRadius: radius.pill,
+    whiteSpace: "nowrap",
   };
 }
 
@@ -128,10 +172,19 @@ export const pageShellDark: React.CSSProperties = {
   minHeight: "100vh",
   background: colors.bg,
   fontFamily: font,
+  color: colors.text,
 };
 
-export const pageShellLight: React.CSSProperties = {
-  minHeight: "100vh",
-  background: colors.surfaceSoft,
-  fontFamily: font,
+export const pageShellLight = pageShellDark;
+
+// Form düzeyindeki hata kutusu (alan hataları input altında kalır).
+export const alertBoxStyle: React.CSSProperties = {
+  background: colors.dangerSoft,
+  border: "1px solid rgba(239,83,80,0.5)",
+  color: colors.text,
+  borderRadius: radius.md,
+  padding: "12px 14px",
+  fontSize: 14,
+  lineHeight: 1.5,
+  margin: "0 0 14px",
 };

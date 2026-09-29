@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { reportClientEvent } from "@/lib/clientEvent";
-import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { colors, inputStyle, labelStyle, primaryButtonStyle, alertBoxStyle } from "@/lib/theme";
 import { AuthShell, AuthShellLoading, AuthFooterLink } from "@/components/AuthShell";
 import { InstallCta } from "@/components/InstallCta";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
@@ -159,7 +159,7 @@ function BireyselGirisForm() {
         </div>
 
         {error && (
-          <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 14, lineHeight: 1.5 }}>
+          <p role="alert" style={alertBoxStyle}>
             {error}
           </p>
         )}

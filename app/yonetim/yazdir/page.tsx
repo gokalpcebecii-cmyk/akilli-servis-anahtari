@@ -63,19 +63,19 @@ function YazdirInner() {
   }, [batch, batchId]);
 
   return (
-    <main style={{ fontFamily: font, color: colors.textDark, padding: 16, background: "#fff", minHeight: "100vh" }}>
+    <main style={{ fontFamily: font, color: "#102033", padding: 16, background: "#fff", minHeight: "100vh" }}>
       <style>{`
         @media print { .no-print { display: none !important; } body { background: #fff; } }
         .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
         .qr-cell { border: 1px dashed #c9d2da; border-radius: 10px; padding: 10px; text-align: center; break-inside: avoid; }
       `}</style>
       <div className="no-print" style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 16 }}>
-        <a href="/yonetim" style={{ color: colors.greenDark, fontWeight: 700, minHeight: 44, display: "inline-flex", alignItems: "center" }}>← Yönetim</a>
+        <a href="/yonetim" style={{ color: "#16B94E", fontWeight: 700, minHeight: 44, display: "inline-flex", alignItems: "center" }}>← Yönetim</a>
         <h1 style={{ fontSize: 18, margin: 0 }}>{title || "QR partisi"} — {items.length} kod</h1>
         <button
           onClick={() => window.print()}
           disabled={items.length === 0}
-          style={{ marginLeft: "auto", padding: "10px 18px", minHeight: 44, borderRadius: 8, border: "none", background: colors.green, fontWeight: 800, cursor: "pointer" }}
+          style={{ marginLeft: "auto", padding: "10px 18px", minHeight: 44, borderRadius: 8, border: "none", background: colors.green, color: colors.onAccent, fontWeight: 800, cursor: "pointer" }}
         >
           Yazdır
         </button>
@@ -92,7 +92,7 @@ function YazdirInner() {
           <div key={i.code} className="qr-cell">
             <img src={i.img} alt={`QR ${i.label}`} style={{ width: "100%", maxWidth: 160, height: "auto" }} />
             <div style={{ fontFamily: "monospace", fontSize: 13, fontWeight: 700, marginTop: 4, letterSpacing: 0.5 }}>{i.label}</div>
-            <div style={{ fontSize: 10, color: colors.textMuted }}>OTOİZ</div>
+            <div style={{ fontSize: 10, color: "#5B6875" }}>OTOİZ</div>
           </div>
         ))}
       </div>

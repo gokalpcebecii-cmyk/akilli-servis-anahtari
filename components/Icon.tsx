@@ -43,6 +43,27 @@ export function Icon({
           <path d="M10 20a2 2 0 0 0 4 0" />
         </svg>
       );
+    case "search":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+      );
+    case "message":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" />
+        </svg>
+      );
+    case "alert":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v5" />
+          <path d="M12 16.5v.01" />
+        </svg>
+      );
     case "check":
       return (
         <svg viewBox="0 0 24 24" style={s}>

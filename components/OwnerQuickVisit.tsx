@@ -120,11 +120,11 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
   }
 
   const tile = (on: boolean): React.CSSProperties => ({
-    minHeight: 44,
-    borderRadius: radius.sm,
-    border: `1.5px solid ${on ? colors.green : colors.border}`,
-    background: on ? colors.green : "#fff",
-    color: on ? colors.textDark : colors.textDark,
+    minHeight: 52,
+    borderRadius: radius.md,
+    border: `1px solid ${on ? colors.green : colors.border}`,
+    background: on ? colors.green : colors.surfaceRaised,
+    color: on ? colors.onAccent : colors.text,
     fontWeight: 700,
     fontSize: 13.5,
     fontFamily: font,

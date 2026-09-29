@@ -256,7 +256,7 @@ export default function LandingPage() {
                   onClick={goToGirisSecimi}
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    padding: "15px 24px", background: colors.green, color: colors.textDark, borderRadius: 999, border: "none",
+                    padding: "15px 24px", background: colors.green, color: colors.onAccent, borderRadius: 999, border: "none",
                     fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48,
                   }}
                 >
@@ -265,7 +265,7 @@ export default function LandingPage() {
                 </button>
                 <button
                   onClick={goToGirisSecimi}
-                  style={{ padding: "14px 24px", background: "rgba(6,20,33,0.35)", color: colors.textLight, border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 999, fontWeight: 600, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48 }}
+                  style={{ padding: "14px 24px", background: "rgba(0,0,0,0.35)", color: colors.textLight, border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 999, fontWeight: 600, fontSize: 15, cursor: "pointer", fontFamily: "inherit", minHeight: 48 }}
                 >
                   Giriş Yap
                 </button>
@@ -490,7 +490,7 @@ export default function LandingPage() {
               </ul>
               {p.note && <p style={{ fontSize: 12.5, color: "rgba(255,255,255,0.55)", margin: "0 0 18px", lineHeight: 1.5 }}>{p.note}</p>}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                <a href={p.primary.href} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "12px 22px", minHeight: 48, background: colors.green, color: colors.textDark, borderRadius: 999, fontWeight: 800, fontSize: 14.5, textDecoration: "none" }}>
+                <a href={p.primary.href} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "12px 22px", minHeight: 48, background: colors.green, color: colors.onAccent, borderRadius: 999, fontWeight: 800, fontSize: 14.5, textDecoration: "none" }}>
                   {p.primary.label}
                   <Icon name="chevron-right" color={colors.textDark} size={15} />
                 </a>
@@ -520,7 +520,7 @@ export default function LandingPage() {
                   width: 48,
                   height: 48,
                   borderRadius: "50%",
-                  background: "rgba(54,232,109,0.12)",
+                  background: "rgba(34,197,94,0.12)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -541,7 +541,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 980, margin: "0 auto 44px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
           {finalBenefits.map((b) => (
             <div key={b.title} className="otoiz-glass-surface" style={{ background: "rgba(255,255,255,0.05)", borderRadius: 14, padding: "18px 16px", textAlign: "center" }}>
-              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(54,232,109,0.14)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(34,197,94,0.14)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
                 <Icon name={b.icon} color={colors.green} size={18} />
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: colors.textLight, marginBottom: 4 }}>{b.title}</div>
@@ -563,7 +563,7 @@ export default function LandingPage() {
               display: "inline-flex", alignItems: "center", gap: 8,
               padding: "17px 40px",
               background: colors.green,
-              color: colors.textDark,
+              color: colors.onAccent,
               borderRadius: 999,
               border: "none",
               fontWeight: 800,
@@ -571,7 +571,7 @@ export default function LandingPage() {
               cursor: "pointer",
               fontFamily: "inherit",
               minHeight: 52,
-              boxShadow: "0 16px 34px rgba(54,232,109,0.3)",
+              boxShadow: "0 16px 34px rgba(34,197,94,0.3)",
             }}
           >
             Hemen Kaydolun

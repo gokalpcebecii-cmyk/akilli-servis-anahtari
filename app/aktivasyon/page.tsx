@@ -29,7 +29,7 @@ function Shell({ step, children }: { step: Step; children: React.ReactNode }) {
   const order: Step[] = ["auth", "code", "vehicle", "done"];
   const idx = Math.max(0, order.indexOf(step));
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, color: colors.textDark }}>
+    <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, color: colors.textDark }}>
       <div style={{ background: colors.bg, padding: "18px 16px 34px" }}>
         <div style={{ maxWidth: 420, margin: "0 auto" }}>
           <OtoizLogo variant="dark" size={120} />
@@ -42,7 +42,7 @@ function Shell({ step, children }: { step: Step; children: React.ReactNode }) {
         </div>
       </div>
       <div style={{ maxWidth: 420, margin: "-20px auto 0", padding: "0 16px 40px" }}>
-        <div style={{ ...cardStyle, padding: 20, boxShadow: "0 12px 40px rgba(6,20,33,0.12)" }}>{children}</div>
+        <div style={{ ...cardStyle, padding: 20, boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}>{children}</div>
       </div>
     </main>
   );

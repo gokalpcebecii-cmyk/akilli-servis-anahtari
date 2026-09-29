@@ -12,7 +12,8 @@
 // açılır.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { colors, font, inputStyle, labelStyle } from "@/lib/theme";
+import { colors, font, inputStyle, labelStyle, errorTextStyle } from "@/lib/theme";
+import { Icon } from "@/components/Icon";
 const { findBrand, modelsFor, findModel, pickerState, searchNames } = require("@/lib/vehicleCatalogSearch");
 
 type Brand = { name: string; models: string[] };
@@ -63,7 +64,7 @@ const triggerStyle: React.CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   gap: 8,
-  minHeight: 48,
+  minHeight: 52,
   textAlign: "left",
   cursor: "pointer",
   WebkitTapHighlightColor: "transparent",
@@ -73,9 +74,9 @@ const switchStyle: React.CSSProperties = {
   background: "none",
   border: "none",
   padding: "6px 0",
-  minHeight: 32,
-  color: colors.greenDark,
-  fontSize: 12.5,
+  minHeight: 40,
+  color: colors.greenLight,
+  fontSize: 14,
   fontWeight: 700,
   cursor: "pointer",
   fontFamily: "inherit",
@@ -83,8 +84,8 @@ const switchStyle: React.CSSProperties = {
 
 const rowStyle: React.CSSProperties = {
   width: "100%",
-  minHeight: 48,
-  padding: "12px 16px",
+  minHeight: 52,
+  padding: "12px 18px",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -93,7 +94,7 @@ const rowStyle: React.CSSProperties = {
   border: "none",
   borderBottom: `1px solid ${colors.border}`,
   fontSize: 16,
-  color: colors.textDark,
+  color: colors.text,
   textAlign: "left",
   cursor: "pointer",
   fontFamily: "inherit",
@@ -102,7 +103,7 @@ const rowStyle: React.CSSProperties = {
 function Chevron() {
   return (
     <svg aria-hidden="true" width="12" height="8" viewBox="0 0 12 8" style={{ flexShrink: 0 }}>
-      <path d="M1 1l5 5 5-5" stroke="#5b6875" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M1 1l5 5 5-5" stroke="#A9B3C1" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
 }
@@ -167,7 +168,7 @@ function PickerSheet({
         position: "fixed",
         inset: 0,
         zIndex: 1000,
-        background: "rgba(15,18,22,0.55)",
+        background: "rgba(8,10,14,0.72)",
         fontFamily: font,
         display: "flex",
         justifyContent: "center",
@@ -184,8 +185,9 @@ function PickerSheet({
         style={{
           width: "min(520px, 100%)",
           maxHeight: "calc(100dvh - 24px)",
-          background: colors.surfaceLight,
-          borderRadius: 16,
+          background: colors.surface,
+          border: `1px solid ${colors.border}`,
+          borderRadius: 18,
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -193,13 +195,16 @@ function PickerSheet({
           outline: "none",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 12px 8px 16px" }}>
-          <strong style={{ fontSize: 17, color: colors.textDark }}>{title}</strong>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 12px 10px 18px" }}>
+          <strong style={{ fontSize: 18, fontWeight: 800, color: colors.text }}>{title}</strong>
           <button type="button" onClick={onClose} style={{ ...switchStyle, fontSize: 15, minHeight: 44, padding: "0 8px" }}>
             Kapat
           </button>
         </div>
-        <div style={{ padding: "0 12px 10px" }}>
+        <div style={{ padding: "0 14px 12px", position: "relative" }}>
+          <span aria-hidden="true" style={{ position: "absolute", left: 30, top: 16, display: "flex", pointerEvents: "none" }}>
+            <Icon name="search" color={colors.textFaint} size={20} />
+          </span>
           <input
             ref={searchRef}
             type="text"
@@ -220,12 +225,12 @@ function PickerSheet({
                 else if (typed) onManual(typed);
               }
             }}
-            style={{ ...inputStyle, minHeight: 46 }}
+            style={{ ...inputStyle, minHeight: 52, paddingLeft: 46, background: colors.bg }}
           />
         </div>
         <div style={{ overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", borderTop: `1px solid ${colors.border}` }}>
           {status === "loading" && (
-            <p role="status" style={{ padding: "22px 16px", margin: 0, color: colors.textMuted, fontSize: 15 }}>
+            <p role="status" className="otoiz-skeleton" style={{ padding: "18px 18px", margin: 12, borderRadius: 12, color: colors.textMuted, fontSize: 15 }}>
               Liste yükleniyor…
             </p>
           )}
@@ -251,14 +256,14 @@ function PickerSheet({
               )}
               {shown.map((name) => (
                 <li key={name}>
-                  <button type="button" aria-current={name === selected ? "true" : undefined} onClick={() => onPick(name)} style={{ ...rowStyle, fontWeight: name === selected ? 800 : 500 }}>
+                  <button type="button" aria-current={name === selected ? "true" : undefined} onClick={() => onPick(name)} style={{ ...rowStyle, fontWeight: name === selected ? 800 : 500, background: name === selected ? colors.greenSoft : "none", color: name === selected ? colors.greenLight : colors.text }}>
                     <span>{name}</span>
-                    {name === selected && <span aria-hidden="true" style={{ color: colors.greenDark }}>✓</span>}
+                    {name === selected && <Icon name="check" color={colors.greenLight} size={18} />}
                   </button>
                 </li>
               ))}
               <li>
-                <button type="button" onClick={() => onManual(typed)} style={{ ...rowStyle, color: colors.greenDark, fontWeight: 700, borderBottom: "none" }}>
+                <button type="button" onClick={() => onManual(typed)} style={{ ...rowStyle, color: colors.greenLight, fontWeight: 700, borderBottom: "none" }}>
                   {typed && shown.length === 0 ? `“${typed}” olarak elle gir` : "Diğer / Elle gir"}
                 </button>
               </li>
@@ -323,7 +328,7 @@ export function BrandModelPicker({
 
   const err = (msg?: string, id?: string) =>
     msg ? (
-      <p id={id} role="alert" style={{ color: colors.danger, fontSize: 12.5, margin: "4px 0 6px" }}>
+      <p id={id} role="alert" style={errorTextStyle}>
         {msg}
       </p>
     ) : null;
@@ -377,7 +382,7 @@ export function BrandModelPicker({
           aria-invalid={!!errors.brand}
           aria-describedby={errors.brand ? `${bId}-err` : undefined}
           onClick={() => setOpen("brand")}
-          style={{ ...triggerStyle, ...border(errors.brand), color: brandShown ? colors.textDark : colors.textMuted }}
+          style={{ ...triggerStyle, ...border(errors.brand), color: brandShown ? colors.text : colors.textMuted }}
         >
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{brandShown || "Marka seçin"}</span>
           <Chevron />
@@ -433,7 +438,7 @@ export function BrandModelPicker({
           aria-invalid={!!errors.model}
           aria-describedby={errors.model ? `${mId}-err` : undefined}
           onClick={() => setOpen("model")}
-          style={{ ...triggerStyle, ...border(errors.model), color: modelShown ? colors.textDark : colors.textMuted, opacity: modelDisabled ? 0.6 : 1, cursor: modelDisabled ? "not-allowed" : "pointer" }}
+          style={{ ...triggerStyle, ...border(errors.model), color: modelShown ? colors.text : colors.textMuted, opacity: modelDisabled ? 0.6 : 1, cursor: modelDisabled ? "not-allowed" : "pointer" }}
         >
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{modelShown || (modelDisabled ? "Önce marka seçin" : "Model seçin")}</span>
           <Chevron />
@@ -448,7 +453,7 @@ export function BrandModelPicker({
       data-testid="marka-model"
       data-katalog={catalog.status}
       className={layout === "row" ? "otoiz-brand-model" : undefined}
-      style={{ display: "flex", flexDirection: layout === "row" ? "row" : "column", gap: layout === "row" ? 8 : 10, marginBottom: 10 }}
+      style={{ display: "flex", flexDirection: layout === "row" ? "row" : "column", gap: layout === "row" ? 10 : 16, marginBottom: 16 }}
     >
       {brandField}
       {modelField}

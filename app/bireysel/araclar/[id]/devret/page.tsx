@@ -114,7 +114,7 @@ export default function BireyselDevretPage() {
 
   if (result) {
     return (
-      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
         <div style={{ maxWidth: 440, margin: "0 auto", padding: "40px 20px" }}>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
@@ -152,7 +152,7 @@ export default function BireyselDevretPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+    <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "32px 20px" }}>
         <div style={{ width: 56, height: 56, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
           <Icon name="handover" color={colors.greenDark} size={28} />

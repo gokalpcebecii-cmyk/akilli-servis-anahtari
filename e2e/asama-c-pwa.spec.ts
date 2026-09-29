@@ -10,7 +10,7 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== "desktop-chromium", "cihazlar test içinde açılıyor");
 });
 
-const ANTHRACITE = "rgb(15, 18, 22)";
+const ANTHRACITE = "rgb(15, 17, 21)"; // son cila: #0F1115
 const OWNER_ID = "c0c0c0c0-0000-4000-8000-000000000001";
 const VEHICLE_ID = "c0c0c0c0-0000-4000-8000-000000000002";
 
@@ -124,8 +124,8 @@ test.describe("Aşama C — PWA markalama", () => {
     expect(m.id).toBe("/");
     expect(m.scope).toBe("/");
     expect(m.start_url).toBe("/bireysel/araclar");
-    expect(m.theme_color).toBe("#0F1216");
-    expect(m.background_color).toBe("#0F1216");
+    expect(m.theme_color).toBe("#0F1115");
+    expect(m.background_color).toBe("#0F1115");
     const purposes = m.icons.map((i: any) => `${i.sizes}:${i.purpose}`);
     expect(purposes).toEqual(expect.arrayContaining(["192x192:any", "512x512:any", "192x192:maskable", "512x512:maskable"]));
     for (const icon of m.icons) {
@@ -149,7 +149,7 @@ test.describe("Aşama C — PWA markalama", () => {
   test("head: manifest, favicon, apple-touch-icon, tema rengi, iOS başlığı ve açılış ekranları yükleniyor", async ({ browser, baseURL, request }) => {
     const { context, page } = await open(browser, IPHONE, baseURL!);
     await page.goto("/bireysel/giris");
-    expect(await page.locator('meta[name="theme-color"]').getAttribute("content")).toBe("#0F1216");
+    expect(await page.locator('meta[name="theme-color"]').getAttribute("content")).toBe("#0F1115");
     expect(await page.locator('meta[name="apple-mobile-web-app-title"]').getAttribute("content")).toBe("OTOİZ");
     expect(await page.locator('meta[name="application-name"]').getAttribute("content")).toBe("OTOİZ");
     expect(await page.locator('link[rel="manifest"]').getAttribute("href")).toBe("/manifest.json");

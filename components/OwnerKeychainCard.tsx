@@ -5,7 +5,7 @@
 // kodu ve herkese açık pasaport bağlantısını gösterir.
 import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
+import { colors, radius, inputStyle, labelStyle, primaryButtonStyle, secondaryButtonStyle, errorTextStyle, cardStyle } from "@/lib/theme";
 
 export default function OwnerKeychainCard({ vehicleId, onStatus }: { vehicleId: string; onStatus?: (active: boolean) => void }) {
   const supabase = createBrowserSupabase();
@@ -117,18 +117,23 @@ export default function OwnerKeychainCard({ vehicleId, onStatus }: { vehicleId: 
 
   return (
     <section id="anahtarlik" style={cardStyle}>
-      <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.textDark, margin: "0 0 10px" }}>QR Anahtarlık</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>QR Durumu</h2>
+        <span data-testid="anahtarlik-durum" style={{ fontSize: 12, fontWeight: 700, borderRadius: radius.pill, padding: "3px 10px", background: activeCode ? colors.green : colors.neutralSoft, color: activeCode ? colors.onAccent : colors.textMuted }}>
+          {activeCode ? "Aktif" : "Bağlı değil"}
+        </span>
+      </div>
       {activeCode ? (
         <div>
-          <p style={{ fontSize: 13.5, color: colors.textDark, margin: "0 0 10px" }}>
-            Anahtarlığınız bu araca bağlı: <code style={{ fontWeight: 800 }}>{activeCode}</code>
+          <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 14px", lineHeight: 1.5 }}>
+            Anahtarlığınız bu araca bağlı. Kod: <code style={{ fontWeight: 700, color: colors.text }}>{activeCode}</code>
           </p>
-          {success && <p role="status" style={{ color: colors.greenDark, fontSize: 13, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
+          {success && <p role="status" style={{ color: colors.greenLight, fontSize: 14, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
           <a
             href={`/p/${activeCode}`}
             target="_blank"
             rel="noopener"
-            style={{ display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 16px", borderRadius: radius.sm, background: colors.surfaceSoft, color: colors.textDark, fontWeight: 700, fontSize: 13.5, textDecoration: "none" }}
+            style={{ ...secondaryButtonStyle(), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}
           >
             Dijital pasaportu aç
           </a>
@@ -136,22 +141,22 @@ export default function OwnerKeychainCard({ vehicleId, onStatus }: { vehicleId: 
             type="button"
             onClick={revoke}
             disabled={busy}
-            style={{ display: "block", marginTop: 12, background: "transparent", border: "none", color: colors.danger, fontWeight: 700, fontSize: 13, cursor: "pointer", padding: "10px 0", minHeight: 44, fontFamily: "inherit" }}
+            style={{ display: "block", margin: "10px auto 0", background: "transparent", border: "none", color: colors.danger, fontWeight: 700, fontSize: 14, cursor: "pointer", padding: "10px 0", minHeight: 44, fontFamily: "inherit" }}
           >
             Anahtarlığımı kaybettim — iptal et
           </button>
-          {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, margin: "4px 0 0" }}>{error}</p>}
+          {error && <p role="alert" style={errorTextStyle}>{error}</p>}
         </div>
       ) : (
         <div>
-          <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 10px" }}>
+          <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 16px", lineHeight: 1.5 }}>
             {myCodes.length > 0
               ? "Hesabınıza tanımlı bir anahtarlık var. Bu araca bağlamak için aşağıdaki düğmeye basın."
               : "Satın aldığınız OTOİZ anahtarlığının üzerindeki kodu girerek bu araca bağlayın."}
           </p>
           <label style={labelStyle} htmlFor="owner-qr-code">Anahtarlık kodu</label>
           {myCodes.length > 1 ? (
-            <select id="owner-qr-code" value={code} onChange={(e) => setCode(e.target.value)} style={{ ...inputStyle, marginBottom: 10 }}>
+            <select id="owner-qr-code" value={code} onChange={(e) => setCode(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }}>
               {myCodes.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           ) : (
@@ -161,11 +166,11 @@ export default function OwnerKeychainCard({ vehicleId, onStatus }: { vehicleId: 
               onChange={(e) => setCode(e.target.value)}
               placeholder="Ör. 7gs9cqmxhqmy"
               autoCapitalize="none"
-              style={{ ...inputStyle, marginBottom: 10 }}
+              style={{ ...inputStyle, marginBottom: 12 }}
             />
           )}
-          {success && <p role="status" style={{ color: colors.greenDark, fontSize: 13, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
-          {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 10px" }}>{error}</p>}
+          {success && <p role="status" style={{ color: colors.greenLight, fontSize: 14, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
+          {error && <p role="alert" style={{ ...errorTextStyle, margin: "0 0 12px" }}>{error}</p>}
           <button type="button" onClick={bind} disabled={busy} style={primaryButtonStyle(busy)}>
             {busy ? "Bağlanıyor…" : "Anahtarlığımı bu araca bağla"}
           </button>

@@ -57,7 +57,7 @@ export default function BildirimlerPage() {
   const isEmpty = transfers.length === 0 && maintenanceAlerts.length === 0;
 
   return (
-    <main className="otoiz-has-bottom-nav" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+    <main className="otoiz-has-bottom-nav" style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px" }}>
         <h1 style={{ fontSize: 21, fontWeight: 800, color: colors.textDark, margin: "0 0 18px" }}>Bildirimler</h1>
 

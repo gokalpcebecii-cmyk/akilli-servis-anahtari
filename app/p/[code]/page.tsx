@@ -105,7 +105,7 @@ function ViewerShortcut({ code }: { code: string }) {
 
 function ActivatePrompt({ code }: { code: string }) {
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+    <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
       <div style={{ maxWidth: 420, width: "100%", margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
         <h1 style={{ fontSize: 21, color: colors.textDark, fontWeight: 800, marginBottom: 8 }}>Yeni OTOİZ anahtarlığı</h1>
         <p style={{ color: colors.textMuted, lineHeight: 1.55, margin: "0 0 20px" }}>

@@ -122,11 +122,11 @@ export default function DashboardPage() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 260, margin: "0 auto" }}>
           {pendingServiceSignup && (
-            <a href="/panel/kayit/tamamla" style={{ padding: "10px 16px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700 }}>
+            <a href="/panel/kayit/tamamla" style={{ padding: "10px 16px", background: colors.green, color: colors.onAccent, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700 }}>
               İşletme Başvurusunu Tamamla
             </a>
           )}
-          <a href="/bireysel/giris" style={{ padding: "10px 16px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700 }}>
+          <a href="/bireysel/giris" style={{ padding: "10px 16px", background: colors.green, color: colors.onAccent, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700 }}>
             Bireysel Girişe Geç
           </a>
           <a href="/panel/kayit" style={{ padding: "10px 16px", border: `1px solid ${colors.border}`, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 600 }}>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+    <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
       <div style={{ background: colors.surfaceDark, padding: "16px 18px 18px" }}>
         <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
           <OtoizLogo variant="dark" size={255} />
@@ -154,7 +154,7 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 40px" }}>
         {approvalStatus && approvalStatus !== "approved" && (
-          <div role="status" style={{ background: approvalStatus === "rejected" ? "#FDECEC" : "#FFF8E6", border: `1px solid ${approvalStatus === "rejected" ? colors.danger : "#E8C468"}`, borderRadius: radius.md, padding: "14px 16px", marginBottom: 16, fontSize: 14, fontWeight: 700, color: colors.textDark, lineHeight: 1.5 }}>
+          <div role="status" style={{ background: approvalStatus === "rejected" ? colors.dangerSoft : colors.warningSoft, border: `1px solid ${approvalStatus === "rejected" ? colors.danger : "#E8C468"}`, borderRadius: radius.md, padding: "14px 16px", marginBottom: 16, fontSize: 14, fontWeight: 700, color: colors.textDark, lineHeight: 1.5 }}>
             {approvalStatus === "rejected"
               ? "İşletme başvurunuz onaylanmadı. Araç ve bakım kaydı yapamazsınız. Bilgi için OTOİZ ile iletişime geçin."
               : "İşletmeniz OTOİZ onayı bekliyor. Onaylandıktan sonra araç ekleyebilir, bakım kaydı girebilir ve size ayrılan QR anahtarlıkları eşleştirebilirsiniz."}
@@ -172,11 +172,11 @@ export default function DashboardPage() {
           }}
           enterKeyHint="go"
           autoFocus
-          style={{ ...inputStyle, marginBottom: 16, padding: "14px 16px", fontSize: 17, boxShadow: "0 6px 18px rgba(6,20,33,0.06)" }}
+          style={{ ...inputStyle, marginBottom: 16, padding: "14px 16px", fontSize: 17, boxShadow: "0 6px 18px rgba(0,0,0,0.06)" }}
         />
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 24 }}>
-          <a href="/panel/araclar/yeni" style={{ display: "inline-block", padding: "12px 20px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, minHeight: 44 }}>
+          <a href="/panel/araclar/yeni" style={{ display: "inline-block", padding: "12px 20px", background: colors.green, color: colors.onAccent, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, minHeight: 44 }}>
             + Yeni Araç Ekle
           </a>
           {PILOT_FLAGS.qrMatchingSelfService && (

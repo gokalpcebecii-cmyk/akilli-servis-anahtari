@@ -123,7 +123,7 @@ export function AdminMfa({ mode, onVerified, onCancel }: { mode: "gate" | "add";
       </p>
       {enrollment && (
         <div style={{ textAlign: "center", marginBottom: 12 }}>
-          <img src={enrollment.qr} alt="Doğrulayıcı QR kodu" width={200} height={200} style={{ background: "#fff", padding: 8, borderRadius: radius.sm }} />
+          <img src={enrollment.qr} alt="Doğrulayıcı QR kodu" width={200} height={200} style={{ background: colors.white, padding: 8, borderRadius: radius.sm }} />
           <p style={{ fontSize: 12, color: colors.textMuted, margin: "8px 0 0", wordBreak: "break-all" }}>
             QR okutamıyorsanız anahtar: <code data-testid="mfa-secret">{enrollment.secret}</code>
           </p>

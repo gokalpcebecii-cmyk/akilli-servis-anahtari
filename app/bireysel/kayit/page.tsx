@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { colors, inputStyle, labelStyle, primaryButtonStyle, alertBoxStyle } from "@/lib/theme";
 import { AuthShell, AuthShellLoading, AuthFooterLink } from "@/components/AuthShell";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
 
@@ -81,7 +81,7 @@ function BireyselKayitForm() {
         <label htmlFor="kayit-tel" style={labelStyle}>Telefon</label>
         <input id="kayit-tel" type="tel" inputMode="tel" autoComplete="tel" style={{ ...inputStyle, marginBottom: 16 }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0555 000 00 00" />
 
-        {error && <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 12 }}>{error}</p>}
+        {error && <p role="alert" style={alertBoxStyle}>{error}</p>}
 
         <button type="submit" disabled={loading} style={primaryButtonStyle(loading)}>
           {loading ? "Oluşturuluyor..." : "Hesap Oluştur"}

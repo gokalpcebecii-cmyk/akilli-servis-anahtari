@@ -112,7 +112,7 @@ test.describe("İkinci düzeltme turu — madde 2: çift gönderim tek araç olu
     await pickBrandModel(page, "Fiat", "Egea");
     await page
       .locator("label")
-      .filter({ hasText: /^Model Yılı$/ })
+      .filter({ hasText: /^Model Yılı( \(isteğe bağlı\))?$/ })
       .locator("xpath=following-sibling::input[1]")
       .fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("40000");

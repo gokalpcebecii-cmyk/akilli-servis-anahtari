@@ -249,7 +249,7 @@ test.describe("Aşama E — bireysel", () => {
     await expect(page.getByTestId("sonraki-bakim")).toHaveAttribute("data-level", "soon");
     await expect(page.getByTestId("bireysel-ozet")).toContainText("Servis doğrulamalı");
     await expect(page.getByTestId("bireysel-ozet")).toContainText("Bireysel kayıt");
-    await expect(page.getByTestId("bireysel-ozet")).toContainText("QR durumu");
+    await expect(page.getByTestId("bireysel-ozet")).toContainText(/QR durumu/i);
     const preview = page.getByTestId("zaman-cizelgesi");
     await expect(preview).toContainText("Son İşlemler");
     await expect(preview.getByTestId("zaman-olay")).toHaveCount(5);
@@ -265,7 +265,7 @@ test.describe("Aşama E — bireysel", () => {
     await expect(page.getByText(/Revizyon \d/)).toHaveCount(0);
     await expect(page.getByText("Ahmet Usta")).toHaveCount(0);
     expect(historyCalls.length, "sahip ekranı revizyon RPC'sini çağırmamalı").toBe(0);
-    await page.getByRole("button", { name: /Tüm zaman çizelgesi/ }).click();
+    await page.getByRole("button", { name: /Tüm geçmişi gör/ }).click();
     await expect(page.getByRole("button", { name: "Kendi kaydını ekle (serbest not)" })).toBeVisible();
     await expect(page.getByTestId("zaman-cizelgesi").getByTestId("zaman-olay")).toHaveCount(20);
     await shot(page, `bireysel-zaman-cizelgesi-${info.project.name}`);

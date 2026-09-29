@@ -4,7 +4,7 @@
 // OTOİZ onayı. Bu formda şifre alınmaz; şifre, e-postadaki bağlantıyla
 // gelinen /panel/kayit/tamamla sayfasında belirlenir (bkz. app/api/signup).
 import { useState } from "react";
-import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { colors, inputStyle, labelStyle, primaryButtonStyle, alertBoxStyle } from "@/lib/theme";
 import { AuthShell, AuthFooterLink } from "@/components/AuthShell";
 import { Icon } from "@/components/Icon";
 import { ResendConfirmation } from "@/components/ResendConfirmation";
@@ -97,7 +97,7 @@ export default function SignupPage() {
           E-postanıza gelen bağlantıyla şifrenizi belirleyeceksiniz. İşletmeniz OTOİZ onayından sonra aktifleşir.
         </p>
 
-        {error && <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 12 }}>{error}</p>}
+        {error && <p role="alert" style={alertBoxStyle}>{error}</p>}
 
         <button type="submit" disabled={loading} style={primaryButtonStyle(loading)}>
           {loading ? "Oluşturuluyor..." : "Hesap Oluştur"}

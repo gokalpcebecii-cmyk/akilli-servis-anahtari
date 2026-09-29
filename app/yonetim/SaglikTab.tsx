@@ -7,14 +7,15 @@
 
 import { useEffect, useState } from "react";
 import { colors, font, radius, inputStyle, cardStyle } from "@/lib/theme";
+const { feedbackLabel, FEEDBACK_CATEGORIES, FEEDBACK_SCREENS } = require("@/lib/feedback");
 const { ACTION_LABELS, actionLabel } = require("@/lib/auditLabels");
 
 type Api = (path: string, init?: RequestInit) => Promise<{ ok: boolean; status: number; body: any }>;
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string; border: string }> = {
-  NORMAL: { bg: "#E8F8EF", fg: "#0B6B3A", border: "#9ED9B8" },
-  UYARI: { bg: "#FFF6E0", fg: "#8A5A00", border: "#E8C468" },
-  KRİTİK: { bg: "#FDECEC", fg: "#A11D1D", border: "#E59A9A" },
+  NORMAL: { bg: colors.greenSoft, fg: colors.greenLight, border: colors.green },
+  UYARI: { bg: colors.warningSoft, fg: colors.warning, border: colors.warning },
+  KRİTİK: { bg: colors.dangerSoft, fg: colors.danger, border: colors.danger },
 };
 
 function fmt(d: string | null | undefined) {
@@ -141,6 +142,14 @@ export function AuditLogTab({ api }: { api: Api }) {
             <strong style={{ fontSize: 13.5, flex: "1 1 200px" }}>{actionLabel(r.action)}</strong>
             <span style={{ fontSize: 12.5 }}>{r.tenant_name ?? ""}</span>
             <span style={{ fontSize: 12, color: colors.textMuted, wordBreak: "break-all" }}>{r.actor_email ?? ""}</span>
+            {r.action === "user_feedback" && r.detail?.message && (
+              <div data-testid="gorus-kaydi" style={{ flexBasis: "100%", fontSize: 13.5, color: colors.text, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "10px 12px", marginTop: 4, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                <span style={{ display: "block", fontSize: 12, color: colors.textMuted, marginBottom: 4 }}>
+                  {feedbackLabel(r.detail.category, FEEDBACK_CATEGORIES)} · {feedbackLabel(r.detail.screen, FEEDBACK_SCREENS)}
+                </span>
+                {String(r.detail.message)}
+              </div>
+            )}
           </div>
         ))}
         {!loading && rows.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>Kayıt yok.</p>}

@@ -338,7 +338,7 @@ export default function YonetimPage() {
   });
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, color: colors.textDark }}>
+    <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, color: colors.textDark }}>
       <header style={{ background: colors.bg, padding: "12px 16px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

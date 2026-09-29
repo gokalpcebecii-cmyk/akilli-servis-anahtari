@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, inputStyle, labelStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
+import { colors, inputStyle, labelStyle, primaryButtonStyle, secondaryButtonStyle, alertBoxStyle } from "@/lib/theme";
 import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import { AdminMfa } from "@/components/AdminMfa";
 const { parseRecoveryParams } = require("@/lib/emailConfirm");
@@ -184,7 +184,7 @@ export default function SifreGuncellePage() {
         />
 
         {error && (
-          <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 12 }}>
+          <p role="alert" style={alertBoxStyle}>
             {error}
           </p>
         )}
