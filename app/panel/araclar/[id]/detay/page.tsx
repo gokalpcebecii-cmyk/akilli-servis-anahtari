@@ -149,7 +149,7 @@ export default function AracDetayPage() {
 
       <div style={groupStyle}>
         <div style={groupTitle}>Diğer</div>
-        <label style={labelStyle}>Muayene Tarihi</label>
+        <label style={labelStyle}>Sonraki Muayene Tarihi</label>
         <input type="date" style={inputStyle} value={form.muayene_tarihi} onChange={(e) => setForm({ ...form, muayene_tarihi: e.target.value })} />
         <label style={labelStyle}>Trafik Sigortası Bitiş</label>
         <input type="date" style={inputStyle} value={form.trafik_sigortasi_bitis} onChange={(e) => setForm({ ...form, trafik_sigortasi_bitis: e.target.value })} />

@@ -22,6 +22,10 @@ const ITEM_DISPLAY: Record<string, { label: string; icon: string }> = {
   fren_diski: { label: "Fren Diski", icon: "wrench" },
   buji: { label: "Buji", icon: "wrench" },
   silecek: { label: "Silecek", icon: "wrench" },
+  yakit_filtresi: { label: "Yakıt Filtresi", icon: "wrench" },
+  fren_balatasi: { label: "Fren Balatası", icon: "wrench" },
+  sanziman_yagi: { label: "Şanzıman Yağı", icon: "wrench" },
+  antifriz: { label: "Antifriz", icon: "wrench" },
 };
 
 const ITEM_ORDER = [
@@ -43,6 +47,9 @@ const ITEM_ORDER = [
 // varsa listeye eklenir (aksi halde her araçta "Bilgi Yok" satırı olarak
 // büyümesin).
 const LEGACY_ITEM_KEY = "fren_disk_balata";
+// Aşama E kalemleri: yalnız o araçta kaydı varsa gösterilir (her araçta
+// "Bilgi Yok" satırı çoğalmasın diye).
+const OPTIONAL_ITEM_KEYS = ["yakit_filtresi", "fren_balatasi", "sanziman_yagi", "antifriz"];
 
 export interface PublicPassportData {
   vehicle: {
@@ -175,7 +182,11 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "20px" }}>
         <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Araç Sağlık Özeti</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
-          {[...ITEM_ORDER, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM_KEY) ? [LEGACY_ITEM_KEY] : [])].map((key) => {
+          {[
+            ...ITEM_ORDER,
+            ...OPTIONAL_ITEM_KEYS.filter((k) => maintenanceItems.some((m: any) => m.item_key === k)),
+            ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM_KEY) ? [LEGACY_ITEM_KEY] : []),
+          ].map((key) => {
             const display = ITEM_DISPLAY[key];
             const status = getItemStatus(key);
             return (

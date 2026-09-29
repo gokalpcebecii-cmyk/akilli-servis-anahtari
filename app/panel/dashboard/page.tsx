@@ -7,7 +7,9 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, inputStyle, secondaryButtonStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
-const { describeMaintenancePlan } = require("@/lib/logic");
+const { describeMaintenancePlan, todayIsoIstanbul } = require("@/lib/logic");
+const { nextServiceStatus, LEVELS } = require("@/lib/vehicleStatus");
+import { STATUS_TONE } from "@/components/VehicleStatusPanel";
 const { plateKeyQuery, keysetOrFilter, PAGE_SIZE } = require("@/lib/pagination");
 
 const VEHICLE_COLS = "id, plate, brand, model, current_km, next_service_km, next_service_date, created_at";
@@ -164,6 +166,11 @@ export default function DashboardPage() {
           placeholder="Plaka ile ara..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          // Aşama E: tek sonuç varsa Enter doğrudan hızlı kayda götürür.
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && search.trim() && !searching && filtered.length === 1) router.push(`/panel/araclar/${filtered[0].id}`);
+          }}
+          enterKeyHint="go"
           autoFocus
           style={{ ...inputStyle, marginBottom: 16, padding: "14px 16px", fontSize: 17, boxShadow: "0 6px 18px rgba(6,20,33,0.06)" }}
         />
@@ -209,12 +216,22 @@ export default function DashboardPage() {
                 <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
                   {v.brand} {v.model}
                 </div>
-                <div style={{ color: colors.textMuted, fontSize: 12.5, marginTop: 4 }}>
-                  Sonraki bakım:{" "}
-                  <strong style={{ color: colors.greenDark, fontWeight: 800 }}>
-                    {describeMaintenancePlan({ nextServiceKm: v.next_service_km, nextServiceDate: v.next_service_date }).label}
-                  </strong>
-                </div>
+                {(() => {
+                  const st = nextServiceStatus({ currentKm: v.current_km, nextServiceKm: v.next_service_km, nextServiceDate: v.next_service_date, today: todayIsoIstanbul() });
+                  const tone = STATUS_TONE[st.level] ?? STATUS_TONE.none;
+                  return (
+                    <div data-level={st.level} style={{ color: colors.textMuted, fontSize: 12.5, marginTop: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: "50%", background: tone.dot, flex: "0 0 9px" }} />
+                      <span>
+                        Sonraki bakım:{" "}
+                        <strong style={{ color: tone.fg, fontWeight: 800 }}>
+                          {describeMaintenancePlan({ nextServiceKm: v.next_service_km, nextServiceDate: v.next_service_date }).label}
+                        </strong>
+                        {st.level !== "none" && st.level !== "ok" ? ` · ${LEVELS[st.level].label}` : ""}
+                      </span>
+                    </div>
+                  );
+                })()}
               </a>
             </li>
           ))}

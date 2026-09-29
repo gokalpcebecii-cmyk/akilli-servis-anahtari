@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { fetchVehicleRecords } from "@/lib/vehicleRecords";
-import { RevisionHistory, useRecordRevisions } from "@/components/RevisionHistory";
-import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
+import { fetchStatusRecords } from "@/lib/vehicleRecords";
+import { useRecordRevisions } from "@/components/RevisionHistory";
+import { VehicleStatusPanel } from "@/components/VehicleStatusPanel";
+import { VehicleTimeline } from "@/components/VehicleTimeline";
+import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { printableQrUrl, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
@@ -17,9 +19,10 @@ const {
   isValidNextServiceKm,
   isValidNextServiceDate,
   isValidCurrentKmUpdate,
-  computeAutoNextServicePlan,
+  resolveQuickPlan,
   todayIsoIstanbul,
 } = require("@/lib/logic");
+const { ITEM_LABELS, DEFAULT_INTERVALS, SERVICE_QUICK_KEYS, SERVICE_MORE_KEYS, NEXT_PLAN_OPTIONS } = require("@/lib/maintenanceItems");
 
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
 // temizlenir. Bireysel formuyla aynı davranış (PILOT FIX 03 madde A3).
@@ -43,37 +46,12 @@ const PLAN_OPTIONS: { key: string; label: string }[] = [
   { key: "later", label: "Bakım planını sonra belirle" },
 ];
 
-const QUICK_ITEMS = [
-  { key: "motor_yagi", label: "Motor Yağı" },
-  { key: "yag_filtresi", label: "Yağ Filtresi" },
-  { key: "hava_filtresi", label: "Hava Filtresi" },
-  { key: "polen_filtresi", label: "Polen Filtresi" },
-  { key: "fren_on_balata", label: "Ön Balata" },
-  { key: "fren_arka_balata", label: "Arka Balata" },
-  { key: "lastik", label: "Lastik" },
-  { key: "aku", label: "Akü" },
-  { key: "triger_seti", label: "Triger Seti" },
-  { key: "fren_diski", label: "Fren Diski" },
-  { key: "buji", label: "Buji" },
-  { key: "silecek", label: "Silecek" },
-];
-
-// Bir işlem seçildiğinde "önerilen periyot otomatik atansın" (madde C) —
-// bu varsayılanlar Planı Düzenle'de her zaman değiştirilebilir.
-const DEFAULT_INTERVALS: Record<string, number> = {
-  motor_yagi: 10000,
-  yag_filtresi: 10000,
-  hava_filtresi: 15000,
-  polen_filtresi: 15000,
-  fren_on_balata: 20000,
-  fren_arka_balata: 20000,
-  lastik: 40000,
-  aku: 30000,
-  triger_seti: 60000,
-  fren_diski: 60000,
-  buji: 30000,
-  silecek: 20000,
-};
+// Aşama E: servis hızlı kayıt — 11 hızlı seçim + "Diğer"; eski kalemler
+// "Daha fazla işlem" altında (mevcut kayıtlarla uyum). Varsayılan periyotlar
+// lib/maintenanceItems.js'de tek kaynak.
+const QUICK_ITEMS: { key: string; label: string }[] = SERVICE_QUICK_KEYS.map((key: string) => ({ key, label: ITEM_LABELS[key] }));
+const MORE_ITEMS: { key: string; label: string }[] = SERVICE_MORE_KEYS.map((key: string) => ({ key, label: ITEM_LABELS[key] }));
+const ALL_ITEMS = [...QUICK_ITEMS, ...MORE_ITEMS];
 
 const PRESET_KM_OPTIONS = [5000, 10000, 15000, 20000, 30000];
 
@@ -86,10 +64,12 @@ export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState<any>(
     isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "" } : null
   );
-  const [records, setRecords] = useState<any[]>([]);
-  // P1: geçmiş 50'lik sayfalar; düzeltme geçmişi ayrı RPC'den.
-  const [recordCount, setRecordCount] = useState<number | null>(null);
+  // Aşama E: geçmiş = zaman çizelgesi (20'lik sayfalar, vehicle_timeline RPC);
+  // düzeltme geçmişi ayrı RPC'den (servis: revizyon ayrıntısı).
   const [revisionReload, setRevisionReload] = useState(0);
+  const [statusRecords, setStatusRecords] = useState<{ lastMuayene: any; lastDetailing: any }>({ lastMuayene: null, lastDetailing: null });
+  const [quickPlan, setQuickPlan] = useState<string>("default");
+  const [showMoreItems, setShowMoreItems] = useState(false);
   const revisions = useRecordRevisions(supabase, params.id as string, revisionReload);
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -136,9 +116,7 @@ export default function VehicleDetailPage() {
         // otomatik önerinin üzerine sessizce yazılmasına yol açıyordu.
       }
 
-      const { rows: r, count: rc } = await fetchVehicleRecords(supabase, params.id as string);
-      setRecords(r);
-      setRecordCount(rc);
+      setStatusRecords(await fetchStatusRecords(supabase, params.id as string));
 
       const { data: mi } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
       setMaintenanceItems(mi ?? []);
@@ -330,36 +308,30 @@ export default function VehicleDetailPage() {
     // Tüm "bugün" kontrolleri Europe/Istanbul takvim gününü kullanır.
     const todayIso = todayIsoIstanbul();
 
-    // İkinci düzeltme turu (madde 8): "Planı düzenle" manuel tarihi de
-    // input'un native min'inin ötesinde sunucuyla birebir aynı kontrolden
-    // geçiyor.
-    if (nextServiceDate && !isValidNextServiceDate(nextServiceDate, todayIso)) {
-      setSubmitError("Sonraki bakım tarihi geçmişte olamaz.");
-      return;
-    }
+    const selectedKeys = ALL_ITEMS.filter((it) => selectedItems[it.key]).map((it) => it.key);
 
-    const selectedKeys = QUICK_ITEMS.filter((it) => selectedItems[it.key]).map((it) => it.key);
-
-    // Otomatik öneri: varsayılan +10.000 km / 12 ay taban, seçili
-    // işlemlerden biri DAHA ERKEN bir vadeye işaret ediyorsa o kazanır.
-    // Manuel "Planı düzenle" girişi YALNIZCA kullanıcı GERÇEKTEN
-    // doldurduysa (alan boş değilse) bu otomatik öneriyi ezer — sayfa
-    // yüklemesinde bu alanlar artık ESKİ plandan DOLDURULMUYOR (yukarıda),
-    // bu yüzden "boş" güvenilir biçimde "henüz dokunulmadı" anlamına gelir.
+    // Aşama E: "Sonraki bakım" seçimi. Varsayılan (+10.000 km / 12 ay) güncel
+    // km'den otomatik hesaplanır; seçili işlemlerden biri daha erken vade
+    // gösteriyorsa o kazanır. Özel: yalnız yazılan km/tarih. Sonra belirle:
+    // plan boş kalır. Doğrulama sunucudaki record_service_visit ile aynı.
     const selectedIntervals: Record<string, string> = {};
     for (const key of selectedKeys) {
       if (itemIntervals[key]) selectedIntervals[key] = itemIntervals[key];
     }
-    const autoPlan = computeAutoNextServicePlan({ currentKm: km, today: todayIso, selectedItemIntervals: selectedIntervals });
-    const manualNextKmProvided = nextServiceKm !== "" && nextServiceKm != null;
-    const manualNextDateProvided = nextServiceDate !== "" && nextServiceDate != null;
-    const finalNextKm = manualNextKmProvided ? Number(nextServiceKm) : autoPlan.nextServiceKm;
-    const finalNextDate = manualNextDateProvided ? nextServiceDate : autoPlan.nextServiceDate;
-
-    if (!isValidNextServiceKm(km, finalNextKm)) {
-      setSubmitError("Sonraki bakım kilometresi, güncel kilometreden büyük olmalı.");
+    const plan = resolveQuickPlan({
+      planKey: quickPlan,
+      currentKm: km,
+      today: todayIso,
+      selectedItemIntervals: selectedIntervals,
+      customNextKm: nextServiceKm,
+      customNextDate: nextServiceDate,
+    });
+    if (plan.error) {
+      setSubmitError(plan.error);
       return;
     }
+    const finalNextKm = plan.nextServiceKm;
+    const finalNextDate = plan.nextServiceDate;
 
     quickSubmitRef.current = true;
     setSubmitting(true);
@@ -395,7 +367,7 @@ export default function VehicleDetailPage() {
             ? (crypto as any).randomUUID()
             : `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, "0")}`;
       }
-      const visitLabels = selectedKeys.map((key) => QUICK_ITEMS.find((it) => it.key === key)?.label ?? key);
+      const visitLabels = selectedKeys.map((key) => ITEM_LABELS[key] ?? key);
       if (otherSelected && otherText.trim()) {
         visitLabels.push(otherText.trim());
       }
@@ -403,7 +375,7 @@ export default function VehicleDetailPage() {
         key,
         interval_km: itemIntervals[key] ? Number(itemIntervals[key]) : null,
       }));
-      const { error: rpcError } = await supabase.rpc("record_service_visit", {
+      const { data: rpcData, error: rpcError } = await supabase.rpc("record_service_visit", {
         p_vehicle_id: params.id,
         p_km: km,
         p_items: itemsPayload,
@@ -432,16 +404,14 @@ export default function VehicleDetailPage() {
       // GÖSTERİLMEZ, form verileri TEMİZLENMEZ (kullanıcı ne seçtiğini
       // kaybetmesin, gerekirse manuel sayfa yenilemesiyle devam etsin).
       const { data: mi, error: miError } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
-      const { rows: r, count: rc, error: rError } = await fetchVehicleRecords(supabase, params.id as string);
-      if (miError || rError) {
+      if (miError) {
         setSubmitError("Kayıt kaydedilmiş olabilir ancak ekran yenilenemedi. Yeniden göndermeyin; sayfayı yenileyin.");
         return;
       }
 
       setMaintenanceItems(mi ?? []);
-      setRecords(r);
-      setRecordCount(rc);
       setRevisionReload((n) => n + 1);
+      fetchStatusRecords(supabase, params.id as string).then(setStatusRecords);
       setVehicle((prev: any) => ({ ...prev, current_km: km, next_service_km: finalNextKm, next_service_date: finalNextDate }));
 
       setSelectedItems({});
@@ -450,7 +420,9 @@ export default function VehicleDetailPage() {
       setOtherText("");
       setNextServiceKm("");
       setNextServiceDate("");
-      setSuccessMessage("✓ Kayıt tamamlandı");
+      setQuickPlan("default");
+      setShowMoreItems(false);
+      setSuccessMessage(rpcData?.service_verified === false ? "✓ Kayıt tamamlandı" : "✓ Kayıt tamamlandı · Servis Doğrulamalı");
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch {
       // Beklenmeyen ağ/fetch istisnası (ör. bağlantı koptu) — yukarıdaki
@@ -681,29 +653,34 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section className="otoiz-servis-area-quick" style={{ ...cardStyle, paddingBottom: 88 }}>
-            <label style={{ ...labelStyle, fontSize: 13.5 }}>Güncel Kilometre</label>
+          <section className="otoiz-servis-area-quick" data-testid="hizli-kayit" style={{ ...cardStyle, paddingBottom: 88 }}>
+            {/* Aşama E — 15–20 sn akış: 1 KM → 2 işlemler → 3 sonraki bakım → KAYDET.
+                Normal bakımda klavye yalnız km için açılır; geri kalan her şey dokunuş. */}
+            <StepLabel n={1} text="Güncel Kilometre" />
             <input
               type="text"
               inputMode="numeric"
-             
+              enterKeyHint="done"
+              aria-label="Güncel kilometre"
               autoFocus
               // Mevcut km önceden dolu geliyor; odaklanınca tümü seçilsin ki
               // yazılan yeni değer eskisinin SONUNA eklenmesin (canlı testte
               // 68000 + "68500" → 6806850000 oldu).
               onFocus={(e) => e.currentTarget.select()}
-              style={{ ...inputStyle, fontSize: 24, fontWeight: 800, padding: 16, textAlign: "center", marginBottom: 16 }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+              }}
+              style={{ ...inputStyle, fontSize: 24, fontWeight: 800, padding: 14, textAlign: "center", marginBottom: 16 }}
               value={formatKmInput(quickKm)}
               onChange={(e) => setQuickKm(sanitizeKmInput(e.target.value))}
               placeholder="Km"
             />
 
-            <label style={{ ...labelStyle, fontSize: 13.5, marginBottom: 10, display: "block" }}>Yapılan İşlemler</label>
+            <StepLabel n={2} text="Yapılan İşlemler" />
             {/* Gerçek <button> + aria-pressed: klavye/ekran okuyucu/dokunma
-                hepsiyle çalışır (madde C). Periyot seçici artık burada
-                değil, "Planı düzenle" altında — varsayılan görünüm sade. */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 10 }}>
-              {QUICK_ITEMS.map((item) => {
+                hepsiyle çalışır. */}
+            <div className="otoiz-quick-chips" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8, marginBottom: 8 }}>
+              {[...QUICK_ITEMS, ...(showMoreItems ? MORE_ITEMS : [])].map((item) => {
                 const active = !!selectedItems[item.key];
                 return (
                   <button
@@ -719,6 +696,7 @@ export default function VehicleDetailPage() {
                       fontFamily: "inherit",
                     }}
                   >
+                    {active ? "✓ " : ""}
                     {item.label}
                   </button>
                 );
@@ -729,7 +707,6 @@ export default function VehicleDetailPage() {
                 onClick={() => setOtherSelected((v) => !v)}
                 style={{
                   ...chipBase,
-                  gridColumn: "span 2",
                   border: otherSelected ? `2px solid ${colors.greenDark}` : chipBase.border,
                   background: otherSelected ? colors.greenDark : colors.surfaceLight,
                   color: otherSelected ? colors.textLight : colors.textDark,
@@ -739,22 +716,97 @@ export default function VehicleDetailPage() {
                 Diğer
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowMoreItems((v) => !v)}
+              style={{ background: "none", border: "none", color: colors.textMuted, fontWeight: 700, fontSize: 12.5, padding: "4px 0", minHeight: 40, cursor: "pointer" }}
+            >
+              {showMoreItems ? "Daha az işlem ▲" : "Daha fazla işlem (balata ön/arka, triger, buji, silecek) ▾"}
+            </button>
 
             {otherSelected && (
               <input
                 placeholder="Yapılan işlemi kısaca yazın"
+                aria-label="Diğer işlem"
                 style={{ ...inputStyle, marginBottom: 10 }}
                 value={otherText}
                 onChange={(e) => setOtherText(e.target.value)}
               />
             )}
 
+            <div style={{ marginTop: 8 }}>
+              <StepLabel n={3} text="Sonraki Bakım" />
+            </div>
+            <div role="radiogroup" aria-label="Sonraki bakım" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+              {NEXT_PLAN_OPTIONS.map((opt: any) => {
+                const on = quickPlan === opt.key;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => setQuickPlan(opt.key)}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: radius.pill,
+                      border: on ? `2px solid ${colors.greenDark}` : `1px solid ${colors.border}`,
+                      background: on ? colors.greenSoft : colors.surfaceLight,
+                      color: on ? colors.greenDark : colors.textDark,
+                      fontSize: 13,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      minHeight: 44,
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+            {quickPlan === "custom" && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ fontSize: 12, color: colors.textMuted }}>Sonraki bakım (km)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
+                    value={formatKmInput(nextServiceKm)}
+                    onChange={(e) => setNextServiceKm(sanitizeKmInput(e.target.value))}
+                    placeholder="Örn. 95.000"
+                  />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ fontSize: 12, color: colors.textMuted }}>Sonraki bakım (tarih)</label>
+                  <input type="date" min={todayIsoIstanbul()} style={inputStyle} value={nextServiceDate} onChange={(e) => setNextServiceDate(e.target.value)} />
+                </div>
+              </div>
+            )}
+            <PlanPreview
+              plan={
+                kmValid
+                  ? resolveQuickPlan({
+                      planKey: quickPlan,
+                      currentKm: Number(quickKm),
+                      selectedItemIntervals: Object.fromEntries(
+                        ALL_ITEMS.filter((it) => selectedItems[it.key] && itemIntervals[it.key]).map((it) => [it.key, itemIntervals[it.key]])
+                      ),
+                      customNextKm: nextServiceKm,
+                      customNextDate: nextServiceDate,
+                    })
+                  : null
+              }
+              planKey={quickPlan}
+            />
+
             <button
               type="button"
               onClick={() => setShowPlanEditor((v) => !v)}
               style={{ background: "none", border: "none", color: colors.greenDark, fontWeight: 700, fontSize: 12.5, padding: "6px 0", minHeight: 44, cursor: "pointer", marginBottom: showPlanEditor ? 10 : 4 }}
             >
-              {showPlanEditor ? "Planı düzenle ▲" : "Planı düzenle ▾"}
+              {showPlanEditor ? "Parça periyotları ▲" : "Parça periyotları ▾"}
             </button>
 
             {showPlanEditor && (
@@ -762,7 +814,7 @@ export default function VehicleDetailPage() {
                 {Object.keys(selectedItems).filter((k) => selectedItems[k]).length === 0 ? (
                   <p style={{ fontSize: 12, color: colors.textMuted, margin: 0 }}>Periyot düzenlemek için önce bir işlem seçin.</p>
                 ) : (
-                  QUICK_ITEMS.filter((it) => selectedItems[it.key]).map((item) => (
+                  ALL_ITEMS.filter((it) => selectedItems[it.key]).map((item) => (
                     <div key={item.key} style={{ marginBottom: 8 }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: colors.textDark }}>{item.label}</span>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
@@ -773,7 +825,7 @@ export default function VehicleDetailPage() {
                             aria-pressed={itemIntervals[item.key] === String(p)}
                             onClick={() => setItemIntervals((prev) => ({ ...prev, [item.key]: String(p) }))}
                             style={{
-                              fontSize: 11, padding: "5px 9px", borderRadius: radius.pill, minHeight: 28,
+                              fontSize: 12, padding: "6px 10px", borderRadius: radius.pill, minHeight: 34,
                               border: itemIntervals[item.key] === String(p) ? `1.5px solid ${colors.greenDark}` : `1px solid ${colors.border}`,
                               background: itemIntervals[item.key] === String(p) ? colors.greenDark : colors.surfaceLight,
                               color: itemIntervals[item.key] === String(p) ? "#fff" : colors.textDark,
@@ -787,48 +839,43 @@ export default function VehicleDetailPage() {
                     </div>
                   ))
                 )}
-                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 12, color: colors.textMuted }}>Sonraki Bakım (km, manuel)</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                     
-                      style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
-                      value={formatKmInput(nextServiceKm)}
-                      onChange={(e) => setNextServiceKm(sanitizeKmInput(e.target.value))}
-                      placeholder="Otomatik önerilir"
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 12, color: colors.textMuted }}>Sonraki Bakım (tarih)</label>
-                    <input type="date" min={todayIsoIstanbul()} style={inputStyle} value={nextServiceDate} onChange={(e) => setNextServiceDate(e.target.value)} />
-                  </div>
-                </div>
               </div>
             )}
 
             {submitError && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 10 }}>{submitError}</p>}
             {successMessage && (
-              <div style={{ background: colors.greenSoft, color: colors.greenDark, padding: "10px 14px", borderRadius: radius.sm, fontWeight: 700, textAlign: "center", marginBottom: 10 }}>
+              <div role="status" style={{ background: colors.greenSoft, color: colors.greenDark, padding: "10px 14px", borderRadius: radius.sm, fontWeight: 700, textAlign: "center", marginBottom: 10 }}>
                 {successMessage}
               </div>
             )}
 
-            {/* Mobilde her zaman erişilebilir sticky Kaydet (madde C). */}
+            {/* Mobilde her zaman erişilebilir sticky Kaydet. */}
             <div
               className="otoiz-quick-save-bar"
-              style={{ position: "sticky", bottom: 0, background: colors.surfaceLight, paddingTop: 10, marginTop: 4 }}
+              style={{ position: "sticky", bottom: 0, background: colors.surfaceLight, paddingTop: 10, paddingBottom: "env(safe-area-inset-bottom)", marginTop: 4 }}
             >
               <button
                 onClick={handleQuickSave}
                 disabled={submitting}
-                style={{ ...primaryButtonStyle(submitting), padding: 17, fontSize: 16, minHeight: 48 }}
+                style={{ ...primaryButtonStyle(submitting), padding: 17, fontSize: 17, minHeight: 56 }}
               >
                 {submitting ? "Kaydediliyor…" : "KAYDET"}
               </button>
             </div>
           </section>
+        )}
+
+        {!isNew && (
+          <div className="otoiz-servis-area-durum" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <VehicleStatusPanel
+              vehicle={vehicle}
+              items={maintenanceItems}
+              labels={ITEM_LABELS}
+              lastMuayene={statusRecords.lastMuayene}
+              lastDetailing={statusRecords.lastDetailing}
+              compact
+            />
+          </div>
         )}
 
         {!isNew && (
@@ -892,36 +939,46 @@ export default function VehicleDetailPage() {
         )}
 
         {!isNew && (
-          <section className="otoiz-servis-area-gecmis" style={cardStyle}>
-            <h2 style={{ fontSize: 14, color: colors.textMuted, fontWeight: 700, marginTop: 0, marginBottom: 12 }}>Geçmiş</h2>
-            {records.length === 0 ? (
-              <p style={{ fontSize: 13, color: colors.textMuted }}>Henüz kayıt yok.</p>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                {records.map((r) => (
-                  <li key={r.id} style={{ borderBottom: `1px solid ${colors.border}`, padding: "9px 0", fontSize: 13.5, color: colors.textDark }}>
-                    <strong style={{ fontWeight: 800 }}>{new Date(r.service_date).toLocaleDateString("tr-TR")}</strong> — {r.description}{" "}
-                    {r.km_at_service ? <strong style={{ fontWeight: 900, color: colors.textDark }}>{Number(r.km_at_service).toLocaleString("tr-TR")} km</strong> : ""}
-                    {r.revision > 0 && <span style={{ ...badgeStyle("warning"), marginLeft: 6 }}>Düzeltildi</span>}
-                    <RevisionHistory revisions={revisions[r.id]} audience="servis" />
-                  </li>
-                ))}
-              </ul>
-            )}
-            {recordCount != null && records.length < recordCount && (
-              <button
-                onClick={async () => {
-                  const { rows } = await fetchVehicleRecords(supabase, params.id as string, records.length);
-                  setRecords((prev) => [...prev, ...rows]);
-                }}
-                style={{ marginTop: 10, width: "100%", minHeight: 44, border: `1px solid ${colors.border}`, borderRadius: radius.sm, background: colors.surfaceLight, cursor: "pointer", fontWeight: 700 }}
-              >
-                Daha fazla kayıt göster ({records.length} / {recordCount})
-              </button>
-            )}
-          </section>
+          <div className="otoiz-servis-area-gecmis">
+            <VehicleTimeline supabase={supabase} vehicleId={params.id as string} audience="servis" reloadKey={revisionReload} revisions={revisions} />
+          </div>
         )}
       </div>
     </main>
+  );
+}
+
+function StepLabel({ n, text }: { n: number; text: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+      <span aria-hidden="true" style={{ width: 24, height: 24, borderRadius: "50%", background: colors.surfaceDark, color: colors.textLight, fontSize: 12.5, fontWeight: 900, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+        {n}
+      </span>
+      <span style={{ fontSize: 14, fontWeight: 800, color: colors.textDark }}>{text}</span>
+    </div>
+  );
+}
+
+function PlanPreview({ plan, planKey }: { plan: any; planKey: string }) {
+  let text = "Kilometre girin; sonraki bakım otomatik önerilir.";
+  let tone: string = colors.textMuted;
+  if (plan) {
+    if (planKey === "later") text = "Sonraki bakım planı sonra belirlenecek.";
+    else if (plan.error) {
+      text = plan.error;
+      tone = colors.danger;
+    } else {
+      const parts = [
+        plan.nextServiceKm != null ? `${Number(plan.nextServiceKm).toLocaleString("tr-TR")} km` : null,
+        plan.nextServiceDate ? new Date(`${plan.nextServiceDate}T12:00:00Z`).toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" }) : null,
+      ].filter(Boolean);
+      text = `Sonraki bakım: ${parts.join(" · ")}`;
+      tone = colors.greenDark;
+    }
+  }
+  return (
+    <p data-testid="plan-onizleme" style={{ fontSize: 13.5, fontWeight: 800, color: tone, background: colors.surfaceSoft, borderRadius: radius.sm, padding: "9px 12px", margin: "0 0 4px" }}>
+      {text}
+    </p>
   );
 }
