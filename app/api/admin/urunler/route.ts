@@ -14,6 +14,10 @@ import { requireAdmin, isAdminContext } from "@/lib/adminAuth";
 const { generateQrCode } = require("@/lib/qrToken");
 const { generateActivationCode } = require("@/lib/activationCodeGen");
 const { qrIssuanceLocked, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
+const { decodeCursor, keysetOrFilter, splitPage, PAGE_SIZE } = require("@/lib/pagination");
+import { isRateLimited, rateLimitedResponse } from "@/lib/rateLimit";
+const { LIMITS } = require("@/lib/rateLimitCore");
+import { withApiLog } from "@/lib/appEvents";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -71,7 +75,7 @@ function sanitizeClientReport(raw: any) {
 // GET                      → partiler + durum sayıları
 // GET ?batch_id=<uuid>     → partinin ürünleri (aktivasyon kodu YOK)
 // GET ?serial=OTZ-000123   → tek ürün
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   const ctx = await requireAdmin(req);
   if (!isAdminContext(ctx)) return ctx;
   const db = ctx.db;
@@ -114,38 +118,40 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const { data: batches, error } = await db
+  // P1: partiler 50'lik cursor sayfa; durum sayıları/seri aralığı veritabanında
+  // özetlenir (eskiden partilerin tüm ürünleri çekiliyordu; 1.000 üründe kesiliyordu).
+  const cur = decodeCursor(url.searchParams.get("cursor"));
+  let bq = db
     .from("product_batches")
     .select("id, label, quantity, default_channel, created_at, verification, verified_at")
     .order("created_at", { ascending: false })
-    .limit(200);
+    .order("id", { ascending: false })
+    .limit(PAGE_SIZE + 1);
+  if (cur) bq = bq.or(keysetOrFilter(cur));
+  const { data: rawBatches, error } = await bq;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const ids = (batches ?? []).map((b: any) => b.id);
-  const counts: Record<string, Record<string, number>> = {};
-  const range: Record<string, { first: string; last: string; channels: Set<string> }> = {};
+  const page = splitPage(rawBatches);
+  const batches = page.rows;
+  const ids = batches.map((b: any) => b.id);
+  const summary: Record<string, any> = {};
   if (ids.length > 0) {
-    const { data: rows } = await db.from("qr_keys").select("batch_id, status, serial_no, distribution_channel").in("batch_id", ids);
-    for (const r of rows ?? []) {
-      counts[r.batch_id] = counts[r.batch_id] || {};
-      counts[r.batch_id][r.status] = (counts[r.batch_id][r.status] || 0) + 1;
-      const g = (range[r.batch_id] = range[r.batch_id] || { first: r.serial_no, last: r.serial_no, channels: new Set() });
-      if (r.serial_no && r.serial_no < g.first) g.first = r.serial_no;
-      if (r.serial_no && r.serial_no > g.last) g.last = r.serial_no;
-      if (r.distribution_channel) g.channels.add(r.distribution_channel);
-    }
+    const { data: sums, error: sErr } = await db.rpc("admin_batch_summaries", { p_ids: ids });
+    if (sErr) return NextResponse.json({ error: sErr.message }, { status: 500 });
+    for (const r of sums ?? []) summary[r.batch_id] = r;
   }
   return NextResponse.json({
-    batches: (batches ?? []).map((b: any) => ({
+    next_cursor: page.nextCursor,
+    batches: batches.map((b: any) => ({
       ...b,
-      counts: counts[b.id] || {},
-      serial_first: range[b.id]?.first ?? null,
-      serial_last: range[b.id]?.last ?? null,
-      channels: range[b.id] ? Array.from(range[b.id].channels) : [],
+      counts: summary[b.id]?.counts || {},
+      serial_first: summary[b.id]?.serial_first ?? null,
+      serial_last: summary[b.id]?.serial_last ?? null,
+      channels: summary[b.id]?.channels ?? [],
     })),
   });
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const ctx = await requireAdmin(req);
   if (!isAdminContext(ctx)) return ctx;
   const db = ctx.db;
@@ -163,6 +169,8 @@ export async function POST(req: NextRequest) {
     if (qrIssuanceLocked()) {
       return NextResponse.json({ error: QR_LOCK_MESSAGE, code: "qr_issuance_locked" }, { status: 423 });
     }
+    // P1: MFA'ya ek olarak yönetici başına saatlik üretim sınırı.
+    if (await isRateLimited([{ scope: "admin-batch-h", value: ctx.userId, ...LIMITS.adminBatchHour }])) return rateLimitedResponse();
     const count = Math.floor(Number(body.count));
     if (!Number.isFinite(count) || count < 1 || count > MAX_BATCH) {
       return NextResponse.json({ error: `Adet 1 ile ${MAX_BATCH} arasında olmalı` }, { status: 400 });
@@ -337,3 +345,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ error: "Bilinmeyen işlem" }, { status: 400 });
 }
+
+export const GET = withApiLog("/api/admin/urunler", handleGET);
+export const POST = withApiLog("/api/admin/urunler", handlePOST);

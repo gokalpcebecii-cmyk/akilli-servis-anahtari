@@ -3,6 +3,10 @@ import { requireAdmin, isAdminContext } from "@/lib/adminAuth";
 const { generateQrCode, normalizeQrCode } = require("@/lib/qrToken");
 const { accountCodeFromUserId } = require("@/lib/passwordPolicy");
 const { qrIssuanceLocked, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
+const { decodeCursor, keysetOrFilter, splitPage, PAGE_SIZE } = require("@/lib/pagination");
+import { isRateLimited, rateLimitedResponse } from "@/lib/rateLimit";
+const { LIMITS } = require("@/lib/rateLimitCore");
+import { withApiLog } from "@/lib/appEvents";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,8 +25,10 @@ async function audit(db: any, adminId: string, action: string, targetId: string 
   });
 }
 
-// GET /api/admin/qr?filter=all|free|reserved|assigned|revoked&batch=...
-export async function GET(req: NextRequest) {
+// GET /api/admin/qr?filter=all|free|reserved|assigned|revoked&batch=...&cursor=…
+// P1: 50'lik cursor sayfa (eskiden 1.000'de kesiliyordu); parti adları ve
+// e-postalar tek sorguyla (kullanıcı başına ayrı Auth çağrısı yok).
+async function handleGET(req: NextRequest) {
   const ctx = await requireAdmin(req);
   if (!isAdminContext(ctx)) return ctx;
   const db = ctx.db;
@@ -35,7 +41,10 @@ export async function GET(req: NextRequest) {
     .from("qr_keys")
     .select("id, code, batch_label, created_at, assigned_at, revoked_at, vehicle_id, reserved_tenant_id, reserved_user_id")
     .order("created_at", { ascending: false })
-    .limit(1000);
+    .order("id", { ascending: false })
+    .limit(PAGE_SIZE + 1);
+  const cur = decodeCursor(url.searchParams.get("cursor"));
+  if (cur) q = q.or(keysetOrFilter(cur));
   if (batch) q = q.eq("batch_label", batch);
   if (filter === "free") q = q.is("vehicle_id", null).is("reserved_tenant_id", null).is("reserved_user_id", null).is("revoked_at", null);
   if (filter === "reserved") q = q.is("vehicle_id", null).not("reserved_tenant_id", "is", null).is("revoked_at", null);
@@ -43,8 +52,10 @@ export async function GET(req: NextRequest) {
   if (filter === "assigned") q = q.not("vehicle_id", "is", null).is("revoked_at", null);
   if (filter === "revoked") q = q.not("revoked_at", "is", null);
 
-  const { data: rows, error } = await q;
+  const { data: rawRows, error } = await q;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const page = splitPage(rawRows);
+  const rows = page.rows;
 
   const vehicleIds = Array.from(new Set((rows ?? []).map((r: any) => r.vehicle_id).filter(Boolean)));
   const vehicleMap: Record<string, any> = {};
@@ -52,23 +63,28 @@ export async function GET(req: NextRequest) {
     const { data: vs } = await db.from("vehicles").select("id, plate, brand, model, tenant_id, owner_user_id").in("id", vehicleIds);
     for (const v of vs ?? []) vehicleMap[v.id] = v;
   }
-  const { data: tenants } = await db.from("tenants").select("id, name");
+  const { data: tenants } = await db.from("tenants").select("id, name").limit(5000);
   const tenantName: Record<string, string> = {};
   for (const t of tenants ?? []) tenantName[t.id] = t.name;
 
   // Bireysel kullanıcıya tanımlı kodlar için e-posta (yalnız yönetici görür).
   const userIds = Array.from(new Set((rows ?? []).map((r: any) => r.reserved_user_id).filter(Boolean))) as string[];
   const userEmail: Record<string, string> = {};
-  for (const uid of userIds) {
-    const { data } = await db.auth.admin.getUserById(uid);
-    if (data?.user) userEmail[uid] = data.user.email ?? "—";
+  if (userIds.length > 0) {
+    const { data: emails } = await db.rpc("admin_user_emails", { p_ids: userIds });
+    for (const e of emails ?? []) userEmail[e.id] = e.email ?? "—";
   }
 
-  const { data: batchRows } = await db.from("qr_keys").select("batch_label").not("batch_label", "is", null);
-  const batches = Array.from(new Set((batchRows ?? []).map((b: any) => b.batch_label))).sort().reverse();
+  // Parti adları yalnız ilk sayfada (filtre menüsü için) döner.
+  let batches: string[] | undefined;
+  if (!cur) {
+    const { data: batchRows } = await db.rpc("admin_qr_batch_labels");
+    batches = (batchRows ?? []).map((b: any) => b.batch_label).sort().reverse();
+  }
 
   return NextResponse.json({
     batches,
+    next_cursor: page.nextCursor,
     codes: (rows ?? []).map((r: any) => {
       const v = r.vehicle_id ? vehicleMap[r.vehicle_id] : null;
       const status = r.revoked_at ? "revoked" : r.vehicle_id ? "assigned" : r.reserved_tenant_id ? "reserved" : r.reserved_user_id ? "reserved_user" : "free";
@@ -97,7 +113,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const ctx = await requireAdmin(req);
   if (!isAdminContext(ctx)) return ctx;
   const db = ctx.db;
@@ -118,6 +134,8 @@ export async function POST(req: NextRequest) {
     if (qrIssuanceLocked()) {
       return NextResponse.json({ error: QR_LOCK_MESSAGE, code: "qr_issuance_locked" }, { status: 423 });
     }
+    // P1: MFA'ya ek olarak yönetici başına saatlik üretim sınırı.
+    if (await isRateLimited([{ scope: "admin-batch-h", value: ctx.userId, ...LIMITS.adminBatchHour }])) return rateLimitedResponse();
     const count = Math.floor(Number(body.count));
     if (!Number.isFinite(count) || count < 1 || count > MAX_BATCH) {
       return NextResponse.json({ error: `Adet 1 ile ${MAX_BATCH} arasında olmalı` }, { status: 400 });
@@ -304,3 +322,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ error: "Bilinmeyen işlem" }, { status: 400 });
 }
+
+export const GET = withApiLog("/api/admin/qr", handleGET);
+export const POST = withApiLog("/api/admin/qr", handlePOST);

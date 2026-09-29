@@ -8,8 +8,9 @@ import { createClient } from "@supabase/supabase-js";
 import { isRateLimited, rateLimitedResponse } from "@/lib/rateLimit";
 const { LIMITS } = require("@/lib/rateLimitCore");
 const { validateServiceFields, slugifyBusiness, applicationMessage } = require("@/lib/serviceSignup");
+import { withApiLog } from "@/lib/appEvents";
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const authHeader = req.headers.get("authorization") || "";
   if (!authHeader.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Oturum bulunamadı. Lütfen giriş yapın." }, { status: 401 });
@@ -58,3 +59,5 @@ export async function POST(req: NextRequest) {
   }
   return NextResponse.json({ ok: true, code, approval_status: (data as any).approval_status, message: applicationMessage(code) });
 }
+
+export const POST = withApiLog("/api/servis-basvuru", handlePOST);

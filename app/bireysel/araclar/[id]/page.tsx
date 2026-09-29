@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { fetchVehicleRecords } from "@/lib/vehicleRecords";
+import { RevisionHistory, useRecordRevisions } from "@/components/RevisionHistory";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, dangerOutlineButtonStyle, badgeStyle, cardStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
@@ -101,6 +103,10 @@ export default function BireyselVehicleDetailPage() {
     isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "", notes: "" } : null
   );
   const [records, setRecords] = useState<any[]>([]);
+  // P1: geçmiş 50'lik sayfalar; servis düzeltmeleri sade "düzeltildi" notuyla.
+  const [recordCount, setRecordCount] = useState<number | null>(null);
+  const [revisionReload, setRevisionReload] = useState(0);
+  const revisions = useRecordRevisions(supabase, params.id as string, revisionReload);
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
   const [intervalInputs, setIntervalInputs] = useState<Record<string, string>>({});
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -164,12 +170,9 @@ export default function BireyselVehicleDetailPage() {
       // otomatik dolar ve düzenlenebilir kalır (madde D).
       if (v?.current_km != null) setNewRecord((prev) => ({ ...prev, km_at_service: String(v.current_km) }));
 
-      const { data: r } = await supabase
-        .from("maintenance_records")
-        .select("*")
-        .eq("vehicle_id", params.id)
-        .order("service_date", { ascending: false });
-      setRecords(r ?? []);
+      const { rows: r, count: rc } = await fetchVehicleRecords(supabase, params.id as string);
+      setRecords(r);
+      setRecordCount(rc);
 
       const { data: mi } = await supabase
         .from("maintenance_items")
@@ -265,12 +268,10 @@ export default function BireyselVehicleDetailPage() {
   }
 
   async function refreshRecords() {
-    const { data: r } = await supabase
-      .from("maintenance_records")
-      .select("*")
-      .eq("vehicle_id", params.id)
-      .order("service_date", { ascending: false });
-    setRecords(r ?? []);
+    const { rows: r, count: rc } = await fetchVehicleRecords(supabase, params.id as string);
+    setRecords(r);
+    setRecordCount(rc);
+    setRevisionReload((n) => n + 1);
   }
 
   function focusFirstError(errors: Record<string, string>) {
@@ -587,7 +588,7 @@ export default function BireyselVehicleDetailPage() {
     .map((item) => ({ item, status: getUpcomingStatus(item.key) }))
     .find((x) => x.status && (x.status.kind === "danger" || x.status.kind === "warning"));
   const summaryRows: { icon: string; title: string; meta: string; tab: "genel" | "gecmis" | "belgeler"; hash?: string }[] = [
-    { icon: "history", title: "Servis Geçmişi", meta: `${records.length} kayıt`, tab: "gecmis" },
+    { icon: "history", title: "Servis Geçmişi", meta: `${recordCount ?? records.length} kayıt`, tab: "gecmis" },
     { icon: "wrench", title: "Parça Değişimleri", meta: `${trackedPartsCount} kayıt`, tab: "genel", hash: "parca" },
     {
       icon: "clipboard",
@@ -1321,9 +1322,21 @@ export default function BireyselVehicleDetailPage() {
                       <span style={badgeStyle(r.tenant_id ? "success" : "neutral")}>
                         {r.tenant_id ? "Servis Doğrulamalı Kayıt" : "Araç Sahibi Kaydı"}
                       </span>
+                      <RevisionHistory revisions={revisions[r.id]} audience="bireysel" />
                     </li>
                   ))}
                 </ul>
+              )}
+              {recordCount != null && records.length < recordCount && (
+                <button
+                  onClick={async () => {
+                    const { rows } = await fetchVehicleRecords(supabase, params.id as string, records.length);
+                    setRecords((prev) => [...prev, ...rows]);
+                  }}
+                  style={{ marginTop: 10, width: "100%", minHeight: 44, border: `1px solid ${colors.border}`, borderRadius: radius.sm, background: colors.surfaceLight, cursor: "pointer", fontWeight: 700 }}
+                >
+                  Daha fazla kayıt göster ({records.length} / {recordCount})
+                </button>
               )}
             </section>
           </>

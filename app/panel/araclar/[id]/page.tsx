@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
+import { fetchVehicleRecords } from "@/lib/vehicleRecords";
+import { RevisionHistory, useRecordRevisions } from "@/components/RevisionHistory";
+import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { printableQrUrl, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
@@ -85,6 +87,10 @@ export default function VehicleDetailPage() {
     isNew ? { plate: "", brand: "", model: "", year: "", current_km: "", next_service_km: "", next_service_date: "" } : null
   );
   const [records, setRecords] = useState<any[]>([]);
+  // P1: geçmiş 50'lik sayfalar; düzeltme geçmişi ayrı RPC'den.
+  const [recordCount, setRecordCount] = useState<number | null>(null);
+  const [revisionReload, setRevisionReload] = useState(0);
+  const revisions = useRecordRevisions(supabase, params.id as string, revisionReload);
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
@@ -130,12 +136,9 @@ export default function VehicleDetailPage() {
         // otomatik önerinin üzerine sessizce yazılmasına yol açıyordu.
       }
 
-      const { data: r } = await supabase
-        .from("maintenance_records")
-        .select("*")
-        .eq("vehicle_id", params.id)
-        .order("service_date", { ascending: false });
-      setRecords(r ?? []);
+      const { rows: r, count: rc } = await fetchVehicleRecords(supabase, params.id as string);
+      setRecords(r);
+      setRecordCount(rc);
 
       const { data: mi } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
       setMaintenanceItems(mi ?? []);
@@ -429,18 +432,16 @@ export default function VehicleDetailPage() {
       // GÖSTERİLMEZ, form verileri TEMİZLENMEZ (kullanıcı ne seçtiğini
       // kaybetmesin, gerekirse manuel sayfa yenilemesiyle devam etsin).
       const { data: mi, error: miError } = await supabase.from("maintenance_items").select("*").eq("vehicle_id", params.id);
-      const { data: r, error: rError } = await supabase
-        .from("maintenance_records")
-        .select("*")
-        .eq("vehicle_id", params.id)
-        .order("service_date", { ascending: false });
+      const { rows: r, count: rc, error: rError } = await fetchVehicleRecords(supabase, params.id as string);
       if (miError || rError) {
         setSubmitError("Kayıt kaydedilmiş olabilir ancak ekran yenilenemedi. Yeniden göndermeyin; sayfayı yenileyin.");
         return;
       }
 
       setMaintenanceItems(mi ?? []);
-      setRecords(r ?? []);
+      setRecords(r);
+      setRecordCount(rc);
+      setRevisionReload((n) => n + 1);
       setVehicle((prev: any) => ({ ...prev, current_km: km, next_service_km: finalNextKm, next_service_date: finalNextDate }));
 
       setSelectedItems({});
@@ -901,9 +902,22 @@ export default function VehicleDetailPage() {
                   <li key={r.id} style={{ borderBottom: `1px solid ${colors.border}`, padding: "9px 0", fontSize: 13.5, color: colors.textDark }}>
                     <strong style={{ fontWeight: 800 }}>{new Date(r.service_date).toLocaleDateString("tr-TR")}</strong> — {r.description}{" "}
                     {r.km_at_service ? <strong style={{ fontWeight: 900, color: colors.textDark }}>{Number(r.km_at_service).toLocaleString("tr-TR")} km</strong> : ""}
+                    {r.revision > 0 && <span style={{ ...badgeStyle("warning"), marginLeft: 6 }}>Düzeltildi</span>}
+                    <RevisionHistory revisions={revisions[r.id]} audience="servis" />
                   </li>
                 ))}
               </ul>
+            )}
+            {recordCount != null && records.length < recordCount && (
+              <button
+                onClick={async () => {
+                  const { rows } = await fetchVehicleRecords(supabase, params.id as string, records.length);
+                  setRecords((prev) => [...prev, ...rows]);
+                }}
+                style={{ marginTop: 10, width: "100%", minHeight: 44, border: `1px solid ${colors.border}`, borderRadius: radius.sm, background: colors.surfaceLight, cursor: "pointer", fontWeight: 700 }}
+              >
+                Daha fazla kayıt göster ({records.length} / {recordCount})
+              </button>
             )}
           </section>
         )}

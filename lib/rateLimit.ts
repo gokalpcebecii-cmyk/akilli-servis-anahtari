@@ -1,5 +1,6 @@
 // OTOİZ P0 — sunucu tarafı hız sınırı. Yalnız API route'larında kullanılır.
 import { createServerSupabase } from "@/lib/supabase";
+import { logAppEvent } from "@/lib/appEvents";
 const { rateKey, RATE_LIMIT_MESSAGE } = require("@/lib/rateLimitCore");
 
 export type RateCheck = { scope: string; value: string; windowSeconds: number; max: number };
@@ -7,7 +8,7 @@ export type RateCheck = { scope: string; value: string; windowSeconds: number; m
 // Sınırlardan biri aşıldıysa true. Sayaç okunamazsa (ör. migration henüz
 // uygulanmadı) istek engellenmez ve hata günlüğe yazılır; Supabase Auth'un
 // kendi gönderim sınırları bu durumda da geçerlidir.
-export async function isRateLimited(checks: RateCheck[]): Promise<boolean> {
+export async function isRateLimited(checks: RateCheck[], opts: { silent?: boolean } = {}): Promise<boolean> {
   const db = createServerSupabase();
   let limited = false;
   for (const c of checks) {
@@ -22,6 +23,8 @@ export async function isRateLimited(checks: RateCheck[]): Promise<boolean> {
     }
     if (data === false) limited = true;
   }
+  // P1: Sistem Sağlığı "engellenen aşırı istek" sayacı (anahtar değil, yalnız kapsam).
+  if (limited && !opts.silent) await logAppEvent("rate_limited", checks[0]?.scope ?? null, 429);
   return limited;
 }
 

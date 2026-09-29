@@ -3,8 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 const { normalizeQrCode } = require("@/lib/qrToken");
+import { withApiLog } from "@/lib/appEvents";
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   try {
     // İkinci düzeltme turu (madde 4): /panel/eslestir ekranı atlanıp
     // doğrudan bu route'a istek gönderilse bile pilot süresince sıfır
@@ -121,3 +122,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Beklenmeyen hata" }, { status: 500 });
   }
 }
+
+export const POST = withApiLog("/api/qr-eslestir", handlePOST);

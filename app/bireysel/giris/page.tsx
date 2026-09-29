@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
+import { reportClientEvent } from "@/lib/clientEvent";
 import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
 import { AuthShell, AuthShellLoading, AuthFooterLink } from "@/components/AuthShell";
 import { InstallCta } from "@/components/InstallCta";
@@ -73,6 +74,7 @@ function BireyselGirisForm() {
       const { error } = await supabase.auth.signInWithPassword({ email: trimmedEmail, password });
       setLoading(false);
       if (error) {
+        reportClientEvent("login_failed", "bireysel", (error as any).code);
         // Sunucudan gelen ham teknik metin asla doğrudan gösterilmez;
         // yalnızca durum koduna göre iki genel, anlaşılır mesajdan biri.
         if ((error as any).code === "email_not_confirmed") {

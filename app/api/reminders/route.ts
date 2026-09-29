@@ -3,12 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 const { shouldSendReminder } = require("@/lib/logic");
 const { sendSms } = require("@/lib/sms");
 const { authorizeCronRequest } = require("@/lib/cronAuth");
+import { withApiLog } from "@/lib/appEvents";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const auth = authorizeCronRequest(authHeader, process.env.CRON_SECRET);
   if (!auth.ok) {
@@ -18,12 +19,19 @@ export async function GET(req: NextRequest) {
   const supabase = createServerSupabase();
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data: vehicles, error } = await supabase
-    .from("vehicles")
-    .select("id, plate, current_km, next_service_km, next_service_date, tenant_id, customer_id, customers(phone, full_name), tenants(name, reminder_km_before, reminder_days_before)")
-    .not("customer_id", "is", null);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // P1: 1.000'lik sayfalarla hepsi okunur (eskiden tek istekte 1.000'de kesiliyordu).
+  const vehicles: any[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data: chunk, error } = await supabase
+      .from("vehicles")
+      .select("id, plate, current_km, next_service_km, next_service_date, tenant_id, customer_id, customers(phone, full_name), tenants(name, reminder_km_before, reminder_days_before)")
+      .not("customer_id", "is", null)
+      .order("id", { ascending: true })
+      .range(from, from + 999);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    vehicles.push(...(chunk ?? []));
+    if (!chunk || chunk.length < 1000) break;
+  }
 
   let sent = 0;
   let dryRun = 0;
@@ -55,3 +63,5 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ checked: vehicles?.length ?? 0, sent, dryRun, results });
 }
+
+export const GET = withApiLog("/api/reminders", handleGET);

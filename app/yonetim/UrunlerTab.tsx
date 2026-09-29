@@ -54,9 +54,13 @@ export default function UrunlerTab({ api, tenants }: { api: Api; tenants: any[] 
   const [distTenant, setDistTenant] = useState("");
   const [reissued, setReissued] = useState<{ serial_no: string; activation_code: string } | null>(null);
 
-  async function loadBatches() {
-    const r = await api("/api/admin/urunler");
-    if (r.ok) setBatches(r.body.batches ?? []);
+  const [batchesNext, setBatchesNext] = useState<string | null>(null);
+  // P1: partiler 50'lik sayfalar hâlinde gelir; "Daha fazla parti" sonrakini ekler.
+  async function loadBatches(cursor?: string | null) {
+    const r = await api(`/api/admin/urunler${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
+    if (!r.ok) return;
+    setBatches((prev) => (cursor ? [...prev, ...(r.body.batches ?? [])] : r.body.batches ?? []));
+    setBatchesNext(r.body.next_cursor ?? null);
   }
   async function loadProducts(id: string) {
     const r = await api(`/api/admin/urunler?batch_id=${encodeURIComponent(id)}`);
@@ -260,7 +264,7 @@ export default function UrunlerTab({ api, tenants }: { api: Api; tenants: any[] 
       )}
 
       <section style={cardStyle}>
-        <h2 style={{ fontSize: 16, margin: "0 0 10px" }}>Baskı Merkezi · Partiler ({batches.length})</h2>
+        <h2 style={{ fontSize: 16, margin: "0 0 10px" }}>Baskı Merkezi · Partiler ({batches.length}{batchesNext ? "+" : ""})</h2>
         {batches.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>Henüz ürün partisi yok.</p>}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {batches.map((b) => (
@@ -372,6 +376,11 @@ export default function UrunlerTab({ api, tenants }: { api: Api; tenants: any[] 
             </div>
           ))}
         </div>
+        {batchesNext && (
+          <button onClick={() => loadBatches(batchesNext)} style={{ marginTop: 12, width: "100%", minHeight: 44, border: `1px solid ${colors.border}`, borderRadius: radius.sm, background: colors.surfaceLight, cursor: "pointer", fontWeight: 700 }}>
+            Daha fazla parti göster
+          </button>
+        )}
       </section>
     </>
   );
