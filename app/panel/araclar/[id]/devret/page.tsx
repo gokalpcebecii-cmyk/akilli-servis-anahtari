@@ -74,6 +74,15 @@ export default function OwnershipTransferPage() {
       .eq("id", params.id)
       .single();
 
+    // P0: servis araç sahipliğini yönetmez. Sahibi OTOİZ hesabı kullanan
+    // araçta sahiplik yalnız sahibin başlattığı resmi devirle değişir
+    // (veritabanı da istemciden owner_user_id değişikliğini reddeder).
+    if (vehicle?.owner_user_id) {
+      setSaving(false);
+      alert("Bu aracın sahibi OTOİZ hesabı kullanıyor. Devri araç sahibi kendi hesabından başlatmalı; gerekirse OTOİZ destek ekibiyle iletişime geçin.");
+      return;
+    }
+
     let previousCustomer = null;
     if (vehicle?.customer_id) {
       const { data: c } = await supabase.from("customers").select("*").eq("id", vehicle.customer_id).single();
@@ -102,14 +111,14 @@ export default function OwnershipTransferPage() {
       new_customer_id: createdCustomer?.id,
       km_at_transfer: kmAtTransfer ? Number(kmAtTransfer) : vehicle?.current_km,
       performed_by: session.session?.user.id,
-      previous_owner_user_id: vehicle?.owner_user_id ?? null,
+      previous_owner_user_id: null,
       new_owner_user_id: null,
     });
 
     // Eski sahibin uygulama üzerinden bu araca erişimi hemen kesiliyor.
     // Teknik geçmiş (maintenance_records/maintenance_items) vehicle_id
     // üzerinden korunmaya devam ediyor, yalnızca erişim yetkisi kaldırılıyor.
-    await supabase.from("vehicles").update({ customer_id: createdCustomer?.id, owner_user_id: null }).eq("id", params.id);
+    await supabase.from("vehicles").update({ customer_id: createdCustomer?.id }).eq("id", params.id);
 
     if (previousCustomer && fieldsToErase.length > 0) {
       await supabase

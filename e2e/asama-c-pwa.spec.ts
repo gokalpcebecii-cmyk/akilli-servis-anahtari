@@ -429,11 +429,12 @@ test.describe("Aşama C — auth akışlarında regresyon yok (ağ mock'lu)", ()
     await page.goto("/bireysel/kayit");
     await page.locator("#kayit-ad").fill("Test Kişi");
     await page.locator("#kayit-email").fill("Kayit@Ornek.com");
-    await page.locator("#kayit-sifre").fill("Sifre12345");
+    await expect(page.locator("#kayit-sifre")).toHaveCount(0);
     await page.getByRole("button", { name: "Hesap Oluştur" }).click();
     await expect(page.getByTestId("check-email")).toBeVisible();
     await expect(page.getByRole("heading", { name: "E-postanı kontrol et" })).toBeVisible();
-    expect(kayit).toMatchObject({ full_name: "Test Kişi", email: "Kayit@Ornek.com", password: "Sifre12345", next: "/bireysel/araclar" });
+    expect(kayit).toMatchObject({ full_name: "Test Kişi", email: "Kayit@Ornek.com", next: "/bireysel/araclar" });
+    expect(kayit.password).toBeUndefined();
 
     await page.goto("/hesap/sifremi-unuttum");
     await page.locator("#reset-email").fill("r@ornek.com");
