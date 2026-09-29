@@ -132,13 +132,14 @@ async function noHorizontalOverflow(page: Page) {
 }
 
 test.describe("Aşama E — servis", () => {
-  test("Araç Durumu: renkler yalnız km/tarihten (bakım SARI, muayene KIRMIZI, belgeler YEŞİL, detailing GRİ)", async ({ page, baseURL }, info) => {
+  test("Araç Durumu: renkler yalnız km/tarihten (bakım SARI, muayene KIRMIZI, trafik YEŞİL, kasko GRİ, detailing GRİ)", async ({ page, baseURL }, info) => {
     await setupServis(page, baseURL!);
     await expect(page.getByTestId("sonraki-bakim")).toHaveAttribute("data-level", "soon");
     await expect(page.getByTestId("sonraki-bakim")).toContainText("Bakım yaklaşıyor");
     await expect(page.getByTestId("sonraki-bakim")).toContainText("800 km kaldı");
     await expect(page.getByTestId("durum-muayene")).toHaveAttribute("data-level", "late");
-    await expect(page.getByTestId("durum-belgeler")).toHaveAttribute("data-level", "ok");
+    await expect(page.getByTestId("durum-trafik")).toHaveAttribute("data-level", "ok");
+    await expect(page.getByTestId("durum-kasko")).toHaveAttribute("data-level", "none");
     await expect(page.getByTestId("durum-yaklasan")).toHaveAttribute("data-level", "late");
     await expect(page.getByTestId("arac-durumu")).toContainText("mekanik değerlendirme değildir");
     await noHorizontalOverflow(page);
@@ -274,7 +275,7 @@ test.describe("Aşama E — bireysel", () => {
     await setupBireysel(page, baseURL!, { ...baseVehicle, next_service_km: null, next_service_date: null, muayene_tarihi: null, trafik_sigortasi_bitis: null }, []);
     await expect(page.getByTestId("sonraki-bakim")).toHaveAttribute("data-level", "none");
     await expect(page.getByTestId("sonraki-bakim")).toContainText("Plan belirlenmedi");
-    for (const k of ["bakim", "muayene", "detailing", "belgeler", "yaklasan"]) {
+    for (const k of ["bakim", "muayene", "trafik", "kasko", "detailing", "yaklasan"]) {
       await expect(page.getByTestId(`durum-${k}`)).toHaveAttribute("data-level", "none");
     }
     await expect(page.getByTestId("zaman-bos")).toBeVisible();

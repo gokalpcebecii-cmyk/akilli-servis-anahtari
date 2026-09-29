@@ -108,16 +108,8 @@ test.describe("İkinci düzeltme turu — madde 2: çift gönderim tek araç olu
       .filter({ hasText: /^Plaka$/ })
       .locator("xpath=following-sibling::input[1]")
       .fill("34 CC 111");
-    await page
-      .locator("label")
-      .filter({ hasText: /^Marka$/ })
-      .locator("xpath=following-sibling::input[1]")
-      .fill("Fiat");
-    await page
-      .locator("label")
-      .filter({ hasText: /^Model$/ })
-      .locator("xpath=following-sibling::input[1]")
-      .fill("Egea");
+    await page.getByLabel("Marka", { exact: true }).selectOption("Fiat");
+    await page.getByLabel("Model", { exact: true }).selectOption("Egea");
     await page
       .locator("label")
       .filter({ hasText: /^Model Yılı$/ })
