@@ -5,7 +5,7 @@
 // çağıranın public.platform_admins listesinde olduğunu sunucu tarafında
 // doğrular. Bu sayfa yalnızca arayüzdür — yetki kararı burada verilmez.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { reportClientEvent } from "@/lib/clientEvent";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
@@ -14,6 +14,7 @@ import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import UrunlerTab from "./UrunlerTab";
 import { AdminMfa } from "@/components/AdminMfa";
 import { SystemHealthTab, AuditLogTab } from "./SaglikTab";
+const { vehicleCountView } = require("@/lib/vehicleCount");
 
 type Tab = "genel" | "saglik" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler" | "islem";
 
@@ -81,6 +82,10 @@ export default function YonetimPage() {
   const [qrBatch, setQrBatch] = useState("");
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [vehicleQuery, setVehicleQuery] = useState("");
+  // DÜZELTME 01: aramasız toplam ayrı tutulur; arama yazılırken eski yanıtlar yenisini ezmesin diye sıra numarası
+  const [vehiclesAllTotal, setVehiclesAllTotal] = useState<number | null>(null);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
+  const vehiclesReq = useRef(0);
 
   const [genCount, setGenCount] = useState<number | "">("");
   const [genTenant, setGenTenant] = useState("");
@@ -150,7 +155,10 @@ export default function YonetimPage() {
       loadQr();
       if (!overview) loadOverview();
     }
-    if (tab === "araclar") loadVehicles("");
+    if (tab === "araclar") {
+      setVehicleQuery("");
+      loadVehicles("");
+    }
   }, [stage, tab]);
 
   useEffect(() => {
@@ -191,12 +199,17 @@ export default function YonetimPage() {
     const params = new URLSearchParams();
     params.set("q", q);
     if (cursor) params.set("cursor", cursor);
+    const seq = ++vehiclesReq.current;
     if (cursor) setLoadingMore(true);
+    else setVehiclesLoading(true);
     const r = await api(`/api/admin/araclar?${params.toString()}`);
+    if (seq !== vehiclesReq.current) return; // daha yeni bir arama başladı; bu yanıt eskidi
     setLoadingMore(false);
+    setVehiclesLoading(false);
     if (!r.ok) return setError(r.body?.error || "Araçlar yüklenemedi");
     setVehicles((prev) => (cursor ? [...prev, ...(r.body.vehicles ?? [])] : r.body.vehicles ?? []));
     setVehiclesMeta((prev) => ({ total: cursor ? prev.total : r.body.total ?? null, next: r.body.next_cursor ?? null }));
+    if (!cursor && q.trim() === "") setVehiclesAllTotal(r.body.total ?? null);
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -677,10 +690,24 @@ export default function YonetimPage() {
         {/* ================= ARAÇLAR ================= */}
         {tab === "araclar" && (
           <section style={cardStyle}>
-            <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Tüm araçlar</h2>
-            <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 10px" }}>
-              {vehiclesMeta.total != null ? `${vehiclesMeta.total} araç${vehicleQuery ? " bulundu" : ""} · ` : ""}en yeni önce, {vehicles.length} gösteriliyor
-            </p>
+            {(() => {
+              const cv = vehicleCountView({ allTotal: vehiclesAllTotal, matchTotal: vehiclesMeta.total, shown: vehicles.length, query: vehicleQuery, loading: vehiclesLoading });
+              return (
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 14px", margin: "0 0 12px" }}>
+                  <h2 style={{ fontSize: 16, margin: 0, flex: "1 1 auto" }}>Tüm araçlar</h2>
+                  <div
+                    data-testid="arac-toplam"
+                    role="status"
+                    aria-live="polite"
+                    style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "8px 14px", borderRadius: radius.md, border: `1px solid ${colors.greenDark}`, background: colors.greenSoft }}
+                  >
+                    <span style={{ fontSize: 13, color: colors.textDark }}>Toplam araç</span>
+                    <strong data-testid="arac-toplam-sayi" style={{ fontSize: 24, lineHeight: 1.1, color: colors.textDark }}>{cv.headline}</strong>
+                  </div>
+                  <p data-testid="arac-toplam-detay" style={{ fontSize: 13, color: colors.textMuted, margin: 0, flexBasis: "100%" }}>{cv.detail}</p>
+                </div>
+              );
+            })()}
             <input
               value={vehicleQuery}
               onChange={(e) => { setVehicleQuery(e.target.value); loadVehicles(e.target.value); }}
