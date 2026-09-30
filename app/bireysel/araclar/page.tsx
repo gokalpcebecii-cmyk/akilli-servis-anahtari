@@ -1,16 +1,13 @@
 "use client";
 
-// OTOİZ — Bireysel ana ekran (pilot öncesi son cila, kapalı tasarım).
+// OTOİZ — Bireysel ana ekran (Nihai UX mimarisi, kapalı tasarım).
 // Yukarıdan aşağı tek okuma sırası:
-//  1) Üst başlık: karşılama, aktif araç (plaka / marka-model), kısa alt metin,
-//     birden çok araç varsa sade araç seçici
-//  2) Birincil aksiyon: kullanıcının durumuna göre TEK net adım
-//     (Aracımı Ekle · QR'ı Etkinleştir · Eksik Bilgileri Tamamla)
-//  3) Araç Durumu: Bakım / Muayene / Kasko / Trafik sigortası (4 mini kart)
-//  4) QR Durumu kartı
-//  5) Yaklaşan işlemler
-//  6) Son kayıtlar (son 3 olay) + "Tüm geçmişi gör"
-// Veri erişimi önceki ekranla aynı (vehicles, qr_keys, maintenance_items,
+//  A) Araç kimliği: plaka, marka/model/yıl, güncel km, küçük "Araç Değiştir"
+//  B) Kritik özet: kaç işlem dikkat bekliyor + en önemli iki işlem
+//  C) Bakım · Muayene · Kasko · Trafik Sigortası (masaüstü tek satır, mobil 2x2)
+//  D) Yaklaşan İşlemler + Son Kayıtlar (masaüstü 2 sütun, mobil alt alta)
+//  E) QR: bağlı değilse tek kompakt aksiyon kartı
+// Veri erişimi değişmedi (vehicles, qr_keys, maintenance_items,
 // vehicle_timeline); yeni yazma yok.
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,11 +19,12 @@ import { OtoizLogo } from "@/components/OtoizLogo";
 import { BottomNav } from "@/components/BottomNav";
 import { InstallCta } from "@/components/InstallCta";
 import { AuthShellLoading } from "@/components/AuthShell";
-import { StatusQuad, StatusPill, vehicleStatusFor } from "@/components/VehicleStatusPanel";
+import { StatusQuad, StatusPill, STATUS_TONE, vehicleStatusFor } from "@/components/VehicleStatusPanel";
 import { VehicleTimeline } from "@/components/VehicleTimeline";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 const { ITEM_LABELS } = require("@/lib/maintenanceItems");
+const { criticalSummary } = require("@/lib/vehicleStatus");
 
 const ACTIVE_KEY = "otoiz-aktif-arac";
 
@@ -60,6 +58,7 @@ export default function BireyselAraclarPage() {
   const [items, setItems] = useState<any[]>([]);
   const [statusRecords, setStatusRecords] = useState<{ lastMuayene: any; lastDetailing: any }>({ lastMuayene: null, lastDetailing: null });
   const [qr, setQr] = useState<QrState>("loading");
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   async function loadPendingTransfers() {
     // Pilotta bu RPC'nin EXECUTE yetkisi authenticated'dan alındı; çağırmak
@@ -148,6 +147,7 @@ export default function BireyselAraclarPage() {
   function selectVehicle(id: string) {
     setActiveId(id);
     writeActive(id);
+    setSwitcherOpen(false);
   }
 
   const active = vehicles.find((v) => v.id === activeId) ?? null;
@@ -178,7 +178,9 @@ export default function BireyselAraclarPage() {
         <div className="otoiz-page otoiz-page-wide" style={{ paddingTop: 16, paddingBottom: 22 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
             <OtoizLogo variant="dark" size={128} />
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* Masaüstünde üstteki gezinme çubuğu aynı bağlantıları taşır;
+                üst üste binmesin diye bu iki düğme yalnız mobilde. */}
+            <div className="otoiz-mobile-only" style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 onClick={() => router.push("/bireysel/bildirimler")}
                 aria-label="Bildirimler"
@@ -197,56 +199,69 @@ export default function BireyselAraclarPage() {
             </div>
           </div>
 
-          <p style={{ fontSize: 15, color: colors.textMuted, margin: "0 0 6px", fontWeight: 600 }}>Merhaba{firstName ? `, ${firstName}` : ""}</p>
           {active ? (
-            <>
-              <h1 data-testid="aktif-plaka" style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.8, color: colors.text, margin: 0, lineHeight: 1.15 }}>
-                {active.plate}
-              </h1>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 12px", marginTop: 6 }}>
-                <span style={{ fontSize: 15, fontWeight: 600, color: colors.text }}>
-                  {[active.brand, active.model].filter(Boolean).join(" ") || "Marka/model girilmedi"}
-                  {active.year ? ` · ${active.year}` : ""}
-                </span>
-                {active.current_km != null && active.current_km !== "" && (
-                  <span style={{ fontSize: 15, fontWeight: 700, color: colors.greenLight }}>{Number(active.current_km).toLocaleString("tr-TR")} km</span>
-                )}
+            <section aria-label="Araç kimliği" data-testid="arac-kimligi">
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <h1 data-testid="aktif-plaka" style={{ fontSize: 28, fontWeight: 800, letterSpacing: 0.6, color: colors.text, margin: 0, lineHeight: 1.15, whiteSpace: "nowrap" }}>
+                    {active.plate}
+                  </h1>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 12px", marginTop: 6 }}>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: colors.textMuted }}>
+                      {[active.brand, active.model].filter(Boolean).join(" ") || "Marka/model girilmedi"}
+                      {active.year ? ` · ${active.year}` : ""}
+                    </span>
+                    {active.current_km != null && active.current_km !== "" && (
+                      <span data-testid="aktif-km" style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{Number(active.current_km).toLocaleString("tr-TR")} km</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-testid="arac-degistir"
+                  aria-expanded={switcherOpen}
+                  aria-controls="arac-secici"
+                  onClick={() => setSwitcherOpen((v) => !v)}
+                  style={{ flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 40, padding: "0 11px", borderRadius: radius.pill, border: `1px solid ${colors.border}`, background: colors.surfaceRaised, color: colors.text, fontSize: 13.5, fontWeight: 700, fontFamily: font, cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  <Icon name="swap" color={colors.textMuted} size={15} />
+                  Araç Değiştir
+                </button>
               </div>
-              <p style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: colors.textFaint, margin: "12px 0 0" }}>
-                <Icon name="shield-check" color={colors.textFaint} size={15} />
-                Bakım, muayene ve sigorta tarihleri tek ekranda.
-              </p>
-            </>
+              {switcherOpen && (
+                <div id="arac-secici" data-testid="arac-secici" className="otoiz-enter" style={{ marginTop: 14, background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: 6 }}>
+                  <div role="listbox" aria-label="Araç seçin">
+                    {vehicles.map((v) => {
+                      const on = v.id === activeId;
+                      return (
+                        <button
+                          key={v.id}
+                          role="option"
+                          aria-selected={on}
+                          onClick={() => selectVehicle(v.id)}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, width: "100%", minHeight: 48, padding: "8px 12px", borderRadius: radius.sm, border: "none", background: on ? colors.surfaceRaised : "transparent", color: colors.text, fontFamily: font, cursor: "pointer", textAlign: "left" }}
+                        >
+                          <span style={{ minWidth: 0 }}>
+                            <span style={{ display: "block", fontSize: 15, fontWeight: 800, letterSpacing: 0.4 }}>{v.plate}</span>
+                            <span style={{ display: "block", fontSize: 12.5, color: colors.textMuted }}>{[v.brand, v.model].filter(Boolean).join(" ")}</span>
+                          </span>
+                          {on && <Icon name="check" color={colors.green} size={18} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <a href="/bireysel/araclar/yeni" style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 48, padding: "8px 12px", borderTop: `1px solid ${colors.border}`, marginTop: 4, color: colors.text, fontSize: 14.5, fontWeight: 700, textDecoration: "none" }}>
+                    <Icon name="plus-square" color={colors.textMuted} size={18} />
+                    Başka Araç Ekle
+                  </a>
+                </div>
+              )}
+            </section>
           ) : (
             <>
               <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.text, margin: 0 }}>Aracınızı ekleyin</h1>
               <p style={{ fontSize: 14, color: colors.textMuted, margin: "8px 0 0", lineHeight: 1.5 }}>Bakım, muayene ve sigorta tarihlerini tek yerden takip edin.</p>
             </>
-          )}
-
-          {vehicles.length > 1 && (
-            <div role="tablist" aria-label="Araç seçin" data-testid="arac-secici" style={{ display: "flex", gap: 8, overflowX: "auto", margin: "16px -16px 0", padding: "2px 16px", scrollbarWidth: "none" }}>
-              {vehicles.map((v) => {
-                const on = v.id === activeId;
-                return (
-                  <button
-                    key={v.id}
-                    role="tab"
-                    aria-selected={on}
-                    onClick={() => selectVehicle(v.id)}
-                    style={{
-                      flex: "0 0 auto", minHeight: 44, padding: "0 16px", borderRadius: radius.pill, cursor: "pointer", fontFamily: font,
-                      fontSize: 14, fontWeight: 700, letterSpacing: 0.4, whiteSpace: "nowrap",
-                      border: `1px solid ${on ? colors.green : colors.border}`,
-                      background: on ? colors.greenSoft : colors.surfaceRaised,
-                      color: on ? colors.greenLight : colors.textMuted,
-                    }}
-                  >
-                    {v.plate}
-                  </button>
-                );
-              })}
-            </div>
           )}
         </div>
       </header>
@@ -282,7 +297,7 @@ export default function BireyselAraclarPage() {
                 <Icon name="car" color={colors.greenLight} size={26} />
               </div>
               <h2 style={{ fontSize: 19, fontWeight: 800, color: colors.text, margin: "0 0 6px" }}>Henüz araç eklemediniz</h2>
-              <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 20px", lineHeight: 1.5 }}>Plaka ve kilometreyle başlayın; diğer bilgileri sonra ekleyebilirsiniz.</p>
+              <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 20px", lineHeight: 1.5 }}>Plaka, marka, model, model yılı ve kilometreyle başlayın; tarihleri sonra da ekleyebilirsiniz.</p>
               <a href="/bireysel/araclar/yeni" style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
                 Aracımı Ekle
               </a>
@@ -293,26 +308,26 @@ export default function BireyselAraclarPage() {
             <InstallCta tone="light" />
           </div>
         ) : (
-          <div className="otoiz-home-grid otoiz-stack otoiz-enter">
-            <div className="otoiz-stack">
-              {/* 2) Birincil aksiyon */}
-              <PrimaryAction vehicle={active} qr={qr} missing={missing} />
+          <div className="otoiz-stack otoiz-enter">
+            {/* B) Kritik özet */}
+            {status && <CriticalSummary status={status} vehicleId={active.id} missing={missing} />}
 
-              {/* 3) Araç Durumu */}
-              <section aria-label="Araç durumu">
-                <SectionTitle
-                  action={
-                    <a href={`/bireysel/araclar/${active.id}`} style={linkStyle}>
-                      Detay
-                    </a>
-                  }
-                >
-                  Araç Durumu
-                </SectionTitle>
-                {status && <StatusQuad cards={status.cards} />}
-              </section>
+            {/* C) Dört durum kartı */}
+            <section aria-label="Araç durumu">
+              <SectionTitle
+                action={
+                  <a href={`/bireysel/araclar/${active.id}`} style={linkStyle}>
+                    Araç detayı
+                  </a>
+                }
+              >
+                Araç Durumu
+              </SectionTitle>
+              {status && <StatusQuad cards={status.cards} />}
+            </section>
 
-              {/* 5) Yaklaşan işlemler */}
+            {/* D) Yaklaşan İşlemler + Son Kayıtlar */}
+            <div className="otoiz-two-col">
               <section aria-label="Yaklaşan işlemler" data-testid="yaklasan-islemler" style={cardStyle}>
                 <h2 style={cardTitle}>Yaklaşan İşlemler</h2>
                 {status && status.upcoming.length > 0 ? (
@@ -335,13 +350,7 @@ export default function BireyselAraclarPage() {
                   </p>
                 )}
               </section>
-            </div>
 
-            <div className="otoiz-stack">
-              {/* 4) QR Durumu */}
-              <QrCard vehicleId={active.id} qr={qr} />
-
-              {/* 6) Son kayıtlar */}
               <VehicleTimeline
                 supabase={supabase}
                 vehicleId={active.id}
@@ -351,14 +360,12 @@ export default function BireyselAraclarPage() {
                 alwaysShowAll
                 onShowAll={() => router.push(`/bireysel/araclar/${active.id}#servis-gecmisi`)}
               />
-
-              <InstallCta tone="light" />
-
-              <a href="/bireysel/araclar/yeni" style={{ ...secondaryButtonStyle(), display: "flex", alignItems: "center", justifyContent: "center", gap: 8, textDecoration: "none" }}>
-                <Icon name="plus-square" color={colors.text} size={18} />
-                Başka Araç Ekle
-              </a>
             </div>
+
+            {/* E) QR */}
+            <QrCard vehicleId={active.id} qr={qr} />
+
+            <InstallCta tone="light" />
           </div>
         )}
 
@@ -397,71 +404,64 @@ function SectionTitle({ children, action }: { children: React.ReactNode; action?
   );
 }
 
-// Kullanıcının o anki tek net adımı. Öncelik: QR bağlı değilse etkinleştir,
-// sonra eksik bilgi. İkisi de tamamsa kart görünmez (ekran sadeleşir).
-function PrimaryAction({ vehicle, qr, missing }: { vehicle: any; qr: QrState; missing: string[] }) {
-  let title = "";
-  let text = "";
-  let href = "";
-  let cta = "";
-  let secondary: { href: string; label: string } | null = null;
-  if (qr === "none") {
-    title = "QR anahtarlığınızı etkinleştirin";
-    text = "Anahtarlığın arkasındaki seri no ve kodla aracınıza bağlayın.";
-    href = "/aktivasyon";
-    cta = "QR'ı Etkinleştir";
-    if (missing.length > 0) secondary = { href: `/bireysel/araclar/${vehicle.id}#duzenle`, label: "Eksik Bilgileri Tamamla" };
-  } else if (missing.length > 0) {
-    title = "Eksik bilgiler var";
-    text = `Durumların doğru görünmesi için ekleyin: ${missing.join(", ")}.`;
-    href = `/bireysel/araclar/${vehicle.id}#duzenle`;
-    cta = "Eksik Bilgileri Tamamla";
-  } else {
-    return null;
-  }
+// B) Kritik özet — dikkat bekleyen işlem sayısı ve en önemli iki işlem.
+// Eksik bilgi varsa tek küçük bağlantı; büyük yeşil yüzey yok.
+function CriticalSummary({ status, vehicleId, missing }: { status: any; vehicleId: string; missing: string[] }) {
+  const s = criticalSummary(status);
+  const t = STATUS_TONE[s.level] ?? STATUS_TONE.none;
+  const icon = s.level === "late" || s.level === "soon" ? "alert" : s.level === "ok" ? "check" : "clipboard";
   return (
-    <section data-testid="birincil-aksiyon" style={{ ...cardStyle, borderColor: "rgba(34,197,94,0.45)", background: `linear-gradient(160deg, rgba(34,197,94,0.10) 0%, ${colors.surface} 55%)` }}>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: colors.text, margin: "0 0 6px" }}>{title}</h2>
-      <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 16px", lineHeight: 1.5 }}>{text}</p>
-      <a href={href} style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
-        {cta}
-      </a>
-      {secondary && (
-        <a href={secondary.href} style={{ ...secondaryButtonStyle(), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", marginTop: 10 }}>
-          {secondary.label}
-        </a>
-      )}
+    <section data-testid="kritik-ozet" data-level={s.level} aria-label="Kritik özet" style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "stretch" }}>
+        <div aria-hidden="true" style={{ width: 4, flex: "0 0 4px", background: t.dot }} />
+        <div style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "16px 18px", flex: 1, minWidth: 0 }}>
+          <div aria-hidden="true" style={{ width: 40, height: 40, minWidth: 40, borderRadius: radius.sm, background: colors.surfaceRaised, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name={icon} color={s.level === "none" ? colors.textMuted : t.dot} size={20} />
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0, lineHeight: 1.3 }}>{s.title}</h2>
+            <p style={{ fontSize: 14, color: colors.textMuted, margin: "4px 0 0", lineHeight: 1.45 }}>{s.line}</p>
+            {missing.length > 0 && (
+              <a href={`/bireysel/araclar/${vehicleId}#duzenle`} data-testid="eksik-bilgi" style={{ ...linkStyle, padding: 0, minHeight: 36, marginTop: 4, color: colors.text }}>
+                Eksik bilgileri tamamla ({missing.length})
+                <Icon name="chevron-right" color={colors.textMuted} size={16} />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
 
+// E) QR — tek kompakt kart. Bağlı değilse yalnız "Anahtarlığı Etkinleştir".
 function QrCard({ vehicleId, qr }: { vehicleId: string; qr: QrState }) {
-  const map: Record<QrState, { label: string; kind: "ok" | "late" | "none"; text: string; cta?: { href: string; label: string } }> = {
-    loading: { label: "Kontrol ediliyor", kind: "none", text: "QR durumu yükleniyor…" },
-    active: { label: "Aktif", kind: "ok", text: "QR okutulduğunda aracın dijital pasaportu açılır.", cta: { href: `/bireysel/araclar/${vehicleId}#anahtarlik`, label: "QR ayrıntıları" } },
-    none: { label: "Bağlı değil", kind: "none", text: "Bu araca bağlı bir QR anahtarlık yok.", cta: { href: "/aktivasyon", label: "QR'ı Etkinleştir" } },
-    revoked: { label: "İptal edildi", kind: "late", text: "Bu aracın QR'ı iptal edildi. Yeni bir OTOİZ ürünü gerekir.", cta: { href: "/aktivasyon", label: "Yeni ürünü etkinleştir" } },
+  if (qr === "loading") return null;
+  const map: Record<Exclude<QrState, "loading">, { title: string; cta: { href: string; label: string }; level: string }> = {
+    none: { title: "OTOİZ anahtarlığı henüz bağlı değil", cta: { href: "/aktivasyon", label: "Anahtarlığı Etkinleştir" }, level: "none" },
+    active: { title: "OTOİZ anahtarlık bağlı", cta: { href: `/bireysel/araclar/${vehicleId}#anahtarlik`, label: "Ayrıntılar" }, level: "ok" },
+    revoked: { title: "Anahtarlık iptal edildi", cta: { href: "/aktivasyon", label: "Yeni ürünü etkinleştir" }, level: "late" },
   };
   const m = map[qr];
-  const pill = { ok: { bg: colors.green, fg: colors.onAccent }, late: { bg: colors.danger, fg: "#FFFFFF" }, none: { bg: colors.neutralSoft, fg: colors.textMuted } }[m.kind];
   return (
-    <section data-testid="qr-durumu" data-state={qr} aria-label="QR durumu" style={cardStyle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 44, height: 44, minWidth: 44, borderRadius: radius.md, background: colors.surfaceRaised, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name="qr" color={qr === "active" ? colors.greenLight : colors.textMuted} size={22} />
+    <section data-testid="qr-durumu" data-state={qr} aria-label="QR anahtarlık" style={{ ...cardStyle, padding: "14px 16px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div aria-hidden="true" style={{ width: 40, height: 40, minWidth: 40, borderRadius: radius.sm, background: colors.surfaceRaised, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="qr" color={qr === "active" ? colors.green : colors.textMuted} size={20} />
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted }}>QR Durumu</div>
-          <span style={{ display: "inline-block", marginTop: 4, fontSize: 12, fontWeight: 700, color: pill.fg, background: pill.bg, borderRadius: radius.pill, padding: "3px 10px" }}>{m.label}</span>
+        <div style={{ flex: "1 1 180px", minWidth: 0, fontSize: 15, fontWeight: 700, color: colors.text }}>
+          {m.title}
+          {qr === "active" && (
+            <span data-testid="qr-aktif" style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, color: colors.greenLight, border: `1px solid rgba(34,197,94,0.5)`, borderRadius: radius.pill, padding: "2px 9px", verticalAlign: "2px" }}>
+              Aktif
+            </span>
+          )}
         </div>
-      </div>
-      <p style={{ fontSize: 14, color: colors.textMuted, margin: "12px 0 0", lineHeight: 1.5 }}>{m.text}</p>
-      {m.cta && (
-        <a href={m.cta.href} style={{ ...linkStyle, padding: 0, marginTop: 6 }}>
+        <a href={m.cta.href} style={{ ...linkStyle, padding: 0, color: qr === "none" ? colors.greenLight : colors.text }}>
           {m.cta.label}
-          <Icon name="chevron-right" color={colors.greenLight} size={16} />
+          <Icon name="chevron-right" color={qr === "none" ? colors.greenLight : colors.textMuted} size={16} />
         </a>
-      )}
+      </div>
     </section>
   );
 }

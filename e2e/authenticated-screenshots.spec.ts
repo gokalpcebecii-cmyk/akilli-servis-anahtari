@@ -117,11 +117,11 @@ test.describe("Authenticated ekranlar — mock fixture ile gerçek render (bkz. 
     await page.goto(`/panel/araclar/${VEHICLE_ID}`);
     await page.getByText("34 ABC 123").first().waitFor();
 
-    for (const label of ["Motor Yağı", "Fren Balatası", "Diğer"]) {
-      const box = await page.getByText(label, { exact: true }).first().boundingBox();
+    for (const label of ["Motor Yağı", "Ön Fren Balatası", "Diğer"]) {
+      const box = await page.getByRole("button", { name: label, exact: true }).first().boundingBox();
       expect(box?.height ?? 0, `${label} chip yüksekliği`).toBeGreaterThanOrEqual(44);
     }
-    const saveBox = await page.getByRole("button", { name: "KAYDET" }).boundingBox();
+    const saveBox = await page.getByRole("button", { name: "Bakımı Kaydet" }).boundingBox();
     expect(saveBox?.height ?? 0, "KAYDET buton yüksekliği").toBeGreaterThanOrEqual(44);
   });
 });

@@ -4,6 +4,7 @@
 // Saf sunum: hesap lib/vehicleStatus.js'de (unit testli). Durumlar yalnız
 // tarih/km/bakım planı/kayıt üzerinden; mekanik teşhis metni YOK.
 import { colors, radius, cardStyle } from "@/lib/theme";
+import { Icon } from "@/components/Icon";
 const { buildVehicleStatus, LEVELS, DISCLAIMER } = require("@/lib/vehicleStatus");
 const { todayIsoIstanbul } = require("@/lib/logic");
 
@@ -54,77 +55,116 @@ export function NextServiceHero({ status }: { status: any }) {
   );
 }
 
+// Nihai UX — araç detay / Genel Bakış hiyerarşisi (bakım TEK yerde):
+//  1) Sonraki Bakım ana kartı
+//  2) Muayene · Kasko · Trafik Sigortası küçük kartları
+//  3) Yaklaşan İşlemler
+//  4) Detailing ve Belgeler alt bölümü
 export function VehicleStatusPanel({
   vehicle,
   items,
   labels,
   lastMuayene,
   lastDetailing,
-  showHero = true,
   compact = false,
+  onOpenDocs,
 }: {
   vehicle: any;
   items: any[];
   labels: Record<string, string>;
   lastMuayene?: any;
   lastDetailing?: any;
-  showHero?: boolean;
   compact?: boolean;
+  onOpenDocs?: () => void;
 }) {
-  const { cards, nextService } = buildVehicleStatus({ vehicle, items, labels, lastMuayene, lastDetailing, today: todayIsoIstanbul() });
-  const main = cards.filter((c: any) => c.key !== "yaklasan");
-  const upcoming = cards.find((c: any) => c.key === "yaklasan");
+  const { cards, upcoming, nextService } = buildVehicleStatus({ vehicle, items, labels, lastMuayene, lastDetailing, today: todayIsoIstanbul() });
+  const card = (k: string) => cards.find((c: any) => c.key === k) ?? { key: k, level: "none", value: "", detail: "" };
+  const yak = card("yaklasan");
+  const det = card("detailing");
+  const docCount = [vehicle?.muayene_tarihi, vehicle?.kasko_bitis, vehicle?.trafik_sigortasi_bitis].filter(Boolean).length;
+  const sub: React.CSSProperties = { fontSize: 15, fontWeight: 800, color: colors.text, margin: "0 0 12px" };
   return (
-    <>
-      {showHero && <NextServiceHero status={nextService} />}
-      <section data-testid="arac-durumu" aria-label="Araç durumu" style={{ ...cardStyle, padding: compact ? 16 : 18 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: "0 0 14px" }}>Araç Durumu</h2>
-        <div className="otoiz-status-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
-          {main.map((c: any, i: number) => {
-            const t = STATUS_TONE[c.level] ?? STATUS_TONE.none;
-            // Tek sayıda kart varsa sonuncusu tam genişlik (boş hücre kalmasın).
-            const span = main.length % 2 === 1 && i === main.length - 1;
-            return (
-              <div
-                key={c.key}
-                data-testid={`durum-${c.key}`}
-                data-level={c.level}
-                style={{ position: "relative", overflow: "hidden", background: t.bg, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 14px", minWidth: 0, gridColumn: span ? "1 / -1" : undefined }}
-              >
-                <span aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: t.dot }} />
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, minWidth: 0 }}>{c.title}</span>
-                  <span aria-hidden="true" style={{ width: 8, height: 8, minWidth: 8, borderRadius: "50%", background: t.dot }} />
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: t.fg, marginTop: 4, overflowWrap: "anywhere" }}>{c.value}</div>
-                {!compact && <div style={{ fontSize: 12.5, color: colors.textMuted, marginTop: 4, lineHeight: 1.4, overflowWrap: "anywhere" }}>{c.detail}</div>}
-              </div>
-            );
-          })}
-          {upcoming && (
+    <div data-testid="arac-durumu" aria-label="Araç durumu" style={{ display: "flex", flexDirection: "column", gap: compact ? 12 : 16 }}>
+      <NextServiceHero status={nextService} />
+
+      <div className="otoiz-tri">
+        {[
+          { key: "muayene", title: "Muayene" },
+          { key: "kasko", title: "Kasko" },
+          { key: "trafik", title: "Trafik Sigortası" },
+        ].map(({ key, title }) => {
+          const c = card(key);
+          const t = STATUS_TONE[c.level] ?? STATUS_TONE.none;
+          const [date, phrase] = String(c.detail || "").split(" · ");
+          return (
             <div
-              data-testid="durum-yaklasan"
-              data-level={upcoming.level}
-              style={{
-                gridColumn: "1 / -1",
-                background: colors.surfaceRaised,
-                border: `1px solid ${colors.border}`,
-                borderRadius: radius.md,
-                padding: "12px 14px",
-              }}
+              key={key}
+              data-testid={`durum-${key}`}
+              data-level={c.level}
+              style={{ position: "relative", overflow: "hidden", background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "13px 12px 12px", minWidth: 0 }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted }}>{upcoming.title}</span>
-                <StatusPill level={upcoming.level} />
+              <span aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 3, background: t.dot }} />
+              <div style={{ fontSize: 13, fontWeight: 700, color: colors.textMuted, marginBottom: 8, overflowWrap: "anywhere" }}>{title}</div>
+              <StatusPill level={c.level} />
+              <div style={{ fontSize: 12.5, color: colors.textMuted, marginTop: 6, lineHeight: 1.35, overflowWrap: "anywhere" }}>
+                {c.level === "none" ? "Tarih girilmedi" : (
+                  <>
+                    <span style={{ display: "block", color: colors.text, fontWeight: 600 }}>{date}</span>
+                    {phrase}
+                  </>
+                )}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: colors.text, marginTop: 4 }}>{upcoming.value}</div>
-              <div style={{ fontSize: 12.5, color: colors.textMuted, marginTop: 4, lineHeight: 1.4 }}>{upcoming.detail}</div>
             </div>
-          )}
-        </div>
-        <p style={{ fontSize: 12, color: colors.textFaint, margin: "12px 0 0", lineHeight: 1.45 }}>{DISCLAIMER}</p>
+          );
+        })}
+      </div>
+
+      <section data-testid="durum-yaklasan" data-level={yak.level} aria-label="Yaklaşan işlemler" style={{ ...cardStyle, padding: compact ? 16 : 18 }}>
+        <h2 style={sub}>Yaklaşan İşlemler</h2>
+        {upcoming.length > 0 ? (
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+            {upcoming.slice(0, 5).map((u: any) => (
+              <li key={u.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "11px 14px" }}>
+                <span style={{ minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: colors.text }}>{u.title}</span>
+                  <span style={{ display: "block", fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{u.detail}</span>
+                </span>
+                <StatusPill level={u.level} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p style={{ fontSize: 14, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>{yak.detail}</p>
+        )}
       </section>
-    </>
+
+      <section aria-label="Detailing ve belgeler" style={{ ...cardStyle, padding: compact ? 16 : 18 }}>
+        <h2 style={sub}>Detailing ve Belgeler</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div data-testid="durum-detailing" data-level={det.level} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "11px 14px" }}>
+            <span style={{ minWidth: 0 }}>
+              <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: colors.text }}>Detailing</span>
+              <span style={{ display: "block", fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{det.detail}</span>
+            </span>
+            <StatusPill level={det.level} />
+          </div>
+          <button
+            type="button"
+            onClick={onOpenDocs}
+            disabled={!onOpenDocs}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, width: "100%", textAlign: "left", background: colors.surfaceRaised, border: "none", borderRadius: radius.sm, padding: "11px 14px", cursor: onOpenDocs ? "pointer" : "default", fontFamily: "inherit", minHeight: 52 }}
+          >
+            <span style={{ minWidth: 0 }}>
+              <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: colors.text }}>Tarihler ve Belgeler</span>
+              <span style={{ display: "block", fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{docCount} / 3 tarih girildi</span>
+            </span>
+            {onOpenDocs && <Icon name="chevron-right" color={colors.textMuted} size={18} />}
+          </button>
+        </div>
+      </section>
+
+      <p style={{ fontSize: 12, color: colors.textFaint, margin: 0, lineHeight: 1.45 }}>{DISCLAIMER}</p>
+    </div>
   );
 }
 

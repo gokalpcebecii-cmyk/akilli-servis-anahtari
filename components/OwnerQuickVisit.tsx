@@ -9,9 +9,11 @@
 import { useRef, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { CaretSafeInput } from "@/components/CaretSafeInput";
-import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
+import { colors, inputStyle, labelStyle, primaryButtonStyle, cardStyle } from "@/lib/theme";
+import { ItemChipGrid, GRID_ITEMS } from "@/components/ItemChipGrid";
 
 const { isValidCurrentKmUpdate, computeAutoNextServicePlan, todayIsoIstanbul } = require("@/lib/logic");
+const { ITEM_LABELS } = require("@/lib/maintenanceItems");
 
 export type QuickItem = { key: string; label: string };
 
@@ -35,7 +37,8 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
   const [success, setSuccess] = useState("");
   const requestIdRef = useRef<string | null>(null);
 
-  const selectedKeys = items.filter((it) => selected[it.key]).map((it) => it.key);
+  // Nihai UX: servis ekranıyla aynı işlem ızgarası (items yalnız etiket için).
+  const selectedKeys = GRID_ITEMS.filter((it) => selected[it.key]).map((it) => it.key);
 
   function intervalFor(key: string): number | null {
     const existing = maintenanceItems.find((m: any) => m.item_key === key);
@@ -84,7 +87,7 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
             ? (crypto as any).randomUUID()
             : `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, "0")}`;
       }
-      const labels = selectedKeys.map((k) => items.find((it) => it.key === k)?.label ?? k);
+      const labels = selectedKeys.map((k) => items.find((it) => it.key === k)?.label ?? ITEM_LABELS[k] ?? k);
       if (otherOn && otherText.trim()) labels.push(otherText.trim());
       const { error: rpcError } = await supabase.rpc("record_service_visit", {
         p_vehicle_id: vehicle.id,
@@ -119,19 +122,6 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
     }
   }
 
-  const tile = (on: boolean): React.CSSProperties => ({
-    minHeight: 52,
-    borderRadius: radius.md,
-    border: `1px solid ${on ? colors.green : colors.border}`,
-    background: on ? colors.green : colors.surfaceRaised,
-    color: on ? colors.onAccent : colors.text,
-    fontWeight: 700,
-    fontSize: 13.5,
-    fontFamily: font,
-    cursor: "pointer",
-    padding: "8px 6px",
-  });
-
   return (
     <section id="hizli-bakim" style={cardStyle}>
       <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.textDark, margin: "0 0 12px" }}>Hızlı Bakım Kaydı</h2>
@@ -148,37 +138,22 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
       />
 
       <div style={{ ...labelStyle, marginBottom: 8 }}>Yapılan İşlemler</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-        {items.map((it) => (
-          <button
-            key={it.key}
-            type="button"
-            aria-pressed={!!selected[it.key]}
-            onClick={() => setSelected((s) => ({ ...s, [it.key]: !s[it.key] }))}
-            style={tile(!!selected[it.key])}
-          >
-            {it.label}
-          </button>
-        ))}
-        <button type="button" aria-pressed={otherOn} onClick={() => setOtherOn((v) => !v)} style={tile(otherOn)}>
-          Diğer
-        </button>
-      </div>
-      {otherOn && (
-        <input
-          placeholder="Ör. Klima gazı dolumu"
-          value={otherText}
-          onChange={(e) => setOtherText(e.target.value)}
-          style={{ ...inputStyle, marginBottom: 10 }}
-          aria-label="Diğer işlem"
-        />
-      )}
+      <ItemChipGrid
+        selected={selected}
+        onToggle={(k) => setSelected((s) => ({ ...s, [k]: !s[k] }))}
+        otherOn={otherOn}
+        onToggleOther={() => setOtherOn((v) => !v)}
+        otherText={otherText}
+        onOtherText={setOtherText}
+        otherPlaceholder="Ör. Klima gazı dolumu"
+      />
+      <div style={{ height: 12 }} />
 
       {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, margin: "0 0 10px" }}>{error}</p>}
-      {success && <p role="status" style={{ color: colors.greenDark, fontSize: 13, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
+      {success && <p role="status" style={{ color: colors.greenLight, fontSize: 13, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
 
       <button type="button" onClick={save} disabled={saving} style={primaryButtonStyle(saving)}>
-        {saving ? "Kaydediliyor…" : "KAYDET"}
+        {saving ? "Kaydediliyor…" : "Bakımı Kaydet"}
       </button>
     </section>
   );

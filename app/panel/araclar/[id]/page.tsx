@@ -15,6 +15,7 @@ import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { BrandModelPicker } from "@/components/BrandModelPicker";
 import { DocDatesFields } from "@/components/DocDatesFields";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
+import { ItemChipGrid, GRID_ITEMS } from "@/components/ItemChipGrid";
 const { printableQrUrl, QR_LOCK_MESSAGE } = require("@/lib/qrUrl");
 
 const {
@@ -26,7 +27,7 @@ const {
   resolveQuickPlan,
   todayIsoIstanbul,
 } = require("@/lib/logic");
-const { ITEM_LABELS, DEFAULT_INTERVALS, SERVICE_QUICK_KEYS, SERVICE_MORE_KEYS, NEXT_PLAN_OPTIONS } = require("@/lib/maintenanceItems");
+const { ITEM_LABELS, DEFAULT_INTERVALS, NEXT_PLAN_OPTIONS } = require("@/lib/maintenanceItems");
 
 // Kilometre input'ları için: yalnızca rakam, baştaki gereksiz sıfırlar
 // temizlenir. Bireysel formuyla aynı davranış (PILOT FIX 03 madde A3).
@@ -50,12 +51,10 @@ const PLAN_OPTIONS: { key: string; label: string }[] = [
   { key: "later", label: "Bakım planını sonra belirle" },
 ];
 
-// Aşama E: servis hızlı kayıt — 11 hızlı seçim + "Diğer"; eski kalemler
-// "Daha fazla işlem" altında (mevcut kayıtlarla uyum). Varsayılan periyotlar
-// lib/maintenanceItems.js'de tek kaynak.
-const QUICK_ITEMS: { key: string; label: string }[] = SERVICE_QUICK_KEYS.map((key: string) => ({ key, label: ITEM_LABELS[key] }));
-const MORE_ITEMS: { key: string; label: string }[] = SERVICE_MORE_KEYS.map((key: string) => ({ key, label: ITEM_LABELS[key] }));
-const ALL_ITEMS = [...QUICK_ITEMS, ...MORE_ITEMS];
+// Nihai UX: servis hızlı kayıt — tek kompakt işlem ızgarası (15 işlem +
+// "Diğer"; masaüstü 3–4, mobil 2 sütun). Kayıt açıklaması ITEM_LABELS ile
+// yazılır; varsayılan periyotlar lib/maintenanceItems.js'de tek kaynak.
+const ALL_ITEMS: { key: string; label: string }[] = GRID_ITEMS;
 
 const PRESET_KM_OPTIONS = [5000, 10000, 15000, 20000, 30000];
 
@@ -73,7 +72,6 @@ export default function VehicleDetailPage() {
   const [revisionReload, setRevisionReload] = useState(0);
   const [statusRecords, setStatusRecords] = useState<{ lastMuayene: any; lastDetailing: any }>({ lastMuayene: null, lastDetailing: null });
   const [quickPlan, setQuickPlan] = useState<string>("default");
-  const [showMoreItems, setShowMoreItems] = useState(false);
   const revisions = useRecordRevisions(supabase, params.id as string, revisionReload);
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -445,7 +443,6 @@ export default function VehicleDetailPage() {
       setNextServiceKm("");
       setNextServiceDate("");
       setQuickPlan("default");
-      setShowMoreItems(false);
       setSuccessMessage(rpcData?.service_verified === false ? "✓ Kayıt tamamlandı" : "✓ Kayıt tamamlandı · Servis Doğrulamalı");
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch {
@@ -474,20 +471,6 @@ export default function VehicleDetailPage() {
       </main>
     );
 
-  const chipBase: React.CSSProperties = {
-    padding: "14px 10px",
-    borderRadius: radius.md,
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: 700,
-    cursor: "pointer",
-    userSelect: "none",
-    border: `1px solid ${colors.border}`,
-    background: colors.surfaceRaised,
-    color: colors.text,
-    minHeight: 52,
-  };
-
   return (
     <main className="otoiz-servis-shell" style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, paddingBottom: 40 }}>
       <div className="otoiz-servis-header" style={{ position: "relative", background: `linear-gradient(180deg, ${colors.bgAlt} 0%, ${colors.bg} 100%)`, borderBottom: `1px solid ${colors.border}`, padding: "10px 16px 22px" }}>
@@ -507,23 +490,10 @@ export default function VehicleDetailPage() {
               </button>
             )}
           </div>
-          <h1 style={{ fontSize: isNew ? 26 : 14, fontWeight: isNew ? 800 : 700, margin: "10px 0 0", color: isNew ? colors.text : colors.textMuted, letterSpacing: isNew ? 0 : 0.4 }}>
+          <h1 style={{ fontSize: isNew ? 26 : 20, fontWeight: 800, margin: "10px 0 0", color: colors.text }}>
             {isNew ? "Yeni Araç" : "Hızlı Bakım Kaydı"}
           </h1>
           {isNew && <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "6px 0 0" }}>Plaka, marka ve kilometreyi girin; aracı oluşturun.</p>}
-          {!isNew && (
-            <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginTop: 6 }}>
-              <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: 0.8, color: colors.text }}>{vehicle.plate}</span>
-              <span style={{ fontSize: 15, fontWeight: 600, color: colors.text }}>
-                {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
-              </span>
-              {vehicle.current_km != null && vehicle.current_km !== "" && (
-                <span style={{ fontSize: 15, fontWeight: 700, color: colors.greenLight }}>
-                  {Number(vehicle.current_km).toLocaleString("tr-TR")} km
-                </span>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -683,9 +653,22 @@ export default function VehicleDetailPage() {
 
         {!isNew && (
           <section className="otoiz-servis-area-quick" data-testid="hizli-kayit" style={{ ...cardStyle, paddingBottom: 88 }}>
-            {/* Aşama E — 15–20 sn akış: 1 KM → 2 işlemler → 3 sonraki bakım → KAYDET.
-                Normal bakımda klavye yalnız km için açılır; geri kalan her şey dokunuş. */}
-            <StepLabel n={1} text="Güncel Kilometre" />
+            {/* Nihai UX — 15–20 sn akış: Araç → KM → İşlemler → Not → Sonraki
+                bakım → Bakımı Kaydet. Normal bakımda klavye yalnız km için açılır. */}
+            <StepLabel n={1} text="Araç" />
+            <div data-testid="servis-arac" style={{ display: "flex", alignItems: "baseline", gap: "4px 12px", flexWrap: "wrap", background: colors.surfaceRaised, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 14px", marginBottom: 18 }}>
+              <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: 0.8, color: colors.text }}>{vehicle.plate}</span>
+              <span style={{ fontSize: 14.5, fontWeight: 600, color: colors.textMuted }}>
+                {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
+              </span>
+              {vehicle.current_km != null && vehicle.current_km !== "" && (
+                <span style={{ fontSize: 14.5, fontWeight: 700, color: colors.text }}>
+                  Kayıtlı: {Number(vehicle.current_km).toLocaleString("tr-TR")} km
+                </span>
+              )}
+            </div>
+
+            <StepLabel n={2} text="Güncel Kilometre" />
             <CaretSafeInput caretChars="digits"
               type="text"
               inputMode="numeric"
@@ -699,72 +682,24 @@ export default function VehicleDetailPage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") e.currentTarget.blur();
               }}
-              style={{ ...inputStyle, fontSize: 24, fontWeight: 800, padding: 14, textAlign: "center", marginBottom: 16 }}
+              style={{ ...inputStyle, fontSize: 24, fontWeight: 800, padding: 14, textAlign: "center", marginBottom: 18 }}
               value={formatKmInput(quickKm)}
               onChange={(e) => setQuickKm(sanitizeKmInput(e.target.value))}
               placeholder="Km"
             />
 
-            <StepLabel n={2} text="Yapılan İşlemler" />
-            {/* Gerçek <button> + aria-pressed: klavye/ekran okuyucu/dokunma
-                hepsiyle çalışır. */}
-            <div className="otoiz-quick-chips" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8, marginBottom: 8 }}>
-              {[...QUICK_ITEMS, ...(showMoreItems ? MORE_ITEMS : [])].map((item) => {
-                const active = !!selectedItems[item.key];
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => toggleItem(item.key)}
-                    style={{
-                      ...chipBase,
-                      border: active ? `1px solid ${colors.green}` : chipBase.border,
-                      background: active ? colors.green : colors.surfaceRaised,
-                      color: active ? colors.onAccent : colors.text,
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    {active && <span aria-hidden="true" style={{ display: "inline-flex", verticalAlign: "-3px", marginRight: 4 }}><Icon name="check" color={colors.onAccent} size={16} strokeWidth={2.6} /></span>}
-                    {item.label}
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                aria-pressed={otherSelected}
-                onClick={() => setOtherSelected((v) => !v)}
-                style={{
-                  ...chipBase,
-                  border: otherSelected ? `1px solid ${colors.green}` : chipBase.border,
-                  background: otherSelected ? colors.green : colors.surfaceRaised,
-                  color: otherSelected ? colors.onAccent : colors.text,
-                  fontFamily: "inherit",
-                }}
-              >
-                Diğer
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowMoreItems((v) => !v)}
-              style={{ background: "none", border: "none", color: colors.greenLight, fontWeight: 700, fontSize: 14, padding: "4px 0", minHeight: 44, cursor: "pointer", fontFamily: font }}
-            >
-              {showMoreItems ? "Daha az işlem göster" : "Daha fazla işlem (balata, triger, buji, silecek)"}
-            </button>
+            <StepLabel n={3} text="Yapılan İşlemler" />
+            <ItemChipGrid
+              selected={selectedItems}
+              onToggle={toggleItem}
+              otherOn={otherSelected}
+              onToggleOther={() => setOtherSelected((v) => !v)}
+              otherText={otherText}
+              onOtherText={setOtherText}
+            />
 
-            {otherSelected && (
-              <input
-                placeholder="Yapılan işlemi kısaca yazın"
-                aria-label="Diğer işlem"
-                style={{ ...inputStyle, marginBottom: 10 }}
-                value={otherText}
-                onChange={(e) => setOtherText(e.target.value)}
-              />
-            )}
-
-            <div style={{ marginTop: 14 }}>
-              <StepLabel n={3} text="Not" optional />
+            <div style={{ marginTop: 18 }}>
+              <StepLabel n={4} text="Not" optional />
             </div>
             <input
               data-testid="servis-not"
@@ -777,7 +712,7 @@ export default function VehicleDetailPage() {
             />
 
             <div>
-              <StepLabel n={4} text="Sonraki Bakım" />
+              <StepLabel n={5} text="Sonraki Bakım" />
             </div>
             <div role="radiogroup" aria-label="Sonraki bakım" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
               {NEXT_PLAN_OPTIONS.map((opt: any) => {
@@ -846,9 +781,11 @@ export default function VehicleDetailPage() {
             <button
               type="button"
               onClick={() => setShowPlanEditor((v) => !v)}
-              style={{ background: "none", border: "none", color: colors.greenLight, fontWeight: 700, fontSize: 14, padding: "6px 0", minHeight: 44, cursor: "pointer", fontFamily: font, marginBottom: showPlanEditor ? 10 : 4 }}
+              aria-expanded={showPlanEditor}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", color: colors.textMuted, fontWeight: 700, fontSize: 14, padding: "6px 0", minHeight: 44, cursor: "pointer", fontFamily: font, marginBottom: showPlanEditor ? 10 : 4 }}
             >
               {showPlanEditor ? "Parça periyotlarını gizle" : "Parça periyotları"}
+              <Icon name={showPlanEditor ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={16} />
             </button>
 
             {showPlanEditor && (
@@ -907,7 +844,7 @@ export default function VehicleDetailPage() {
                 disabled={submitting}
                 style={{ ...primaryButtonStyle(submitting), padding: 17, fontSize: 17, minHeight: 56 }}
               >
-                {submitting ? "Kaydediliyor…" : "KAYDET"}
+                {submitting ? "Kaydediliyor…" : "Bakımı Kaydet"}
               </button>
             </div>
           </section>
@@ -999,7 +936,7 @@ export default function VehicleDetailPage() {
 function StepLabel({ n, text, optional = false }: { n: number; text: string; optional?: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-      <span aria-hidden="true" style={{ width: 26, height: 26, borderRadius: "50%", border: `1.5px solid ${colors.green}`, color: colors.greenLight, fontSize: 13, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      <span aria-hidden="true" style={{ width: 26, height: 26, borderRadius: "50%", border: `1.5px solid ${colors.border}`, color: colors.textMuted, fontSize: 13, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
         {n}
       </span>
       <span style={{ fontSize: 15.5, fontWeight: 800, color: colors.text }}>{text}</span>
@@ -1022,7 +959,7 @@ function PlanPreview({ plan, planKey }: { plan: any; planKey: string }) {
         plan.nextServiceDate ? new Date(`${plan.nextServiceDate}T12:00:00Z`).toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" }) : null,
       ].filter(Boolean);
       text = `Sonraki bakım: ${parts.join(" · ")}`;
-      tone = colors.greenLight;
+      tone = colors.text;
     }
   }
   return (

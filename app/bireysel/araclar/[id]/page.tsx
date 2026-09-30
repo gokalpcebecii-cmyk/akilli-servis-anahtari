@@ -16,11 +16,14 @@ import OwnerKeychainCard from "@/components/OwnerKeychainCard";
 import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { BrandModelPicker } from "@/components/BrandModelPicker";
 import { DocDatesFields, DOC_DATE_FIELDS } from "@/components/DocDatesFields";
+import { HistoryEntryFields } from "@/components/HistoryEntryFields";
+import { saveHistoryEntries, newRequestId, type HistoryEntry } from "@/lib/historySave";
+const { emptyEntry, validateHistoryEntry } = require("@/lib/history");
 const { printableQrUrl } = require("@/lib/qrUrl");
 
 const { ITEM_LABELS } = require("@/lib/maintenanceItems");
 const { dateDueStatus, fmtDate } = require("@/lib/vehicleStatus");
-const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, describeMaintenancePlan, todayIsoIstanbul } = require("@/lib/logic");
+const { validateVehicleInput, computeMaintenancePlan, isValidNextServiceKm, isValidNextServiceDate, isValidDocDate, todayIsoIstanbul } = require("@/lib/logic");
 
 // Yeni araç akışındaki otomatik bakım planı seçenekleri (PILOT FIX 03 madde B).
 const PLAN_OPTIONS: { key: string; label: string }[] = [
@@ -105,9 +108,6 @@ export default function BireyselVehicleDetailPage() {
   const [statusRecords, setStatusRecords] = useState<{ lastMuayene: any; lastDetailing: any }>({ lastMuayene: null, lastDetailing: null });
   const [sourceCounts, setSourceCounts] = useState<{ service: number | null; owner: number | null }>({ service: null, owner: null });
   const [qrActive, setQrActive] = useState<boolean | null>(null);
-  const [showAddRecord, setShowAddRecord] = useState(false);
-  const [addingRecord, setAddingRecord] = useState(false);
-  const addRecordRef = useRef(false);
   const [maintenanceItems, setMaintenanceItems] = useState<any[]>([]);
   const [intervalInputs, setIntervalInputs] = useState<Record<string, string>>({});
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -117,8 +117,6 @@ export default function BireyselVehicleDetailPage() {
   // PILOT FIX 03 (bölüm F): büyük taranabilir QR artık varsayılan açık
   // görünmüyor — "QR'ı Göster" açık eylemiyle ortaya çıkıyor.
   const [qrRevealed, setQrRevealed] = useState(false);
-  const [newRecord, setNewRecord] = useState({ description: "", km_at_service: "", cost: "" });
-  const [recordError, setRecordError] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
@@ -148,6 +146,23 @@ export default function BireyselVehicleDetailPage() {
   // kompakt tek-dokunuş düğmesi; tüm liste + periyot ayarları ayrı açılım.
   const [quickSearch, setQuickSearch] = useState("");
   const [showAllQuickItems, setShowAllQuickItems] = useState(false);
+  // Nihai UX: Parça Durumu formu uzatmasın diye kapalı başlar.
+  const [showParts, setShowParts] = useState(false);
+  // Tarihler & Belgeler: okuma görünümü; "Düzenle" ile tarih alanları açılır.
+  const [docsEditing, setDocsEditing] = useState(false);
+  const [docsDraft, setDocsDraft] = useState<Record<string, string>>({});
+  const [docsSaving, setDocsSaving] = useState(false);
+  const [docsError, setDocsError] = useState("");
+  const [docsSaved, setDocsSaved] = useState(false);
+  // Zaman çizelgesi: "Geçmiş İşlem Ekle" (bakım/parça ya da diğer kayıt).
+  const [addMode, setAddMode] = useState<null | "bakim" | "diger">(null);
+  const [histEntry, setHistEntry] = useState<HistoryEntry>(emptyEntry());
+  const [histError, setHistError] = useState<{ field: string; message: string } | null>(null);
+  const [histSaveError, setHistSaveError] = useState("");
+  const [histSaved, setHistSaved] = useState("");
+  const histReqRef = useRef<string | null>(null);
+  const histSavingRef = useRef(false);
+  const [histSaving, setHistSaving] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -167,9 +182,6 @@ export default function BireyselVehicleDetailPage() {
       }
       setVehicle(v);
       setNotesDraft(v.notes || "");
-      // Serbest bakım kaydı km alanı, aracın güncel kilometresinden
-      // otomatik dolar ve düzenlenebilir kalır (madde D).
-      if (v?.current_km != null) setNewRecord((prev) => ({ ...prev, km_at_service: String(v.current_km) }));
 
       await loadStatusData();
 
@@ -203,7 +215,10 @@ export default function BireyselVehicleDetailPage() {
         if (hash === "servis-gecmisi") setActiveTab("gecmis");
         else if (hash === "muayene" || hash === "qr") setActiveTab("belgeler");
         else setActiveTab("genel");
-        if (hash === "parca") setShowQuickEntry(true);
+        if (hash === "parca") {
+          setShowParts(true);
+          setShowQuickEntry(true);
+        }
         // #anahtarlik gibi kendi verisini sonradan yükleyen kartlar için
         // kısa aralıklarla birkaç kez denenir.
         let tries = 0;
@@ -404,7 +419,8 @@ export default function BireyselVehicleDetailPage() {
         alert("Bağlantı hatası. Lütfen tekrar deneyin.");
         return;
       }
-      router.push(`/bireysel/araclar/${json.vehicle.id}`);
+      // Nihai UX: yeni araçtan sonra bir kez "son 12 aylık geçmiş" başlangıcı.
+      router.push(`/bireysel/araclar/${json.vehicle.id}/gecmis`);
     } else {
       // Form alanlarında NE varsa (kullanıcı değiştirmediyse mevcut,
       // değiştirdiyse yeni girilen) BİREBİR O yazılır — plan.nextServiceKm/
@@ -538,52 +554,86 @@ export default function BireyselVehicleDetailPage() {
     saveInterval(itemKey, String(value));
   }
 
-  async function handleAddRecord() {
-    // Çift tıklama tek kayıt üretsin (senkron ref kilidi).
-    if (addRecordRef.current) return;
-    // PILOT FIX 03 (bölüm D): boş formda sessiz başarısızlık yerine
-    // alan bazlı hata.
-    if (!newRecord.description.trim()) {
-      setRecordError("Lütfen ne yapıldığını kısaca yazın.");
-      return;
-    }
-    setRecordError("");
-    addRecordRef.current = true;
-    setAddingRecord(true);
+  // Zaman çizelgesi → "Geçmiş İşlem Ekle". Kayıt "Bireysel Geçmiş Kaydı"
+  // (tenant_id=null, geçmiş işlem tarihi). Bakım/parça kaydı, araçta daha yeni
+  // kayıt yoksa sonraki bakımı bu kaydın tarih ve km'sinden başlatır.
+  function openAdd(mode: "bakim" | "diger") {
+    setAddMode((m) => (m === mode ? null : mode));
+    setHistEntry({ ...emptyEntry(), date: todayIsoIstanbul(), otherOn: mode === "diger" });
+    setHistError(null);
+    setHistSaveError("");
+    setHistSaved("");
+    histReqRef.current = null;
+  }
 
+  async function handleAddHistory() {
+    if (!addMode || !userId || histSavingRef.current) return;
+    setHistSaveError("");
+    const today = todayIsoIstanbul();
+    const minDate = vehicle.year ? `${Math.max(1950, Number(vehicle.year) - 1)}-01-01` : "2000-01-01";
+    const err = validateHistoryEntry(histEntry, { today, currentKm: vehicle.current_km, minDate, kind: addMode });
+    setHistError(err);
+    if (err) return;
+    histSavingRef.current = true;
+    setHistSaving(true);
     try {
-      const enteredKm = newRecord.km_at_service ? Number(newRecord.km_at_service) : null;
-      const costNum = newRecord.cost ? Number(newRecord.cost) : null;
-
-      const { error: insertError } = await supabase.from("maintenance_records").insert({
-        vehicle_id: params.id,
-        tenant_id: null,
-        description: newRecord.description.trim(),
-        km_at_service: enteredKm,
-        cost: costNum != null && !Number.isNaN(costNum) ? costNum : null,
-        created_by: userId,
-      });
-      if (insertError) {
-        setRecordError("Kayıt eklenemedi. Lütfen tekrar deneyin.");
+      if (!histReqRef.current) histReqRef.current = newRequestId();
+      const res = await saveHistoryEntries({ supabase, vehicleId: params.id as string, userId, entries: [histEntry], requestIds: [histReqRef.current] });
+      if (!res.ok) {
+        setHistSaveError(res.message || "Kaydedilemedi.");
         return;
       }
-
-      // Daha yüksek km kaydı aracın güncel kilometresini yükseltebilir;
-      // geçmişe dönük daha düşük bir kayıt güncel km'yi ASLA düşürmez.
-      const raisedKm = enteredKm != null && enteredKm > (vehicle.current_km ?? 0);
-      if (raisedKm) {
-        await supabase.from("vehicles").update({ current_km: enteredKm, updated_at: new Date().toISOString() }).eq("id", params.id);
-        setVehicle((prev: any) => ({ ...prev, current_km: enteredKm }));
-      }
-
+      histReqRef.current = null;
+      if (res.plan) setVehicle((prev: any) => ({ ...prev, next_service_km: res.plan!.nextServiceKm, next_service_date: res.plan!.nextServiceDate }));
+      await refreshMaintenanceItems();
       await refreshRecords();
-      const nextKm = raisedKm ? enteredKm : vehicle.current_km;
-      setNewRecord({ description: "", km_at_service: nextKm != null ? String(nextKm) : "", cost: "" });
-      setShowAddRecord(false);
+      setAddMode(null);
+      setHistSaved(res.plan ? "Kayıt eklendi; sonraki bakım bu kayda göre güncellendi." : "Kayıt eklendi.");
+      window.setTimeout(() => setHistSaved(""), 5000);
+    } catch {
+      setHistSaveError("Beklenmeyen bir bağlantı hatası oluştu. Tekrar göndermeden önce zaman çizelgesini kontrol edin.");
     } finally {
-      addRecordRef.current = false;
-      setAddingRecord(false);
+      histSavingRef.current = false;
+      setHistSaving(false);
     }
+  }
+
+  function openDocsEdit() {
+    setDocsDraft({
+      muayene_tarihi: vehicle.muayene_tarihi || "",
+      kasko_bitis: vehicle.kasko_bitis || "",
+      trafik_sigortasi_bitis: vehicle.trafik_sigortasi_bitis || "",
+    });
+    setDocsError("");
+    setDocsSaved(false);
+    setDocsEditing(true);
+  }
+
+  async function handleSaveDocs() {
+    if (docsSaving) return;
+    for (const f of DOC_DATE_FIELDS) {
+      if (!isValidDocDate(docsDraft[f.key])) {
+        setDocsError(`${f.label} geçerli bir tarih olmalı.`);
+        return;
+      }
+    }
+    setDocsError("");
+    setDocsSaving(true);
+    const patch = {
+      muayene_tarihi: docsDraft.muayene_tarihi || null,
+      kasko_bitis: docsDraft.kasko_bitis || null,
+      trafik_sigortasi_bitis: docsDraft.trafik_sigortasi_bitis || null,
+    };
+    const { error } = await supabase.from("vehicles").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", params.id);
+    setDocsSaving(false);
+    if (error) {
+      setDocsError("Kaydedilemedi; tarihler değişmedi. Tekrar deneyin.");
+      return;
+    }
+    setVehicle((prev: any) => ({ ...prev, ...patch }));
+    setDocsEditing(false);
+    setDocsSaved(true);
+    window.setTimeout(() => setDocsSaved(false), 3000);
   }
 
   if (loading || !vehicle) return <DetailSkeleton />;
@@ -621,7 +671,7 @@ export default function BireyselVehicleDetailPage() {
     <main className="otoiz-app-shell" style={{ fontFamily: font, paddingBottom: 60 }}>
       {/* 1) Araç başlığı: plaka, marka/model, kısa meta */}
       <header style={{ background: `linear-gradient(180deg, ${colors.bgAlt} 0%, ${colors.bg} 100%)`, borderBottom: `1px solid ${colors.border}` }}>
-        <div className="otoiz-vehicle-shell" style={{ maxWidth: 560, margin: "0 auto", padding: "10px 16px 22px" }}>
+        <div className={isNew ? "otoiz-vehicle-shell otoiz-form-800" : "otoiz-vehicle-shell otoiz-detail-shell"} style={{ maxWidth: 560, margin: "0 auto", padding: "10px 16px 22px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
             <a href="/bireysel/araclar" style={{ fontSize: 14.5, fontWeight: 600, color: colors.textMuted, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, minHeight: 44, paddingRight: 12 }}>
               <Icon name="chevron-left" color={colors.textMuted} size={18} />
@@ -646,12 +696,12 @@ export default function BireyselVehicleDetailPage() {
             <>
               <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.8, color: colors.text, margin: "10px 0 0", lineHeight: 1.15 }}>{vehicle.plate}</h1>
               <div style={{ display: "flex", alignItems: "baseline", gap: "4px 12px", flexWrap: "wrap", marginTop: 6 }}>
-                <span style={{ fontSize: 15, fontWeight: 600, color: colors.text }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: colors.textMuted }}>
                   {[vehicle.brand, vehicle.model].filter(Boolean).join(" ") || "Marka/model girilmedi"}
                   {vehicle.year ? ` · ${vehicle.year}` : ""}
                 </span>
                 {vehicle.current_km != null && vehicle.current_km !== "" && (
-                  <span style={{ fontSize: 15, fontWeight: 700, color: colors.greenLight }}>{Number(vehicle.current_km).toLocaleString("tr-TR")} km</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{Number(vehicle.current_km).toLocaleString("tr-TR")} km</span>
                 )}
               </div>
             </>
@@ -659,9 +709,9 @@ export default function BireyselVehicleDetailPage() {
         </div>
       </header>
 
-      <div className="otoiz-vehicle-shell" style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className={isNew ? "otoiz-vehicle-shell otoiz-form-800" : "otoiz-vehicle-shell otoiz-detail-shell"} style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 0", display: "flex", flexDirection: "column", gap: 20 }}>
         {(isNew || editingVehicle) && (
-          <section id="arac-formu" data-testid="arac-formu" className="otoiz-enter" style={{ ...cardStyle, padding: 20 }}>
+          <section id="arac-formu" data-testid="arac-formu" className="otoiz-enter otoiz-detail-narrow" style={{ ...cardStyle, padding: 20 }}>
             {!isNew && (
               <>
                 <h2 style={{ fontSize: 18, fontWeight: 800, color: colors.text, margin: "0 0 4px" }}>Araç Bilgilerini Düzenle</h2>
@@ -803,7 +853,7 @@ export default function BireyselVehicleDetailPage() {
                 [
                   { key: "genel", label: "Genel Bakış" },
                   { key: "gecmis", label: "Zaman Çizelgesi" },
-                  { key: "belgeler", label: "Belgeler" },
+                  { key: "belgeler", label: "Tarihler & Belgeler" },
                 ] as const
               ).map((t) => (
                 <button
@@ -822,265 +872,340 @@ export default function BireyselVehicleDetailPage() {
               ))}
             </nav>
 
-            {/* Genel Bakış: 2) durum kartları · 3) QR durumu · 4) teknik /
-                operasyonel bloklar · 5) son işlemler. */}
+            {/* Genel Bakış (Nihai UX): sol — Sonraki Bakım → Muayene/Kasko/Trafik →
+                Yaklaşan İşlemler → Detailing ve Belgeler; sağ — hızlı bakım kaydı,
+                parça durumu, son işlemler, QR, kayıt sayıları. Bakım tek yerde. */}
             {!isNew && vehicle?.id && (
-              <div data-testid={activeTab === "genel" ? "bireysel-ozet" : undefined} style={{ display: activeTab === "genel" ? "flex" : "none", flexDirection: "column", gap: 20 }}>
-                {activeTab === "genel" && (
-                  <VehicleStatusPanel
+              <div data-testid={activeTab === "genel" ? "bireysel-ozet" : undefined} className="otoiz-detail-grid" style={{ display: activeTab === "genel" ? undefined : "none" }}>
+                <div className="otoiz-detail-col">
+                  {activeTab === "genel" && (
+                    <VehicleStatusPanel
+                      vehicle={vehicle}
+                      items={maintenanceItems}
+                      labels={ITEM_LABELS}
+                      lastMuayene={statusRecords.lastMuayene}
+                      lastDetailing={statusRecords.lastDetailing}
+                      onOpenDocs={() => {
+                        setActiveTab("belgeler");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    />
+                  )}
+                </div>
+                <div className="otoiz-detail-col">
+                  <OwnerQuickVisit
                     vehicle={vehicle}
-                    items={maintenanceItems}
-                    labels={ITEM_LABELS}
-                    lastMuayene={statusRecords.lastMuayene}
-                    lastDetailing={statusRecords.lastDetailing}
+                    userId={userId}
+                    items={MAINTENANCE_ITEMS}
+                    defaultIntervals={DEFAULT_ITEM_INTERVALS}
+                    maintenanceItems={maintenanceItems}
+                    onSaved={async (u) => {
+                      setVehicle((prev: any) => ({ ...prev, ...u }));
+                      await refreshMaintenanceItems();
+                      await refreshRecords();
+                    }}
                   />
-                )}
-                <OwnerKeychainCard vehicleId={vehicle.id} onStatus={setQrActive} />
-                <section aria-label="Kayıt kaynakları" style={{ ...cardStyle, padding: 16 }}>
-                  <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.text, margin: "0 0 12px" }}>Kayıtlar</h2>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
-                    <MiniStat label="Servis doğrulamalı" value={sourceCounts.service != null ? String(sourceCounts.service) : "—"} tone={colors.greenLight} />
-                    <MiniStat label="Bireysel kayıt" value={sourceCounts.owner != null ? String(sourceCounts.owner) : "—"} tone={colors.info} />
-                  </div>
-                </section>
-                <OwnerQuickVisit
-                  vehicle={vehicle}
-                  userId={userId}
-                  items={MAINTENANCE_ITEMS}
-                  defaultIntervals={DEFAULT_ITEM_INTERVALS}
-                  maintenanceItems={maintenanceItems}
-                  onSaved={async (u) => {
-                    setVehicle((prev: any) => ({ ...prev, ...u }));
-                    await refreshMaintenanceItems();
-                    await refreshRecords();
-                  }}
-                />
-              </div>
-            )}
-            <section id="parca" style={{ ...cardStyle, display: activeTab === "genel" ? "block" : "none" }}>
-              <SectionHeader icon="wrench" title="Parça Durumu" />
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-                {[...MAINTENANCE_ITEMS, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM.key) ? [LEGACY_ITEM] : [])].map((item) => {
-                  const s = getUpcomingStatus(item.key);
-                  if (!s) return null;
-                  return (
-                    <div key={item.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "12px 14px" }}>
-                      <span style={{ fontSize: 14.5, fontWeight: 600, color: colors.text }}>{item.label}</span>
-                      <span style={badgeStyle(s.kind)}>{s.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => setShowQuickEntry((v) => !v)}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
-                  background: colors.surfaceRaised, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 16px",
-                  cursor: "pointer", fontFamily: font, fontSize: 14.5, fontWeight: 700, color: colors.text, minHeight: 52,
-                }}
-              >
-                Parça değişimi ekle
-                <Icon name={showQuickEntry ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={16} />
-              </button>
-
-              {quickUndo && (
-                <div
-                  role="status"
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
-                    background: colors.greenSoft, borderRadius: radius.sm, padding: "10px 14px", marginTop: 10,
-                  }}
-                >
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: colors.greenLight, fontWeight: 700 }}><Icon name="check" color={colors.greenLight} size={16} />{quickUndo.label} eklendi</span>
+                <section id="parca" style={cardStyle}>
                   <button
                     type="button"
-                    onClick={handleUndoQuickMaintenance}
-                    style={{ background: "none", border: "none", color: colors.text, fontWeight: 800, fontSize: 14, textDecoration: "underline", cursor: "pointer", minHeight: 44, fontFamily: font }}
+                    data-testid="parca-durumu-ac"
+                    aria-expanded={showParts}
+                    onClick={() => setShowParts((v) => !v)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "none", padding: 0, minHeight: 44, cursor: "pointer", fontFamily: font }}
                   >
-                    Geri al
+                    <span style={{ fontSize: 15, fontWeight: 800, color: colors.text }}>Parça Durumu</span>
+                    <Icon name={showParts ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={18} />
                   </button>
-                </div>
-              )}
+                  {showParts && (
+                  <>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "12px 0 16px" }}>
+                    {[...MAINTENANCE_ITEMS, ...(maintenanceItems.some((m: any) => m.item_key === LEGACY_ITEM.key) ? [LEGACY_ITEM] : [])].map((item) => {
+                      const s = getUpcomingStatus(item.key);
+                      if (!s) return null;
+                      return (
+                        <div key={item.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "12px 14px" }}>
+                          <span style={{ fontSize: 14.5, fontWeight: 600, color: colors.text }}>{item.label}</span>
+                          <span style={badgeStyle(s.kind)}>{s.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
 
-              {showQuickEntry && (
-              <>
-              <p style={{ ...helperStyle, margin: "14px 0" }}>
-                Kendiniz yaptıysanız ya da başka yerde yaptırdıysanız işleme dokunun. Bugünün tarihi, güncel km ve varsayılan periyotla kaydedilir.
-              </p>
+                  <button
+                    onClick={() => setShowQuickEntry((v) => !v)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+                      background: colors.surfaceRaised, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 16px",
+                      cursor: "pointer", fontFamily: font, fontSize: 14.5, fontWeight: 700, color: colors.text, minHeight: 52,
+                    }}
+                  >
+                    Parça değişimi ekle
+                    <Icon name={showQuickEntry ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={16} />
+                  </button>
 
-              {/* PILOT FIX 03 (bölüm D): dokuz büyük kart yerine — arama +
-                  en sık 6 işlem kompakt tek-dokunuş düğmesi ilk görünümde. */}
-              <input
-                type="search"
-                placeholder="İşlem ara (örn. lastik)"
-                value={quickSearch}
-                onChange={(e) => setQuickSearch(e.target.value)}
-                style={{ ...inputStyle, marginBottom: 10 }}
-              />
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
-                {(quickSearch ? MAINTENANCE_ITEMS : TOP_QUICK_ITEMS)
-                  .filter((item) => item.label.toLocaleLowerCase("tr-TR").includes(quickSearch.toLocaleLowerCase("tr-TR")))
-                  .map((item) => {
-                    const status = getItemStatus(item.key);
-                    const isSaving = savingItem === item.key;
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => handleQuickMaintenance(item.key, item.label)}
-                        disabled={isSaving}
-                        style={{ ...chipStyle(!!status?.isToday), cursor: isSaving ? "wait" : "pointer" }}
-                      >
-                        {isSaving ? "Kaydediliyor…" : item.label}
-                        {status?.isToday && " ✓"}
-                      </button>
-                    );
-                  })}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowAllQuickItems((v) => !v)}
-                style={{ background: "none", border: "none", color: colors.greenLight, fontWeight: 700, fontSize: 14, padding: "4px 0", minHeight: 44, cursor: "pointer", fontFamily: font, marginBottom: showAllQuickItems ? 10 : 4 }}
-              >
-                {showAllQuickItems ? "Tüm işlemler ve periyot ayarları ▲" : "Tüm işlemler ve periyot ayarları ▾"}
-              </button>
-
-              {showAllQuickItems && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {MAINTENANCE_ITEMS.filter((item) => item.label.toLocaleLowerCase("tr-TR").includes(quickSearch.toLocaleLowerCase("tr-TR"))).map((item) => {
-                  const status = getItemStatus(item.key);
-                  const isSaving = savingItem === item.key;
-                  const isSavingInterval = savingInterval === item.key;
-                  const currentValue = intervalInputs[item.key] ?? "";
-                  return (
+                  {quickUndo && (
                     <div
-                      key={item.key}
+                      role="status"
                       style={{
-                        padding: "12px 14px",
-                        borderRadius: radius.sm,
-                        border: status?.isToday ? `1px solid ${colors.green}` : `1px solid ${colors.border}`,
-                        background: status?.isToday ? colors.greenSoft : colors.surfaceRaised,
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                        background: colors.greenSoft, borderRadius: radius.sm, padding: "10px 14px", marginTop: 10,
                       }}
                     >
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: colors.greenLight, fontWeight: 700 }}><Icon name="check" color={colors.greenLight} size={16} />{quickUndo.label} eklendi</span>
                       <button
-                        onClick={() => handleQuickMaintenance(item.key, item.label)}
-                        disabled={isSaving}
-                        style={{
-                          width: "100%", textAlign: "left", background: "none", border: "none", minHeight: 32,
-                          cursor: isSaving ? "wait" : "pointer",
-                          color: status?.isToday ? colors.greenLight : colors.text, fontWeight: 700, fontSize: 14.5, padding: 0, marginBottom: 8, fontFamily: font,
-                        }}
+                        type="button"
+                        onClick={handleUndoQuickMaintenance}
+                        style={{ background: "none", border: "none", color: colors.text, fontWeight: 800, fontSize: 14, textDecoration: "underline", cursor: "pointer", minHeight: 44, fontFamily: font }}
                       >
-                        <div>{isSaving ? "Kaydediliyor…" : item.label}</div>
-                        {status && (
-                          <div style={{ fontSize: 12.5, fontWeight: 500, marginTop: 2, color: status.isToday ? colors.greenLight : colors.textMuted }}>
-                            {status.isToday ? "✓ Bugün yapıldı" : `Son: ${new Date(status.date).toLocaleDateString("tr-TR")}`}
-                          </div>
-                        )}
+                        Geri al
                       </button>
-
-                      <div style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 6 }}>Periyot (km)</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
-                        {PRESET_KM_OPTIONS.map((preset) => {
-                          const isActive = currentValue === String(preset);
-                          return (
-                            <button
-                              key={preset}
-                              onClick={() => handlePresetClick(item.key, preset)}
-                              disabled={isSavingInterval}
-                              style={{
-                                padding: "6px 12px", borderRadius: radius.pill,
-                                border: `1px solid ${isActive ? colors.green : colors.border}`,
-                                background: isActive ? colors.green : colors.surface,
-                                color: isActive ? colors.onAccent : colors.textMuted,
-                                fontSize: 13, fontWeight: 700, cursor: isSavingInterval ? "wait" : "pointer", minHeight: 36, fontFamily: font,
-                              }}
-                            >
-                              {preset.toLocaleString("tr-TR")}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="veya kendi sayını yaz"
-                        value={currentValue}
-                        onChange={(e) => handleIntervalInputChange(item.key, e.target.value.replace(/\D/g, ""))}
-                        onBlur={() => handleIntervalBlur(item.key)}
-                        disabled={isSavingInterval}
-                        style={{ ...inputStyle, minHeight: 44, padding: "8px 12px", fontSize: 15 }}
-                      />
                     </div>
-                  );
-                })}
-              </div>
-              )}
-              </>
-              )}
-            </section>
+                  )}
 
-            {activeTab === "genel" && (
-              <VehicleTimeline
-                supabase={supabase}
-                vehicleId={params.id as string}
-                audience="bireysel"
-                reloadKey={timelineReload}
-                preview={5}
-                title="Son İşlemler"
-                alwaysShowAll
-                onShowAll={() => {
-                  setActiveTab("gecmis");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
+                  {showQuickEntry && (
+                  <>
+                  <p style={{ ...helperStyle, margin: "14px 0" }}>
+                    Kendiniz yaptıysanız ya da başka yerde yaptırdıysanız işleme dokunun. Bugünün tarihi, güncel km ve varsayılan periyotla kaydedilir.
+                  </p>
+
+                  {/* PILOT FIX 03 (bölüm D): dokuz büyük kart yerine — arama +
+                      en sık 6 işlem kompakt tek-dokunuş düğmesi ilk görünümde. */}
+                  <input
+                    type="search"
+                    placeholder="İşlem ara (örn. lastik)"
+                    value={quickSearch}
+                    onChange={(e) => setQuickSearch(e.target.value)}
+                    style={{ ...inputStyle, marginBottom: 10 }}
+                  />
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                    {(quickSearch ? MAINTENANCE_ITEMS : TOP_QUICK_ITEMS)
+                      .filter((item) => item.label.toLocaleLowerCase("tr-TR").includes(quickSearch.toLocaleLowerCase("tr-TR")))
+                      .map((item) => {
+                        const status = getItemStatus(item.key);
+                        const isSaving = savingItem === item.key;
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => handleQuickMaintenance(item.key, item.label)}
+                            disabled={isSaving}
+                            style={{ ...chipStyle(!!status?.isToday), cursor: isSaving ? "wait" : "pointer" }}
+                          >
+                            {isSaving ? "Kaydediliyor…" : item.label}
+                            {status?.isToday && " ✓"}
+                          </button>
+                        );
+                      })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAllQuickItems((v) => !v)}
+                    style={{ background: "none", border: "none", color: colors.greenLight, fontWeight: 700, fontSize: 14, padding: "4px 0", minHeight: 44, cursor: "pointer", fontFamily: font, marginBottom: showAllQuickItems ? 10 : 4 }}
+                  >
+                    {showAllQuickItems ? "Tüm işlemler ve periyot ayarları ▲" : "Tüm işlemler ve periyot ayarları ▾"}
+                  </button>
+
+                  {showAllQuickItems && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {MAINTENANCE_ITEMS.filter((item) => item.label.toLocaleLowerCase("tr-TR").includes(quickSearch.toLocaleLowerCase("tr-TR"))).map((item) => {
+                      const status = getItemStatus(item.key);
+                      const isSaving = savingItem === item.key;
+                      const isSavingInterval = savingInterval === item.key;
+                      const currentValue = intervalInputs[item.key] ?? "";
+                      return (
+                        <div
+                          key={item.key}
+                          style={{
+                            padding: "12px 14px",
+                            borderRadius: radius.sm,
+                            border: status?.isToday ? `1px solid ${colors.green}` : `1px solid ${colors.border}`,
+                            background: status?.isToday ? colors.greenSoft : colors.surfaceRaised,
+                          }}
+                        >
+                          <button
+                            onClick={() => handleQuickMaintenance(item.key, item.label)}
+                            disabled={isSaving}
+                            style={{
+                              width: "100%", textAlign: "left", background: "none", border: "none", minHeight: 32,
+                              cursor: isSaving ? "wait" : "pointer",
+                              color: status?.isToday ? colors.greenLight : colors.text, fontWeight: 700, fontSize: 14.5, padding: 0, marginBottom: 8, fontFamily: font,
+                            }}
+                          >
+                            <div>{isSaving ? "Kaydediliyor…" : item.label}</div>
+                            {status && (
+                              <div style={{ fontSize: 12.5, fontWeight: 500, marginTop: 2, color: status.isToday ? colors.greenLight : colors.textMuted }}>
+                                {status.isToday ? "✓ Bugün yapıldı" : `Son: ${new Date(status.date).toLocaleDateString("tr-TR")}`}
+                              </div>
+                            )}
+                          </button>
+
+                          <div style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 6 }}>Periyot (km)</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+                            {PRESET_KM_OPTIONS.map((preset) => {
+                              const isActive = currentValue === String(preset);
+                              return (
+                                <button
+                                  key={preset}
+                                  onClick={() => handlePresetClick(item.key, preset)}
+                                  disabled={isSavingInterval}
+                                  style={{
+                                    padding: "6px 12px", borderRadius: radius.pill,
+                                    border: `1px solid ${isActive ? colors.green : colors.border}`,
+                                    background: isActive ? colors.green : colors.surface,
+                                    color: isActive ? colors.onAccent : colors.textMuted,
+                                    fontSize: 13, fontWeight: 700, cursor: isSavingInterval ? "wait" : "pointer", minHeight: 36, fontFamily: font,
+                                  }}
+                                >
+                                  {preset.toLocaleString("tr-TR")}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="veya kendi sayını yaz"
+                            value={currentValue}
+                            onChange={(e) => handleIntervalInputChange(item.key, e.target.value.replace(/\D/g, ""))}
+                            onBlur={() => handleIntervalBlur(item.key)}
+                            disabled={isSavingInterval}
+                            style={{ ...inputStyle, minHeight: 44, padding: "8px 12px", fontSize: 15 }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  )}
+                  </>
+                  )}
+                              </>
+                  )}
+                </section>
+                  {activeTab === "genel" && (
+                    <VehicleTimeline
+                      supabase={supabase}
+                      vehicleId={params.id as string}
+                      audience="bireysel"
+                      reloadKey={timelineReload}
+                      preview={5}
+                      title="Son İşlemler"
+                      alwaysShowAll
+                      onShowAll={() => {
+                        setActiveTab("gecmis");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    />
+                  )}
+                  <OwnerKeychainCard vehicleId={vehicle.id} onStatus={setQrActive} />
+                  <section aria-label="Kayıt kaynakları" style={{ ...cardStyle, padding: 16 }}>
+                    <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.text, margin: "0 0 12px" }}>Kayıtlar</h2>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+                      <MiniStat label="Servis doğrulamalı" value={sourceCounts.service != null ? String(sourceCounts.service) : "—"} tone={colors.text} />
+                      <MiniStat label="Bireysel kayıt" value={sourceCounts.owner != null ? String(sourceCounts.owner) : "—"} tone={colors.text} />
+                    </div>
+                  </section>
+                  {PILOT_FLAGS.ownershipTransferSelfService && (
+                    <section id="devir" style={{ ...cardStyle, textAlign: "center" }}>
+                      <SectionHeader icon="swap" title="Sahiplik Devri" center />
+                      <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 14, lineHeight: 1.6 }}>
+                        Aracınızı sattığınızda teknik geçmişi koruyarak yeni sahibine güvenle devredin.
+                        Kişisel bilgileriniz yeni sahibine aktarılmaz.
+                      </p>
+                      <a
+                        href={`/bireysel/araclar/${params.id}/devret`}
+                        style={{ ...secondaryButtonStyle(), display: "inline-flex", alignItems: "center", justifyContent: "center", width: "auto", textDecoration: "none" }}
+                      >
+                        Aracı Devret / Elden Çıkar
+                      </a>
+                    </section>
+                  )}
+                </div>
+              </div>
             )}
 
-            <section id="muayene" style={{ ...cardStyle, display: activeTab === "belgeler" ? "block" : "none" }}>
-              <SectionHeader icon="clipboard" title="Muayene ve Sigorta" />
-              <div data-testid="belge-ozet" style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-                {DOC_DATE_FIELDS.map((f) => {
-                  const v = vehicle[f.key];
-                  const st = dateDueStatus(v, todayIsoIstanbul());
-                  return (
-                    <div key={f.key} data-testid={`belge-satir-${f.key}`} data-level={st.level} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "12px 14px" }}>
-                      <span style={{ minWidth: 0 }}>
-                        <span style={{ display: "block", fontSize: 13, color: colors.textMuted }}>{f.label}</span>
-                        <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: colors.text, marginTop: 2 }}>{v ? fmtDate(v) : "Tarih girilmedi"}</span>
-                      </span>
-                      <StatusPill level={st.level} />
+            {/* Tarihler & Belgeler (Nihai UX): okunur satırlar; sağ üstte
+                "Düzenle" ile tarih alanları açılır. Not ayrı ve ikincil. */}
+            <div className="otoiz-detail-narrow" style={{ display: activeTab === "belgeler" ? "flex" : "none", flexDirection: "column", gap: 16 }}>
+              <section id="muayene" data-testid="tarihler-belgeler" style={cardStyle}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
+                  <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>Muayene ve Sigorta</h2>
+                  {!docsEditing && (
+                    <button
+                      type="button"
+                      aria-label="Tarihleri düzenle"
+                      onClick={openDocsEdit}
+                      style={{ ...secondaryButtonStyle(), width: "auto", minHeight: 40, padding: "0 16px", fontSize: 14 }}
+                    >
+                      Düzenle
+                    </button>
+                  )}
+                </div>
+                {docsEditing ? (
+                  <>
+                    <DocDatesFields idPrefix="belge" hideLegend value={docsDraft} onChange={(key, v) => setDocsDraft((d) => ({ ...d, [key]: v }))} />
+                    {docsError && <p role="alert" style={{ ...errorTextStyle, margin: "0 0 12px" }}>{docsError}</p>}
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <button type="button" onClick={() => setDocsEditing(false)} disabled={docsSaving} style={{ ...secondaryButtonStyle(), flex: 1 }}>
+                        Vazgeç
+                      </button>
+                      <button type="button" onClick={handleSaveDocs} disabled={docsSaving} style={{ ...primaryButtonStyle(docsSaving), flex: 1 }}>
+                        {docsSaving ? "Kaydediliyor…" : "Kaydet"}
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingVehicle(true);
-                  window.setTimeout(() => document.querySelector<HTMLElement>('[data-field="muayene_tarihi"]')?.focus(), 50);
-                }}
-                style={{ ...primaryButtonStyle(false), marginBottom: 20 }}
-              >
-                Tarihleri Güncelle
-              </button>
-              <label htmlFor="arac-notlar" style={labelStyle}>Notlar <span style={{ color: colors.textFaint, fontWeight: 500 }}>(isteğe bağlı)</span></label>
-              <textarea
-                id="arac-notlar"
-                value={notesDraft}
-                onChange={(e) => setNotesDraft(e.target.value)}
-                placeholder="Örn. kasko poliçe numarası"
-                rows={3}
-                style={{ ...inputStyle, marginBottom: 12, resize: "vertical", fontFamily: font, lineHeight: 1.5 }}
-              />
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <button onClick={handleSaveNotes} disabled={savingNotes} style={{ ...secondaryButtonStyle(), width: "auto", padding: "0 22px" }}>
-                  {savingNotes ? "Kaydediliyor…" : "Notu Kaydet"}
-                </button>
-                {notesSaved && <span role="status" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: colors.greenLight, fontWeight: 700 }}><Icon name="check" color={colors.greenLight} size={16} />Kaydedildi</span>}
-              </div>
-            </section>
+                  </>
+                ) : (
+                  <div data-testid="belge-ozet" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {DOC_DATE_FIELDS.map((f) => {
+                      const v = vehicle[f.key];
+                      const st = dateDueStatus(v, todayIsoIstanbul());
+                      const name = { muayene_tarihi: "Muayene", kasko_bitis: "Kasko", trafik_sigortasi_bitis: "Zorunlu Trafik Sigortası" }[f.key];
+                      return (
+                        <div key={f.key} data-testid={`belge-satir-${f.key}`} data-level={st.level} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "12px 14px" }}>
+                          <span style={{ minWidth: 0 }}>
+                            <span style={{ display: "block", fontSize: 13, color: colors.textMuted }}>{name}</span>
+                            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: colors.text, marginTop: 2 }}>
+                              {v ? fmtDate(v) : "Tarih girilmedi"}
+                              {v && st.daysLeft != null && (
+                                <span style={{ fontWeight: 500, color: colors.textMuted }}>
+                                  {" · "}
+                                  {st.daysLeft === 0 ? "bugün" : st.daysLeft < 0 ? `${Math.abs(st.daysLeft)} gün geçti` : `${st.daysLeft} gün kaldı`}
+                                </span>
+                              )}
+                            </span>
+                          </span>
+                          <StatusPill level={st.level} />
+                        </div>
+                      );
+                    })}
+                    {docsSaved && (
+                      <span role="status" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: colors.greenLight, fontWeight: 700, marginTop: 4 }}>
+                        <Icon name="check" color={colors.greenLight} size={16} />
+                        Tarihler kaydedildi
+                      </span>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              <section aria-label="Not" style={{ ...cardStyle, padding: 16 }}>
+                <label htmlFor="arac-notlar" style={{ ...labelStyle, fontSize: 13 }}>Not <span style={{ color: colors.textFaint, fontWeight: 500 }}>(isteğe bağlı)</span></label>
+                <textarea
+                  id="arac-notlar"
+                  value={notesDraft}
+                  onChange={(e) => setNotesDraft(e.target.value)}
+                  placeholder="Örn. kasko poliçe numarası"
+                  rows={2}
+                  style={{ ...inputStyle, marginBottom: 10, resize: "vertical", fontFamily: font, lineHeight: 1.5, fontSize: 15 }}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <button onClick={handleSaveNotes} disabled={savingNotes} style={{ ...secondaryButtonStyle(), width: "auto", padding: "0 18px", minHeight: 44, fontSize: 14 }}>
+                    {savingNotes ? "Kaydediliyor…" : "Notu Kaydet"}
+                  </button>
+                  {notesSaved && <span role="status" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: colors.greenLight, fontWeight: 700 }}><Icon name="check" color={colors.greenLight} size={16} />Kaydedildi</span>}
+                </div>
+              </section>
+            </div>
 
             <section id="qr" className="otoiz-hero-pattern" style={{ ...cardStyle, textAlign: "center", display: activeTab === "belgeler" && PILOT_FLAGS.qrSelfIssuance ? "block" : "none" }}>
               <SectionHeader icon="qr" title="QR / NFC Yönetimi" center />
@@ -1141,76 +1266,57 @@ export default function BireyselVehicleDetailPage() {
               )}
             </section>
 
-            <section id="devir" style={{ ...cardStyle, textAlign: "center", display: activeTab === "genel" && PILOT_FLAGS.ownershipTransferSelfService ? "block" : "none" }}>
-              <SectionHeader icon="swap" title="Sahiplik Devri" center />
-              <p style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 14, lineHeight: 1.6 }}>
-                Aracınızı sattığınızda teknik geçmişi koruyarak yeni sahibine güvenle devredin.
-                Kişisel bilgileriniz yeni sahibine aktarılmaz.
-              </p>
-              <a
-                href={`/bireysel/araclar/${params.id}/devret`}
-                style={{ ...secondaryButtonStyle(), display: "inline-flex", alignItems: "center", justifyContent: "center", width: "auto", textDecoration: "none" }}
-              >
-                Aracı Devret / Elden Çıkar
-              </a>
-            </section>
-
-            <div id="servis-gecmisi" style={{ display: activeTab === "gecmis" ? "flex" : "none", flexDirection: "column", gap: 14 }}>
-              <section style={cardStyle}>
-                <button
-                  type="button"
-                  data-testid="kendi-kaydini-ekle"
-                  onClick={() => setShowAddRecord((v) => !v)}
-                  aria-expanded={showAddRecord}
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "none",
-                    padding: 0, cursor: "pointer", fontFamily: font, fontSize: 15, fontWeight: 800, color: colors.text, minHeight: 44,
-                  }}
-                >
-                  Kendi kaydını ekle (serbest not)
-                  <Icon name={showAddRecord ? "chevron-up" : "chevron-down"} color={colors.textMuted} size={16} />
-                </button>
-                {showAddRecord && (
-                  <div style={{ marginTop: 10 }}>
-                    <p style={{ ...helperStyle, margin: "0 0 14px" }}>
-                      Bu kayıt &quot;Bireysel Kayıt&quot; olarak görünür; servis doğrulamalı kayıtlardan ayrı gösterilir.
-                    </p>
-                    <input
-                      placeholder="Yapılan işlem (örn. Araç muayenesi, Seramik kaplama)"
-                      aria-invalid={!!recordError}
-                      aria-describedby={recordError ? "record-desc-err" : undefined}
-                      style={{ ...inputStyle, marginBottom: recordError ? 0 : 10 }}
-                      value={newRecord.description}
-                      onChange={(e) => {
-                        setNewRecord({ ...newRecord, description: e.target.value });
-                        if (recordError) setRecordError("");
-                      }}
-                    />
-                    {recordError && (
-                      <p id="record-desc-err" role="alert" style={{ ...errorTextStyle, margin: "6px 0 10px" }}>
-                        {recordError}
-                      </p>
-                    )}
-                    <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-                      <CaretSafeInput caretChars="digits"
-                        type="text" inputMode="numeric" placeholder="Km" aria-label="Kilometre" style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3, minWidth: 0 }}
-                        value={formatKmInput(newRecord.km_at_service)}
-                        onChange={(e) => setNewRecord({ ...newRecord, km_at_service: sanitizeKmInput(e.target.value) })}
-                      />
-                      <CaretSafeInput caretChars="digits"
-                        type="text" inputMode="decimal" placeholder="Ücret (₺)" aria-label="Ücret" style={{ ...inputStyle, minWidth: 0 }}
-                        value={newRecord.cost}
-                        onChange={(e) => setNewRecord({ ...newRecord, cost: e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".") })}
-                      />
-                    </div>
+            <div id="servis-gecmisi" className="otoiz-detail-narrow" style={{ display: activeTab === "gecmis" ? "flex" : "none", flexDirection: "column", gap: 14 }}>
+              {/* Nihai UX: serbest not yerine "Geçmiş İşlem Ekle" — kayıt
+                  "Bireysel Geçmiş Kaydı" olarak görünür. */}
+              <section data-testid="gecmis-islem-ekle" style={cardStyle}>
+                <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.text, margin: "0 0 4px" }}>Geçmiş İşlem Ekle</h2>
+                <p style={{ ...helperStyle, margin: "0 0 12px" }}>Servis dışında ya da OTOİZ öncesinde yapılan işlemler &quot;Bireysel Geçmiş Kaydı&quot; olarak eklenir.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+                  {(
+                    [
+                      { key: "bakim", label: "Bakım / Parça Değişimi" },
+                      { key: "diger", label: "Diğer Araç Kaydı" },
+                    ] as const
+                  ).map((o) => (
                     <button
-                      onClick={handleAddRecord}
-                      disabled={!newRecord.description.trim() || addingRecord}
-                      style={{ ...primaryButtonStyle(!newRecord.description.trim() || addingRecord), width: "100%" }}
+                      key={o.key}
+                      type="button"
+                      aria-expanded={addMode === o.key}
+                      onClick={() => openAdd(o.key)}
+                      style={{ ...chipStyle(addMode === o.key), borderRadius: radius.sm, minHeight: 48, padding: "10px 12px", lineHeight: 1.25 }}
                     >
-                      {addingRecord ? "Kaydediliyor…" : "Kaydı Ekle"}
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+                {addMode && (
+                  <div style={{ marginTop: 16 }}>
+                    <HistoryEntryFields
+                      key={addMode}
+                      idPrefix={`ekle-${addMode}`}
+                      kind={addMode}
+                      entry={histEntry}
+                      onChange={(n) => {
+                        setHistEntry(n);
+                        if (histError) setHistError(null);
+                        histReqRef.current = null;
+                      }}
+                      today={todayIso}
+                      minDate={vehicle.year ? `${Math.max(1950, Number(vehicle.year) - 1)}-01-01` : "2000-01-01"}
+                      error={histError}
+                    />
+                    {histSaveError && <p role="alert" style={{ ...errorTextStyle, margin: "12px 0 0" }}>{histSaveError}</p>}
+                    <button type="button" onClick={handleAddHistory} disabled={histSaving} style={{ ...primaryButtonStyle(histSaving), marginTop: 16 }}>
+                      {histSaving ? "Kaydediliyor…" : "Kaydı Ekle"}
                     </button>
                   </div>
+                )}
+                {histSaved && (
+                  <p role="status" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: colors.greenLight, fontWeight: 700, margin: "12px 0 0" }}>
+                    <Icon name="check" color={colors.greenLight} size={16} />
+                    {histSaved}
+                  </p>
                 )}
               </section>
               {activeTab === "gecmis" && (

@@ -15,10 +15,13 @@ const { TIMELINE_PAGE, normalizeTimelineResponse, mergeTimelinePages, describeEv
 const { fmtDate } = require("@/lib/vehicleStatus");
 
 // Kapalı tasarım rozetleri: servis doğrulamalı = yeşil çerçeveli, bireysel =
-// mavi, sistem = gri. Düzeltilmiş kayıt ayrıca sarı kenarlıklı rozetle.
+// mavi, bireysel geçmiş = mavi çerçeveli, sistem = gri. Düzeltilmiş kayıt ayrıca sarı kenarlıklı rozetle.
 const SOURCE_STYLE: Record<string, { fg: string; bg: string; border: string; icon: string }> = {
   service: { fg: colors.greenLight, bg: "transparent", border: colors.green, icon: "shield-check" },
   owner: { fg: colors.info, bg: colors.infoSoft, border: "rgba(96,165,250,0.45)", icon: "user" },
+  // Nihai UX: araç sahibinin geçmişe dönük girdiği kayıt — bireysel mavi,
+  // dolgusuz (servis doğrulamalı gibi görünmez).
+  owner_history: { fg: colors.info, bg: "transparent", border: "rgba(96,165,250,0.45)", icon: "history" },
   system: { fg: colors.textMuted, bg: colors.neutralSoft, border: "transparent", icon: "car" },
 };
 
@@ -138,7 +141,7 @@ export function VehicleTimeline({
                   const s = SOURCE_STYLE[d.source] ?? SOURCE_STYLE.system;
                   return (
                     <li key={`${ev.kind}:${ev.id}`} data-testid="zaman-olay" data-source={d.source} style={{ position: "relative", padding: "2px 0 16px 18px" }}>
-                      <span aria-hidden="true" style={{ position: "absolute", left: -7, top: 6, width: 12, height: 12, borderRadius: "50%", background: colors.surface, border: `3px solid ${d.source === "service" ? colors.green : d.source === "owner" ? colors.info : colors.gray}` }} />
+                      <span aria-hidden="true" style={{ position: "absolute", left: -7, top: 6, width: 12, height: 12, borderRadius: "50%", background: colors.surface, border: `3px solid ${d.source === "service" ? colors.green : d.source === "owner" || d.source === "owner_history" ? colors.info : colors.gray}` }} />
                       <div style={{ fontSize: 13, color: colors.textMuted, fontWeight: 600 }}>
                         {fmtDate(ev.event_date)}
                         {ev.km != null && (

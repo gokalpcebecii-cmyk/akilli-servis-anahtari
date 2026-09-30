@@ -21,15 +21,17 @@ export function DocDatesFields({
   value,
   onChange,
   idPrefix = "belge",
+  hideLegend = false,
 }: {
   value: DocDates;
   onChange: (key: keyof DocDates, v: string) => void;
   idPrefix?: string;
+  hideLegend?: boolean;
 }) {
   const today = todayIsoIstanbul();
   return (
     <fieldset data-testid="belge-tarihleri" style={{ border: "none", padding: 0, margin: "4px 0 16px", minWidth: 0 }}>
-      <legend style={{ width: "100%", fontSize: 12.5, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", color: colors.textFaint, margin: "0 0 12px", padding: "0 0 8px", borderBottom: `1px solid ${colors.border}` }}>Muayene ve Sigorta Tarihleri</legend>
+      <legend className={hideLegend ? "sr-only" : undefined} style={hideLegend ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" } : { width: "100%", fontSize: 12.5, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", color: colors.textFaint, margin: "0 0 12px", padding: "0 0 8px", borderBottom: `1px solid ${colors.border}` }}>Muayene ve Sigorta Tarihleri</legend>
       {DOC_DATE_FIELDS.map((f) => {
         const v = (value as any)[f.key] || "";
         const st = dateDueStatus(v, today);

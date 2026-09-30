@@ -66,7 +66,7 @@ const OK = { status: 200, body: { ok: true, duplicate: false, record_id: "x", se
 
 async function expectNoSuccessAndRetryable(page: Page) {
   await expect(page.getByText(/Kayıt tamamlandı/)).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "KAYDET" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Bakımı Kaydet" })).toBeEnabled();
 }
 
 test.describe("Kapanış — servis hızlı bakım kaydı (tek RPC)", () => {
@@ -76,7 +76,7 @@ test.describe("Kapanış — servis hızlı bakım kaydı (tek RPC)", () => {
       await page.getByRole("button", { name, exact: true }).click();
     }
     await page.getByTestId("servis-not").fill("ön lastikler 3 mm");
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect(page.getByText(/Kayıt tamamlandı/)).toBeVisible();
     expect(s.rpcCalls.length).toBe(1);
     const body = s.rpcCalls[0];
@@ -89,7 +89,7 @@ test.describe("Kapanış — servis hızlı bakım kaydı (tek RPC)", () => {
   test("sunucu hatası: başarı yok, açık Türkçe hata, KAYDET yeniden kullanılabilir", async ({ page, baseURL }) => {
     await setupServis(page, baseURL!, { status: 500, body: { message: "internal" } });
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("Kayıt yapılamadı; hiçbir değişiklik kaydedilmedi.");
     await expect(page.locator('p[role="alert"]')).not.toContainText("internal");
     await expectNoSuccessAndRetryable(page);
@@ -98,7 +98,7 @@ test.describe("Kapanış — servis hızlı bakım kaydı (tek RPC)", () => {
   test("düşük kilometre (sunucu reddi): anlaşılır mesaj", async ({ page, baseURL }) => {
     await setupServis(page, baseURL!, { status: 400, body: { message: "km_lower_than_current", code: "P0001" } });
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("düşük olamaz");
     await expectNoSuccessAndRetryable(page);
   });
@@ -106,7 +106,7 @@ test.describe("Kapanış — servis hızlı bakım kaydı (tek RPC)", () => {
   test("yetki yok / onaysız işletme: anlaşılır mesaj", async ({ page, baseURL }) => {
     await setupServis(page, baseURL!, { status: 403, body: { message: "forbidden", code: "42501" } });
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("yetkiniz yok");
     await expectNoSuccessAndRetryable(page);
   });
@@ -114,7 +114,7 @@ test.describe("Kapanış — servis hızlı bakım kaydı (tek RPC)", () => {
   test("bağlantı kopması: başarı yok, bağlantı hatası, KAYDET yeniden etkin", async ({ page, baseURL }) => {
     await setupServis(page, baseURL!, "abort");
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("bağlantı hatası");
     await expectNoSuccessAndRetryable(page);
   });
@@ -122,7 +122,7 @@ test.describe("Kapanış — servis hızlı bakım kaydı (tek RPC)", () => {
   test("kayıt sonrası ekran yenilenemezse: normal başarı yok, 'yeniden göndermeyin' uyarısı, seçim korunur", async ({ page, baseURL }) => {
     await setupServis(page, baseURL!, OK, { failRefresh: true });
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("Yeniden göndermeyin");
     await expect(page.getByText(/Kayıt tamamlandı/)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Motor Yağı", exact: true })).toHaveAttribute("aria-pressed", "true");
@@ -205,7 +205,8 @@ test.describe("Kapanış — yeni araç ve yönlendirmeler", () => {
       b.click();
       b.click();
     });
-    await page.waitForURL(new RegExp(`/bireysel/araclar/${CREATED_ID}$`));
+    // Nihai UX: yeni araçtan sonra "son 12 aylık geçmiş" başlangıç ekranı.
+    await page.waitForURL(new RegExp(`/bireysel/araclar/${CREATED_ID}/gecmis$`));
     expect(posts).toBe(1);
   });
 

@@ -122,7 +122,7 @@ test.describe("İkinci düzeltme turu — madde 2: çift gönderim tek araç olu
     // yansımadan gelen ikinci tıklamayı taklit eder (madde A5/A1'in
     // senkron useRef kilidi burada test ediliyor).
     await Promise.all([submitBtn.click(), submitBtn.click()]);
-    await page.waitForURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}$`));
+    await page.waitForURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}/gecmis$`));
 
     expect(postCount, "iki hızlı tıklama yalnızca BİR POST /api/vehicles üretmeli").toBe(1);
   });
@@ -182,7 +182,7 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
     const { recordInserts } = await setupQuickSave(page, baseURL!, "34 GR 001");
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await page.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     expect(recordInserts.length, "maintenance_records'a tam olarak bir POST gitmeli").toBe(1);
@@ -195,7 +195,7 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await page.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
     await page.getByRole("button", { name: "Hava Filtresi", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     const rows = Array.isArray(recordInserts[0]) ? recordInserts[0] : [recordInserts[0]];
@@ -211,7 +211,7 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
     // Otomatik öneri en erken olanı (50.000) seçmeli, en geç olanı değil.
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await page.getByRole("button", { name: "Hava Filtresi", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     expect(vehiclePatches.length).toBeGreaterThan(0);
@@ -223,7 +223,7 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
     const { vehiclePatches } = await setupQuickSave(page, baseURL!, "34 GR 005");
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await page.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     expect(vehiclePatches.length, "vehicles'a tam olarak bir PATCH gitmeli").toBe(1);
@@ -233,7 +233,7 @@ test.describe("İkinci düzeltme turu — madde 7/8: aynı anda seçilen birden 
   test("madde 8: KAYDET'e hızlı çift tıklama tek ziyaret üretir (ikinci istek engellenmeli)", async ({ page, baseURL }) => {
     const { recordInserts } = await setupQuickSave(page, baseURL!, "34 GR 006");
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    const saveBtn = page.getByRole("button", { name: "KAYDET" });
+    const saveBtn = page.getByRole("button", { name: "Bakımı Kaydet" });
     // quickSubmitRef senkron kilidi — iki hızlı tıklama tek istek üretmeli.
     await Promise.all([saveBtn.click(), saveBtn.click()]);
     await page.waitForTimeout(400);
@@ -436,7 +436,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
   }) => {
     const { vehiclePatches } = await setupQuickSaveWithExistingPlan(page, baseURL!, "34 PL 001", "dddddddd-3333-3333-3333-333333333333");
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click(); // periyot 10.000 → vade 50.000
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     expect(vehiclePatches.length).toBe(1);
@@ -449,7 +449,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     const { vehiclePatches } = await setupQuickSaveWithExistingPlan(page, baseURL!, "34 PL 002", "dddddddd-4444-4444-4444-444444444444");
     await page.getByRole("button", { name: "Diğer", exact: true }).click();
     await page.getByPlaceholder("Yapılan işlemi kısaca yazın").fill("Genel kontrol");
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     expect(vehiclePatches.length).toBe(1);
@@ -461,7 +461,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await page.getByRole("button", { name: /Planı düzenle/ }).click();
     await page.getByPlaceholder("Otomatik önerilir").fill("65000");
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     expect(vehiclePatches.length).toBe(1);
@@ -481,7 +481,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     await kmInput.fill("");
     await kmInput.fill("39000");
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     await expect(page.locator('p[role="alert"]')).toContainText("düşük olamaz");
@@ -529,7 +529,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     await page.goto(`/panel/araclar/${vehicleId}`);
     await page.getByText(plate).first().waitFor();
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
@@ -538,7 +538,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
 
     // Kilitlenmemiş: hata sonrası KAYDET'e yeniden basılabilmeli (submitting
     // durumu sıfırlanmış olmalı).
-    await expect(page.getByRole("button", { name: "KAYDET" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Bakımı Kaydet" })).toBeEnabled();
   });
 
   test("staff.tenant_id null/boş olduğunda hiçbir yazma yapılmaz (yalnızca staff nesnesi değil, tenant_id'nin kendisi zorunlu)", async ({
@@ -553,7 +553,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
       { tenantId: null }
     );
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
@@ -566,7 +566,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
   test("vehicles PATCH isteği hem id hem tenant_id filtresi taşır (tenant kapsamına bağlı güncelleme)", async ({ page, baseURL }) => {
     const { vehiclePatchUrls } = await setupQuickSaveWithExistingPlan(page, baseURL!, "34 TN 002", "eeeeeeee-2222-2222-2222-222222222222");
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     expect(vehiclePatchUrls.length).toBe(1);
@@ -619,7 +619,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     await page.goto(`/panel/araclar/${vehicleId}`);
     await page.getByText(plate).first().waitFor();
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
@@ -655,13 +655,13 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     await page.goto(`/panel/araclar/${vehicleId}`);
     await page.getByText(plate).first().waitFor();
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);
     await expect(page.locator('p[role="alert"]')).toBeVisible();
     // Kilitlenmemiş: buton kalıcı "Kaydediliyor…" durumunda KALMAZ.
-    await expect(page.getByRole("button", { name: "KAYDET" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Bakımı Kaydet" })).toBeEnabled();
   });
 
   test("Yenileme (refresh) sorgusu başarısız olursa: normal başarı mesajı ÇIKMAZ, 'yeniden göndermeyin' uyarısı gösterilir, form temizlenmez", async ({
@@ -710,7 +710,7 @@ test.describe("Pilot bugfix turu — servis hızlı bakım kaydı: otomatik plan
     await page.goto(`/panel/araclar/${vehicleId}`);
     await page.getByText(plate).first().waitFor();
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await page.waitForTimeout(300);
 
     await expect(page.getByText("✓ Kayıt tamamlandı")).toHaveCount(0);

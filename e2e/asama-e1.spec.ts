@@ -88,7 +88,7 @@ test.describe("Aşama E.1 — muayene / kasko / trafik sigortası", () => {
     await noHorizontalOverflow(page);
     await shot(page, `e1-durum-${info.project.name}`);
 
-    await page.getByRole("button", { name: "Belgeler" }).click();
+    await page.getByRole("button", { name: "Tarihler & Belgeler" }).click();
     await expect(page.getByTestId("belge-satir-trafik_sigortasi_bitis")).toHaveAttribute("data-level", "late");
     await expect(page.getByTestId("belge-satir-kasko_bitis")).toHaveAttribute("data-level", "soon");
     await expect(page.getByTestId("belge-satir-muayene_tarihi")).toHaveAttribute("data-level", "none");
@@ -99,8 +99,8 @@ test.describe("Aşama E.1 — muayene / kasko / trafik sigortası", () => {
     const { patches } = await setupOwner(page, baseURL!);
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}`);
     await page.getByTestId("arac-durumu").waitFor();
-    await page.getByRole("button", { name: "Belgeler" }).click();
-    await page.getByRole("button", { name: "Tarihleri Güncelle" }).click();
+    await page.getByRole("button", { name: "Tarihler & Belgeler" }).click();
+    await page.getByRole("button", { name: "Tarihleri düzenle" }).click();
     const box = page.getByTestId("belge-tarihleri");
     await expect(box).toBeVisible();
     await page.locator('[data-field="muayene_tarihi"]').fill(isoInDays(30));
@@ -113,15 +113,15 @@ test.describe("Aşama E.1 — muayene / kasko / trafik sigortası", () => {
     await expect(page.getByTestId("belge-durum-trafik_sigortasi_bitis")).toHaveAttribute("data-level", "none");
     await noHorizontalOverflow(page);
     await shot(page, `e1-tarih-duzenle-${info.project.name}`);
-    await page.getByRole("button", { name: "Kaydet", exact: true }).first().click();
+    await page.getByTestId("tarihler-belgeler").getByRole("button", { name: "Kaydet", exact: true }).click();
     await expect.poll(() => patches.length).toBe(1);
     expect(patches[0].muayene_tarihi).toBe(isoInDays(31));
     expect(patches[0].kasko_bitis).toBe(isoInDays(-1));
     expect(patches[0].trafik_sigortasi_bitis).toBeNull();
-    // Diğer alanlar aynen
-    expect(patches[0].brand).toBe("Volkswagen");
-    expect(patches[0].model).toBe("Passat");
-    expect(patches[0].current_km).toBe(84200);
+    // Nihai UX: yalnız tarihler yazılır; diğer araç alanlarına dokunulmaz.
+    expect(Object.keys(patches[0]).sort()).toEqual(["kasko_bitis", "muayene_tarihi", "trafik_sigortasi_bitis", "updated_at"]);
+    // Okuma görünümüne döner, yeni renkler satırlarda
+    await expect(page.getByTestId("belge-satir-kasko_bitis")).toHaveAttribute("data-level", "late");
   });
 
   test("Servis araç bilgilerinden tarihleri girer; güncelleme hata verirse form açık kalır", async ({ page, baseURL }) => {
