@@ -19,6 +19,7 @@ export function ItemChipGrid({
   onOtherText,
   otherPlaceholder = "Yapılan işlemi kısaca yazın",
   label = "Yapılan işlemler",
+  items = GRID_ITEMS,
 }: {
   selected: Record<string, boolean>;
   onToggle: (key: string) => void;
@@ -28,11 +29,12 @@ export function ItemChipGrid({
   onOtherText: (v: string) => void;
   otherPlaceholder?: string;
   label?: string;
+  items?: { key: string; label: string }[];
 }) {
   return (
     <div className="otoiz-chip-wrap">
       <div role="group" aria-label={label} className="otoiz-chip-grid otoiz-quick-chips" data-testid="islem-izgarasi">
-        {GRID_ITEMS.map((it) => (
+        {items.map((it) => (
           <Chip key={it.key} on={!!selected[it.key]} label={it.label} onClick={() => onToggle(it.key)} />
         ))}
         <Chip on={otherOn} label="Diğer" onClick={onToggleOther} />

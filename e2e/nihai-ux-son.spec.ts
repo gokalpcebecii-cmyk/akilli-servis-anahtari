@@ -99,7 +99,9 @@ test.describe("Nihai UX son düzenleme — araç detay / Genel Bakış", () => {
     await expect(page.getByText("Kayıt kaynakları")).toHaveCount(0);
     const qa = visible(page, "hizli-islemler");
     await expect(qa).toHaveCount(1);
-    await expect(qa.getByRole("button")).toHaveText(["KM Güncelle", "Bakım Kaydı Ekle", "Geçmiş İşlem Ekle", "QR Yönetimi"]);
+    // Hızlı İşlem Alanı: tek ana düğme + ikincil geçmiş satırı
+    await expect(qa.getByRole("button")).toHaveCount(2);
+    await expect(qa.getByTestId("islem-ekle")).toHaveText("İşlem Ekle");
     const box = async (l: any) => (await l.boundingBox())!;
     const hero = await box(page.getByTestId("sonraki-bakim"));
     const dates = await box(page.getByTestId("durum-muayene"));
@@ -122,42 +124,35 @@ test.describe("Nihai UX son düzenleme — araç detay / Genel Bakış", () => {
     await noOverflow(page);
   });
 
-  test("Bakım Kaydı Ekle penceresi: KM → işlem → not → sonraki bakım → Bakımı Kaydet; kayıt sonra kapanır", async ({ page, baseURL }, info) => {
+  test("Bakım Kaydı Ekle (İşlem Ekle penceresinden): tarih → KM → işlem → not → öneri → kaydet; kullanıcı araç ekranında kalır", async ({ page, baseURL }) => {
     await asOwner(page, baseURL!);
     const writes = await mockAll(page, { qr: true });
     await page.goto(`/bireysel/araclar/${VID}`);
     await page.getByTestId("arac-durumu").waitFor();
-    await visible(page, "hizli-islemler").getByRole("button", { name: "Bakım Kaydı Ekle" }).click();
-    const dlg = page.getByRole("dialog", { name: "Bakım Kaydı Ekle" });
-    await expect(dlg).toBeVisible();
-    const vp = page.viewportSize()!;
-    const d = (await dlg.boundingBox())!;
-    if (info.project.name === "desktop-chromium") {
-      expect(d.width).toBeLessThanOrEqual(560);
-      expect(Math.round(d.x + d.width)).toBe(vp.width);
-    } else {
-      expect(Math.round(d.width)).toBe(vp.width); // telefonda tam ekran odaklı ekran
-    }
+    await visible(page, "hizli-islemler").getByTestId("islem-ekle").click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByRole("listitem").filter({ hasText: "Bakım Kaydı Ekle" }).click();
+    await expect(dlg.getByRole("heading", { name: "Bakım Kaydı Ekle" })).toBeVisible();
     const y = async (l: any) => (await l.boundingBox())!.y;
-    const km = dlg.locator("#owner-quick-km");
+    const date = dlg.locator("#qa-bakim-tarih");
     const grid = dlg.getByTestId("islem-izgarasi");
-    const note = dlg.locator("#owner-quick-not");
-    const plan = dlg.getByRole("radiogroup", { name: "Sonraki bakım" });
-    const save = dlg.getByRole("button", { name: "Bakımı Kaydet" });
-    expect(await y(km)).toBeLessThan(await y(grid));
+    const note = dlg.locator("#qa-bakim-not");
+    const save = dlg.getByRole("button", { name: "Bakım Kaydını Ekle" });
+    await expect(date).toHaveValue(istToday());
+    expect(await y(date)).toBeLessThan(await y(grid));
     expect(await y(grid)).toBeLessThan(await y(note));
-    expect(await y(note)).toBeLessThan(await y(plan));
-    expect(await y(plan)).toBeLessThan(await y(save));
-    await km.fill("85000");
+    expect(await y(note)).toBeLessThan(await y(save));
+    await dlg.locator("#qa-bakim-km").fill("85000");
     await grid.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await note.fill("yetkili serviste");
-    await expect(dlg.getByTestId("bireysel-plan-onizleme")).toContainText("95.000 km");
+    await expect(dlg.getByTestId("sonraki-bakim-onerisi")).toContainText("95.000 km");
     await save.click();
     await expect.poll(() => writes.filter((w) => w.table === "rpc/record_service_visit").length).toBe(1);
     const v = writes.find((w) => w.table === "rpc/record_service_visit")!.body;
     expect(v).toMatchObject({ p_km: 85000, p_next_km: 95000, p_description: "Motor Yağı — Not: yetkili serviste" });
     await expect(dlg).toHaveCount(0);
-    await expect(visible(page, "hizli-islemler")).toContainText("Bakım kaydedildi.");
+    await expect(page.getByTestId("basari-bildirimi")).toHaveText("Bakım kaydı eklendi.");
+    await expect(page).toHaveURL(new RegExp(`/bireysel/araclar/${VID}`));
   });
 
   test("KM Güncelle: düşük km reddedilir; geçerli km yalnız current_km yazar; Esc kapatır", async ({ page, baseURL }) => {
@@ -166,22 +161,25 @@ test.describe("Nihai UX son düzenleme — araç detay / Genel Bakış", () => {
     await page.goto(`/bireysel/araclar/${VID}`);
     await page.getByTestId("arac-durumu").waitFor();
     const qa = visible(page, "hizli-islemler");
-    await qa.getByRole("button", { name: "KM Güncelle" }).click();
-    const dlg = page.getByRole("dialog", { name: "KM Güncelle" });
+    const dlg = page.getByRole("dialog");
+    await qa.getByTestId("islem-ekle").click();
+    await expect(dlg).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dlg).toHaveCount(0);
-    await qa.getByRole("button", { name: "KM Güncelle" }).click();
+    await qa.getByTestId("islem-ekle").click();
+    await dlg.getByRole("listitem").filter({ hasText: "KM Güncelle" }).click();
     await dlg.locator("#km-guncelle").fill("80000");
-    await dlg.getByRole("button", { name: "Kilometreyi Kaydet" }).click();
+    await dlg.getByRole("button", { name: "Kilometreyi Güncelle" }).click();
     await expect(dlg.getByRole("alert")).toContainText("84.200 km");
     expect(writes).toEqual([]);
     await dlg.locator("#km-guncelle").fill("86500");
-    await dlg.getByRole("button", { name: "Kilometreyi Kaydet" }).click();
+    await dlg.getByRole("button", { name: "Kilometreyi Güncelle" }).click();
     await expect(dlg).toHaveCount(0);
     const w = writes.filter((x) => x.table === "vehicles");
     expect(w).toHaveLength(1);
     expect(Object.keys(w[0].body).sort()).toEqual(["current_km", "updated_at"]);
     expect(w[0].body.current_km).toBe(86500);
+    await expect(page.getByTestId("basari-bildirimi")).toHaveText("Kilometre güncellendi.");
     await expect(page.getByText("86.500 km").first()).toBeVisible();
   });
 
@@ -193,7 +191,7 @@ test.describe("Nihai UX son düzenleme — araç detay / Genel Bakış", () => {
     const nav = page.getByRole("navigation", { name: "Araç bölümleri" });
     await expect(nav.getByRole("button")).toHaveText(["Genel Bakış", "Geçmiş", "Tarihler"]);
     await expect(nav.getByText("Belgeler")).toHaveCount(0);
-    await visible(page, "hizli-islemler").getByRole("button", { name: "Geçmiş İşlem Ekle" }).click();
+    await visible(page, "hizli-islemler").getByTestId("gecmis-islem-kisayol").click();
     await expect(nav.getByRole("button", { name: "Geçmiş" })).toHaveAttribute("aria-current", "page");
     await expect(page.getByTestId("gecmis-beyan")).toHaveText("Bu kayıt sizin beyanınızla eklenir ve Bireysel Geçmiş Kaydı olarak görünür.");
     await expect(page.getByRole("button", { name: "Bakım / Parça Değişimi" })).toBeVisible();
@@ -219,9 +217,6 @@ test.describe("Nihai UX son düzenleme — QR bağlı değil", () => {
     await expect(card.getByRole("button", { name: "Anahtarlığımı bu araca bağla" })).toBeVisible();
     await card.getByRole("button", { name: "Vazgeç" }).click();
     await expect(card.locator("#owner-qr-code")).toHaveCount(0);
-    // Hızlı İşlemler > QR Yönetimi kod alanını açar
-    await visible(page, "hizli-islemler").getByRole("button", { name: "QR Yönetimi" }).click();
-    await expect(card.locator("#owner-qr-code")).toBeVisible();
     await noOverflow(page);
   });
 });
