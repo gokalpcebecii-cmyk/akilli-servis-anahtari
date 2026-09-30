@@ -201,8 +201,8 @@ export default function BireyselAraclarPage() {
 
           {active ? (
             <section aria-label="Araç kimliği" data-testid="arac-kimligi">
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-                <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0, flex: "1 1 auto" }}>
                   <h1 data-testid="aktif-plaka" style={{ fontSize: 28, fontWeight: 800, letterSpacing: 0.6, color: colors.text, margin: 0, lineHeight: 1.15, whiteSpace: "nowrap" }}>
                     {active.plate}
                   </h1>
