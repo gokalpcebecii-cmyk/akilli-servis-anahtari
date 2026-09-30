@@ -317,3 +317,52 @@ test.describe("Son mikro UX — ana ekran hatırlatma bandı", () => {
     await expect(page.getByTestId("yaklasan-islemler")).toBeVisible();
   });
 });
+
+test.describe("Son mikro UX 02 — eksik bilgi satırı hatırlatma bandından bağımsız", () => {
+  const far = () => istToday(200);
+  const cases = [
+    { name: "eksik bilgi + hatırlatma", v: { ...V1 }, missing: true, band: true },
+    { name: "eksik bilgi var, hatırlatma yok", v: { ...V1, trafik_sigortasi_bitis: far(), kasko_bitis: far() }, missing: true, band: false },
+    { name: "eksik bilgi yok, hatırlatma var", v: { ...V1, muayene_tarihi: far() }, missing: false, band: true },
+    { name: "ikisi de yok", v: { ...V1, muayene_tarihi: far(), trafik_sigortasi_bitis: far(), kasko_bitis: far() }, missing: false, band: false },
+  ];
+  for (const c of cases) {
+    test(c.name, async ({ page, baseURL }) => {
+      await asOwner(page, baseURL!);
+      await mockAll(page, { qr: true, vehicles: [c.v] });
+      await page.goto("/bireysel/araclar");
+      await page.getByTestId("durum-dortlu").waitFor();
+      const row = page.getByTestId("eksik-bilgi");
+      const band = page.getByTestId("kritik-ozet");
+      await expect(row).toHaveCount(c.missing ? 1 : 0);
+      await expect(band).toHaveCount(c.band ? 1 : 0);
+      if (c.missing) {
+        await expect(row).toContainText("Eksik araç bilgileri var");
+        await expect(row.getByTestId("eksik-bilgi-tamamla")).toHaveText(/Bilgileri tamamla/);
+        await expect(row.getByTestId("eksik-bilgi-tamamla")).toHaveAttribute("href", `/bireysel/araclar/${VID}#duzenle`);
+        // araç başlığının hemen altında, bandın dışında
+        expect(await row.evaluate((el) => !!el.closest('[data-testid="arac-kimligi"]'))).toBe(true);
+      }
+      if (c.band) {
+        await expect(band).toContainText(/\d+ hatırlatma var/);
+        await expect(band.getByTestId("eksik-bilgi")).toHaveCount(0);
+        await expect(band.getByText("Eksik bilgileri tamamla")).toHaveCount(0);
+      }
+      if (c.missing && c.band) {
+        const r = (await row.boundingBox())!;
+        const b = (await band.boundingBox())!;
+        expect(r.y + r.height).toBeLessThan(b.y);
+      }
+      await noOverflow(page);
+    });
+  }
+
+  test("marka/model eksikse de satır görünür", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    await mockAll(page, { qr: true, vehicles: [{ ...V1, model: "", muayene_tarihi: istToday(200), trafik_sigortasi_bitis: istToday(200), kasko_bitis: istToday(200) }] });
+    await page.goto("/bireysel/araclar");
+    await page.getByTestId("durum-dortlu").waitFor();
+    await expect(page.getByTestId("eksik-bilgi")).toHaveCount(1);
+    await expect(page.getByTestId("kritik-ozet")).toHaveCount(0);
+  });
+});

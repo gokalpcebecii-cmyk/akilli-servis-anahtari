@@ -161,9 +161,11 @@ export default function BireyselAraclarPage() {
     return <AuthShellLoading />;
   }
 
-  // Eksik bilgi: km, bakım planı veya belge tarihlerinden biri boşsa.
+  // Eksik kritik bilgi: marka/model, km, sonraki bakım, muayene, kasko,
+  // zorunlu trafik sigortası. Hatırlatma bandından bağımsız gösterilir.
   const missing: string[] = [];
   if (active) {
+    if (!active.brand || !active.model) missing.push("marka/model");
     if (active.current_km == null || active.current_km === "") missing.push("kilometre");
     if (!active.next_service_km && !active.next_service_date) missing.push("bakım planı");
     if (!active.muayene_tarihi) missing.push("muayene tarihi");
@@ -228,6 +230,17 @@ export default function BireyselAraclarPage() {
                   Araç Değiştir
                 </button>
               </div>
+              {missing.length > 0 && (
+                <div data-testid="eksik-bilgi" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px 12px", flexWrap: "wrap", marginTop: 10, padding: "6px 12px", borderRadius: radius.sm, border: `1px solid ${colors.border}`, background: colors.surfaceRaised }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: colors.textMuted }}>
+                    <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: colors.warning, flex: "0 0 6px" }} />
+                    Eksik araç bilgileri var
+                  </span>
+                  <a href={`/bireysel/araclar/${active.id}#duzenle`} data-testid="eksik-bilgi-tamamla" style={{ display: "inline-flex", alignItems: "center", minHeight: 36, fontSize: 13.5, fontWeight: 700, color: colors.text, textDecoration: "none" }}>
+                    Bilgileri tamamla <span aria-hidden="true" style={{ marginLeft: 4 }}>→</span>
+                  </a>
+                </div>
+              )}
               {switcherOpen && (
                 <div id="arac-secici" data-testid="arac-secici" className="otoiz-enter" style={{ marginTop: 14, background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: 6 }}>
                   <div role="listbox" aria-label="Araç seçin">
@@ -310,7 +323,7 @@ export default function BireyselAraclarPage() {
         ) : (
           <div className="otoiz-stack otoiz-enter">
             {/* B) Kritik özet */}
-            {status && <CriticalSummary status={status} vehicleId={active.id} missing={missing} />}
+            {status && <CriticalSummary status={status} />}
 
             {/* C) Dört durum kartı */}
             <section aria-label="Araç durumu">
@@ -406,12 +419,12 @@ function SectionTitle({ children, action }: { children: React.ReactNode; action?
 
 // B) Hatırlatma bandı — "X hatırlatma var" ve en önemli iki işlem. Yaklaşan
 // ya da geciken işlem yoksa hiç görünmez. Dokununca aynı sayfadaki
-// Yaklaşan İşlemler bölümüne gider. Eksik bilgi varsa tek küçük bağlantı.
+// Yaklaşan İşlemler bölümüne gider.
 function goUpcoming() {
   document.getElementById("yaklasan-islemler")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function CriticalSummary({ status, vehicleId, missing }: { status: any; vehicleId: string; missing: string[] }) {
+function CriticalSummary({ status }: { status: any }) {
   const s = criticalSummary(status);
   if (!s.count) return null;
   const t = STATUS_TONE[s.level] ?? STATUS_TONE.none;
@@ -441,12 +454,6 @@ function CriticalSummary({ status, vehicleId, missing }: { status: any; vehicleI
           <div style={{ minWidth: 0, flex: 1 }}>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0, lineHeight: 1.3 }}>{s.title}</h2>
             <p style={{ fontSize: 14, color: colors.textMuted, margin: "4px 0 0", lineHeight: 1.45 }}>{s.line}</p>
-            {missing.length > 0 && (
-              <a href={`/bireysel/araclar/${vehicleId}#duzenle`} data-testid="eksik-bilgi" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} style={{ ...linkStyle, padding: 0, minHeight: 36, marginTop: 4, color: colors.text }}>
-                Eksik bilgileri tamamla ({missing.length})
-                <Icon name="chevron-right" color={colors.textMuted} size={16} />
-              </a>
-            )}
           </div>
         </div>
       </div>
