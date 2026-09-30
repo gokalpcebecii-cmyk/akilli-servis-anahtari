@@ -175,9 +175,9 @@ export default function BireyselAraclarPage() {
     <main className="otoiz-app-shell otoiz-has-bottom-nav" style={{ fontFamily: font }}>
       {/* 1) Üst başlık */}
       <header style={{ background: `linear-gradient(180deg, ${colors.bgAlt} 0%, ${colors.bg} 100%)`, borderBottom: `1px solid ${colors.border}` }}>
-        <div className="otoiz-page otoiz-page-wide" style={{ paddingTop: 16, paddingBottom: 22 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-            <OtoizLogo variant="dark" size={128} />
+        <div className="otoiz-page otoiz-page-wide" style={{ paddingTop: 12, paddingBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <OtoizLogo variant="dark" size={116} />
             {/* Masaüstünde üstteki gezinme çubuğu aynı bağlantıları taşır;
                 üst üste binmesin diye bu iki düğme yalnız mobilde. */}
             <div className="otoiz-mobile-only" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -201,18 +201,18 @@ export default function BireyselAraclarPage() {
 
           {active ? (
             <section aria-label="Araç kimliği" data-testid="arac-kimligi">
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px 12px", flexWrap: "wrap" }}>
                 <div style={{ minWidth: 0, flex: "1 1 auto" }}>
-                  <h1 data-testid="aktif-plaka" style={{ fontSize: 28, fontWeight: 800, letterSpacing: 0.6, color: colors.text, margin: 0, lineHeight: 1.15, whiteSpace: "nowrap" }}>
+                  <h1 data-testid="aktif-plaka" style={{ fontSize: 24, fontWeight: 800, letterSpacing: 0.6, color: colors.text, margin: 0, lineHeight: 1.15, whiteSpace: "nowrap" }}>
                     {active.plate}
                   </h1>
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 12px", marginTop: 6 }}>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: colors.textMuted }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "2px 12px", marginTop: 4 }}>
+                    <span style={{ fontSize: 14.5, fontWeight: 600, color: colors.textMuted }}>
                       {[active.brand, active.model].filter(Boolean).join(" ") || "Marka/model girilmedi"}
                       {active.year ? ` · ${active.year}` : ""}
                     </span>
                     {active.current_km != null && active.current_km !== "" && (
-                      <span data-testid="aktif-km" style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{Number(active.current_km).toLocaleString("tr-TR")} km</span>
+                      <span data-testid="aktif-km" style={{ fontSize: 14.5, fontWeight: 700, color: colors.text }}>{Number(active.current_km).toLocaleString("tr-TR")} km</span>
                     )}
                   </div>
                 </div>
@@ -222,9 +222,9 @@ export default function BireyselAraclarPage() {
                   aria-expanded={switcherOpen}
                   aria-controls="arac-secici"
                   onClick={() => setSwitcherOpen((v) => !v)}
-                  style={{ flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 40, padding: "0 11px", borderRadius: radius.pill, border: `1px solid ${colors.border}`, background: colors.surfaceRaised, color: colors.text, fontSize: 13.5, fontWeight: 700, fontFamily: font, cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 44, padding: "0 2px", border: "none", background: "transparent", color: colors.textMuted, fontSize: 13.5, fontWeight: 600, fontFamily: font, cursor: "pointer", whiteSpace: "nowrap", textDecoration: "underline", textDecorationColor: colors.border, textUnderlineOffset: 4 }}
                 >
-                  <Icon name="swap" color={colors.textMuted} size={15} />
+                  <Icon name="swap" color={colors.textFaint} size={14} />
                   Araç Değiştir
                 </button>
               </div>

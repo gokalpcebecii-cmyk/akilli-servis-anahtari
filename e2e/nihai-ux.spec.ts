@@ -156,17 +156,17 @@ test.describe("Nihai UX — araç detay", () => {
     expect(await y("sonraki-bakim")).toBeLessThan(await y("durum-muayene"));
     expect(await y("durum-muayene")).toBeLessThan(await y("durum-yaklasan"));
     expect(await y("durum-yaklasan")).toBeLessThan(await y("durum-detailing"));
-    await expect(page.getByRole("button", { name: "Tarihler & Belgeler" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Tarihler", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Belgeler", exact: true })).toHaveCount(0);
     await noOverflow(page);
   });
 
-  test("Tarihler & Belgeler: okunur satırlar, Tarihleri Güncelle yok, Düzenle ile alanlar açılır, not ayrı", async ({ page, baseURL }) => {
+  test("Tarihler: Önemli Tarihler okunur satırlar, Tarihleri Güncelle yok, Düzenle ile alanlar açılır, Not alanı yok", async ({ page, baseURL }) => {
     await asOwner(page, baseURL!);
     const writes = await mockAll(page, { qr: true });
     await page.goto(`/bireysel/araclar/${VID}`);
     await page.getByTestId("arac-durumu").waitFor();
-    await page.getByRole("button", { name: "Tarihler & Belgeler" }).click();
+    await page.getByRole("button", { name: "Tarihler", exact: true }).click();
     const box = page.getByTestId("tarihler-belgeler");
     await expect(box.getByTestId("belge-satir-muayene_tarihi")).toContainText("Muayene");
     await expect(box.getByTestId("belge-satir-kasko_bitis")).toContainText("18 gün kaldı");
@@ -179,7 +179,8 @@ test.describe("Nihai UX — araç detay", () => {
     await expect.poll(() => writes.filter((w) => w.table === "vehicles").length).toBe(1);
     expect(writes[0].body.muayene_tarihi).toBe(istToday(100));
     await expect(box.getByTestId("belge-satir-muayene_tarihi")).toHaveAttribute("data-level", "ok");
-    await expect(page.locator("#arac-notlar")).toBeVisible();
+    await expect(box.getByRole("heading", { name: "Önemli Tarihler" })).toBeVisible();
+    await expect(page.locator("#arac-notlar")).toHaveCount(0);
   });
 });
 
@@ -236,11 +237,12 @@ test.describe("Nihai UX — 12 aylık başlangıç geçmişi", () => {
     await expect(page.getByText("Son 12 ayda yapılan önemli bakım ve işlemleri ekleyin. OTOİZ sonraki bakım takibini bu geçmişe göre başlatsın.")).toBeVisible();
   });
 
-  test("Şimdilik Atla: hiçbir şey yazılmaz, araca geçilir", async ({ page, baseURL }) => {
+  test("Geçmişi bilmiyorum, şimdi başla: hiçbir şey yazılmaz, araca geçilir", async ({ page, baseURL }) => {
     await asOwner(page, baseURL!);
     const writes = await mockAll(page, { vehicles: [V1] });
     await page.goto(`/bireysel/araclar/${VID}/gecmis`);
-    await page.getByRole("button", { name: "Şimdilik Atla" }).click();
+    await expect(page.getByRole("button", { name: "Şimdilik Atla" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Geçmişi bilmiyorum, şimdi başla" }).click();
     await page.waitForURL(`**/bireysel/araclar/${VID}`);
     await page.getByTestId("arac-durumu").waitFor();
     expect(writes).toEqual([]);
@@ -250,28 +252,35 @@ test.describe("Nihai UX — 12 aylık başlangıç geçmişi", () => {
     await asOwner(page, baseURL!);
     const writes = await mockAll(page, { vehicles: [V1] });
     await page.goto(`/bireysel/araclar/${VID}/gecmis`);
-    await page.getByRole("button", { name: "Geçmiş Bakım Ekle" }).click();
+    await expect(page.getByTestId("onboarding-adimlar").locator("li")).toHaveText(["Araç", "Geçmiş", "Hazır"].map((t) => new RegExp(t)));
 
     // boş gönderim: hata, yazma yok
     await page.getByRole("button", { name: "Geçmişi Kaydet ve OTOİZ'i Başlat" }).click();
-    await expect(page.getByRole("alert").first()).toContainText("İşlem tarihini seçin");
+    await expect(page.getByRole("alert").first()).toContainText("en az bir geçmiş işlem");
     expect(writes).toEqual([]);
+    // eksik işlem: düzenleyicide hata
+    await page.locator("#gecmis-0-tarih").fill(istToday(-10));
+    await page.getByTestId("islemi-ekle").click();
+    await expect(page.getByRole("alert").first()).toContainText("kilometreyi girin");
 
     const d1 = istToday(-300);
     const d2 = istToday(-120);
     await page.locator("#gecmis-0-tarih").fill(d1);
     await page.locator("#gecmis-0-km").fill("70000");
-    const g0 = page.locator("#gecmis-0");
-    await g0.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await g0.getByRole("button", { name: "Akü", exact: true }).click();
+    const ed = page.getByTestId("gecmis-duzenleyici");
+    await ed.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await ed.getByRole("button", { name: "Akü", exact: true }).click();
+    await page.getByTestId("islemi-ekle").click();
+    await expect(page.getByTestId("gecmis-ozet")).toHaveCount(1);
+    await expect(page.getByTestId("gecmis-ozet").first()).toContainText("70.000 km");
+    await expect(page.getByTestId("gecmis-ozet").first()).toContainText("Motor Yağı · Akü");
 
-    await page.getByRole("button", { name: "+ Bir işlem daha ekle" }).click();
-    const g1 = page.locator("#gecmis-1");
-    await page.locator("#gecmis-1-tarih").fill(d2);
-    await page.locator("#gecmis-1-km").fill("78000");
-    await g1.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    await g1.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
-    await page.locator("#gecmis-1-not").fill("yetkili serviste");
+    await page.getByRole("button", { name: "+ Bir geçmiş işlem daha ekle" }).click();
+    await page.locator("#gecmis-0-tarih").fill(d2);
+    await page.locator("#gecmis-0-km").fill("78000");
+    await ed.getByRole("button", { name: "Motor Yağı", exact: true }).click();
+    await ed.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
+    await page.locator("#gecmis-0-not").fill("yetkili serviste");
     await noOverflow(page);
     await page.getByRole("button", { name: "Geçmişi Kaydet ve OTOİZ'i Başlat" }).click();
     await page.getByTestId("gecmis-kaydedildi").waitFor();

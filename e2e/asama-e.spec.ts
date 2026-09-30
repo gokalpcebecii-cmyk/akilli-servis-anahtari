@@ -243,16 +243,17 @@ test.describe("Aşama E — servis", () => {
 });
 
 test.describe("Aşama E — bireysel", () => {
-  test("ilk bakış: araç, km, sonraki bakım, kaynak sayıları, QR, son işlemler", async ({ page, baseURL }, info) => {
+  test("ilk bakış: araç, km, sonraki bakım, kaynak rozetleri, QR, son kayıtlar", async ({ page, baseURL }, info) => {
     await setupBireysel(page, baseURL!);
     await expect(page.getByText("34 OTZ 084").first()).toBeVisible();
     await expect(page.getByTestId("sonraki-bakim")).toHaveAttribute("data-level", "soon");
-    await expect(page.getByTestId("bireysel-ozet")).toContainText("Servis doğrulamalı");
-    await expect(page.getByTestId("bireysel-ozet")).toContainText("Bireysel kayıt");
+    // Nihai UX son düzenleme: kaynak sayıları kartı yok; kaynak her kaydın rozetinde.
+    await expect(page.getByTestId("bireysel-ozet")).toContainText("Servis Doğrulamalı");
+    await expect(page.getByTestId("bireysel-ozet")).toContainText("Bireysel Kayıt");
     await expect(page.getByTestId("bireysel-ozet")).toContainText(/QR durumu/i);
     const preview = page.getByTestId("zaman-cizelgesi");
-    await expect(preview).toContainText("Son İşlemler");
-    await expect(preview.getByTestId("zaman-olay")).toHaveCount(5);
+    await expect(preview).toContainText("Son Kayıtlar");
+    await expect(preview.getByTestId("zaman-olay")).toHaveCount(3);
     // Sonraki bakım görseli ilk ekranda (fold üstü) görünür.
     await expect(page.getByTestId("sonraki-bakim")).toBeInViewport();
     await noHorizontalOverflow(page);

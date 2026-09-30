@@ -1907,3 +1907,109 @@ a {
     display: none !important;
   }
 }
+
+/* ============ Nihai UX son düzenleme (2026-09-30) ============
+   Araç detay: sol ana kolon bilgi, sağ dar kolon Hızlı İşlemler / Son
+   Kayıtlar / QR Durumu. Formlar odaklı pencerede (drawer; telefonda tam
+   ekran). */
+.otoiz-drawer-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.otoiz-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 7, 10, 0.72);
+}
+.otoiz-drawer-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #151922;
+  color: #f5f7fa;
+  outline: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.otoiz-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2d3542;
+}
+.otoiz-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 18px 16px 32px;
+}
+@media (min-width: 768px) {
+  .otoiz-drawer-panel {
+    left: auto;
+    width: min(560px, 100vw);
+    border-left: 1px solid #2d3542;
+    box-shadow: -18px 0 44px rgba(0, 0, 0, 0.45);
+  }
+  .otoiz-drawer-head {
+    padding: 16px 24px;
+  }
+  .otoiz-drawer-body {
+    padding: 22px 24px 32px;
+  }
+}
+/* Hızlı İşlemler: telefonda kritik tarihlerden hemen sonra (sol kolonda),
+   geniş ekranda sağ dar kolonun başında. İkisinden yalnız biri görünür. */
+.otoiz-when-wide {
+  display: none !important;
+}
+@media (min-width: 1040px) {
+  .otoiz-when-wide {
+    display: block !important;
+  }
+  .otoiz-when-stacked {
+    display: none !important;
+  }
+  .otoiz-detail-grid.otoiz-detail-split {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 24px;
+  }
+}
+.otoiz-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (min-width: 1040px) {
+  .otoiz-quick-actions {
+    grid-template-columns: 1fr;
+  }
+}
+/* Giriş (masaüstü): marka alanı kartın kendisiyle dikey ortalanır; kartın
+   altındaki bağlantılar dengeyi bozmaz, boşluk azalır. */
+@media (min-width: 1024px) {
+  .otoiz-auth2-grid {
+    max-width: 1040px;
+    column-gap: 64px;
+    row-gap: 0;
+    align-content: center;
+    align-items: start;
+    padding: 12px 48px 40px;
+  }
+  .otoiz-auth2-col {
+    display: contents;
+  }
+  .otoiz-auth2-brand {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+  }
+  .otoiz-auth2-col > * {
+    grid-column: 2;
+  }
+  .otoiz-auth2-card {
+    grid-row: 1;
+  }
+}

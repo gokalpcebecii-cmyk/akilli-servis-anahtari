@@ -88,7 +88,7 @@ test.describe("Aşama E.1 — muayene / kasko / trafik sigortası", () => {
     await noHorizontalOverflow(page);
     await shot(page, `e1-durum-${info.project.name}`);
 
-    await page.getByRole("button", { name: "Tarihler & Belgeler" }).click();
+    await page.getByRole("button", { name: "Tarihler", exact: true }).click();
     await expect(page.getByTestId("belge-satir-trafik_sigortasi_bitis")).toHaveAttribute("data-level", "late");
     await expect(page.getByTestId("belge-satir-kasko_bitis")).toHaveAttribute("data-level", "soon");
     await expect(page.getByTestId("belge-satir-muayene_tarihi")).toHaveAttribute("data-level", "none");
@@ -99,7 +99,7 @@ test.describe("Aşama E.1 — muayene / kasko / trafik sigortası", () => {
     const { patches } = await setupOwner(page, baseURL!);
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}`);
     await page.getByTestId("arac-durumu").waitFor();
-    await page.getByRole("button", { name: "Tarihler & Belgeler" }).click();
+    await page.getByRole("button", { name: "Tarihler", exact: true }).click();
     await page.getByRole("button", { name: "Tarihleri düzenle" }).click();
     const box = page.getByTestId("belge-tarihleri");
     await expect(box).toBeVisible();

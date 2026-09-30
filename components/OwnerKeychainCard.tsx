@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, radius, inputStyle, labelStyle, primaryButtonStyle, secondaryButtonStyle, errorTextStyle, cardStyle } from "@/lib/theme";
 
-export default function OwnerKeychainCard({ vehicleId, onStatus }: { vehicleId: string; onStatus?: (active: boolean) => void }) {
+// Nihai UX son düzenleme: bağlı değilse normal görünüm yalnız durum, tek
+// cümle ve "Anahtarlığı Bağla →". Kod alanı ancak bu düğmeyle açılır.
+export default function OwnerKeychainCard({ vehicleId, onStatus, bindRequest = 0 }: { vehicleId: string; onStatus?: (active: boolean) => void; bindRequest?: number }) {
   const supabase = createBrowserSupabase();
   const [loading, setLoading] = useState(true);
   const [activeCode, setActiveCode] = useState<string | null>(null);
@@ -16,6 +18,12 @@ export default function OwnerKeychainCard({ vehicleId, onStatus }: { vehicleId: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [bindOpen, setBindOpen] = useState(false);
+
+  // "Hızlı İşlemler > QR Yönetimi" bağlı değilse kod alanını doğrudan açar.
+  useEffect(() => {
+    if (bindRequest > 0) setBindOpen(true);
+  }, [bindRequest]);
 
   async function authHeader() {
     const { data } = await supabase.auth.getSession();
@@ -149,31 +157,53 @@ export default function OwnerKeychainCard({ vehicleId, onStatus }: { vehicleId: 
         </div>
       ) : (
         <div>
-          <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 16px", lineHeight: 1.5 }}>
-            {myCodes.length > 0
-              ? "Hesabınıza tanımlı bir anahtarlık var. Bu araca bağlamak için aşağıdaki düğmeye basın."
-              : "Satın aldığınız OTOİZ anahtarlığının üzerindeki kodu girerek bu araca bağlayın."}
-          </p>
-          <label style={labelStyle} htmlFor="owner-qr-code">Anahtarlık kodu</label>
-          {myCodes.length > 1 ? (
-            <select id="owner-qr-code" value={code} onChange={(e) => setCode(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }}>
-              {myCodes.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+          <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 14px", lineHeight: 1.5 }}>OTOİZ anahtarlığınızı bu araca bağlayın.</p>
+          {!bindOpen ? (
+            <button
+              type="button"
+              data-testid="anahtarligi-bagla"
+              aria-expanded={false}
+              onClick={() => setBindOpen(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", padding: 0, minHeight: 44, color: colors.greenLight, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Anahtarlığı Bağla <span aria-hidden="true">→</span>
+            </button>
           ) : (
-            <input
-              id="owner-qr-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="Ör. 7gs9cqmxhqmy"
-              autoCapitalize="none"
-              style={{ ...inputStyle, marginBottom: 12 }}
-            />
+            <div data-testid="anahtarlik-kod-alani">
+              {myCodes.length > 0 && (
+                <p style={{ fontSize: 13.5, color: colors.textMuted, margin: "0 0 12px", lineHeight: 1.5 }}>Hesabınıza tanımlı anahtarlık kodu aşağıda seçili.</p>
+              )}
+              <label style={labelStyle} htmlFor="owner-qr-code">Anahtarlık kodu</label>
+              {myCodes.length > 1 ? (
+                <select id="owner-qr-code" value={code} onChange={(e) => setCode(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }}>
+                  {myCodes.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              ) : (
+                <input
+                  id="owner-qr-code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="Ör. 7gs9cqmxhqmy"
+                  autoCapitalize="none"
+                  autoFocus
+                  style={{ ...inputStyle, marginBottom: 12 }}
+                />
+              )}
+              {success && <p role="status" style={{ color: colors.greenLight, fontSize: 14, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
+              {error && <p role="alert" style={{ ...errorTextStyle, margin: "0 0 12px" }}>{error}</p>}
+              <button type="button" onClick={bind} disabled={busy} style={primaryButtonStyle(busy)}>
+                {busy ? "Bağlanıyor…" : "Anahtarlığımı bu araca bağla"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setBindOpen(false); setError(""); }}
+                disabled={busy}
+                style={{ display: "block", margin: "6px auto 0", background: "none", border: "none", color: colors.textMuted, fontSize: 14, fontWeight: 700, minHeight: 44, cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Vazgeç
+              </button>
+            </div>
           )}
-          {success && <p role="status" style={{ color: colors.greenLight, fontSize: 14, fontWeight: 700, margin: "0 0 10px" }}>{success}</p>}
-          {error && <p role="alert" style={{ ...errorTextStyle, margin: "0 0 12px" }}>{error}</p>}
-          <button type="button" onClick={bind} disabled={busy} style={primaryButtonStyle(busy)}>
-            {busy ? "Bağlanıyor…" : "Anahtarlığımı bu araca bağla"}
-          </button>
         </div>
       )}
     </section>

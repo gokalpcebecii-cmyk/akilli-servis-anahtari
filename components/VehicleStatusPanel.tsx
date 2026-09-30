@@ -59,7 +59,9 @@ export function NextServiceHero({ status }: { status: any }) {
 //  1) Sonraki Bakım ana kartı
 //  2) Muayene · Kasko · Trafik Sigortası küçük kartları
 //  3) Yaklaşan İşlemler
-//  4) Detailing ve Belgeler alt bölümü
+//  4) Detailing ve diğer takipler
+// Son düzenleme: afterDates telefonda kritik tarihlerden hemen sonra gelen
+// "Hızlı İşlemler" içindir; extra diğer takipler bölümüne eklenir.
 export function VehicleStatusPanel({
   vehicle,
   items,
@@ -68,6 +70,8 @@ export function VehicleStatusPanel({
   lastDetailing,
   compact = false,
   onOpenDocs,
+  afterDates,
+  extra,
 }: {
   vehicle: any;
   items: any[];
@@ -76,6 +80,8 @@ export function VehicleStatusPanel({
   lastDetailing?: any;
   compact?: boolean;
   onOpenDocs?: () => void;
+  afterDates?: React.ReactNode;
+  extra?: React.ReactNode;
 }) {
   const { cards, upcoming, nextService } = buildVehicleStatus({ vehicle, items, labels, lastMuayene, lastDetailing, today: todayIsoIstanbul() });
   const card = (k: string) => cards.find((c: any) => c.key === k) ?? { key: k, level: "none", value: "", detail: "" };
@@ -119,6 +125,8 @@ export function VehicleStatusPanel({
         })}
       </div>
 
+      {afterDates}
+
       <section data-testid="durum-yaklasan" data-level={yak.level} aria-label="Yaklaşan işlemler" style={{ ...cardStyle, padding: compact ? 16 : 18 }}>
         <h2 style={sub}>Yaklaşan İşlemler</h2>
         {upcoming.length > 0 ? (
@@ -138,8 +146,8 @@ export function VehicleStatusPanel({
         )}
       </section>
 
-      <section aria-label="Detailing ve belgeler" style={{ ...cardStyle, padding: compact ? 16 : 18 }}>
-        <h2 style={sub}>Detailing ve Belgeler</h2>
+      <section aria-label="Detailing ve diğer takipler" style={{ ...cardStyle, padding: compact ? 16 : 18 }}>
+        <h2 style={sub}>Detailing ve Diğer Takipler</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div data-testid="durum-detailing" data-level={det.level} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "11px 14px" }}>
             <span style={{ minWidth: 0 }}>
@@ -155,11 +163,12 @@ export function VehicleStatusPanel({
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, width: "100%", textAlign: "left", background: colors.surfaceRaised, border: "none", borderRadius: radius.sm, padding: "11px 14px", cursor: onOpenDocs ? "pointer" : "default", fontFamily: "inherit", minHeight: 52 }}
           >
             <span style={{ minWidth: 0 }}>
-              <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: colors.text }}>Tarihler ve Belgeler</span>
+              <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: colors.text }}>Önemli Tarihler</span>
               <span style={{ display: "block", fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{docCount} / 3 tarih girildi</span>
             </span>
             {onOpenDocs && <Icon name="chevron-right" color={colors.textMuted} size={18} />}
           </button>
+          {extra}
         </div>
       </section>
 

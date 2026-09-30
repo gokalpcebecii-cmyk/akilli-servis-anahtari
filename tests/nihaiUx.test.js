@@ -122,3 +122,16 @@ test("kritik özet: sayı + en önemli iki işlem kısa cümle", () => {
   const none = criticalSummary(buildVehicleStatus({ vehicle: {}, items: [], labels: ITEM_LABELS, today: TODAY }));
   assert.equal(none.level, "none");
 });
+
+test("son düzenleme: onboarding özet kartı '20 Mart 2026 · 68.000 km' + işlemler; boş kayıt tanınır", () => {
+  const { fmtLongDate, entrySummary, isBlankEntry } = require("../lib/history");
+  assert.equal(fmtLongDate("2026-03-20"), "20 Mart 2026");
+  assert.equal(fmtLongDate("2025-12-01"), "1 Aralık 2025");
+  assert.equal(fmtLongDate(""), "");
+  const s = entrySummary(e({ date: "2026-03-20", km: "68000", items: ["hava_filtresi", "fren_on_balata"] }));
+  assert.equal(s.head, "20 Mart 2026 · 68.000 km");
+  assert.equal(s.items, "Hava Filtresi · Ön Fren Balatası");
+  assert.equal(entrySummary(e({ date: "2026-03-20", items: ["triger_seti"], otherOn: true, otherText: " Klima gazı " })).items, "Triger · Klima gazı");
+  assert.equal(isBlankEntry(emptyEntry()), true);
+  assert.equal(isBlankEntry(e({ km: "5" })), false);
+});
