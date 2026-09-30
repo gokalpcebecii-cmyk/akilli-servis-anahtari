@@ -231,12 +231,12 @@ export default function BireyselAraclarPage() {
                 </button>
               </div>
               {missing.length > 0 && (
-                <div data-testid="eksik-bilgi" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px 12px", flexWrap: "wrap", marginTop: 10, padding: "6px 12px", borderRadius: radius.sm, border: `1px solid ${colors.border}`, background: colors.surfaceRaised }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600, color: colors.textMuted }}>
+                <div data-testid="eksik-bilgi" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0 8px", flexWrap: "wrap", marginTop: 10, padding: "4px 10px", borderRadius: radius.sm, border: `1px solid ${colors.border}`, background: colors.surfaceRaised }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, color: colors.textMuted, whiteSpace: "nowrap" }}>
                     <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: colors.warning, flex: "0 0 6px" }} />
                     Eksik araç bilgileri var
                   </span>
-                  <a href={`/bireysel/araclar/${active.id}#duzenle`} data-testid="eksik-bilgi-tamamla" style={{ display: "inline-flex", alignItems: "center", minHeight: 36, fontSize: 13.5, fontWeight: 700, color: colors.text, textDecoration: "none" }}>
+                  <a href={`/bireysel/araclar/${active.id}#duzenle`} data-testid="eksik-bilgi-tamamla" style={{ display: "inline-flex", alignItems: "center", minHeight: 36, fontSize: 13, fontWeight: 700, color: colors.text, textDecoration: "none", whiteSpace: "nowrap" }}>
                     Bilgileri tamamla <span aria-hidden="true" style={{ marginLeft: 4 }}>→</span>
                   </a>
                 </div>
