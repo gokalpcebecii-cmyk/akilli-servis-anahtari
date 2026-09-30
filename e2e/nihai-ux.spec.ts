@@ -92,8 +92,8 @@ test.describe("Nihai UX — bireysel ana ekran", () => {
     await page.getByTestId("kritik-ozet").waitFor();
     await expect(page.getByTestId("aktif-plaka")).toHaveText("34 NUX 001");
     await expect(page.getByTestId("aktif-km")).toHaveText("84.200 km");
-    await expect(page.getByTestId("kritik-ozet")).toContainText("2 işlem dikkatinizi bekliyor");
-    await expect(page.getByTestId("kritik-ozet")).toContainText("Trafik sigortası gecikti · Kasko 18 gün sonra");
+    await expect(page.getByTestId("kritik-ozet")).toContainText("2 hatırlatma var");
+    await expect(page.getByTestId("kritik-ozet")).toContainText("Trafik sigortası 3 gün geçti · Kasko 18 gün sonra");
     await expect(page.getByTestId("durum-dortlu").locator("[data-testid^=dortlu-]")).toHaveCount(4);
     // QR yok: tek kompakt aksiyon kartı, tekrar eden QR açıklaması yok
     await expect(page.getByTestId("qr-durumu")).toContainText("OTOİZ anahtarlığı henüz bağlı değil");

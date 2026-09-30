@@ -279,3 +279,41 @@ test.describe("Nihai UX son düzenleme — ana ekran ve giriş", () => {
     await noOverflow(page);
   });
 });
+
+test.describe("Son mikro UX — ana ekran hatırlatma bandı", () => {
+  test("'X hatırlatma var'; dokununca Yaklaşan İşlemler'e gider", async ({ page, baseURL }, info) => {
+    await asOwner(page, baseURL!);
+    await mockAll(page, { qr: true });
+    await page.goto("/bireysel/araclar");
+    const band = page.getByTestId("kritik-ozet");
+    await band.waitFor();
+    await expect(band).toContainText("2 hatırlatma var");
+    await expect(band).toContainText("Trafik sigortası 3 gün geçti · Kasko 18 gün sonra");
+    await expect(page.getByText("dikkatinizi bekliyor")).toHaveCount(0);
+    await expect(band).toHaveAttribute("data-level", "late");
+    await band.click();
+    await expect(page.getByTestId("yaklasan-islemler")).toBeInViewport({ ratio: 0.5 });
+    // Telefonda sayfa bölüme kayar (masaüstünde bölüm zaten görünür).
+    if (info.project.name !== "desktop-chromium") await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+  });
+
+  test("tek kayıt: '1 hatırlatma var'", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    await mockAll(page, { qr: true, vehicles: [{ ...V1, trafik_sigortasi_bitis: istToday(200) }] });
+    await page.goto("/bireysel/araclar");
+    const band = page.getByTestId("kritik-ozet");
+    await expect(band).toContainText("1 hatırlatma var");
+    await expect(band).toContainText("Kasko 18 gün sonra");
+    await expect(band).toHaveAttribute("data-level", "soon");
+  });
+
+  test("yaklaşan/geciken yoksa bant hiç görünmez", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    await mockAll(page, { qr: true, vehicles: [{ ...V1, trafik_sigortasi_bitis: istToday(200), kasko_bitis: istToday(200) }] });
+    await page.goto("/bireysel/araclar");
+    await page.getByTestId("durum-dortlu").waitFor();
+    await expect(page.getByTestId("kritik-ozet")).toHaveCount(0);
+    await expect(page.getByText("hatırlatma var")).toHaveCount(0);
+    await expect(page.getByTestId("yaklasan-islemler")).toBeVisible();
+  });
+});

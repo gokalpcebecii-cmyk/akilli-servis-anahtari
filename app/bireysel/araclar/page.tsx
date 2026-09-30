@@ -328,7 +328,7 @@ export default function BireyselAraclarPage() {
 
             {/* D) Yaklaşan İşlemler + Son Kayıtlar */}
             <div className="otoiz-two-col">
-              <section aria-label="Yaklaşan işlemler" data-testid="yaklasan-islemler" style={cardStyle}>
+              <section id="yaklasan-islemler" aria-label="Yaklaşan işlemler" data-testid="yaklasan-islemler" style={{ ...cardStyle, scrollMarginTop: 16 }}>
                 <h2 style={cardTitle}>Yaklaşan İşlemler</h2>
                 {status && status.upcoming.length > 0 ? (
                   <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -404,14 +404,34 @@ function SectionTitle({ children, action }: { children: React.ReactNode; action?
   );
 }
 
-// B) Kritik özet — dikkat bekleyen işlem sayısı ve en önemli iki işlem.
-// Eksik bilgi varsa tek küçük bağlantı; büyük yeşil yüzey yok.
+// B) Hatırlatma bandı — "X hatırlatma var" ve en önemli iki işlem. Yaklaşan
+// ya da geciken işlem yoksa hiç görünmez. Dokununca aynı sayfadaki
+// Yaklaşan İşlemler bölümüne gider. Eksik bilgi varsa tek küçük bağlantı.
+function goUpcoming() {
+  document.getElementById("yaklasan-islemler")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function CriticalSummary({ status, vehicleId, missing }: { status: any; vehicleId: string; missing: string[] }) {
   const s = criticalSummary(status);
+  if (!s.count) return null;
   const t = STATUS_TONE[s.level] ?? STATUS_TONE.none;
   const icon = s.level === "late" || s.level === "soon" ? "alert" : s.level === "ok" ? "check" : "clipboard";
   return (
-    <section data-testid="kritik-ozet" data-level={s.level} aria-label="Kritik özet" style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+    <section
+      data-testid="kritik-ozet"
+      data-level={s.level}
+      aria-label={`${s.title}. Yaklaşan işlemlere git`}
+      role="link"
+      tabIndex={0}
+      onClick={goUpcoming}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          goUpcoming();
+        }
+      }}
+      style={{ ...cardStyle, padding: 0, overflow: "hidden", cursor: "pointer" }}
+    >
       <div style={{ display: "flex", alignItems: "stretch" }}>
         <div aria-hidden="true" style={{ width: 4, flex: "0 0 4px", background: t.dot }} />
         <div style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "16px 18px", flex: 1, minWidth: 0 }}>
@@ -422,7 +442,7 @@ function CriticalSummary({ status, vehicleId, missing }: { status: any; vehicleI
             <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0, lineHeight: 1.3 }}>{s.title}</h2>
             <p style={{ fontSize: 14, color: colors.textMuted, margin: "4px 0 0", lineHeight: 1.45 }}>{s.line}</p>
             {missing.length > 0 && (
-              <a href={`/bireysel/araclar/${vehicleId}#duzenle`} data-testid="eksik-bilgi" style={{ ...linkStyle, padding: 0, minHeight: 36, marginTop: 4, color: colors.text }}>
+              <a href={`/bireysel/araclar/${vehicleId}#duzenle`} data-testid="eksik-bilgi" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} style={{ ...linkStyle, padding: 0, minHeight: 36, marginTop: 4, color: colors.text }}>
                 Eksik bilgileri tamamla ({missing.length})
                 <Icon name="chevron-right" color={colors.textMuted} size={16} />
               </a>

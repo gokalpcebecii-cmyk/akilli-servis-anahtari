@@ -114,8 +114,12 @@ test("12 ay önce: ay sonu taşması güvenli", () => {
 test("kritik özet: sayı + en önemli iki işlem kısa cümle", () => {
   const vehicle = { current_km: 84200, next_service_km: 90000, next_service_date: "2027-06-01", trafik_sigortasi_bitis: "2026-09-27", kasko_bitis: "2026-10-18", muayene_tarihi: null };
   const s = criticalSummary(buildVehicleStatus({ vehicle, items: [], labels: ITEM_LABELS, today: TODAY }));
-  assert.equal(s.title, "2 işlem dikkatinizi bekliyor");
-  assert.equal(s.line, "Trafik sigortası gecikti · Kasko 18 gün sonra");
+  assert.equal(s.title, "2 hatırlatma var");
+  assert.equal(s.count, 2);
+  assert.equal(s.line, "Trafik sigortası 3 gün geçti · Kasko 18 gün sonra");
+  const one = criticalSummary(buildVehicleStatus({ vehicle: { ...vehicle, trafik_sigortasi_bitis: "2027-09-01" }, items: [], labels: ITEM_LABELS, today: TODAY }));
+  assert.equal(one.title, "1 hatırlatma var");
+  assert.equal(one.count, 1);
   assert.equal(s.level, "late");
   const ok = criticalSummary(buildVehicleStatus({ vehicle: { current_km: 1000, next_service_km: 11000 }, items: [], labels: ITEM_LABELS, today: TODAY }));
   assert.equal(ok.title, "Tüm işlemler zamanında");
