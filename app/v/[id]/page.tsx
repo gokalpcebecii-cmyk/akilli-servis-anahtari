@@ -23,7 +23,7 @@ export const dynamic = "force-static";
 
 export default function DeprecatedVehicleLinkPage() {
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, display: "flex", alignItems: "center" }}>
+    <main style={{ minHeight: "100vh", background: colors.bg, display: "flex", alignItems: "center" }}>
       <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", fontFamily: font, textAlign: "center" }}>
         <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bu Bağlantı Artık Geçerli Değil</h1>
         <p style={{ color: colors.textMuted, lineHeight: 1.6 }}>

@@ -149,7 +149,7 @@ test.describe("iPhone kurulum sihirbazı — Safari", () => {
     await btn.click();
     const sheet = page.getByTestId("install-sheet-ios");
     const bg = await sheet.evaluate((el) => getComputedStyle(el).backgroundImage);
-    expect(bg).toContain("rgb(22, 26, 32)"); // --otoiz-anthracite-2
+    expect(bg).toContain("rgb(21, 25, 34)"); // --otoiz-anthracite-2 (son cila: #151922)
     await expect(page.getByRole("button", { name: "Kapat" })).toBeFocused();
     expect(await page.evaluate(() => document.body.style.overflow)).toBe("hidden");
     await page.keyboard.press("Escape");
@@ -308,7 +308,7 @@ test.describe("iPhone kurulum sihirbazı — mobil ana ekran ve regresyon", () =
     const sheet = page.getByTestId("install-sheet-android");
     await expect(sheet.getByRole("heading", { name: "Android telefona ekle" })).toBeVisible();
     await expect(sheet).toContainText("Uygulamayı yükle");
-    expect(await sheet.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(255, 255, 255)");
+    expect(await sheet.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(24, 29, 39)"); // son cila: koyu kart yüzeyi #181D27
     await expect(page.getByTestId("install-sheet-ios")).toHaveCount(0);
     await context.close();
   });

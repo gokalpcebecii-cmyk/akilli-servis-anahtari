@@ -154,7 +154,7 @@ test.describe("Aşama E — servis", () => {
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await page.getByRole("button", { name: "Yağ Filtresi", exact: true }).click();
     await expect(page.getByTestId("plan-onizleme")).toContainText("96.500 km");
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Kayıt tamamlandı" })).toBeVisible();
     const ms = Date.now() - t0;
     test.info().annotations.push({ type: "akış süresi (otomasyon)", description: `${ms} ms, 1 km girişi + 3 dokunuş` });
@@ -171,16 +171,16 @@ test.describe("Aşama E — servis", () => {
 
   test("yeni hızlı seçimler + Sonra belirle: plan boş gider", async ({ page, baseURL }) => {
     const { visits } = await setupServis(page, baseURL!);
-    for (const l of ["Yakıt Filtresi", "Fren Balatası", "Şanzıman Yağı", "Antifriz"]) {
+    for (const l of ["Yakıt Filtresi", "Ön Fren Balatası", "Şanzıman Yağı", "Antifriz"]) {
       await page.getByRole("button", { name: l, exact: true }).click();
     }
     await page.getByRole("radio", { name: "Sonra belirle" }).click();
     await expect(page.getByTestId("plan-onizleme")).toContainText("sonra belirlenecek");
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect.poll(() => visits.length).toBe(1);
     expect(visits[0].p_next_km).toBeNull();
     expect(visits[0].p_next_date).toBeNull();
-    expect(visits[0].p_items.map((i: any) => i.key)).toEqual(["yakit_filtresi", "fren_balatasi", "sanziman_yagi", "antifriz"]);
+    expect(visits[0].p_items.map((i: any) => i.key)).toEqual(["yakit_filtresi", "fren_on_balata", "sanziman_yagi", "antifriz"]);
   });
 
   test("+15.000 km / 12 ay ve Özel plan (geçersiz km engellenir)", async ({ page, baseURL }) => {
@@ -188,11 +188,11 @@ test.describe("Aşama E — servis", () => {
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
     await page.getByRole("radio", { name: "Özel" }).click();
     await page.getByPlaceholder("Örn. 95.000").fill("80000");
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("güncel kilometreden büyük");
     expect(visits.length).toBe(0);
     await page.getByRole("radio", { name: "+15.000 km / 12 ay" }).click();
-    await page.getByRole("button", { name: "KAYDET" }).click();
+    await page.getByRole("button", { name: "Bakımı Kaydet" }).click();
     await expect.poll(() => visits.length).toBe(1);
     expect(visits[0].p_next_km).toBe(84200 + 15000);
   });
@@ -200,7 +200,7 @@ test.describe("Aşama E — servis", () => {
   test("double-submit engeli: hızlı çift tıklama tek kayıt", async ({ page, baseURL }) => {
     const { visits } = await setupServis(page, baseURL!, baseVehicle, { delayMs: 400 });
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).click();
-    const save = page.getByRole("button", { name: "KAYDET" });
+    const save = page.getByRole("button", { name: "Bakımı Kaydet" });
     await Promise.all([save.click(), save.click({ force: true }).catch(() => {})]);
     await page.waitForTimeout(700);
     expect(visits.length).toBe(1);
@@ -233,7 +233,7 @@ test.describe("Aşama E — servis", () => {
     // Klavye açıkken görünür alanın ~yarıya inmesini taklit et.
     await page.setViewportSize({ width: 390, height: 420 });
     await page.getByRole("button", { name: "Motor Yağı", exact: true }).scrollIntoViewIfNeeded();
-    await expect(page.getByRole("button", { name: "KAYDET" })).toBeInViewport();
+    await expect(page.getByRole("button", { name: "Bakımı Kaydet" })).toBeInViewport();
     await noHorizontalOverflow(page);
     for (const w of [360, 412]) {
       await page.setViewportSize({ width: w, height: 800 });
@@ -243,16 +243,17 @@ test.describe("Aşama E — servis", () => {
 });
 
 test.describe("Aşama E — bireysel", () => {
-  test("ilk bakış: araç, km, sonraki bakım, kaynak sayıları, QR, son işlemler", async ({ page, baseURL }, info) => {
+  test("ilk bakış: araç, km, sonraki bakım, kaynak rozetleri, QR, son kayıtlar", async ({ page, baseURL }, info) => {
     await setupBireysel(page, baseURL!);
     await expect(page.getByText("34 OTZ 084").first()).toBeVisible();
     await expect(page.getByTestId("sonraki-bakim")).toHaveAttribute("data-level", "soon");
-    await expect(page.getByTestId("bireysel-ozet")).toContainText("Servis doğrulamalı");
-    await expect(page.getByTestId("bireysel-ozet")).toContainText("Bireysel kayıt");
-    await expect(page.getByTestId("bireysel-ozet")).toContainText("QR durumu");
+    // Nihai UX son düzenleme: kaynak sayıları kartı yok; kaynak her kaydın rozetinde.
+    await expect(page.getByTestId("bireysel-ozet")).toContainText("Servis Doğrulamalı");
+    await expect(page.getByTestId("bireysel-ozet")).toContainText("Bireysel Kayıt");
+    await expect(page.getByTestId("bireysel-ozet")).toContainText(/QR durumu/i);
     const preview = page.getByTestId("zaman-cizelgesi");
-    await expect(preview).toContainText("Son İşlemler");
-    await expect(preview.getByTestId("zaman-olay")).toHaveCount(5);
+    await expect(preview).toContainText("Son Kayıtlar");
+    await expect(preview.getByTestId("zaman-olay")).toHaveCount(3);
     // Sonraki bakım görseli ilk ekranda (fold üstü) görünür.
     await expect(page.getByTestId("sonraki-bakim")).toBeInViewport();
     await noHorizontalOverflow(page);
@@ -265,8 +266,12 @@ test.describe("Aşama E — bireysel", () => {
     await expect(page.getByText(/Revizyon \d/)).toHaveCount(0);
     await expect(page.getByText("Ahmet Usta")).toHaveCount(0);
     expect(historyCalls.length, "sahip ekranı revizyon RPC'sini çağırmamalı").toBe(0);
-    await page.getByRole("button", { name: /Tüm zaman çizelgesi/ }).click();
-    await expect(page.getByRole("button", { name: "Kendi kaydını ekle (serbest not)" })).toBeVisible();
+    await page.getByRole("button", { name: /Tüm geçmişi gör/ }).click();
+    // Nihai UX: serbest not yerine "Geçmiş İşlem Ekle" (bakım/parça ya da diğer kayıt).
+    await expect(page.getByTestId("gecmis-islem-ekle")).toContainText("Geçmiş İşlem Ekle");
+    await expect(page.getByRole("button", { name: "Bakım / Parça Değişimi" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Diğer Araç Kaydı" })).toBeVisible();
+    await expect(page.getByText("Kendi kaydını ekle (serbest not)")).toHaveCount(0);
     await expect(page.getByTestId("zaman-cizelgesi").getByTestId("zaman-olay")).toHaveCount(20);
     await shot(page, `bireysel-zaman-cizelgesi-${info.project.name}`);
   });
@@ -275,7 +280,9 @@ test.describe("Aşama E — bireysel", () => {
     await setupBireysel(page, baseURL!, { ...baseVehicle, next_service_km: null, next_service_date: null, muayene_tarihi: null, trafik_sigortasi_bitis: null }, []);
     await expect(page.getByTestId("sonraki-bakim")).toHaveAttribute("data-level", "none");
     await expect(page.getByTestId("sonraki-bakim")).toContainText("Plan belirlenmedi");
-    for (const k of ["bakim", "muayene", "trafik", "kasko", "detailing", "yaklasan"]) {
+    // Nihai UX: bakım yalnız "Sonraki Bakım" kartında (durum-bakim tekrarı yok).
+    await expect(page.getByTestId("durum-bakim")).toHaveCount(0);
+    for (const k of ["muayene", "trafik", "kasko", "detailing", "yaklasan"]) {
       await expect(page.getByTestId(`durum-${k}`)).toHaveAttribute("data-level", "none");
     }
     await expect(page.getByTestId("zaman-bos")).toBeVisible();

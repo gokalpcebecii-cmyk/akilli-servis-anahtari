@@ -202,7 +202,7 @@ export default function QrUretimPage() {
         <>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <p style={{ fontSize: 14, color: colors.textDark, margin: 0 }}>{codes.length} adet QR üretildi.</p>
-            <button onClick={downloadAll} style={{ padding: "8px 16px", background: colors.greenDark, color: colors.textLight, border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", minHeight: 36 }}>
+            <button onClick={downloadAll} style={{ padding: "8px 16px", background: colors.green, color: colors.onAccent, border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", minHeight: 36 }}>
               Tümünü İndir
             </button>
           </div>

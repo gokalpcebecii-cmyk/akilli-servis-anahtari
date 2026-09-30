@@ -70,7 +70,7 @@ export default function DevirKabulPage() {
   // EXECUTE yetkisi revoke edilerek DB seviyesinde kapatıldı.
   if (!PILOT_FLAGS.ownershipTransferSelfService) {
     return (
-      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
           <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bu Özellik Şu An Kullanılamıyor</h1>
           <p style={{ color: colors.textMuted, marginTop: 8 }}>
@@ -85,7 +85,7 @@ export default function DevirKabulPage() {
 
   if (done) {
     return (
-      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
           <div style={{ width: 52, height: 52, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
             <Icon name="check" color={colors.greenDark} size={24} />
@@ -102,9 +102,9 @@ export default function DevirKabulPage() {
 
   if (!preview && !loggedIn) {
     return (
-      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-          <OtoizLogo variant="light" size={150} mark="primary" />
+          <OtoizLogo variant="dark" size={150} mark="primary" />
           <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800, marginTop: 16 }}>Araç Devrini Kabul Et</h1>
           <p style={{ fontSize: 13, color: colors.textMuted, margin: "8px 0 16px" }}>
             Devir bilgilerini görmek ve aracı devralmak için OTOİZ bireysel hesabınızla giriş yapın veya hesap oluşturun.
@@ -122,7 +122,7 @@ export default function DevirKabulPage() {
 
   if (preview?.own_transfer) {
     return (
-      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
           <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bu devri siz başlattınız</h1>
           <p style={{ color: colors.textMuted }}>Bağlantıyı aracı devredeceğiniz kişiyle paylaşın. Kendi hesabınızla kabul edemezsiniz.</p>
@@ -133,7 +133,7 @@ export default function DevirKabulPage() {
 
   if (!preview) {
     return (
-      <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
           <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Geçersiz veya Süresi Dolmuş Bağlantı</h1>
           <p style={{ color: colors.textMuted }}>Bu devir bağlantısı artık geçerli değil.</p>
@@ -143,10 +143,10 @@ export default function DevirKabulPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+    <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
       <div style={{ maxWidth: 420, margin: "0 auto", padding: "40px 20px" }}>
         <div style={{ marginBottom: 20, textAlign: "center" }}>
-          <OtoizLogo variant="light" size={150} mark="primary" />
+          <OtoizLogo variant="dark" size={150} mark="primary" />
         </div>
         <h1 style={{ fontSize: 20, marginBottom: 8, textAlign: "center", color: colors.textDark, fontWeight: 800 }}>Araç Devrini Kabul Et</h1>
 

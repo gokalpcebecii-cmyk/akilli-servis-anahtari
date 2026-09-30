@@ -1,41 +1,64 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// OTOİZ — Bireysel ana ekran (Nihai UX mimarisi, kapalı tasarım).
+// Yukarıdan aşağı tek okuma sırası:
+//  A) Araç kimliği: plaka, marka/model/yıl, güncel km, küçük "Araç Değiştir"
+//  B) Kritik özet: kaç işlem dikkat bekliyor + en önemli iki işlem
+//  C) Bakım · Muayene · Kasko · Trafik Sigortası (masaüstü tek satır, mobil 2x2)
+//  D) Yaklaşan İşlemler + Son Kayıtlar (masaüstü 2 sütun, mobil alt alta)
+//  E) QR: bağlı değilse tek kompakt aksiyon kartı
+// Veri erişimi değişmedi (vehicles, qr_keys, maintenance_items,
+// vehicle_timeline); yeni yazma yok.
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, font, radius } from "@/lib/theme";
+import { fetchStatusRecords } from "@/lib/vehicleRecords";
+import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 import { BottomNav } from "@/components/BottomNav";
 import { InstallCta } from "@/components/InstallCta";
 import { AuthShellLoading } from "@/components/AuthShell";
+import { StatusQuad, StatusPill, STATUS_TONE, vehicleStatusFor } from "@/components/VehicleStatusPanel";
+import { VehicleTimeline } from "@/components/VehicleTimeline";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
-const { plateSearchKey, describeMaintenancePlan } = require("@/lib/logic");
+const { ITEM_LABELS } = require("@/lib/maintenanceItems");
+const { criticalSummary } = require("@/lib/vehicleStatus");
 
-const MODULES = [
-  { key: "servis-gecmisi", title: "Servis Geçmişi", desc: "Yapılan tüm bakım ve onarım kayıtları.", icon: "history" },
-  { key: "kilometre", title: "Kilometre Kayıtları", desc: "Güncel km ve geçmiş okumalar.", icon: "gauge" },
-  { key: "parca", title: "Parça Değişimleri", desc: "Yağ, filtre, balata, lastik ve daha fazlası.", icon: "wrench" },
-  { key: "muayene", title: "Muayene Bilgileri", desc: "Muayene ve sigorta notlarınız.", icon: "clipboard" },
-  { key: "qr", title: "QR / NFC Yönetimi", desc: "Aktif kodu görün, iptal edin veya yenileyin.", icon: "qr" },
-  { key: "devir", title: "Sahiplik Devri", desc: "Aracı güvenle yeni sahibine devredin.", icon: "swap" },
-].filter((m) =>
-  // Pilot: güvenlik kabulü bekleyen özellikler menüde hiç görünmez
-  // (bkz. lib/pilotFlags.ts). Bayrak açılınca kart kendiliğinden geri gelir.
-  (m.key !== "qr" || PILOT_FLAGS.qrSelfIssuance) &&
-  (m.key !== "devir" || PILOT_FLAGS.ownershipTransferSelfService)
-);
+const ACTIVE_KEY = "otoiz-aktif-arac";
+
+type QrState = "loading" | "active" | "revoked" | "none";
+
+function readActive(): string | null {
+  try {
+    return window.localStorage.getItem(ACTIVE_KEY);
+  } catch {
+    return null;
+  }
+}
+function writeActive(id: string) {
+  try {
+    window.localStorage.setItem(ACTIVE_KEY, id);
+  } catch {
+    // tarayıcı depolaması kapalıysa seçim yalnız bu oturumda kalır
+  }
+}
 
 export default function BireyselAraclarPage() {
   const router = useRouter();
   const supabase = createBrowserSupabase();
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingTransfers, setPendingTransfers] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
+  const [items, setItems] = useState<any[]>([]);
+  const [statusRecords, setStatusRecords] = useState<{ lastMuayene: any; lastDetailing: any }>({ lastMuayene: null, lastDetailing: null });
+  const [qr, setQr] = useState<QrState>("loading");
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   async function loadPendingTransfers() {
     // Pilotta bu RPC'nin EXECUTE yetkisi authenticated'dan alındı; çağırmak
@@ -48,6 +71,22 @@ export default function BireyselAraclarPage() {
     setPendingTransfers(data ?? []);
   }
 
+  async function loadVehicles(userId: string) {
+    const { data: vehicleList, error } = await supabase
+      .from("vehicles")
+      .select("*")
+      .eq("owner_user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) setLoadError(true);
+    const list = vehicleList ?? [];
+    setVehicles(list);
+    const stored = readActive();
+    setActiveId((prev) => {
+      const want = prev ?? stored;
+      return list.some((v: any) => v.id === want) ? want : list[0]?.id ?? null;
+    });
+  }
+
   useEffect(() => {
     async function load() {
       const { data: session } = await supabase.auth.getSession();
@@ -56,19 +95,36 @@ export default function BireyselAraclarPage() {
         return;
       }
       setEmail(session.session.user.email ?? null);
-
-      const { data: vehicleList } = await supabase
-        .from("vehicles")
-        .select("*")
-        .eq("owner_user_id", session.session.user.id)
-        .order("created_at", { ascending: false });
-
-      setVehicles(vehicleList ?? []);
+      await loadVehicles(session.session.user.id);
       await loadPendingTransfers();
       setLoading(false);
     }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Aktif aracın durum verisi (bakım kalemleri, son muayene/detailing, QR).
+  useEffect(() => {
+    if (!activeId) return;
+    let alive = true;
+    setQr("loading");
+    (async () => {
+      const [mi, sr, qk] = await Promise.all([
+        supabase.from("maintenance_items").select("*").eq("vehicle_id", activeId),
+        fetchStatusRecords(supabase, activeId),
+        supabase.from("qr_keys").select("code, revoked_at").eq("vehicle_id", activeId).limit(20),
+      ]);
+      if (!alive) return;
+      setItems(mi.data ?? []);
+      setStatusRecords(sr);
+      const keys: any[] = Array.isArray(qk.data) ? qk.data : qk.data ? [qk.data] : [];
+      setQr(keys.some((k) => !k.revoked_at) ? "active" : keys.length > 0 ? "revoked" : "none");
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId]);
 
   async function handleCancelTransfer(transferId: string) {
     setCancelling(transferId);
@@ -80,14 +136,7 @@ export default function BireyselAraclarPage() {
     }
     await loadPendingTransfers();
     const { data: session } = await supabase.auth.getSession();
-    if (session.session) {
-      const { data: vehicleList } = await supabase
-        .from("vehicles")
-        .select("*")
-        .eq("owner_user_id", session.session.user.id)
-        .order("created_at", { ascending: false });
-      setVehicles(vehicleList ?? []);
-    }
+    if (session.session) await loadVehicles(session.session.user.id);
   }
 
   async function handleLogout() {
@@ -95,91 +144,158 @@ export default function BireyselAraclarPage() {
     router.push("/bireysel/giris");
   }
 
-  const filtered = search ? vehicles.filter((v) => plateSearchKey(v.plate).includes(plateSearchKey(search))) : vehicles;
-  const primary = filtered[0];
-  const rest = filtered.slice(1);
+  function selectVehicle(id: string) {
+    setActiveId(id);
+    writeActive(id);
+    setSwitcherOpen(false);
+  }
+
+  const active = vehicles.find((v) => v.id === activeId) ?? null;
+  const status = useMemo(
+    () => (active ? vehicleStatusFor(active, items, ITEM_LABELS, statusRecords.lastMuayene, statusRecords.lastDetailing) : null),
+    [active, items, statusRecords]
+  );
   const firstName = email ? email.split("@")[0] : "";
 
   if (loading) {
     return <AuthShellLoading />;
   }
 
+  // Eksik kritik bilgi: marka/model, km, sonraki bakım, muayene, kasko,
+  // zorunlu trafik sigortası. Hatırlatma bandından bağımsız gösterilir.
+  const missing: string[] = [];
+  if (active) {
+    if (!active.brand || !active.model) missing.push("marka/model");
+    if (active.current_km == null || active.current_km === "") missing.push("kilometre");
+    if (!active.next_service_km && !active.next_service_date) missing.push("bakım planı");
+    if (!active.muayene_tarihi) missing.push("muayene tarihi");
+    if (!active.kasko_bitis) missing.push("kasko bitişi");
+    if (!active.trafik_sigortasi_bitis) missing.push("trafik sigortası bitişi");
+  }
+
   return (
-    <main className="otoiz-has-bottom-nav otoiz-dashboard-shell" style={{ minHeight: "100vh", fontFamily: font }}>
-      <div
-        className="otoiz-hero-pattern"
-        style={{
-          position: "relative", overflow: "hidden",
-          background: `linear-gradient(160deg, ${colors.bg} 0%, ${colors.bgAlt} 55%, ${colors.surfaceDark} 100%)`,
-          padding: "22px 14px 36px", boxShadow: "0 18px 30px -14px rgba(6,20,33,0.45)",
-        }}
-      >
-        <div className="otoiz-reflection" aria-hidden="true" />
-        <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <OtoizLogo variant="dark" size={190} className="otoiz-dash-logo" />
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <main className="otoiz-app-shell otoiz-has-bottom-nav" style={{ fontFamily: font }}>
+      {/* 1) Üst başlık */}
+      <header style={{ background: `linear-gradient(180deg, ${colors.bgAlt} 0%, ${colors.bg} 100%)`, borderBottom: `1px solid ${colors.border}` }}>
+        <div className="otoiz-page otoiz-page-wide" style={{ paddingTop: 12, paddingBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <OtoizLogo variant="dark" size={116} />
+            {/* Masaüstünde üstteki gezinme çubuğu aynı bağlantıları taşır;
+                üst üste binmesin diye bu iki düğme yalnız mobilde. */}
+            <div className="otoiz-mobile-only" style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 onClick={() => router.push("/bireysel/bildirimler")}
                 aria-label="Bildirimler"
-                style={{
-                  position: "relative", width: 44, height: 44, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.08)", border: "none", display: "flex",
-                  alignItems: "center", justifyContent: "center", cursor: "pointer",
-                }}
+                style={{ position: "relative", width: 44, height: 44, borderRadius: "50%", background: colors.surfaceRaised, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
               >
-                <Icon name="bell" color={colors.textLight} size={18} />
-                {pendingTransfers.length > 0 && (
-                  <span style={{ position: "absolute", top: 9, right: 10, width: 7, height: 7, borderRadius: "50%", background: colors.green }} />
-                )}
+                <Icon name="bell" color={colors.text} size={18} />
+                {pendingTransfers.length > 0 && <span style={{ position: "absolute", top: 9, right: 10, width: 7, height: 7, borderRadius: "50%", background: colors.green }} />}
               </button>
               <button
                 onClick={() => router.push("/bireysel/profil")}
                 aria-label="Profil"
-                style={{
-                  width: 44, height: 44, borderRadius: "50%", background: colors.green, border: "none",
-                  color: colors.textDark, fontWeight: 800, fontSize: 15, cursor: "pointer",
-                }}
+                style={{ width: 44, height: 44, borderRadius: "50%", background: colors.surfaceRaised, border: `1px solid ${colors.border}`, color: colors.greenLight, fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: font }}
               >
-                {firstName ? firstName[0].toUpperCase() : "?"}
+                {firstName ? firstName[0].toLocaleUpperCase("tr-TR") : "?"}
               </button>
             </div>
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: colors.textLight, margin: "0 0 4px" }}>Merhaba{firstName ? `, ${firstName}` : ""}</h1>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", margin: 0 }}>Aracınızın tüm geçmişi tek ekranda.</p>
-        </div>
-      </div>
 
-      <div className="otoiz-dashboard-container" style={{ maxWidth: 480, margin: "-14px auto 0", padding: "0 16px 24px" }}>
-        {vehicles.length > 1 && (
-          <input
-            placeholder="Plaka ile ara..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%", padding: "12px 14px", borderRadius: radius.md, border: `1px solid ${colors.border}`,
-              marginBottom: 16, fontSize: 15, fontFamily: font, background: colors.surfaceLight,
-              boxShadow: "0 8px 24px rgba(6,20,33,0.1)",
-            }}
-          />
+          {active ? (
+            <section aria-label="Araç kimliği" data-testid="arac-kimligi">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px 12px", flexWrap: "wrap" }}>
+                <div style={{ minWidth: 0, flex: "1 1 auto" }}>
+                  <h1 data-testid="aktif-plaka" style={{ fontSize: 24, fontWeight: 800, letterSpacing: 0.6, color: colors.text, margin: 0, lineHeight: 1.15, whiteSpace: "nowrap" }}>
+                    {active.plate}
+                  </h1>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "2px 12px", marginTop: 4 }}>
+                    <span style={{ fontSize: 14.5, fontWeight: 600, color: colors.textMuted }}>
+                      {[active.brand, active.model].filter(Boolean).join(" ") || "Marka/model girilmedi"}
+                      {active.year ? ` · ${active.year}` : ""}
+                    </span>
+                    {active.current_km != null && active.current_km !== "" && (
+                      <span data-testid="aktif-km" style={{ fontSize: 14.5, fontWeight: 700, color: colors.text }}>{Number(active.current_km).toLocaleString("tr-TR")} km</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-testid="arac-degistir"
+                  aria-expanded={switcherOpen}
+                  aria-controls="arac-secici"
+                  onClick={() => setSwitcherOpen((v) => !v)}
+                  style={{ flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 44, padding: "0 2px", border: "none", background: "transparent", color: colors.textMuted, fontSize: 13.5, fontWeight: 600, fontFamily: font, cursor: "pointer", whiteSpace: "nowrap", textDecoration: "underline", textDecorationColor: colors.border, textUnderlineOffset: 4 }}
+                >
+                  <Icon name="swap" color={colors.textFaint} size={14} />
+                  Araç Değiştir
+                </button>
+              </div>
+              {missing.length > 0 && (
+                <div data-testid="eksik-bilgi" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0 8px", flexWrap: "wrap", marginTop: 10, padding: "4px 10px", borderRadius: radius.sm, border: `1px solid ${colors.border}`, background: colors.surfaceRaised }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, color: colors.textMuted, whiteSpace: "nowrap" }}>
+                    <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: colors.warning, flex: "0 0 6px" }} />
+                    Eksik araç bilgileri var
+                  </span>
+                  <a href={`/bireysel/araclar/${active.id}#duzenle`} data-testid="eksik-bilgi-tamamla" style={{ display: "inline-flex", alignItems: "center", minHeight: 36, fontSize: 13, fontWeight: 700, color: colors.text, textDecoration: "none", whiteSpace: "nowrap" }}>
+                    Bilgileri tamamla <span aria-hidden="true" style={{ marginLeft: 4 }}>→</span>
+                  </a>
+                </div>
+              )}
+              {switcherOpen && (
+                <div id="arac-secici" data-testid="arac-secici" className="otoiz-enter" style={{ marginTop: 14, background: colors.surface, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: 6 }}>
+                  <div role="listbox" aria-label="Araç seçin">
+                    {vehicles.map((v) => {
+                      const on = v.id === activeId;
+                      return (
+                        <button
+                          key={v.id}
+                          role="option"
+                          aria-selected={on}
+                          onClick={() => selectVehicle(v.id)}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, width: "100%", minHeight: 48, padding: "8px 12px", borderRadius: radius.sm, border: "none", background: on ? colors.surfaceRaised : "transparent", color: colors.text, fontFamily: font, cursor: "pointer", textAlign: "left" }}
+                        >
+                          <span style={{ minWidth: 0 }}>
+                            <span style={{ display: "block", fontSize: 15, fontWeight: 800, letterSpacing: 0.4 }}>{v.plate}</span>
+                            <span style={{ display: "block", fontSize: 12.5, color: colors.textMuted }}>{[v.brand, v.model].filter(Boolean).join(" ")}</span>
+                          </span>
+                          {on && <Icon name="check" color={colors.green} size={18} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <a href="/bireysel/araclar/yeni" style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 48, padding: "8px 12px", borderTop: `1px solid ${colors.border}`, marginTop: 4, color: colors.text, fontSize: 14.5, fontWeight: 700, textDecoration: "none" }}>
+                    <Icon name="plus-square" color={colors.textMuted} size={18} />
+                    Başka Araç Ekle
+                  </a>
+                </div>
+              )}
+            </section>
+          ) : (
+            <>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.text, margin: 0 }}>Aracınızı ekleyin</h1>
+              <p style={{ fontSize: 14, color: colors.textMuted, margin: "8px 0 0", lineHeight: 1.5 }}>Bakım, muayene ve sigorta tarihlerini tek yerden takip edin.</p>
+            </>
+          )}
+        </div>
+      </header>
+
+      <div className="otoiz-page otoiz-page-wide" style={{ paddingTop: 20, paddingBottom: 28 }}>
+        {loadError && (
+          <p role="alert" style={{ ...cardStyle, borderColor: colors.danger, color: colors.text, fontSize: 14, margin: "0 0 20px" }}>
+            Araçlarınız yüklenemedi. Bağlantınızı kontrol edip sayfayı yenileyin.
+          </p>
         )}
 
         {pendingTransfers.length > 0 && (
           <section style={{ marginBottom: 20 }}>
-            <h2 style={{ fontSize: 13, color: colors.textMuted, marginBottom: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>
-              Bekleyen Devirler
-            </h2>
+            <SectionTitle>Bekleyen Devirler</SectionTitle>
             {pendingTransfers.map((t) => (
-              <div key={t.transfer_id} style={{ background: "#FFF8E6", border: "1px solid #E8C468", borderRadius: 12, padding: 14, marginBottom: 10 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#7a5c10" }}>{t.plate}</div>
-                <div style={{ fontSize: 12, color: "#7a5c10", marginBottom: 10 }}>
-                  {t.brand} {t.model} — {t.expired ? "devir bağlantısının süresi doldu; aracı geri alabilirsiniz" : "yeni sahibin kabul etmesi bekleniyor"}
+              <div key={t.transfer_id} style={{ ...cardStyle, borderColor: colors.warning, marginBottom: 10 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: colors.text }}>{t.plate}</div>
+                <div style={{ fontSize: 13, color: colors.textMuted, margin: "4px 0 12px" }}>
+                  {t.brand} {t.model} · {t.expired ? "devir bağlantısının süresi doldu; aracı geri alabilirsiniz" : "yeni sahibin kabul etmesi bekleniyor"}
                 </div>
-                <button
-                  onClick={() => handleCancelTransfer(t.transfer_id)}
-                  disabled={cancelling === t.transfer_id}
-                  style={{ fontSize: 12, padding: "8px 14px", background: "#fff", border: "1px solid #E8C468", borderRadius: 8, color: "#7a5c10", fontWeight: 600, cursor: "pointer", minHeight: 44 }}
-                >
+                <button onClick={() => handleCancelTransfer(t.transfer_id)} disabled={cancelling === t.transfer_id} style={secondaryButtonStyle()}>
                   {cancelling === t.transfer_id ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
                 </button>
               </div>
@@ -187,93 +303,91 @@ export default function BireyselAraclarPage() {
           </section>
         )}
 
-        {vehicles.length === 0 ? (
-          <>
-          <div style={{ background: colors.surfaceLight, borderRadius: radius.lg, padding: "40px 20px", textAlign: "center", boxShadow: "0 8px 24px rgba(6,20,33,0.08)" }}>
-            <p style={{ color: colors.textMuted, marginBottom: 18, fontSize: 14 }}>Henüz araç eklemediniz.</p>
-            <a
-              href="/bireysel/araclar/yeni"
-              style={{ display: "inline-flex", alignItems: "center", padding: "12px 22px", background: colors.green, color: colors.textDark, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, minHeight: 44 }}
-            >
-              + Yeni Araç Ekle
-            </a>
+        {!active ? (
+          <div className="otoiz-stack otoiz-enter">
+            <section data-testid="birincil-aksiyon" style={{ ...cardStyle, padding: "28px 20px", textAlign: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: radius.md, background: colors.greenSoft, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                <Icon name="car" color={colors.greenLight} size={26} />
+              </div>
+              <h2 style={{ fontSize: 19, fontWeight: 800, color: colors.text, margin: "0 0 6px" }}>Henüz araç eklemediniz</h2>
+              <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 20px", lineHeight: 1.5 }}>Plaka, marka, model, model yılı ve kilometreyle başlayın; tarihleri sonra da ekleyebilirsiniz.</p>
+              <a href="/bireysel/araclar/yeni" style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
+                Aracımı Ekle
+              </a>
+              <a href="/aktivasyon" style={{ display: "inline-flex", alignItems: "center", minHeight: 44, marginTop: 8, color: colors.textMuted, fontSize: 14, fontWeight: 600 }}>
+                OTOİZ anahtarlığım var, etkinleştir
+              </a>
+            </section>
+            <InstallCta tone="light" />
           </div>
-          <InstallCta tone="light" />
-          </>
         ) : (
-          <>
-            {primary && <VehicleHeroCard vehicle={primary} onClick={() => router.push(`/bireysel/araclar/${primary.id}`)} />}
+          <div className="otoiz-stack otoiz-enter">
+            {/* B) Kritik özet */}
+            {status && <CriticalSummary status={status} />}
+
+            {/* C) Dört durum kartı */}
+            <section aria-label="Araç durumu">
+              <SectionTitle
+                action={
+                  <a href={`/bireysel/araclar/${active.id}`} style={linkStyle}>
+                    Araç detayı
+                  </a>
+                }
+              >
+                Araç Durumu
+              </SectionTitle>
+              {status && <StatusQuad cards={status.cards} />}
+            </section>
+
+            {/* D) Yaklaşan İşlemler + Son Kayıtlar */}
+            <div className="otoiz-two-col">
+              <section id="yaklasan-islemler" aria-label="Yaklaşan işlemler" data-testid="yaklasan-islemler" style={{ ...cardStyle, scrollMarginTop: 16 }}>
+                <h2 style={cardTitle}>Yaklaşan İşlemler</h2>
+                {status && status.upcoming.length > 0 ? (
+                  <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+                    {status.upcoming.slice(0, 4).map((u: any) => (
+                      <li key={u.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: colors.surfaceRaised, borderRadius: radius.sm, padding: "12px 14px" }}>
+                        <span style={{ minWidth: 0 }}>
+                          <span style={{ display: "block", fontSize: 14.5, fontWeight: 700, color: colors.text }}>{u.title}</span>
+                          <span style={{ display: "block", fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{u.detail}</span>
+                        </span>
+                        <StatusPill level={u.level} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={{ fontSize: 14, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>
+                    {status && status.cards.find((c: any) => c.key === "yaklasan")?.level === "ok"
+                      ? "Önümüzdeki 30 gün / 1.000 km içinde işlem görünmüyor."
+                      : "Tarih ve bakım planı girildiğinde yaklaşan işlemler burada listelenir."}
+                  </p>
+                )}
+              </section>
+
+              <VehicleTimeline
+                supabase={supabase}
+                vehicleId={active.id}
+                audience="bireysel"
+                preview={3}
+                title="Son Kayıtlar"
+                alwaysShowAll
+                onShowAll={() => router.push(`/bireysel/araclar/${active.id}#servis-gecmisi`)}
+              />
+            </div>
+
+            {/* E) QR */}
+            <QrCard vehicleId={active.id} qr={qr} />
 
             <InstallCta tone="light" />
-
-            {primary && (
-              <section className="otoiz-dashboard-modules" style={{ marginTop: 18, marginBottom: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-                {MODULES.map((m) => (
-                  <a
-                    key={m.key}
-                    href={`/bireysel/araclar/${primary.id}#${m.key}`}
-                    className="otoiz-module-card"
-                    style={{
-                      display: "flex", alignItems: "center", gap: 14, background: colors.surfaceLight,
-                      border: `1px solid ${colors.border}`, borderRadius: radius.lg, padding: "16px 18px",
-                      textDecoration: "none", minHeight: 44, boxShadow: "0 6px 18px rgba(6,20,33,0.09)",
-                    }}
-                  >
-                    <div style={{ width: 44, height: 44, minWidth: 44, borderRadius: "50%", background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Icon name={m.icon} color={colors.greenDark} size={20} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14.5, fontWeight: 700, color: colors.textDark, marginBottom: 2 }}>{m.title}</div>
-                      <div style={{ fontSize: 12, color: colors.textMuted, lineHeight: 1.4 }}>{m.desc}</div>
-                    </div>
-                    <Icon name="chevron-right" color={colors.textMuted} size={18} />
-                  </a>
-                ))}
-              </section>
-            )}
-
-            <a
-              href="/bireysel/araclar/yeni"
-              style={{ display: "block", textAlign: "center", padding: "13px 20px", background: colors.surfaceLight, color: colors.textDark, border: `1.5px solid ${colors.border}`, borderRadius: radius.sm, textDecoration: "none", fontWeight: 700, marginBottom: 20, minHeight: 44 }}
-            >
-              + Yeni Araç Ekle
-            </a>
-
-            {rest.length > 0 && (
-              <section>
-                <h2 style={{ fontSize: 13, color: colors.textMuted, marginBottom: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4 }}>
-                  Diğer Araçlarım
-                </h2>
-                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                  {rest.map((v) => (
-                    <li key={v.id} style={{ background: colors.surfaceLight, borderRadius: radius.md, border: `1px solid ${colors.border}`, marginBottom: 8 }}>
-                      <a href={`/bireysel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-                          <div style={{ fontWeight: 900, fontSize: 19, letterSpacing: 0.6 }}>{v.plate}</div>
-                          <div style={{ fontWeight: 900, fontSize: 18 }}>
-                            {v.current_km != null ? Number(v.current_km).toLocaleString("tr-TR") : "—"}
-                            <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
-                          </div>
-                        </div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
-                          {v.brand} {v.model}
-                        </div>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-          </>
+          </div>
         )}
 
-        {filtered.length === 0 && vehicles.length > 0 && (
-          <p style={{ color: colors.textMuted, marginTop: 20, textAlign: "center", fontSize: 14 }}>Araç bulunamadı.</p>
-        )}
-
-        <button onClick={handleLogout} style={{ display: "block", margin: "28px auto 0", background: "none", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: 13, minHeight: 44, padding: "0 16px" }}>
-          Çıkış yap
-        </button>
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 24 }}>
+          <a href="/bireysel/gorus" style={{ ...linkStyle, color: colors.textMuted }}>Görüş Bildir</a>
+          <button onClick={handleLogout} style={{ ...linkStyle, color: colors.textMuted, background: "none", border: "none", cursor: "pointer", fontFamily: font }}>
+            Çıkış yap
+          </button>
+        </div>
       </div>
 
       <BottomNav active="home" />
@@ -281,53 +395,100 @@ export default function BireyselAraclarPage() {
   );
 }
 
-function VehicleHeroCard({ vehicle, onClick }: { vehicle: any; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="otoiz-hero-pattern"
-      style={{
-        width: "100%", textAlign: "left", position: "relative", overflow: "hidden",
-        background: `linear-gradient(160deg, ${colors.surfaceDark}, ${colors.bg})`, borderRadius: radius.xl, padding: 20,
-        border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: colors.textLight, boxShadow: "0 16px 38px rgba(6,20,33,0.28)",
-      }}
-    >
-      {/* Onaylanan OTOİZ referans fotoğrafı — kart içi görsel araç vurgusu */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute", inset: 0, zIndex: 0,
-          backgroundImage: "url(/marketing/otoiz-hero-car.jpg)",
-          backgroundSize: "cover", backgroundPosition: "70% 40%",
-          opacity: 0.4,
-          WebkitMaskImage: "linear-gradient(105deg, transparent 0%, transparent 30%, black 62%, black 100%)",
-          maskImage: "linear-gradient(105deg, transparent 0%, transparent 30%, black 62%, black 100%)",
-        }}
-      />
+const linkStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 44,
+  padding: "0 10px",
+  fontSize: 14,
+  fontWeight: 700,
+  color: colors.greenLight,
+  textDecoration: "none",
+};
 
-      <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-        <div>
-          <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: 0.5 }}>{vehicle.plate}</div>
-          <div style={{ fontSize: 13, opacity: 0.65, marginTop: 2 }}>
-            {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
+const cardTitle: React.CSSProperties = { fontSize: 17, fontWeight: 800, color: colors.text, margin: "0 0 14px" };
+
+function SectionTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+      <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>{children}</h2>
+      {action}
+    </div>
+  );
+}
+
+// B) Hatırlatma bandı — "X hatırlatma var" ve en önemli iki işlem. Yaklaşan
+// ya da geciken işlem yoksa hiç görünmez. Dokununca aynı sayfadaki
+// Yaklaşan İşlemler bölümüne gider.
+function goUpcoming() {
+  document.getElementById("yaklasan-islemler")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function CriticalSummary({ status }: { status: any }) {
+  const s = criticalSummary(status);
+  if (!s.count) return null;
+  const t = STATUS_TONE[s.level] ?? STATUS_TONE.none;
+  const icon = s.level === "late" || s.level === "soon" ? "alert" : s.level === "ok" ? "check" : "clipboard";
+  return (
+    <section
+      data-testid="kritik-ozet"
+      data-level={s.level}
+      aria-label={`${s.title}. Yaklaşan işlemlere git`}
+      role="link"
+      tabIndex={0}
+      onClick={goUpcoming}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          goUpcoming();
+        }
+      }}
+      style={{ ...cardStyle, padding: 0, overflow: "hidden", cursor: "pointer" }}
+    >
+      <div style={{ display: "flex", alignItems: "stretch" }}>
+        <div aria-hidden="true" style={{ width: 4, flex: "0 0 4px", background: t.dot }} />
+        <div style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "16px 18px", flex: 1, minWidth: 0 }}>
+          <div aria-hidden="true" style={{ width: 40, height: 40, minWidth: 40, borderRadius: radius.sm, background: colors.surfaceRaised, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name={icon} color={s.level === "none" ? colors.textMuted : t.dot} size={20} />
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0, lineHeight: 1.3 }}>{s.title}</h2>
+            <p style={{ fontSize: 14, color: colors.textMuted, margin: "4px 0 0", lineHeight: 1.45 }}>{s.line}</p>
           </div>
         </div>
-        <div style={{ background: "rgba(54,232,109,0.14)", color: colors.green, fontSize: 10.5, fontWeight: 700, padding: "5px 11px", borderRadius: 999, border: "1px solid rgba(54,232,109,0.35)" }}>
-          Aktif Pasaport
-        </div>
       </div>
-      <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 12, padding: "11px 13px", backdropFilter: "blur(2px)" }}>
-          <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>GÜNCEL KM</div>
-          <div style={{ fontSize: 17, fontWeight: 700 }}>{vehicle.current_km != null ? Number(vehicle.current_km).toLocaleString("tr-TR") : "—"}</div>
+    </section>
+  );
+}
+
+// E) QR — tek kompakt kart. Bağlı değilse yalnız "Anahtarlığı Etkinleştir".
+function QrCard({ vehicleId, qr }: { vehicleId: string; qr: QrState }) {
+  if (qr === "loading") return null;
+  const map: Record<Exclude<QrState, "loading">, { title: string; cta: { href: string; label: string }; level: string }> = {
+    none: { title: "OTOİZ anahtarlığı henüz bağlı değil", cta: { href: "/aktivasyon", label: "Anahtarlığı Etkinleştir" }, level: "none" },
+    active: { title: "OTOİZ anahtarlık bağlı", cta: { href: `/bireysel/araclar/${vehicleId}#anahtarlik`, label: "Ayrıntılar" }, level: "ok" },
+    revoked: { title: "Anahtarlık iptal edildi", cta: { href: "/aktivasyon", label: "Yeni ürünü etkinleştir" }, level: "late" },
+  };
+  const m = map[qr];
+  return (
+    <section data-testid="qr-durumu" data-state={qr} aria-label="QR anahtarlık" style={{ ...cardStyle, padding: "14px 16px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div aria-hidden="true" style={{ width: 40, height: 40, minWidth: 40, borderRadius: radius.sm, background: colors.surfaceRaised, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="qr" color={qr === "active" ? colors.green : colors.textMuted} size={20} />
         </div>
-        <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 12, padding: "11px 13px", backdropFilter: "blur(2px)" }}>
-          <div style={{ fontSize: 10, opacity: 0.55, marginBottom: 2 }}>SONRAKİ BAKIM</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: colors.green }}>
-            {describeMaintenancePlan({ nextServiceKm: vehicle.next_service_km, nextServiceDate: vehicle.next_service_date }).label}
-          </div>
+        <div style={{ flex: "1 1 180px", minWidth: 0, fontSize: 15, fontWeight: 700, color: colors.text }}>
+          {m.title}
+          {qr === "active" && (
+            <span data-testid="qr-aktif" style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, color: colors.greenLight, border: `1px solid rgba(34,197,94,0.5)`, borderRadius: radius.pill, padding: "2px 9px", verticalAlign: "2px" }}>
+              Aktif
+            </span>
+          )}
         </div>
+        <a href={m.cta.href} style={{ ...linkStyle, padding: 0, color: qr === "none" ? colors.greenLight : colors.text }}>
+          {m.cta.label}
+          <Icon name="chevron-right" color={qr === "none" ? colors.greenLight : colors.textMuted} size={16} />
+        </a>
       </div>
-    </button>
+    </section>
   );
 }

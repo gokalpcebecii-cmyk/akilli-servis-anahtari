@@ -14,18 +14,34 @@ import { RevisionHistory } from "@/components/RevisionHistory";
 const { TIMELINE_PAGE, normalizeTimelineResponse, mergeTimelinePages, describeEvent, groupByYear } = require("@/lib/timeline");
 const { fmtDate } = require("@/lib/vehicleStatus");
 
+// Kapalı tasarım rozetleri: servis doğrulamalı = yeşil çerçeveli, bireysel =
+// mavi, bireysel geçmiş = mavi çerçeveli, sistem = gri. Düzeltilmiş kayıt ayrıca sarı kenarlıklı rozetle.
 const SOURCE_STYLE: Record<string, { fg: string; bg: string; border: string; icon: string }> = {
-  service: { fg: colors.greenDark, bg: colors.greenSoft, border: colors.greenDark, icon: "shield-check" },
-  owner: { fg: "#2D5A8A", bg: "#EAF2FB", border: "#5B8FC7", icon: "user" },
-  system: { fg: colors.textMuted, bg: colors.neutralSoft, border: "#9AA5B1", icon: "car" },
+  service: { fg: colors.greenLight, bg: "transparent", border: colors.green, icon: "shield-check" },
+  owner: { fg: colors.info, bg: colors.infoSoft, border: "rgba(96,165,250,0.45)", icon: "user" },
+  // Nihai UX: araç sahibinin geçmişe dönük girdiği kayıt — bireysel mavi,
+  // dolgusuz (servis doğrulamalı gibi görünmez).
+  owner_history: { fg: colors.info, bg: "transparent", border: "rgba(96,165,250,0.45)", icon: "history" },
+  system: { fg: colors.textMuted, bg: colors.neutralSoft, border: "transparent", icon: "car" },
 };
+
+export function RevisedBadge() {
+  return (
+    <span
+      data-testid="duzeltildi-rozet"
+      style={{ display: "inline-flex", alignItems: "center", fontSize: 12, fontWeight: 700, color: colors.warning, border: `1px solid ${colors.warning}`, borderRadius: radius.pill, padding: "2px 9px", whiteSpace: "nowrap" }}
+    >
+      Düzeltilmiş kayıt
+    </span>
+  );
+}
 
 export function SourceBadge({ source, label }: { source: string; label: string }) {
   const s = SOURCE_STYLE[source] ?? SOURCE_STYLE.system;
   return (
     <span
       data-source={source}
-      style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 800, color: s.fg, background: s.bg, borderRadius: radius.pill, padding: "3px 8px", whiteSpace: "nowrap" }}
+      style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: s.fg, background: s.bg, border: `1px solid ${s.border}`, borderRadius: radius.pill, padding: "2px 9px", whiteSpace: "nowrap" }}
     >
       <Icon name={s.icon} color={s.fg} size={12} />
       {label}
@@ -42,6 +58,7 @@ export function VehicleTimeline({
   onShowAll,
   revisions,
   title = "Zaman Çizelgesi",
+  alwaysShowAll = false,
 }: {
   supabase: any;
   vehicleId: string;
@@ -51,6 +68,7 @@ export function VehicleTimeline({
   onShowAll?: () => void;
   revisions?: Record<string, any[]>;
   title?: string;
+  alwaysShowAll?: boolean;
 }) {
   const [rows, setRows] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -98,51 +116,56 @@ export function VehicleTimeline({
 
   return (
     <section data-testid="zaman-cizelgesi" aria-label={title} style={cardStyle}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.textDark, margin: 0 }}>{title}</h2>
-        {!loading && total > 0 && <span style={{ fontSize: 12, color: colors.textMuted }}>{total} olay</span>}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>{title}</h2>
+        {!loading && total > 0 && <span style={{ fontSize: 13, color: colors.textFaint }}>{total} olay</span>}
       </div>
       {loading ? (
-        <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>Yükleniyor…</p>
+        <div aria-busy="true" aria-label="Yükleniyor" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="otoiz-skeleton" style={{ height: 46, borderRadius: radius.sm }} />
+          ))}
+        </div>
       ) : error ? (
         <p role="status" style={{ fontSize: 13, color: colors.danger, margin: 0 }}>Zaman çizelgesi yüklenemedi. Sayfayı yenileyin.</p>
       ) : rows.length === 0 ? (
-        <p data-testid="zaman-bos" style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>Henüz kayıt yok. İlk bakım kaydı burada görünecek.</p>
+        <p data-testid="zaman-bos" style={{ fontSize: 14, color: colors.textMuted, margin: 0, padding: "14px 16px", background: colors.surfaceRaised, borderRadius: radius.md, lineHeight: 1.5 }}>Henüz kayıt yok. İlk bakım kaydı burada görünecek.</p>
       ) : (
         <div>
           {groups.map((g: any) => (
             <div key={g.year}>
-              <div style={{ fontSize: 13, fontWeight: 900, color: colors.textDark, margin: "10px 0 6px", letterSpacing: 0.4 }}>{g.year}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: colors.textFaint, margin: "8px 0 8px", letterSpacing: 0.6 }}>{g.year}</div>
               <ol style={{ listStyle: "none", margin: 0, padding: 0, borderLeft: `2px solid ${colors.border}`, marginLeft: 6 }}>
                 {g.items.map((ev: any) => {
                   const d = describeEvent(ev);
                   const s = SOURCE_STYLE[d.source] ?? SOURCE_STYLE.system;
                   return (
-                    <li key={`${ev.kind}:${ev.id}`} data-testid="zaman-olay" data-source={d.source} style={{ position: "relative", padding: "4px 0 12px 16px" }}>
-                      <span aria-hidden="true" style={{ position: "absolute", left: -7, top: 8, width: 12, height: 12, borderRadius: "50%", background: colors.surfaceLight, border: `3px solid ${s.border}` }} />
-                      <div style={{ fontSize: 12, color: colors.textMuted, fontWeight: 700 }}>
+                    <li key={`${ev.kind}:${ev.id}`} data-testid="zaman-olay" data-source={d.source} style={{ position: "relative", padding: "2px 0 16px 18px" }}>
+                      <span aria-hidden="true" style={{ position: "absolute", left: -7, top: 6, width: 12, height: 12, borderRadius: "50%", background: colors.surface, border: `3px solid ${d.source === "service" ? colors.green : d.source === "owner" || d.source === "owner_history" ? colors.info : colors.gray}` }} />
+                      <div style={{ fontSize: 13, color: colors.textMuted, fontWeight: 600 }}>
                         {fmtDate(ev.event_date)}
                         {ev.km != null && (
                           <>
                             {" · "}
-                            <span style={{ color: colors.textDark, fontWeight: 900 }}>{Number(ev.km).toLocaleString("tr-TR")} km</span>
+                            <span style={{ color: colors.text, fontWeight: 700 }}>{Number(ev.km).toLocaleString("tr-TR")} km</span>
                           </>
                         )}
                       </div>
-                      <div style={{ fontSize: 14.5, fontWeight: 800, color: colors.textDark, margin: "2px 0 4px", overflowWrap: "anywhere" }}>{ev.title}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: "3px 0 6px", lineHeight: 1.35, overflowWrap: "anywhere" }}>{ev.title}</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                         <SourceBadge source={d.source} label={d.sourceLabel} />
                         {d.categoryLabel && (
-                          <span style={{ fontSize: 11, fontWeight: 700, color: colors.textDark, background: colors.surfaceSoft, border: `1px solid ${colors.border}`, borderRadius: radius.pill, padding: "2px 8px" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, background: colors.surfaceRaised, border: `1px solid ${colors.border}`, borderRadius: radius.pill, padding: "2px 9px" }}>
                             {d.categoryLabel}
                           </span>
                         )}
+                        {ev.revised && <RevisedBadge />}
                         {d.source === "service" && ev.service_name && audience === "bireysel" && (
-                          <span style={{ fontSize: 11.5, color: colors.textMuted }}>{ev.service_name}</span>
+                          <span style={{ fontSize: 12.5, color: colors.textFaint }}>{ev.service_name}</span>
                         )}
                       </div>
                       {ev.revised && audience === "bireysel" && (
-                        <div data-testid="duzeltildi-notu" style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>
+                        <div data-testid="duzeltildi-notu" style={{ fontSize: 12.5, color: colors.textFaint, marginTop: 6 }}>
                           Bu kayıt sonradan düzeltildi.
                         </div>
                       )}
@@ -155,13 +178,13 @@ export function VehicleTimeline({
           ))}
         </div>
       )}
-      {!loading && preview != null && total > rows.length && onShowAll && (
+      {!loading && preview != null && (total > rows.length || (alwaysShowAll && total > 0)) && onShowAll && (
         <button
           type="button"
           onClick={onShowAll}
-          style={{ marginTop: 4, width: "100%", minHeight: 44, border: `1px solid ${colors.border}`, borderRadius: radius.sm, background: colors.surfaceLight, cursor: "pointer", fontWeight: 700, color: colors.textDark }}
+          style={{ marginTop: 4, width: "100%", minHeight: 48, border: `1px solid ${colors.border}`, borderRadius: radius.md, background: colors.surfaceRaised, cursor: "pointer", fontWeight: 700, fontSize: 14.5, color: colors.text, fontFamily: "inherit" }}
         >
-          Tüm zaman çizelgesi ({total})
+          Tüm geçmişi gör ({total})
         </button>
       )}
       {!loading && preview == null && hasMore && (
@@ -170,7 +193,7 @@ export function VehicleTimeline({
           data-testid="zaman-daha-fazla"
           onClick={loadMore}
           disabled={loadingMore}
-          style={{ marginTop: 4, width: "100%", minHeight: 44, border: `1px solid ${colors.border}`, borderRadius: radius.sm, background: colors.surfaceLight, cursor: loadingMore ? "wait" : "pointer", fontWeight: 700, color: colors.textDark }}
+          style={{ marginTop: 4, width: "100%", minHeight: 48, border: `1px solid ${colors.border}`, borderRadius: radius.md, background: colors.surfaceRaised, cursor: loadingMore ? "wait" : "pointer", fontWeight: 700, fontSize: 14.5, color: colors.text, fontFamily: "inherit" }}
         >
           {loadingMore ? "Yükleniyor…" : `Daha fazla göster (${rows.length} / ${total})`}
         </button>

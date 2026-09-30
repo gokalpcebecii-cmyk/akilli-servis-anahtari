@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { reportClientEvent } from "@/lib/clientEvent";
-import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { colors, inputStyle, labelStyle, primaryButtonStyle, alertBoxStyle } from "@/lib/theme";
 import { AuthShell, AuthFooterLink } from "@/components/AuthShell";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -101,7 +101,7 @@ export default function SifremiUnuttumPage() {
         )}
 
         {error && (
-          <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 12 }}>
+          <p role="alert" style={alertBoxStyle}>
             {error}
           </p>
         )}

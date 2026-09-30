@@ -53,7 +53,7 @@ export default function GirisSecimiPage() {
             style={{
               display: "block", textDecoration: "none",
               background: colors.surfaceLight, borderRadius: radius.xl, padding: "24px 22px",
-              boxShadow: "0 14px 34px rgba(6,20,33,0.35)", minHeight: 44,
+              boxShadow: "0 14px 34px rgba(0,0,0,0.35)", minHeight: 44,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -74,7 +74,7 @@ export default function GirisSecimiPage() {
             style={{
               display: "block", textDecoration: "none",
               background: colors.surfaceLight, borderRadius: radius.xl, padding: "24px 22px",
-              boxShadow: "0 14px 34px rgba(6,20,33,0.35)", minHeight: 44,
+              boxShadow: "0 14px 34px rgba(0,0,0,0.35)", minHeight: 44,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -101,10 +101,10 @@ export default function GirisSecimiPage() {
           aria-hidden="true"
           style={{
             height: 90, margin: "0 -20px -28px", position: "relative", overflow: "hidden",
-            background: "linear-gradient(200deg, transparent 40%, rgba(54,232,109,0.18) 100%)",
+            background: "linear-gradient(200deg, transparent 40%, rgba(34,197,94,0.18) 100%)",
           }}
         >
-          <div style={{ position: "absolute", inset: "-40% -10% auto auto", width: "70%", height: "180%", background: "radial-gradient(closest-side, rgba(54,232,109,0.35), transparent 70%)", filter: "blur(2px)" }} />
+          <div style={{ position: "absolute", inset: "-40% -10% auto auto", width: "70%", height: "180%", background: "radial-gradient(closest-side, rgba(34,197,94,0.35), transparent 70%)", filter: "blur(2px)" }} />
         </div>
         <div style={{ position: "relative", fontSize: 11, fontWeight: 700, letterSpacing: 1, opacity: 0.7, marginTop: -50 }}>
           DAHA İYİ BİR<br />YOLCULUK İÇİN

@@ -121,7 +121,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
   })();
 
   return (
-    <main style={{ fontFamily: font, background: colors.surfaceSoft, minHeight: "100vh" }}>
+    <main style={{ fontFamily: font, background: colors.bg, minHeight: "100vh" }}>
       <div
         className="otoiz-hero-pattern"
         style={{ position: "relative", overflow: "hidden", background: `linear-gradient(160deg, ${colors.bg}, ${colors.surfaceDark})`, color: colors.textLight, padding: "24px 20px 42px", textAlign: "center" }}
@@ -135,7 +135,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
       </div>
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 460, margin: "-24px auto 0", padding: "0 20px" }}>
-        <div style={{ ...cardStyle, boxShadow: "0 14px 34px rgba(6,20,33,0.14)" }}>
+        <div style={{ ...cardStyle, boxShadow: "0 14px 34px rgba(0,0,0,0.14)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
               <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: 0.8, color: colors.textDark }}>{vehicle.plate}</div>
@@ -251,7 +251,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
 
 export function PublicPassportMessage({ title, body }: { title: string; body: string }) {
   return (
-    <main style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font, display: "flex", alignItems: "center" }}>
+    <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
       <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
         <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>{title}</h1>
         <p style={{ color: colors.textMuted }}>{body}</p>

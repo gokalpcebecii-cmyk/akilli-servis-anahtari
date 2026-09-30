@@ -155,7 +155,7 @@ test("zaman çizelgesi: güvenli normalize, sayfa birleştirme, yıl grupları, 
   assert.equal(describeEvent({ source: "owner", kind: "record", title: "Araç muayenesi" }).categoryLabel, "Muayene");
   assert.equal(describeEvent({ source: "system", kind: "ownership_transfer", title: "Sahiplik devredildi" }).sourceLabel, "Sistem / Araç Olayı");
   assert.equal(describeEvent({ source: "bogus" }).source, "system");
-  assert.deepEqual(Object.values(SOURCE_LABELS), ["Servis Doğrulamalı", "Bireysel Kayıt", "Sistem / Araç Olayı"]);
+  assert.deepEqual(Object.values(SOURCE_LABELS), ["Servis Doğrulamalı", "Bireysel Kayıt", "Bireysel Geçmiş Kaydı", "Sistem / Araç Olayı"]);
 });
 
 test("servis hızlı kayıt: 11 hızlı seçim + tüm varsayılan periyotlar tanımlı", () => {

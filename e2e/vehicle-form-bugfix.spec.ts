@@ -106,7 +106,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
   test("3. Sonraki Bakım (km) ilk açılışta boş (Özel plan seçildiğinde)", async ({ page, baseURL }) => {
     await setupNewVehicleForm(page, baseURL!);
     await selectCustomPlan(page);
-    const nextKmInput = page.getByPlaceholder("Opsiyonel");
+    const nextKmInput = page.locator('input[data-field="next_service_km"]');
     await expect(nextKmInput).toHaveValue("");
   });
 
@@ -152,11 +152,11 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
     await fieldByLabel(page, "Model Yılı").fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("52430");
     await selectCustomPlan(page);
-    await page.getByPlaceholder("Opsiyonel").pressSequentially("60000");
+    await page.locator('input[data-field="next_service_km"]').pressSequentially("60000");
     await page.locator('input[data-field="next_service_date"]').fill("2027-03-20");
 
     await page.getByRole("button", { name: "Aracı Oluştur" }).click();
-    await expect(page).toHaveURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}$`));
+    await expect(page).toHaveURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}/gecmis$`));
   });
 
   test("7b. Varsayılan bakım planıyla (çip değiştirilmeden) submit edilebiliyor", async ({ page, baseURL }) => {
@@ -179,7 +179,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
     await page.getByPlaceholder("Örn. 52430").pressSequentially("52430");
     // planType varsayılan olarak "default" — hiçbir çipe basılmadan submit.
     await page.getByRole("button", { name: "Aracı Oluştur" }).click();
-    await expect(page).toHaveURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}$`));
+    await expect(page).toHaveURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}/gecmis$`));
   });
 
   test("8. Boş/geçersiz kilometre ile submit engelleniyor (regresyon: mevcut oluşturma akışı korunuyor)", async ({ page, baseURL }) => {

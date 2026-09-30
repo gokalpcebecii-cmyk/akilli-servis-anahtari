@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { reportClientEvent } from "@/lib/clientEvent";
-import { colors, inputStyle, labelStyle, primaryButtonStyle } from "@/lib/theme";
+import { colors, inputStyle, labelStyle, primaryButtonStyle, alertBoxStyle } from "@/lib/theme";
 import { AuthShell, AuthShellLoading, AuthFooterLink } from "@/components/AuthShell";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -139,7 +139,7 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <p role="alert" style={{ color: colors.danger, fontSize: 14, marginBottom: 14, lineHeight: 1.5 }}>
+          <p role="alert" style={alertBoxStyle}>
             {error}
           </p>
         )}

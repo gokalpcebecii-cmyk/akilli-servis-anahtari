@@ -28,16 +28,16 @@ export function BottomNav({ active }: { active: "home" | "notifications" | "prof
           right: 0,
           bottom: 0,
           zIndex: 40,
-          background: colors.surfaceLight,
+          background: colors.bgAlt,
           borderTop: `1px solid ${colors.border}`,
           display: "flex",
           paddingBottom: "env(safe-area-inset-bottom)",
-          boxShadow: "0 -4px 20px rgba(6,20,33,0.06)",
+          boxShadow: "0 -4px 20px rgba(0,0,0,0.06)",
         }}
       >
         {ITEMS.map((item) => {
           const isActive = item.key === active;
-          const tint = isActive ? colors.greenDark : colors.textMuted;
+          const tint = isActive ? colors.green : colors.textFaint;
           return (
             <button
               key={item.key}
@@ -60,7 +60,7 @@ export function BottomNav({ active }: { active: "home" | "notifications" | "prof
               }}
             >
               <Icon name={item.icon} color={tint} size={21} strokeWidth={isActive ? 2.4 : 2} />
-              <span style={{ fontSize: 10.5, fontWeight: isActive ? 700 : 500 }}>{item.label}</span>
+              <span style={{ fontSize: 11.5, fontWeight: isActive ? 700 : 600, color: isActive ? colors.greenLight : colors.textMuted }}>{item.label}</span>
             </button>
           );
         })}
@@ -82,10 +82,10 @@ export function BottomNav({ active }: { active: "home" | "notifications" | "prof
           right: 16,
           zIndex: 40,
           display: "none",
-          background: colors.surfaceLight,
+          background: colors.surface,
           borderRadius: 999,
           border: `1px solid ${colors.border}`,
-          boxShadow: "0 8px 24px rgba(6,20,33,0.12)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
           padding: 4,
           gap: 2,
         }}
@@ -105,14 +105,14 @@ export function BottomNav({ active }: { active: "home" | "notifications" | "prof
                 borderRadius: 999,
                 border: "none",
                 cursor: "pointer",
-                background: isActive ? colors.greenDark : "transparent",
-                color: isActive ? colors.textLight : colors.textMuted,
+                background: isActive ? colors.green : "transparent",
+                color: isActive ? colors.onAccent : colors.textMuted,
                 fontFamily: font,
                 fontSize: 12.5,
                 fontWeight: isActive ? 700 : 600,
               }}
             >
-              <Icon name={item.icon} color={isActive ? colors.textLight : colors.textMuted} size={16} strokeWidth={isActive ? 2.4 : 2} />
+              <Icon name={item.icon} color={isActive ? colors.onAccent : colors.textMuted} size={16} strokeWidth={isActive ? 2.4 : 2} />
               {item.label}
             </button>
           );

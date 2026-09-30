@@ -47,10 +47,10 @@ export default function ProfilPage() {
   const initial = email ? email[0].toUpperCase() : "?";
 
   return (
-    <main className="otoiz-has-bottom-nav" style={{ minHeight: "100vh", background: colors.surfaceSoft, fontFamily: font }}>
+    <main className="otoiz-has-bottom-nav" style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
       <div style={{ maxWidth: 420, margin: "0 auto", padding: "28px 16px" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 26 }}>
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: colors.green, color: colors.textDark, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, marginBottom: 12 }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: colors.green, color: colors.onAccent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, marginBottom: 12 }}>
             {initial}
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: colors.textDark }}>{email}</div>
@@ -67,7 +67,7 @@ export default function ProfilPage() {
         </div>
 
         <div style={{ background: colors.surfaceLight, borderRadius: radius.lg, border: `1px solid ${colors.border}`, padding: 16, marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 9, background: "#E6FAEE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon name="car" color={colors.greenDark} size={17} />
           </div>
           <div>
