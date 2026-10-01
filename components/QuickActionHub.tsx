@@ -6,7 +6,7 @@
 // pencerede açılır; kayıttan sonra kullanıcı araç ekranında kalır ve kısa
 // bir başarı bildirimi görür.
 import { useEffect, useRef, useState } from "react";
-import { colors, font, radius, inputStyle, labelStyle, helperStyle, errorTextStyle, primaryButtonStyle } from "@/lib/theme";
+import { colors, font, radius, inputStyle, labelStyle, helperStyle, errorTextStyle, primaryButtonStyle, secondaryButtonStyle, cardStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { ItemChipGrid } from "@/components/ItemChipGrid";
@@ -781,6 +781,35 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
   const [docs, setDocs] = useState<any[] | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [error, setError] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  async function confirmDelete() {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      // Önce depolamadaki dosya, sonra kayıt. Silme politikaları yalnız
+      // aracın güncel sahibinin kendi belgesine izin verir.
+      const { error: rmErr } = await supabase.storage.from("vehicle-documents").remove([deleteTarget.storage_path]);
+      if (rmErr) {
+        setDeleteError("Dosya silinemedi. Bağlantınızı kontrol edip tekrar deneyin.");
+        return;
+      }
+      const { error: delErr } = await supabase.from("vehicle_documents").delete().eq("id", deleteTarget.id);
+      if (delErr) {
+        setDeleteError("Belge kaydı silinemedi. Sayfayı yenileyip tekrar deneyin.");
+        return;
+      }
+      setDocs((prev) => (prev ? prev.filter((d) => d.id !== deleteTarget.id) : prev));
+      setDeleteTarget(null);
+    } catch {
+      setDeleteError("Bağlantı hatası. Lütfen tekrar deneyin.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -839,26 +868,63 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
             const url = urls[d.storage_path];
             const when = d.doc_date ? fmtIsoDate(d.doc_date) : new Date(d.created_at).toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" });
             return (
-              <a
+              <div
                 key={d.id}
-                href={url || undefined}
-                target="_blank"
-                rel="noopener noreferrer"
                 data-testid="belge-satir"
-                aria-disabled={!url}
-                style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 60, padding: "10px 12px", borderRadius: radius.sm, background: colors.surfaceRaised, color: colors.text, textDecoration: "none" }}
+                style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 60, padding: "10px 12px", borderRadius: radius.sm, background: colors.surfaceRaised, color: colors.text }}
               >
-                <Icon name="document" color={colors.greenLight} size={20} />
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: "block", fontSize: 14.5, fontWeight: 700 }}>{DOC_TYPE_LABELS[d.doc_type] || "Belge"}</span>
-                  <span style={{ display: "block", fontSize: 12.5, color: colors.textMuted, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {[when, fmtSize(d.size_bytes), d.note].filter(Boolean).join(" · ")}
+                <a
+                  href={url || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-disabled={!url}
+                  aria-label={`${DOC_TYPE_LABELS[d.doc_type] || "Belge"} aç`}
+                  style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12, color: colors.text, textDecoration: "none" }}
+                >
+                  <Icon name="document" color={colors.greenLight} size={20} />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontSize: 14.5, fontWeight: 700 }}>{DOC_TYPE_LABELS[d.doc_type] || "Belge"}</span>
+                    <span style={{ display: "block", fontSize: 12.5, color: colors.textMuted, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {[when, fmtSize(d.size_bytes), d.note].filter(Boolean).join(" · ")}
+                    </span>
                   </span>
-                </span>
-                <span style={{ fontSize: 13.5, fontWeight: 700, color: url ? colors.greenLight : colors.textFaint }}>Aç</span>
-              </a>
+                  <span style={{ fontSize: 13.5, fontWeight: 700, color: url ? colors.greenLight : colors.textFaint, whiteSpace: "nowrap" }}>Aç</span>
+                </a>
+                <button
+                  type="button"
+                  data-testid="belge-sil"
+                  aria-label={`${DOC_TYPE_LABELS[d.doc_type] || "Belge"} sil`}
+                  onClick={() => { setDeleteError(""); setDeleteTarget(d); }}
+                  style={{ minWidth: 56, minHeight: 44, padding: "0 10px", borderRadius: radius.sm, border: `1px solid ${colors.border}`, background: "transparent", color: colors.danger, fontSize: 13.5, fontWeight: 700, fontFamily: font, cursor: "pointer" }}
+                >
+                  Sil
+                </button>
+              </div>
             );
           })}
+        </div>
+      )}
+      {deleteTarget && (
+        <div role="dialog" aria-modal="true" aria-labelledby="belge-sil-baslik" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 80 }}>
+          <div style={{ ...cardStyle, width: "100%", maxWidth: 380, padding: 22 }}>
+            <h3 id="belge-sil-baslik" style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Belgeyi sil</h3>
+            <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>Bu belgeyi silmek istediğinizden emin misiniz?</p>
+            {deleteError && <p role="alert" style={{ color: colors.danger, fontSize: 13.5, margin: "0 0 12px" }}>{deleteError}</p>}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="button" onClick={() => !deleting && setDeleteTarget(null)} disabled={deleting} style={{ ...secondaryButtonStyle(), flex: 1 }}>
+                İptal
+              </button>
+              <button
+                type="button"
+                data-testid="belge-sil-onay"
+                onClick={confirmDelete}
+                disabled={deleting}
+                style={{ flex: 1, minHeight: 48, borderRadius: radius.md, border: "none", background: colors.danger, color: "#fff", fontSize: 15, fontWeight: 800, fontFamily: font, cursor: deleting ? "wait" : "pointer", opacity: deleting ? 0.7 : 1 }}
+              >
+                {deleting ? "Siliniyor…" : "Belgeyi Sil"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </section>

@@ -216,7 +216,7 @@ test.describe("Aşama E.1 — marka → model", () => {
     await page.locator('[data-field="kasko_bitis"]').fill(isoInDays(200));
     await noHorizontalOverflow(page);
     await shot(page, `e1-yeni-arac-${info.project.name}`);
-    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).click();
     await expect.poll(() => posts.length).toBe(1);
     expect(posts[0].brand).toBe("Fiat");
     expect(posts[0].model).toBe("Tipo");
@@ -232,7 +232,7 @@ test.describe("Aşama E.1 — marka → model", () => {
     await page.locator('[data-field="plate"]').fill("34 E1 004");
     await page.locator('[data-field="year"]').fill("2022");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("84200");
-    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).click();
     await expect.poll(() => posts.length).toBe(1);
     expect(posts[0].brand).toBe("Fiat");
     expect(posts[0].model).toBe("Egea");
@@ -251,7 +251,7 @@ test.describe("Aşama E.1 — marka → model", () => {
     await page.locator('[data-field="plate"]').fill("34 E1 002");
     await page.locator('[data-field="year"]').fill("1975");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("120000");
-    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).click();
     await expect.poll(() => posts.length).toBe(1);
     expect(posts[0].brand).toBe("Anadol");
     expect(posts[0].model).toBe("A1");
@@ -298,7 +298,7 @@ test.describe("Aşama E.1 — marka → model", () => {
     await page.locator('[data-field="plate"]').fill("34 E1 003");
     await page.locator('[data-field="year"]').fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("1000");
-    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).click();
     await expect(page.locator("#arac-model-err")).toBeVisible();
     expect(posts.length).toBe(0);
   });

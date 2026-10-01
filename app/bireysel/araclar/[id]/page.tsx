@@ -16,6 +16,7 @@ import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { BrandModelPicker } from "@/components/BrandModelPicker";
 import { DocDatesFields, DOC_DATE_FIELDS } from "@/components/DocDatesFields";
 import { HistoryEntryFields } from "@/components/HistoryEntryFields";
+import { ItemChipGrid } from "@/components/ItemChipGrid";
 import { QuickActionCard, QuickActionSheet, SuccessToast, VehicleDocuments, type QuickStep } from "@/components/QuickActionHub";
 import { saveHistoryEntries, newRequestId, type HistoryEntry } from "@/lib/historySave";
 const { emptyEntry, validateHistoryEntry } = require("@/lib/history");
@@ -143,6 +144,17 @@ export default function BireyselVehicleDetailPage() {
   const histReqRef = useRef<string | null>(null);
   const histSavingRef = useRef(false);
   const [histSaving, setHistSaving] = useState(false);
+  // Onboarding (pilot final): tek ekran — son bakım biliniyor mu?
+  const [lastMaintKnown, setLastMaintKnown] = useState<null | "yes" | "no">(null);
+  const [lastMaintDate, setLastMaintDate] = useState("");
+  const [lastMaintKm, setLastMaintKm] = useState("");
+  const [lastMaintItems, setLastMaintItems] = useState<Record<string, boolean>>({});
+  const [lastMaintOther, setLastMaintOther] = useState(false);
+  const [lastMaintOtherText, setLastMaintOtherText] = useState("");
+  const [lastMaintErrors, setLastMaintErrors] = useState<Record<string, string>>({});
+  // Başarılı ilk kurulum ekranı (yalnız YENİ araç akışında).
+  const [doneVehicle, setDoneVehicle] = useState<any | null>(null);
+  const [userFirstName, setUserFirstName] = useState("");
 
   useEffect(() => {
     async function init() {
@@ -152,6 +164,9 @@ export default function BireyselVehicleDetailPage() {
         return;
       }
       setUserId(session.session.user.id);
+      const meta = session.session.user.user_metadata as any;
+      const full = typeof meta?.full_name === "string" ? meta.full_name.trim() : "";
+      setUserFirstName(full ? full.split(/\s+/)[0] : "");
 
       if (isNew) return;
 
@@ -319,9 +334,33 @@ export default function BireyselVehicleDetailPage() {
       errors.next_service_date = "Sonraki bakım tarihi geçmişte olamaz.";
     }
 
-    if (!valid || Object.keys(errors).length > 0) {
+    // Pilot final onboarding: "son bakım biliniyor" seçildiyse tarih + km
+    // zorunlu ve tutarlı olmalı; en az bir yapılan işlem seçilmeli. Hatada
+    // hiçbir kayıt açılmaz (kayıt yalnız tek submit'te atomik başlar).
+    const lmErrors: Record<string, string> = {};
+    if (isNew && lastMaintKnown === "yes") {
+      if (!lastMaintDate || !isValidDocDate(lastMaintDate) || lastMaintDate > todayIsoIstanbul()) {
+        lmErrors.date = "Geçerli bir son bakım tarihi seçin (bugünden sonra olamaz).";
+      }
+      const lmKmNum = Number(String(lastMaintKm).replace(/\D/g, ""));
+      if (!lastMaintKm || !Number.isInteger(lmKmNum) || lmKmNum <= 0) {
+        lmErrors.km = "Son bakım kilometresini girin.";
+      } else if (valid && lmKmNum > Number(normalized.current_km)) {
+        lmErrors.km = "Son bakım kilometresi, güncel kilometreden büyük olamaz.";
+      }
+      const anyItem = Object.keys(lastMaintItems).some((k) => lastMaintItems[k]);
+      if (!anyItem && !(lastMaintOther && lastMaintOtherText.trim())) {
+        lmErrors.items = "Yapılan en az bir işlemi seçin veya 'Diğer'e yazın.";
+      }
+    }
+    setLastMaintErrors(lmErrors);
+
+    if (!valid || Object.keys(errors).length > 0 || Object.keys(lmErrors).length > 0) {
       setFieldErrors(errors);
       focusFirstError(errors);
+      if (Object.keys(lmErrors).length > 0) {
+        window.setTimeout(() => document.getElementById("son-bakim")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+      }
       return; // Geçersiz istekte hiçbir yan etki (araç/QR/audit) oluşmaz.
     }
     setFieldErrors({});
@@ -359,8 +398,11 @@ export default function BireyselVehicleDetailPage() {
             model: vehicle.model,
             year: vehicle.year,
             current_km: vehicle.current_km,
-            next_service_km: plan.nextServiceKm,
-            next_service_date: plan.nextServiceDate,
+            // Son bakım biliniyorsa sonraki bakım ARAÇ KAYDINDAN değil,
+            // HEMEN ardından yazılan son bakım kaydının tarih/km'sinden
+            // hesaplanır (aşağıda saveHistoryEntries ile).
+            next_service_km: lastMaintKnown === "yes" ? null : plan.nextServiceKm,
+            next_service_date: lastMaintKnown === "yes" ? null : plan.nextServiceDate,
             muayene_tarihi: vehicle.muayene_tarihi || null,
             kasko_bitis: vehicle.kasko_bitis || null,
             trafik_sigortasi_bitis: vehicle.trafik_sigortasi_bitis || null,
@@ -390,8 +432,39 @@ export default function BireyselVehicleDetailPage() {
         alert("Bağlantı hatası. Lütfen tekrar deneyin.");
         return;
       }
-      // Nihai UX: yeni araçtan sonra bir kez "son 12 aylık geçmiş" başlangıcı.
-      router.push(`/bireysel/araclar/${json.vehicle.id}/gecmis`);
+      // Son bakım biliniyorsa tek kayıt: "Bireysel Geçmiş Kaydı" + sonraki
+      // bakım bu kaydın tarih ve km'sinden (OTOİZ'e kayıt tarihinden DEĞİL).
+      if (lastMaintKnown === "yes" && userId) {
+        const items = Object.keys(lastMaintItems).filter((k) => lastMaintItems[k]);
+        try {
+          const hres = await saveHistoryEntries({
+            supabase,
+            vehicleId: json.vehicle.id,
+            userId,
+            entries: [
+              {
+                date: lastMaintDate,
+                km: String(Number(String(lastMaintKm).replace(/\D/g, ""))),
+                items,
+                otherOn: lastMaintOther,
+                otherText: lastMaintOther ? lastMaintOtherText.trim() : "",
+                note: "",
+              },
+            ],
+            requestIds: [newRequestId()],
+          });
+          if (!hres.ok) {
+            alert("Aracınız eklendi ancak son bakım kaydı eklenemedi. İstediğiniz zaman araç sayfasından ekleyebilirsiniz.");
+          }
+        } catch {
+          alert("Aracınız eklendi ancak son bakım kaydı eklenemedi. İstediğiniz zaman araç sayfasından ekleyebilirsiniz.");
+        }
+      }
+      // Tek ekran onboarding tamamlandı → sade başarı ekranı.
+      savingRef.current = false;
+      setSaving(false);
+      setDoneVehicle(json.vehicle);
+      return;
     } else {
       // Form alanlarında NE varsa (kullanıcı değiştirmediyse mevcut,
       // değiştirdiyse yeni girilen) BİREBİR O yazılır — plan.nextServiceKm/
@@ -556,6 +629,63 @@ export default function BireyselVehicleDetailPage() {
 
   if (loading || !vehicle) return <DetailSkeleton />;
 
+  // Pilot final — başarılı ilk kurulum: sade premium başarı ekranı.
+  if (isNew && doneVehicle) {
+    const v = doneVehicle;
+    return (
+      <main className="otoiz-app-shell" style={{ fontFamily: font, minHeight: "100vh", paddingBottom: 60 }}>
+        <div style={{ maxWidth: 520, margin: "0 auto", padding: "48px 20px 40px", textAlign: "center" }}>
+          <div
+            data-testid="basari-ekran"
+            style={{ width: 84, height: 84, borderRadius: "50%", background: colors.greenSoft, border: `1px solid ${colors.green}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 22px" }}
+          >
+            <Icon name="check" color={colors.greenLight} size={40} strokeWidth={2.4} />
+          </div>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Aracınız hazır</h1>
+          <p style={{ fontSize: 15.5, color: colors.textMuted, margin: "0 0 6px", lineHeight: 1.5 }}>
+            OTOİZ&apos;e hoş geldiniz{userFirstName ? `, ${userFirstName}` : ""}
+          </p>
+          <p style={{ fontSize: 15.5, color: colors.textMuted, margin: "0 0 22px", lineHeight: 1.5 }}>
+            {v.plate} için dijital servis pasaportunuz oluşturuldu.
+          </p>
+          <div data-testid="basari-ozet" style={{ ...cardStyle, textAlign: "left", marginBottom: 16 }}>
+            {[
+              ["Marka", v.brand || "—"],
+              ["Model", v.model || "—"],
+              ["Model yılı", v.year ? String(v.year) : "—"],
+              ["Kilometre", v.current_km != null && v.current_km !== "" ? `${Number(v.current_km).toLocaleString("tr-TR")} km` : "—"],
+            ].map(([k, val]) => (
+              <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "9px 0", borderBottom: `1px solid ${colors.border}` }}>
+                <span style={{ fontSize: 14, color: colors.textMuted }}>{k}</span>
+                <span style={{ fontSize: 14.5, fontWeight: 700, color: colors.text }}>{val}</span>
+              </div>
+            ))}
+            <div style={{ textAlign: "center", marginTop: 14 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: colors.greenLight, background: colors.greenSoft, borderRadius: radius.pill, padding: "5px 14px" }}>
+                <Icon name="check" color={colors.greenLight} size={14} strokeWidth={2.6} />
+                Dijital servis pasaportu aktif
+              </span>
+            </div>
+          </div>
+          <a
+            href={`/bireysel/araclar/${v.id}`}
+            data-testid="basari-aracimi-gor"
+            style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", marginBottom: 10 }}
+          >
+            Aracımı Gör
+          </a>
+          <a
+            href={`/bireysel/araclar/${v.id}#anahtarlik`}
+            data-testid="basari-anahtarlik"
+            style={{ ...secondaryButtonStyle(), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}
+          >
+            Anahtarlığımı Bağla
+          </a>
+        </div>
+      </main>
+    );
+  }
+
   // "Sonraki bakım" için geçmiş tarih seçilemesin diye native date input'un min'i.
   const todayIso = todayIsoIstanbul();
 
@@ -600,8 +730,8 @@ export default function BireyselVehicleDetailPage() {
           </div>
           {isNew ? (
             <>
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.text, margin: "10px 0 6px" }}>Yeni Araç</h1>
-              <p style={{ fontSize: 14.5, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>Plaka, marka, model, model yılı ve kilometreyi girin; tarihleri sonra da ekleyebilirsiniz.</p>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.text, margin: "10px 0 6px" }}>Aracınızı OTOİZ&apos;e ekleyelim</h1>
+              <p style={{ fontSize: 14.5, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>Plaka, marka/model, yıl ve kilometre yeterli; son bakım ve tarihleri de bu ekrandan ekleyebilirsiniz.</p>
             </>
           ) : (
             <>
@@ -682,14 +812,7 @@ export default function BireyselVehicleDetailPage() {
               )}
             </div>
 
-            <DocDatesFields
-              idPrefix="arac"
-              value={vehicle}
-              onChange={(key, v) => setVehicle({ ...vehicle, [key]: v })}
-            />
-
-            <FormGroupTitle>Diğer Bilgiler</FormGroupTitle>
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 20 }}>
               <label htmlFor="arac-year" style={labelStyle}>Model Yılı</label>
               <input
                 id="arac-year"
@@ -711,6 +834,93 @@ export default function BireyselVehicleDetailPage() {
               )}
             </div>
 
+            {isNew && (
+              <section id="son-bakim" data-testid="son-bakim" style={{ marginBottom: 8 }}>
+                <FormGroupTitle>Son Bakım</FormGroupTitle>
+                <p style={{ fontSize: 14.5, fontWeight: 700, color: colors.text, margin: "0 0 10px" }}>Aracınızın son bakımını biliyor musunuz?</p>
+                <div role="group" aria-label="Son bakım bilgisi" style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  {([
+                    { key: "yes", label: "Evet, biliyorum" },
+                    { key: "no", label: "Hatırlamıyorum" },
+                  ] as const).map((o) => (
+                    <button
+                      key={o.key}
+                      type="button"
+                      data-testid={o.key === "yes" ? "sonbakim-evet" : "sonbakim-hayir"}
+                      aria-pressed={lastMaintKnown === o.key}
+                      onClick={() => { setLastMaintKnown(o.key); setLastMaintErrors({}); }}
+                      style={chipStyle(lastMaintKnown === o.key)}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+                {lastMaintKnown === "yes" && (
+                  <div data-testid="sonbakim-form" style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 10 }}>
+                    <div>
+                      <label htmlFor="sonbakim-tarih" style={labelStyle}>Son bakım tarihi</label>
+                      <input
+                        id="sonbakim-tarih"
+                        data-testid="sonbakim-tarih"
+                        type="date"
+                        max={todayIsoIstanbul()}
+                        style={{ ...inputStyle, colorScheme: "dark" }}
+                        value={lastMaintDate}
+                        onChange={(e) => setLastMaintDate(e.target.value)}
+                      />
+                      {lastMaintErrors.date && <p role="alert" style={errorTextStyle}>{lastMaintErrors.date}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="sonbakim-km" style={labelStyle}>Son bakım kilometresi</label>
+                      <CaretSafeInput
+                        id="sonbakim-km"
+                        caretChars="digits"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Örn. 62430"
+                        style={{ ...inputStyle, fontWeight: 700 }}
+                        value={formatKmInput(lastMaintKm)}
+                        onChange={(e) => setLastMaintKm(sanitizeKmInput(e.target.value))}
+                      />
+                      {lastMaintErrors.km && <p role="alert" style={errorTextStyle}>{lastMaintErrors.km}</p>}
+                    </div>
+                    <div>
+                      <ItemChipGrid
+                        selected={lastMaintItems}
+                        onToggle={(k) => setLastMaintItems((p) => ({ ...p, [k]: !p[k] }))}
+                        otherOn={lastMaintOther}
+                        onToggleOther={() => setLastMaintOther((v) => !v)}
+                        otherText={lastMaintOtherText}
+                        onOtherText={setLastMaintOtherText}
+                        items={[
+                          { key: "motor_yagi", label: "Motor Yağı" },
+                          { key: "yag_filtresi", label: "Yağ Filtresi" },
+                          { key: "hava_filtresi", label: "Hava Filtresi" },
+                          { key: "polen_filtresi", label: "Polen Filtresi" },
+                          { key: "yakit_filtresi", label: "Yakıt Filtresi" },
+                          { key: "fren_balatasi", label: "Fren Bakımı" },
+                        ]}
+                      />
+                      {lastMaintErrors.items && <p role="alert" style={errorTextStyle}>{lastMaintErrors.items}</p>}
+                    </div>
+                    <p style={{ ...helperStyle, margin: 0 }}>Sonraki bakım önerisi bu bakıma göre hesaplanır.</p>
+                  </div>
+                )}
+              </section>
+            )}
+
+            <DocDatesFields
+              idPrefix="arac"
+              value={vehicle}
+              onChange={(key, v) => setVehicle({ ...vehicle, [key]: v })}
+            />
+
+            {isNew && lastMaintKnown === "yes" ? (
+              <p style={{ ...helperStyle, margin: "0 0 18px" }}>
+                Sonraki bakım önerisi, girdiğiniz son bakım tarihi ve kilometresine göre otomatik hesaplanır.
+              </p>
+            ) : (
+              <>
             <FormGroupTitle>Bakım Planı</FormGroupTitle>
             {isNew ? (
               // PILOT FIX 03 madde B: yeni araç akışında bakım planı elle
@@ -747,9 +957,11 @@ export default function BireyselVehicleDetailPage() {
             ) : (
               <NextServiceFields vehicle={vehicle} setVehicle={setVehicle} fieldErrors={fieldErrors} todayIso={todayIso} />
             )}
+              </>
+            )}
 
             <button onClick={handleSaveVehicle} disabled={saving} style={{ ...primaryButtonStyle(saving), marginTop: 4 }}>
-              {saving ? "Kaydediliyor…" : isNew ? "Aracı Oluştur" : "Kaydet"}
+              {saving ? "Kaydediliyor…" : isNew ? "Aracımı OTOİZ'e Ekle" : "Kaydet"}
             </button>
             {Object.keys(fieldErrors).length > 0 && (
               <p role="status" style={{ ...errorTextStyle, textAlign: "center", marginTop: 10 }}>Kırmızı işaretli alanları kontrol edin.</p>

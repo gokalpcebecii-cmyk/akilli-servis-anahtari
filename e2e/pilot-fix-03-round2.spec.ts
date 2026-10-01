@@ -117,12 +117,12 @@ test.describe("İkinci düzeltme turu — madde 2: çift gönderim tek araç olu
       .fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("40000");
 
-    const submitBtn = page.getByRole("button", { name: "Aracı Oluştur" });
+    const submitBtn = page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" });
     // İki hızlı tıklama — React state güncellemesi henüz DOM'a
     // yansımadan gelen ikinci tıklamayı taklit eder (madde A5/A1'in
     // senkron useRef kilidi burada test ediliyor).
     await Promise.all([submitBtn.click(), submitBtn.click()]);
-    await page.waitForURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}/gecmis$`));
+    await expect(page.getByTestId("basari-ekran")).toBeVisible();
 
     expect(postCount, "iki hızlı tıklama yalnızca BİR POST /api/vehicles üretmeli").toBe(1);
   });

@@ -86,14 +86,14 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
     const kmInput = page.getByPlaceholder("Örn. 52430");
     // Kullanıcı yanlışlıkla başta bir "0" ile "052430" yazsa bile temizlenmeli.
     await kmInput.pressSequentially("052430");
-    await expect(kmInput).toHaveValue("52430");
+    await expect(kmInput).toHaveValue("52.430");
   });
 
   test("2b. Normal giriş akışında da hiçbir zaman baştaki sıfır oluşmuyor", async ({ page, baseURL }) => {
     await setupNewVehicleForm(page, baseURL!);
     const kmInput = page.getByPlaceholder("Örn. 52430");
     await kmInput.pressSequentially("52430");
-    await expect(kmInput).toHaveValue("52430");
+    await expect(kmInput).toHaveValue("52.430");
   });
 
   test("2c. Negatif değer girilemiyor (- karakteri süzülüyor)", async ({ page, baseURL }) => {
@@ -129,11 +129,11 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
     await setupNewVehicleForm(page, baseURL!);
     await selectCustomPlan(page);
     const dateInput = page.locator('input[data-field="next_service_date"]');
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date(Date.now() + 3 * 3600000).toISOString().slice(0, 10); // Istanbul UTC+3
     await expect(dateInput).toHaveAttribute("min", today);
   });
 
-  test("7. Form geçerli değerlerle submit edilebiliyor (Aracı Oluştur → yönlendirme)", async ({ page, baseURL }) => {
+  test("7. Form geçerli değerlerle submit edilebiliyor (Aracımı OTOİZ'e Ekle → yönlendirme)", async ({ page, baseURL }) => {
     await setupNewVehicleForm(page, baseURL!);
     await mockVehiclesApi(page, {
       id: CREATED_VEHICLE_ID,
@@ -155,8 +155,8 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
     await page.locator('input[data-field="next_service_km"]').pressSequentially("60000");
     await page.locator('input[data-field="next_service_date"]').fill("2027-03-20");
 
-    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
-    await expect(page).toHaveURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}/gecmis$`));
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).click();
+    await expect(page.getByTestId("basari-ekran")).toBeVisible();
   });
 
   test("7b. Varsayılan bakım planıyla (çip değiştirilmeden) submit edilebiliyor", async ({ page, baseURL }) => {
@@ -178,8 +178,8 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
     await fieldByLabel(page, "Model Yılı").fill("2020");
     await page.getByPlaceholder("Örn. 52430").pressSequentially("52430");
     // planType varsayılan olarak "default" — hiçbir çipe basılmadan submit.
-    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
-    await expect(page).toHaveURL(new RegExp(`/bireysel/araclar/${CREATED_VEHICLE_ID}/gecmis$`));
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).click();
+    await expect(page.getByTestId("basari-ekran")).toBeVisible();
   });
 
   test("8. Boş/geçersiz kilometre ile submit engelleniyor (regresyon: mevcut oluşturma akışı korunuyor)", async ({ page, baseURL }) => {
@@ -192,7 +192,7 @@ test.describe("Bugfix 01 — Yeni Araç formu: Güncel Kilometre / Sonraki Bakı
     // PILOT FIX 03 (madde A1/A6): artık window.alert değil, alan-seviyeli
     // satır-içi hata + odak gösteriliyor (ham/blok diyalog yerine erişilebilir
     // inline mesaj) — regresyon kontrolü buna göre güncellendi.
-    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).click();
     await expect(page.locator("#err-current_km")).toBeVisible();
     await expect(page.locator('[data-field="current_km"]')).toBeFocused();
     // Hâlâ aynı sayfada (yönlendirme olmadı) ve hiçbir istek yollanmadı.

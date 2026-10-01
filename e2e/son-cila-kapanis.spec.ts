@@ -185,7 +185,7 @@ test.describe("Kapanış — bireysel araç düzenleme", () => {
 });
 
 test.describe("Kapanış — yeni araç ve yönlendirmeler", () => {
-  test("Aracı Oluştur'a aynı anda iki tıklama tek POST üretir", async ({ page, baseURL }) => {
+  test("Aracımı OTOİZ'e Ekle'a aynı anda iki tıklama tek POST üretir", async ({ page, baseURL }) => {
     let posts = 0;
     await installMockSession(page.context(), { id: OWNER_ID, email: "kapanis.yeni@ornek.com" }, baseURL!);
     await mockSupabaseRest(page, { vehicles: { list: [] }, "rpc/list_my_pending_outgoing_transfers": { list: [] } });
@@ -201,12 +201,12 @@ test.describe("Kapanış — yeni araç ve yönlendirmeler", () => {
     await page.locator("#arac-year").fill("2020");
     await page.locator("#arac-km").pressSequentially("40000");
     // İki tıklama aynı olay döngüsünde: React yeniden çizmeden ikincisi gelir.
-    await page.getByRole("button", { name: "Aracı Oluştur" }).evaluate((b: HTMLButtonElement) => {
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).evaluate((b: HTMLButtonElement) => {
       b.click();
       b.click();
     });
     // Nihai UX: yeni araçtan sonra "son 12 aylık geçmiş" başlangıç ekranı.
-    await page.waitForURL(new RegExp(`/bireysel/araclar/${CREATED_ID}/gecmis$`));
+    await expect(page.getByTestId("basari-ekran")).toBeVisible();
     expect(posts).toBe(1);
   });
 

@@ -260,7 +260,7 @@ test.describe("Hızlı İşlem Alanı — mini akışlar", () => {
     await expect(list.getByTestId("belge-satir")).toHaveCount(1);
     await expect(list.getByTestId("belge-satir")).toContainText("Fatura");
     await expect(list.getByTestId("belge-satir")).toContainText("200 KB");
-    await expect(list.getByTestId("belge-satir")).toHaveAttribute("href", /token=t/);
+    await expect(list.getByTestId("belge-satir").getByRole("link")).toHaveAttribute("href", /token=t/);
     await noOverflow(page);
   });
 
