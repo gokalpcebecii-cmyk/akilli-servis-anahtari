@@ -85,26 +85,62 @@ async function handlePOST(req: NextRequest) {
   };
 
   const webhook = String(process.env.OTOIZ_EMAIL_WEBHOOK_URL || "").trim();
-  let delivery: string = "simule";
-  if (webhook) {
-    try {
-      const r = await fetch(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
-      delivery = r.ok ? "sent" : "failed";
-    } catch {
-      delivery = "failed";
-    }
+  if (!webhook) {
+    // Yapılandırma YOK: sahte başarı DÖNMEZ — Türkçe anlamlı durum döner.
+    // Audit log yazılır ama "mail gönderildi" anlamına gelmez.
+    await db.from("audit_log").insert({
+      tenant_id: null,
+      actor_staff_id: null,
+      action: "buyer_report_email",
+      target_table: "buyer_shares",
+      target_id: active.id,
+      detail: { vehicle_id: vehicleId, delivery: "unavailable", subject: payload.subject },
+    }).then(() => null, () => null);
+    return NextResponse.json(
+      { error: "E-posta gönderimi şu anda kullanılamıyor. QR veya PDF ile paylaşabilirsiniz." },
+      { status: 503 }
+    );
   }
 
-  await db.from("audit_log").insert({
-    tenant_id: null,
-    actor_staff_id: null,
-    action: "buyer_report_email",
-    target_table: "buyer_shares",
-    target_id: active.id,
-    detail: { vehicle_id: vehicleId, delivery, subject: payload.subject },
-  }).then(() => null, () => null);
-
-  return NextResponse.json({ ok: true, delivery });
+  try {
+    const r = await fetch(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    if (!r.ok) {
+      await db.from("audit_log").insert({
+        tenant_id: null,
+        actor_staff_id: null,
+        action: "buyer_report_email",
+        target_table: "buyer_shares",
+        target_id: active.id,
+        detail: { vehicle_id: vehicleId, delivery: "failed", subject: payload.subject },
+      }).then(() => null, () => null);
+      return NextResponse.json(
+        { error: "E-posta gönderilemedi. Lütfen biraz sonra tekrar deneyin." },
+        { status: 502 }
+      );
+    }
+    await db.from("audit_log").insert({
+      tenant_id: null,
+      actor_staff_id: null,
+      action: "buyer_report_email",
+      target_table: "buyer_shares",
+      target_id: active.id,
+      detail: { vehicle_id: vehicleId, delivery: "sent", subject: payload.subject },
+    }).then(() => null, () => null);
+    return NextResponse.json({ ok: true, delivery: "sent" });
+  } catch {
+    await db.from("audit_log").insert({
+      tenant_id: null,
+      actor_staff_id: null,
+      action: "buyer_report_email",
+      target_table: "buyer_shares",
+      target_id: active.id,
+      detail: { vehicle_id: vehicleId, delivery: "failed", subject: payload.subject },
+    }).then(() => null, () => null);
+    return NextResponse.json(
+      { error: "E-posta gönderilemedi. Lütfen biraz sonra tekrar deneyin." },
+      { status: 502 }
+    );
+  }
 }
 
 export const POST = withApiLog("/api/alici-raporu/email", handlePOST);

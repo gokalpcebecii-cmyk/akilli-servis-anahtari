@@ -40,6 +40,10 @@ test("Alıcı Raporu: public buyer view premium render, kaynak ayrımı ve sız�
   });
 
   await page.goto("/alici/valid-token-mock");
+  await page.goto("/alici/valid-token-mock");
+  await page.goto("/alici/valid-token-mock");
+  // Aynı aktif link süre içinde tekrar açılabilir (tek kullanımlık DEĞİL).
+  await expect(page.getByRole("heading", { name: "34 QR 001" })).toBeVisible();
   await expect(page.getByText("Otoiz Alıcı Raporu", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "34 QR 001" })).toBeVisible();
   await expect(page.getByText(/3 kayıt · 2 servis doğrulamalı · 1 bireysel kayıt/)).toBeVisible();

@@ -95,7 +95,7 @@ export function AliciyaGoster({ vehicleId }: { vehicleId: string }) {
       const res = await authedFetch("/api/alici-raporu/email", { method: "POST", body: JSON.stringify({ vehicle_id: vehicleId, email: email.trim(), share_url: created.url }) });
       const json = await res.json();
       setEmailSending(false);
-      setEmailStatus(res.ok ? { ok: true, msg: json.delivery === "sent" ? "E-posta gönderildi." : "Gönderim kaydedildi (e-posta altyapısı henüz yapılandırılmadı)." } : { ok: false, msg: json.error || "Gönderilemedi." });
+      setEmailStatus(res.ok ? { ok: true, msg: "E-posta gönderildi." } : { ok: false, msg: json.error || "E-posta gönderimi şu anda kullanılamıyor. QR veya PDF ile paylaşabilirsiniz." });
     } catch {
       setEmailSending(false);
       setEmailStatus({ ok: false, msg: "Bağlantı hatası. Tekrar deneyin." });
