@@ -28,3 +28,4 @@ npm-debug.log*
 /qa-screenshots/
 /blob-report/
 /playwright/.cache/
+supabase/.temp/
