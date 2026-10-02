@@ -18,6 +18,7 @@ import { DocDatesFields, DOC_DATE_FIELDS } from "@/components/DocDatesFields";
 import { HistoryEntryFields } from "@/components/HistoryEntryFields";
 import { ItemChipGrid } from "@/components/ItemChipGrid";
 import { QuickActionCard, QuickActionSheet, SuccessToast, VehicleDocuments, type QuickStep } from "@/components/QuickActionHub";
+import { AliciyaGoster } from "@/components/AliciyaGoster";
 import { saveHistoryEntries, newRequestId, type HistoryEntry } from "@/lib/historySave";
 const { emptyEntry, validateHistoryEntry } = require("@/lib/history");
 const { printableQrUrl } = require("@/lib/qrUrl");
@@ -1017,6 +1018,7 @@ export default function BireyselVehicleDetailPage() {
                       afterDates={
                         <div className="otoiz-when-stacked">
                           <QuickActionCard onOpen={() => openSheet()} onHistory={goHistoryAdd} />
+                          <AliciyaGoster vehicleId={vehicle.id} />
                         </div>
                       }
                       extra={
@@ -1119,6 +1121,7 @@ export default function BireyselVehicleDetailPage() {
                 <div className="otoiz-detail-col">
                   <div className="otoiz-when-wide">
                     <QuickActionCard onOpen={() => openSheet()} onHistory={goHistoryAdd} />
+                    <AliciyaGoster vehicleId={vehicle.id} />
                   </div>
                   {activeTab === "genel" && (
                     <VehicleTimeline
