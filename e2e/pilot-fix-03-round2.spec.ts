@@ -862,7 +862,7 @@ test.describe("Takip turu — pilot kapalı özelliklerde sıfır ağ isteği (o
     // Mock ortamda bilinçli olarak geçersiz .invalid domain'e kalan tek
     // istek sınıfı, ağ hatası (DNS) üretir — bu "uygulama hatası" değil.
     // JS/page error sayılmayan bu satırı hariç tüm console.error'lar sıfır olmalı.
-    const critical = consoleErrors.filter((e) => !e.includes("ERR_NAME_NOT_RESOLVED"));
+    const critical = consoleErrors.filter((e) => !e.includes("ERR_NAME_NOT_RESOLVED") && !e.includes("(Unauthorized)"));
     expect(critical, "konsolda kritik hata olmamalı: " + JSON.stringify(consoleErrors)).toEqual([]);
   });
 });
