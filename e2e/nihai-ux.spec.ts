@@ -231,10 +231,10 @@ test.describe("Nihai UX — 12 aylık başlangıç geçmişi", () => {
     await pickBrandModel(page, "Toyota", "Corolla");
     await page.locator("#arac-year").fill("2019");
     await page.locator("#arac-km").fill("84200");
-    await page.getByRole("button", { name: "Aracı Oluştur" }).click();
-    await page.waitForURL(`**/bireysel/araclar/${VID}/gecmis`);
-    await expect(page.getByRole("heading", { name: "Aracınızın geçmişini başlatalım" })).toBeVisible();
-    await expect(page.getByText("Son 12 ayda yapılan önemli bakım ve işlemleri ekleyin. OTOİZ sonraki bakım takibini bu geçmişe göre başlatsın.")).toBeVisible();
+    await page.getByRole("button", { name: "Aracımı OTOİZ'e Ekle" }).click();
+    await expect(page.getByTestId("basari-ekran")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Aracınız hazır" })).toBeVisible();
+    await expect(page.getByTestId("basari-aracimi-gor")).toBeVisible();
   });
 
   test("Geçmişi bilmiyorum, şimdi başla: hiçbir şey yazılmaz, araca geçilir", async ({ page, baseURL }) => {

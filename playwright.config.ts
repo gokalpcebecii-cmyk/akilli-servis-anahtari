@@ -15,7 +15,11 @@ export default defineConfig({
     // politikası indirmeyi zaten engelliyor. Önceden kurulu ikiliyi
     // doğrudan kullanıyoruz (npx playwright install ÇALIŞTIRILMADI).
     launchOptions: {
-      executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+      // Önceden kurulu linux ikilisi varsa onu kullan (sunucu ortamı);
+      // yoksa Playwright'ın indirdiği varsayılan tarayıcıyla koş (yerel).
+      ...(require("node:fs").existsSync("/opt/pw-browsers/chromium-1194/chrome-linux/chrome")
+        ? { executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" }
+        : {}),
     },
   },
   projects: [

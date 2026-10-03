@@ -297,6 +297,35 @@ export function Icon({
           <path d="M10 8.5v7l6-3.5-6-3.5Z" fill={color} stroke="none" />
         </svg>
       );
+    case "document":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
+          <path d="M14 3v5h5" />
+          <path d="M9 13h6M9 17h4" />
+        </svg>
+      );
+    case "calendar":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+          <path d="M3.5 10h17M8 3v4M16 3v4" />
+          <path d="M8 14h2M14 14h2M8 17.5h2" />
+        </svg>
+      );
+    case "plus":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      );
+    case "upload":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5" />
+          <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+        </svg>
+      );
     default:
       return null;
   }

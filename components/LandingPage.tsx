@@ -241,7 +241,7 @@ export default function LandingPage() {
                 </span>
               </h1>
               <p style={{ fontSize: 15.5, opacity: 0.85, lineHeight: 1.6, marginBottom: 26, maxWidth: 380, textShadow: "0 1px 6px rgba(0,0,0,0.5)" }}>
-                Bakım geçmişi, servis kayıtları ve yaklaşan işlemler tek yerde.
+                Aracınıza yaptığınız bakımlar kaybolmasın. Bakım geçmişi, servis kayıtları ve yaklaşan işlemler tek yerde.
                 OTOİZ ile aracınızın geçmişini düzenli, güvenli ve erişilebilir tutun.
               </p>
 
