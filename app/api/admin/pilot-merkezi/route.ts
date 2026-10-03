@@ -10,7 +10,8 @@ export const fetchCache = "force-no-store";
 async function handleGET(req: NextRequest) {
   const ctx = await requireAdmin(req);
   if (!isAdminContext(ctx)) return ctx;
-  const { data, error } = await ctx.db.rpc("admin_pilot_board");
+  const pBatch = (new URL(req.url).searchParams.get("batch_id") || "").trim();
+  const { data, error } = await ctx.db.rpc("admin_pilot_board", pBatch && /^[0-9a-f-]{36}$/.test(pBatch) ? { p_batch_id: pBatch } : {});
   if (error) return NextResponse.json({ error: "Pilot özeti yüklenemedi." }, { status: 500 });
   const rows = data?.rows ?? [];
   const ozet = {

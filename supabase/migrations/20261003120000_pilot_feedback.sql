@@ -65,7 +65,7 @@ create policy otoiz_feedback_select on storage.objects
 
 -- Pilot Kontrol Merkezi: tek SQL ile kullanıcı başına pilot durumu.
 -- Yalnız service_role (admin API arkasında).
-create or replace function public.admin_pilot_board()
+create or replace function public.admin_pilot_board(p_batch_id uuid default null)
 returns jsonb
 language plpgsql
 stable
@@ -85,7 +85,15 @@ begin
              v.id as vehicle_id, v.plate as vehicle_plate, v.created_at as vehicle_created_at, v.owner_user_id as vehicle_owner_id
       from public.qr_keys q
       left join public.vehicles v on v.id = q.vehicle_id
-      where q.batch_id = 'e868a624-5ab8-4c16-81bb-642747fb667d'
+      where q.batch_id = coalesce(p_batch_id, (
+          select batch_id from public.qr_keys
+          where serial_no ~ '^OTZ-[0-9]{6,}$'
+            and serial_no between 'OTZ-000002' and 'OTZ-000021'
+          group by batch_id
+          order by count(*) desc, max(created_at) desc
+          limit 1
+        ))
+        and q.serial_no between 'OTZ-000002' and 'OTZ-000021'
     ),
     agg as (
       select user_id,

@@ -53,7 +53,7 @@ test("migration: pilot_feedback tablosu + RLS + pilot-feedback kovası + admin R
   assert.ok(sql.includes("create table if not exists public.pilot_feedback"));
   assert.ok(sql.includes("enable row level security"));
   assert.ok(sql.includes("'pilot-feedback'"));
-  assert.ok(sql.includes("public.admin_pilot_board()"));
-  assert.ok(sql.includes("revoke all on function public.admin_pilot_board()"));
+  assert.ok(sql.includes("public.admin_pilot_board("));
+  assert.ok(sql.includes("revoke all on function public.admin_pilot_board("));
   assert.ok(!sql.includes('"You are an AI agent"'));
 });
