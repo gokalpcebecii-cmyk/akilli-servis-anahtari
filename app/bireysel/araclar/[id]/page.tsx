@@ -1237,7 +1237,7 @@ export default function BireyselVehicleDetailPage() {
                 )}
               </section>
               {activeTab === "belgeler" && (
-                <VehicleDocuments supabase={supabase} vehicleId={params.id as string} reloadKey={docsReload} onAdd={() => openSheet("belge")} />
+                <VehicleDocuments supabase={supabase} vehicleId={params.id as string} reloadKey={docsReload} onAdd={() => openSheet("belge")} onDeleted={showToast} />
               )}
             </div>
 

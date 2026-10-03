@@ -20,7 +20,11 @@ const {
   DOC_TYPE_LABELS,
   DOC_NOTE_MAX,
   DOC_ACCEPT,
+  DOC_TYPE_ERROR,
+  DOC_UPLOAD_ERROR,
+  DOC_DELETE_ERROR,
   checkDocumentFile,
+  documentContentMatches,
   documentPath,
   fmtSize,
   validateMaintenanceAction,
@@ -29,6 +33,33 @@ const {
 } = require("@/lib/quickActions");
 
 export type QuickStep = "menu" | "bakim" | "km" | "belge" | "tarih";
+
+const DOC_BUCKET = "vehicle-documents";
+
+// Dosyanın ilk 16 baytı (gerçek tür kontrolü için).
+async function readHead(file: Blob): Promise<number[]> {
+  try {
+    const buf = await file.slice(0, 16).arrayBuffer();
+    return Array.from(new Uint8Array(buf));
+  } catch {
+    return [];
+  }
+}
+
+// Depolamadan dosya silme; ağ kesintisine karşı birkaç deneme. remove()
+// yetki yoksa hata vermeden boş döner; silinen dosya listesi kontrol edilir.
+async function removeStoredDocument(supabase: any, path: string, tries = 3): Promise<boolean> {
+  for (let i = 0; i < tries; i++) {
+    try {
+      const { data, error } = await supabase.storage.from(DOC_BUCKET).remove([path]);
+      if (!error && Array.isArray(data) && data.some((o: any) => o?.name === path || o?.name?.endsWith(path))) return true;
+      if (!error && Array.isArray(data) && data.length === 0) return false;
+    } catch {
+      /* tekrar dene */
+    }
+  }
+  return false;
+}
 
 const OPTIONS: { key: Exclude<QuickStep, "menu">; title: string; desc: string; icon: string }[] = [
   { key: "bakim", title: "Bakım Kaydı Ekle", desc: "Yapılan bakım işlemlerini kaydedin.", icon: "wrench" },
@@ -547,13 +578,19 @@ function DocumentForm({ supabase, vehicle, userId, onDocumentSaved, setBusy, don
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  function pick(f: File | null) {
+  async function pick(f: File | null) {
     setSaveError("");
     if (!f) return;
     const chk = checkDocumentFile(f);
     if (!chk.ok) {
       setFile(null);
       setFileError(chk.error);
+      return;
+    }
+    // Uzantı/tür beyanı yetmez: içerik de PDF/JPG/PNG/HEIC olmalı.
+    if (!documentContentMatches(chk.mime, await readHead(f))) {
+      setFile(null);
+      setFileError(DOC_TYPE_ERROR);
       return;
     }
     setFileError("");
@@ -585,10 +622,16 @@ function DocumentForm({ supabase, vehicle, userId, onDocumentSaved, setBusy, don
     setSaving(true);
     setBusy(true);
     try {
+      if (!documentContentMatches(chk.mime, await readHead(file!))) {
+        setFile(null);
+        setFileError(DOC_TYPE_ERROR);
+        return;
+      }
       const path = documentPath(vehicle.id, newRequestId(), chk.ext);
-      const { error: upErr } = await supabase.storage.from("vehicle-documents").upload(path, file, { contentType: chk.mime, upsert: false, cacheControl: "3600" });
+      const { error: upErr } = await supabase.storage.from(DOC_BUCKET).upload(path, file, { contentType: chk.mime, upsert: false, cacheControl: "3600" });
       if (upErr) {
-        setSaveError("Dosya yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.");
+        const m = String(upErr.message || "").toLowerCase();
+        setSaveError(m.includes("mime") || m.includes("type") ? DOC_TYPE_ERROR : m.includes("size") || m.includes("too large") ? "Dosya 10 MB sınırını aşıyor." : DOC_UPLOAD_ERROR);
         return;
       }
       const { error: insErr } = await supabase.from("vehicle_documents").insert({
@@ -603,14 +646,16 @@ function DocumentForm({ supabase, vehicle, userId, onDocumentSaved, setBusy, don
         size_bytes: chk.size,
       });
       if (insErr) {
+        // Kayıt yazılamadıysa yüklenen dosya geride kalmasın (yarım kayıt yok).
+        await removeStoredDocument(supabase, path);
         const msg = String(insErr.message || "");
-        setSaveError(msg.includes("rate_limited") || msg.includes("Çok fazla") ? "Çok fazla belge eklendi. Lütfen biraz sonra tekrar deneyin." : "Belge kaydedilemedi. Tekrar deneyin.");
+        setSaveError(msg.includes("rate_limited") || msg.includes("Çok fazla") ? "Çok fazla belge eklendi. Lütfen biraz sonra tekrar deneyin." : DOC_UPLOAD_ERROR);
         return;
       }
       onDocumentSaved();
       done("Belge eklendi.");
     } catch {
-      setSaveError("Bağlantı hatası. Tekrar deneyin.");
+      setSaveError(DOC_UPLOAD_ERROR);
     } finally {
       setSaving(false);
       setBusy(false);
@@ -774,10 +819,32 @@ function DatesForm({ supabase, vehicle, onVehiclePatch, setBusy, done }: FormPro
   );
 }
 
+// Kayıtsız kalmış dosyaları temizler (yükleme sonrası kayıt yazılamadı ya da
+// silmede dosya adımı yarıda kaldı). Yalnız kullanıcının kendi dosyaları
+// listelenir; 10 dakikadan eski ve hiçbir belge kaydına bağlı olmayan dosya
+// silinir. Hata kullanıcıya gösterilmez.
+async function sweepOrphans(supabase: any, vehicleId: string) {
+  try {
+    const { data: objs } = await supabase.storage.from(DOC_BUCKET).list(vehicleId, { limit: 100 });
+    if (!Array.isArray(objs) || !objs.length) return;
+    const cutoff = Date.now() - 10 * 60 * 1000;
+    const old = objs
+      .filter((o: any) => o?.name && o?.id && Date.parse(o.created_at || "") < cutoff)
+      .map((o: any) => `${vehicleId}/${o.name}`);
+    if (!old.length) return;
+    const { data: rows, error } = await supabase.from("vehicle_documents").select("storage_path").in("storage_path", old);
+    if (error || !Array.isArray(rows)) return;
+    const linked = new Set(rows.map((r: any) => r.storage_path));
+    for (const p of old) if (!linked.has(p)) await removeStoredDocument(supabase, p, 1);
+  } catch {
+    /* sessiz */
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Tarihler sekmesi: eklenen belgeler (yalnız sahibine, kısa ömürlü bağlantı)
 // ---------------------------------------------------------------------------
-export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { supabase: any; vehicleId: string; reloadKey: number; onAdd: () => void }) {
+export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd, onDeleted }: { supabase: any; vehicleId: string; reloadKey: number; onAdd: () => void; onDeleted?: (message: string) => void }) {
   const [docs, setDocs] = useState<any[] | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [error, setError] = useState(false);
@@ -790,22 +857,22 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
     setDeleting(true);
     setDeleteError("");
     try {
-      // Önce depolamadaki dosya, sonra kayıt. Silme politikaları yalnız
-      // aracın güncel sahibinin kendi belgesine izin verir.
-      const { error: rmErr } = await supabase.storage.from("vehicle-documents").remove([deleteTarget.storage_path]);
-      if (rmErr) {
-        setDeleteError("Dosya silinemedi. Bağlantınızı kontrol edip tekrar deneyin.");
+      // Önce kayıt (kullanıcının gördüğü belge tek adımda kaybolur; dosyası
+      // olmayan bir satır kalmaz), sonra dosya. Silme politikaları yalnız
+      // aracın güncel sahibinin kendi yüklediği belgeye izin verir; yetki
+      // yoksa hiçbir satır silinmez ve kullanıcı hata görür.
+      const { data: gone, error: delErr } = await supabase.from("vehicle_documents").delete().eq("id", deleteTarget.id).select("id");
+      if (delErr || !Array.isArray(gone) || gone.length !== 1) {
+        setDeleteError(DOC_DELETE_ERROR);
         return;
       }
-      const { error: delErr } = await supabase.from("vehicle_documents").delete().eq("id", deleteTarget.id);
-      if (delErr) {
-        setDeleteError("Belge kaydı silinemedi. Sayfayı yenileyip tekrar deneyin.");
-        return;
-      }
+      // Dosya silinemezse (bağlantı koptu) bir sonraki açılışta temizlenir.
+      await removeStoredDocument(supabase, deleteTarget.storage_path);
       setDocs((prev) => (prev ? prev.filter((d) => d.id !== deleteTarget.id) : prev));
       setDeleteTarget(null);
+      onDeleted?.("Belge silindi.");
     } catch {
-      setDeleteError("Bağlantı hatası. Lütfen tekrar deneyin.");
+      setDeleteError(DOC_DELETE_ERROR);
     } finally {
       setDeleting(false);
     }
@@ -828,8 +895,9 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
       }
       setError(false);
       setDocs(data ?? []);
+      void sweepOrphans(supabase, vehicleId);
       if (data && data.length) {
-        const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrls(data.map((d: any) => d.storage_path), 900);
+        const { data: signed } = await supabase.storage.from(DOC_BUCKET).createSignedUrls(data.map((d: any) => d.storage_path), 900);
         if (!alive) return;
         const map: Record<string, string> = {};
         (signed ?? []).forEach((s: any) => {
@@ -908,11 +976,11 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
         <div role="dialog" aria-modal="true" aria-labelledby="belge-sil-baslik" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 80 }}>
           <div style={{ ...cardStyle, width: "100%", maxWidth: 380, padding: 22 }}>
             <h3 id="belge-sil-baslik" style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Belgeyi sil</h3>
-            <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>Bu belgeyi silmek istediğinizden emin misiniz?</p>
+            <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>Bu belgeyi silmek istediğinize emin misiniz?</p>
             {deleteError && <p role="alert" style={{ color: colors.danger, fontSize: 13.5, margin: "0 0 12px" }}>{deleteError}</p>}
             <div style={{ display: "flex", gap: 10 }}>
               <button type="button" onClick={() => !deleting && setDeleteTarget(null)} disabled={deleting} style={{ ...secondaryButtonStyle(), flex: 1 }}>
-                İptal
+                Vazgeç
               </button>
               <button
                 type="button"

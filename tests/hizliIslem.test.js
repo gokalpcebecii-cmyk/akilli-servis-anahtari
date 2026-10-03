@@ -10,6 +10,8 @@ const {
   OWNER_ACTION_KEYS,
   DOC_TYPES,
   checkDocumentFile,
+  sniffDocumentMime,
+  documentContentMatches,
   documentPath,
   fmtSize,
   validateMaintenanceAction,
@@ -97,4 +99,57 @@ test("araç ekranı: tek Hızlı İşlemler kartı, eski 4 düğmeli dağınık 
   for (const t of ["Hızlı İşlemler", "Bakım, kilometre, belge ve önemli tarihleri buradan kolayca yönetin.", "İşlem Ekle", "Ne eklemek istiyorsunuz?", "Bakım Kaydını Ekle", "Kilometreyi Güncelle", "Belgeyi Ekle", "Tarihleri Kaydet", "Bakım kaydı eklendi.", "Kilometre güncellendi.", "Belge eklendi.", "Tarihler güncellendi.", "Son 12 aya ait bir işlem eklemek ister misiniz?", "Geçmiş İşlem Ekle"]) {
     assert.ok(hub.includes(t), t);
   }
+});
+
+test("belge güvenliği: yalnız PDF/JPG/PNG/HEIC/HEIF, sahibinin kesin hata metinleri", () => {
+  for (const [name, type] of [["a.pdf", "application/pdf"], ["a.jpg", "image/jpeg"], ["a.jpeg", "image/jpeg"], ["a.png", "image/png"], ["a.heic", "image/heic"], ["a.heif", "image/heif"], ["IMG.HEIC", ""]]) {
+    assert.equal(checkDocumentFile({ name, type, size: 10 }).ok, true, name);
+  }
+  for (const [name, type] of [["a.webp", "image/webp"], ["a.html", "text/html"], ["a.htm", ""], ["a.svg", "image/svg+xml"], ["a.js", "text/javascript"], ["a.exe", "application/x-msdownload"], ["a.sh", "application/x-sh"], ["a.zip", "application/zip"], ["a.gif", "image/gif"], ["dosya", ""], ["a.bin", "application/octet-stream"]]) {
+    const r = checkDocumentFile({ name, type, size: 10 });
+    assert.equal(r.ok, false, name);
+    assert.equal(r.error, "Bu dosya türü desteklenmiyor.", name);
+  }
+  assert.equal(checkDocumentFile({ name: "a.pdf", type: "application/pdf", size: 10 * 1024 * 1024 + 1 }).error, "Dosya 10 MB sınırını aşıyor.");
+  assert.equal(checkDocumentFile({ name: "a.pdf", type: "application/pdf", size: 10 * 1024 * 1024 }).ok, true);
+});
+
+test("belge güvenliği: içerik imzası (uzantısı değiştirilmiş dosya reddedilir)", () => {
+  const bytes = (s) => Array.from(Buffer.from(s, "latin1"));
+  assert.equal(sniffDocumentMime(bytes("%PDF-1.7\n")), "application/pdf");
+  assert.equal(sniffDocumentMime([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]), "image/jpeg");
+  assert.equal(sniffDocumentMime([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), "image/png");
+  assert.equal(sniffDocumentMime([0, 0, 0, 0x18, ...bytes("ftypheic")]), "image/heic");
+  assert.equal(sniffDocumentMime([0, 0, 0, 0x18, ...bytes("ftypmif1")]), "image/heif");
+  assert.equal(sniffDocumentMime([0, 0, 0, 0x18, ...bytes("ftypisom")]), null); // mp4
+  assert.equal(sniffDocumentMime(bytes("<!DOCTYPE html>")), null);
+  assert.equal(sniffDocumentMime(bytes("<svg xmlns=")), null);
+  assert.equal(sniffDocumentMime(bytes("MZ\x90\x00")), null); // exe
+  assert.equal(sniffDocumentMime(bytes("#!/bin/sh")), null);
+  assert.equal(sniffDocumentMime([]), null);
+  assert.equal(documentContentMatches("application/pdf", bytes("%PDF-1.4")), true);
+  assert.equal(documentContentMatches("application/pdf", bytes("<html><script>")), false); // .pdf adlı HTML
+  assert.equal(documentContentMatches("image/jpeg", [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), false);
+  assert.equal(documentContentMatches("image/heic", [0, 0, 0, 0x18, ...bytes("ftypmif1")]), true);
+});
+
+test("belge silme ve yükleme: güvenli sıra, kesin metinler, yarım kayıt temizliği", () => {
+  const hub = fs.readFileSync(path.join(__dirname, "..", "components", "QuickActionHub.tsx"), "utf8");
+  const page = fs.readFileSync(path.join(__dirname, "..", "app", "bireysel", "araclar", "[id]", "page.tsx"), "utf8");
+  for (const t of ["Bu belgeyi silmek istediğinize emin misiniz?", "Vazgeç", "Belgeyi Sil", "Belge silindi."]) assert.ok(hub.includes(t), t);
+  const lib = fs.readFileSync(path.join(__dirname, "..", "lib", "quickActions.js"), "utf8");
+  assert.ok(lib.includes("Belge yüklenemedi. Lütfen tekrar deneyin."));
+  // Silmede önce kayıt (tek satır silindiği doğrulanır), sonra dosya.
+  const del = hub.slice(hub.indexOf("async function confirmDelete"));
+  assert.ok(del.indexOf('.from("vehicle_documents").delete()') < del.indexOf("removeStoredDocument("));
+  assert.ok(del.includes('.select("id")'));
+  // Kayıt yazılamazsa yüklenen dosya kaldırılır; kayıtsız eski dosyalar süpürülür.
+  assert.ok(/insErr\) \{\s*\/\/[^\n]*\n\s*await removeStoredDocument\(supabase, path\)/.test(hub));
+  assert.ok(hub.includes("sweepOrphans(supabase, vehicleId)"));
+  // Kalıcı açık bağlantı yok: yalnız kısa ömürlü imzalı bağlantı.
+  assert.ok(!hub.includes("getPublicUrl"));
+  assert.ok(hub.includes("createSignedUrls("));
+  // Kullanıcının dosya adı depolama yoluna girmez.
+  assert.ok(hub.includes("documentPath(vehicle.id, newRequestId(), chk.ext)"));
+  assert.ok(page.includes("onDeleted={showToast}"));
 });

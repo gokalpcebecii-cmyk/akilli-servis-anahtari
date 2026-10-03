@@ -35,7 +35,7 @@ const V2 = { ...V1, id: VID2, plate: "06 NUX 002", brand: "Fiat", model: "Egea",
 
 type Writes = { method: string; table: string; body: any }[];
 
-async function mockAll(page: Page, opts: { vehicles?: any[]; qr?: boolean; records?: any[]; timeline?: any[]; role?: "owner" | "servis"; docs?: any[] } = {}) {
+async function mockAll(page: Page, opts: { vehicles?: any[]; qr?: boolean; records?: any[]; timeline?: any[]; role?: "owner" | "servis"; docs?: any[]; failInsert?: boolean; failUpload?: boolean; deleteDenied?: boolean; storageObjects?: any[] } = {}) {
   const vehicles = opts.vehicles ?? [V1, V2];
   const writes: Writes = [];
   await page.route("**/rest/v1/**", async (route) => {
@@ -46,7 +46,12 @@ async function mockAll(page: Page, opts: { vehicles?: any[]; qr?: boolean; recor
     const j = (b: any, status = 200) => route.fulfill({ status, contentType: "application/json", headers: { "content-range": "0-0/1" }, body: JSON.stringify(b) });
     if (req.method() === "HEAD") return route.fulfill({ status: 200, headers: { "content-range": "*/2" }, body: "" });
     if (!["GET", "HEAD"].includes(req.method()) && !table.startsWith("rpc/")) {
-      writes.push({ method: req.method(), table, body: req.postDataJSON() });
+      writes.push({ method: req.method(), table, body: req.method() === "DELETE" ? Object.fromEntries(url.searchParams) : req.postDataJSON() });
+      if (table === "vehicle_documents" && req.method() === "POST" && opts.failInsert) return j({ message: "insert failed" }, 500);
+      if (table === "vehicle_documents" && req.method() === "DELETE") {
+        const id = (url.searchParams.get("id") ?? "").replace(/^eq\./, "");
+        return j(opts.deleteDenied ? [] : [{ id }]);
+      }
       return j(single ? {} : []);
     }
     if (table === "rpc/vehicle_timeline") {
@@ -79,7 +84,14 @@ async function mockAll(page: Page, opts: { vehicles?: any[]; qr?: boolean; recor
       const body = req.postDataJSON() ?? {};
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify((body.paths ?? []).map((p: string) => ({ path: p, signedURL: `/object/sign/vehicle-documents/${p}?token=t`, error: null }))) });
     }
+    if (url.pathname.includes("/object/list/")) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(opts.storageObjects ?? []) });
+    if (req.method() === "DELETE") {
+      const prefixes: string[] = req.postDataJSON()?.prefixes ?? [];
+      writes.push({ method: "REMOVE", table: "storage", body: prefixes });
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(prefixes.map((n) => ({ name: n, bucket_id: "vehicle-documents" }))) });
+    }
     writes.push({ method: "UPLOAD", table: "storage", body: { path: url.pathname.split("/object/")[1], contentType: req.headers()["content-type"] } });
+    if (opts.failUpload) return route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ statusCode: "500", error: "internal", message: "internal" }) });
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ Key: "x", Id: "y" }) });
   });
   await page.route("**/api/bireysel/qr", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ codes: [] }) }));
@@ -238,7 +250,7 @@ test.describe("Hızlı İşlem Alanı — mini akışlar", () => {
     await expect(dlg.getByText("Yüklenecek dosyayı seçin.")).toBeVisible();
     // izin verilmeyen dosya
     await dlg.getByTestId("belge-dosya").setInputFiles({ name: "x.exe", mimeType: "application/x-msdownload", buffer: Buffer.from("MZ") });
-    await expect(dlg.getByText("Yalnız PDF veya fotoğraf")).toBeVisible();
+    await expect(dlg.getByText("Bu dosya türü desteklenmiyor.")).toBeVisible();
     expect(writes).toEqual([]);
     await dlg.getByRole("radio", { name: "Servis Fişi" }).click();
     await dlg.locator("#qa-belge-tarih").fill(istToday(-2));
@@ -262,6 +274,120 @@ test.describe("Hızlı İşlem Alanı — mini akışlar", () => {
     await expect(list.getByTestId("belge-satir")).toContainText("200 KB");
     await expect(list.getByTestId("belge-satir").getByRole("link")).toHaveAttribute("href", /token=t/);
     await noOverflow(page);
+  });
+
+  const DOC1 = { id: "d1", doc_type: "fatura", doc_date: null, note: null, storage_path: `${VID}/11111111-1111-4111-8111-111111111111.pdf`, file_name: "f.pdf", mime_type: "application/pdf", size_bytes: 1000, created_at: new Date().toISOString() };
+
+  async function openDocs(page: Page) {
+    await page.getByTestId("arac-durumu").waitFor();
+    await page.getByRole("navigation", { name: "Araç bölümleri" }).getByRole("button", { name: "Tarihler" }).click();
+    return page.getByTestId("belgeler");
+  }
+
+  test("Belge silme: onay penceresi (Vazgeç / Belgeyi Sil); önce kayıt sonra dosya silinir; 'Belge silindi.'", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    const writes = await mockAll(page, { qr: true, docs: [DOC1] });
+    await page.goto(`/bireysel/araclar/${VID}`);
+    const list = await openDocs(page);
+    await expect(list.getByTestId("belge-satir")).toHaveCount(1);
+    const sil = list.getByTestId("belge-sil");
+    await expect(sil).toHaveText("Sil");
+    expect((await sil.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await sil.click();
+    const dlg = page.getByRole("dialog");
+    await expect(dlg).toContainText("Bu belgeyi silmek istediğinize emin misiniz?");
+    await dlg.getByRole("button", { name: "Vazgeç" }).click();
+    await expect(dlg).toHaveCount(0);
+    expect(writes.filter((w) => w.method === "DELETE" || w.method === "REMOVE")).toEqual([]);
+    await sil.click();
+    await page.getByRole("dialog").getByRole("button", { name: "Belgeyi Sil" }).click();
+    await expect(page.getByTestId("basari-bildirimi")).toHaveText("Belge silindi.");
+    await expect(list.getByTestId("belge-satir")).toHaveCount(0);
+    const order = writes.filter((w) => w.method === "DELETE" || w.method === "REMOVE").map((w) => `${w.method}:${w.table}`);
+    expect(order).toEqual(["DELETE:vehicle_documents", "REMOVE:storage"]);
+    expect(writes.find((w) => w.method === "DELETE")!.body.id).toBe("eq.d1");
+    expect(writes.find((w) => w.method === "REMOVE")!.body).toEqual([DOC1.storage_path]);
+  });
+
+  test("Belge silme: yetki yoksa hiçbir şey silinmez, belge listede kalır, teknik hata görünmez", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    const writes = await mockAll(page, { qr: true, docs: [DOC1], deleteDenied: true });
+    await page.goto(`/bireysel/araclar/${VID}`);
+    const list = await openDocs(page);
+    await list.getByTestId("belge-sil").click();
+    const dlg = page.getByRole("dialog");
+    await dlg.getByRole("button", { name: "Belgeyi Sil" }).click();
+    await expect(dlg.getByRole("alert")).toHaveText("Belge silinemedi. Lütfen tekrar deneyin.");
+    expect(writes.filter((w) => w.method === "REMOVE")).toEqual([]);
+    await dlg.getByRole("button", { name: "Vazgeç" }).click();
+    await expect(list.getByTestId("belge-satir")).toHaveCount(1);
+  });
+
+  test("Belge güvenliği: 10 MB üstü, uzantısı değiştirilmiş HTML ve webp reddedilir; hiçbir şey yüklenmez", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    const writes = await mockAll(page, { qr: true });
+    await page.goto(`/bireysel/araclar/${VID}`);
+    const dlg = await openHub(page);
+    await dlg.getByRole("listitem").filter({ hasText: "Belge Ekle" }).click();
+    await expect(dlg.getByTestId("belge-dosya")).toHaveAttribute("accept", /application\/pdf/);
+    expect(await dlg.getByTestId("belge-dosya").getAttribute("accept")).not.toContain("image/*");
+    const big = Buffer.alloc(10 * 1024 * 1024 + 1, 0);
+    big.write("%PDF-1.4");
+    await dlg.getByTestId("belge-dosya").setInputFiles({ name: "buyuk.pdf", mimeType: "application/pdf", buffer: big });
+    await expect(dlg.getByText("Dosya 10 MB sınırını aşıyor.")).toBeVisible();
+    await dlg.getByTestId("belge-dosya").setInputFiles({ name: "fatura.pdf", mimeType: "application/pdf", buffer: Buffer.from("<html><script>alert(1)</script></html>") });
+    await expect(dlg.getByText("Bu dosya türü desteklenmiyor.")).toBeVisible();
+    await expect(dlg.getByTestId("secilen-dosya")).toHaveCount(0);
+    await dlg.getByTestId("belge-dosya").setInputFiles({ name: "x.webp", mimeType: "image/webp", buffer: Buffer.from("RIFF0000WEBP") });
+    await expect(dlg.getByText("Bu dosya türü desteklenmiyor.")).toBeVisible();
+    await dlg.getByTestId("belge-dosya").setInputFiles({ name: "x.svg", mimeType: "image/svg+xml", buffer: Buffer.from("<svg/>") });
+    await expect(dlg.getByText("Bu dosya türü desteklenmiyor.")).toBeVisible();
+    await dlg.getByTestId("belge-dosya").setInputFiles({ name: "foto.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46]) });
+    await expect(dlg.getByTestId("secilen-dosya")).toHaveText("foto.jpg");
+    expect(writes).toEqual([]);
+  });
+
+  test("Belge yükleme hatası: yükleme başarısızsa kayıt yok; kayıt başarısızsa yüklenen dosya geri silinir", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    let writes = await mockAll(page, { qr: true, failUpload: true });
+    await page.goto(`/bireysel/araclar/${VID}`);
+    let dlg = await openHub(page);
+    await dlg.getByRole("listitem").filter({ hasText: "Belge Ekle" }).click();
+    await dlg.getByRole("radio", { name: "Fatura" }).click();
+    await dlg.getByTestId("belge-dosya").setInputFiles(PDF);
+    await dlg.getByRole("button", { name: "Belgeyi Ekle" }).click();
+    await expect(dlg.getByText("Belge yüklenemedi. Lütfen tekrar deneyin.")).toBeVisible();
+    expect(writes.filter((w) => w.table === "vehicle_documents")).toEqual([]);
+
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    writes = await mockAll(page, { qr: true, failInsert: true });
+    await page.goto(`/bireysel/araclar/${VID}`);
+    dlg = await openHub(page);
+    await dlg.getByRole("listitem").filter({ hasText: "Belge Ekle" }).click();
+    await dlg.getByRole("radio", { name: "Fatura" }).click();
+    await dlg.getByTestId("belge-dosya").setInputFiles(PDF);
+    await dlg.getByRole("button", { name: "Belgeyi Ekle" }).click();
+    await expect(dlg.getByText("Belge yüklenemedi. Lütfen tekrar deneyin.")).toBeVisible();
+    const up = writes.find((w) => w.method === "UPLOAD")!.body.path.replace(/^vehicle-documents\//, "");
+    await expect.poll(() => writes.filter((w) => w.method === "REMOVE").map((w) => w.body)).toEqual([[up]]);
+  });
+
+  test("Kayıtsız kalmış eski dosya açılışta temizlenir; kayıtlı ve yeni dosyaya dokunulmaz", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    const old = new Date(Date.now() - 3600000).toISOString();
+    const writes = await mockAll(page, {
+      qr: true,
+      docs: [DOC1],
+      storageObjects: [
+        { id: "o1", name: "11111111-1111-4111-8111-111111111111.pdf", created_at: old },
+        { id: "o2", name: "22222222-2222-4222-8222-222222222222.pdf", created_at: old },
+        { id: "o3", name: "33333333-3333-4333-8333-333333333333.pdf", created_at: new Date().toISOString() },
+      ],
+    });
+    await page.route("**/rest/v1/vehicle_documents?select=storage_path*", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([{ storage_path: DOC1.storage_path }]) }));
+    await page.goto(`/bireysel/araclar/${VID}`);
+    await openDocs(page);
+    await expect.poll(() => writes.filter((w) => w.method === "REMOVE").map((w) => w.body)).toEqual([[`${VID}/22222222-2222-4222-8222-222222222222.pdf`]]);
   });
 
   test("Tarihleri Güncelle: üç tarih tek ekranda, yalnız tarih kolonları yazılır", async ({ page, baseURL }) => {
