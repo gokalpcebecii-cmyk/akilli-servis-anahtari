@@ -8,9 +8,9 @@ const { normalizeFeedback, feedbackLabel, FEEDBACK_CATEGORIES, FEEDBACK_SCREENS,
 const { LIMITS } = require("../lib/rateLimitCore");
 
 test("görüş: geçerli girdi normalize edilir", () => {
-  const r = normalizeFeedback({ category: "sorun", screen: "arac_detay", message: "  Kayıt\r\nbutonu çalışmıyor \u0007 " });
+  const r = normalizeFeedback({ category: "hata", screen: "arac_detay", message: "  Kayıt\r\nbutonu çalışmıyor \u0007 " });
   assert.equal(r.valid, true);
-  assert.deepEqual(r.value, { category: "sorun", screen: "arac_detay", message: "Kayıt\nbutonu çalışmıyor" });
+  assert.deepEqual(r.value, { category: "hata", screen: "arac_detay", message: "Kayıt\nbutonu çalışmıyor", screenshot_path: null });
 });
 
 test("görüş: konu zorunlu, mesaj en az 5 karakter", () => {
@@ -21,7 +21,7 @@ test("görüş: konu zorunlu, mesaj en az 5 karakter", () => {
 });
 
 test("görüş: uzun mesaj reddedilir, bilinmeyen ekran 'diger' olur", () => {
-  const r = normalizeFeedback({ category: "oneri", screen: "hack", message: "a".repeat(MESSAGE_MAX + 1) });
+  const r = normalizeFeedback({ category: "istek", screen: "hack", message: "a".repeat(MESSAGE_MAX + 1) });
   assert.equal(r.valid, false);
   assert.match(r.errors.message, /En fazla/);
   assert.equal(r.value.screen, "diger");
@@ -29,7 +29,8 @@ test("görüş: uzun mesaj reddedilir, bilinmeyen ekran 'diger' olur", () => {
 });
 
 test("görüş: etiketler ve hız sınırı", () => {
-  assert.equal(feedbackLabel("soru", FEEDBACK_CATEGORIES), "Soru");
+  assert.equal(feedbackLabel("soru", FEEDBACK_CATEGORIES), "Diğer");
+  assert.equal(feedbackLabel("sorun", FEEDBACK_CATEGORIES), "Hata");
   assert.equal(feedbackLabel("yok", FEEDBACK_SCREENS), "");
   assert.deepEqual(LIMITS.feedbackUserHour, { windowSeconds: 3600, max: 5 });
 });

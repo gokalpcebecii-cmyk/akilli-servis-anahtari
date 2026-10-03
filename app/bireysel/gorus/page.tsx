@@ -8,7 +8,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, radius, cardStyle, inputStyle, labelStyle, helperStyle, errorTextStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { BottomNav } from "@/components/BottomNav";
-const { FEEDBACK_CATEGORIES, FEEDBACK_SCREENS, MESSAGE_MAX, normalizeFeedback } = require("@/lib/feedback");
+const { FEEDBACK_CATEGORIES, FEEDBACK_SCREENS, MESSAGE_MAX, normalizeFeedback, validateFeedbackScreenshot } = require("@/lib/feedback");
 
 function GorusInner() {
   const router = useRouter();
@@ -23,6 +23,8 @@ function GorusInner() {
   const [formError, setFormError] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [screenshotError, setScreenshotError] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -40,15 +42,34 @@ function GorusInner() {
     e.preventDefault();
     if (busy) return;
     setFormError("");
-    const check = normalizeFeedback({ category, screen, message });
-    if (!check.valid) {
-      setErrors(check.errors);
-      return;
+    if (screenshot) {
+      const v = validateFeedbackScreenshot({ type: screenshot.type, size: screenshot.size });
+      if (v) { setScreenshotError(v); return; }
     }
+    setScreenshotError("");
     setErrors({});
     setBusy(true);
     try {
       const { data } = await supabase.auth.getSession();
+      let screenshot_path: string | null = null;
+      if (screenshot && data.session) {
+        const ext = (screenshot.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 4) || "jpg";
+        const uid = data.session.user.id;
+        const path = `${uid}/${crypto.randomUUID()}.${ext}`;
+        const up = await supabase.storage.from("pilot-feedback").upload(path, screenshot, { contentType: screenshot.type, upsert: false });
+        if (up.error) {
+          setScreenshotError("Görsel yüklenemedi. Daha küçük bir dosya deneyin ya da görselsiz gönderin.");
+          setBusy(false);
+          return;
+        }
+        screenshot_path = path;
+      }
+      const check = normalizeFeedback({ category, screen, message, screenshot_path });
+      if (!check.valid) {
+        setErrors(check.errors);
+        setBusy(false);
+        return;
+      }
       const res = await fetch("/api/gorus", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` },
@@ -172,6 +193,20 @@ function GorusInner() {
                   <option key={s.key} value={s.key}>{s.label}</option>
                 ))}
               </select>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label htmlFor="gorus-ekran-gorsel" style={labelStyle}>Ekran görüntüsü (isteğe bağlı)</label>
+              <input
+                id="gorus-ekran-gorsel"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => { const f = e.target.files?.[0] ?? null; setScreenshot(f); setScreenshotError(""); }}
+                style={{ fontSize: 14, color: colors.textMuted }}
+              />
+              <p style={{ ...helperStyle, margin: "6px 0 0" }}>JPEG, PNG veya WebP · en fazla 10 MB</p>
+              {screenshot && <p style={{ fontSize: 13, color: colors.textMuted, margin: "4px 0 0" }}>{screenshot.name}</p>}
+              {screenshotError && <p role="alert" style={{ color: colors.danger, fontSize: 13.5, margin: "6px 0 0" }}>{screenshotError}</p>}
             </div>
 
             {formError && (
