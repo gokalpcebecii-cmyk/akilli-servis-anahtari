@@ -76,14 +76,14 @@ export function PilotMerkeziTab({ api }: { api: Api }) {
                 {(data.rows ?? []).map((r: any) => (
                   <tr key={r.id} style={{ borderTop: `1px solid ${colors.border}` }}>
                     <td style={{ padding: "8px 6px", color: colors.text, fontWeight: 700 }}>{r.email}</td>
-                    <td style={{ padding: "8px 6px" }}>{r.last_serial_no ?? "—"}</td>
-                    <td style={{ padding: "8px 6px" }}>{r.qr_active > 0 ? "aktif" : r.qr_activated_by > 0 ? "geçmiş" : "yok"}</td>
+                    <td style={{ padding: "8px 6px" }}>{r.serial_nos ?? "—"}</td>
+                    <td style={{ padding: "8px 6px" }}>{r.has_activated ? (r.has_revoked ? "iptal" : "aktif") : "rezerve"}</td>
                     <td style={{ padding: "8px 6px" }}>{r.first_plate ? `${r.first_plate} (${r.vehicle_count})` : "—"}</td>
                     <td style={{ padding: "8px 6px" }}>{r.record_count > 0 ? `${r.record_count} · ${fmtDate(r.last_record_at)}` : "—"}</td>
                     <td style={{ padding: "8px 6px" }}>{r.document_count}</td>
                     <td style={{ padding: "8px 6px" }}>{r.buyer_share_count > 0 ? r.buyer_share_count : "—"}</td>
                     <td style={{ padding: "8px 6px" }}>{r.feedback_count}{r.feedback_open > 0 ? ` (${r.feedback_open} açık)` : ""}</td>
-                    <td style={{ padding: "8px 6px" }}>{r.returned_7d ? "evet" : "hayır"}</td>
+                    <td style={{ padding: "8px 6px" }}>{r.returned_7d === "evet" ? "evet" : r.returned_7d === "bekleniyor" ? "bekleniyor" : "hayır"}</td>
                   </tr>
                 ))}
               </tbody>

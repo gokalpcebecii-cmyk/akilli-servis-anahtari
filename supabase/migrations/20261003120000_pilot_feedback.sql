@@ -74,23 +74,50 @@ set search_path = ''
 as $$
 declare v_rows jsonb;
 begin
-  select coalesce(jsonb_agg(row_to_json(x)::jsonb order by x.created_at desc), '[]'::jsonb) into v_rows
+  select coalesce(jsonb_agg(row_to_json(x)::jsonb order by x.pilot_started_at desc nulls last), '[]'::jsonb) into v_rows
   from (
+    with pilot_users as (
+      -- Pilot = bu pilot batch'indeki QR'lardan biri kendisine rezerve/aktive
+      -- edilmiş veya aracına bağlanmış auth kullanıcısı. Test/smoke hesapları
+      -- bu batch ile ilişkili değilse pilot sayılmaz.
+      select distinct coalesce(q.activated_by, v.owner_user_id, q.reserved_user_id, q.created_by) as user_id,
+             q.id as qr_id, q.serial_no, q.status as qr_status, q.assigned_at, q.activated_by, q.reserved_user_id, q.revoked_at, q.created_by,
+             v.id as vehicle_id, v.plate as vehicle_plate, v.created_at as vehicle_created_at, v.owner_user_id as vehicle_owner_id
+      from public.qr_keys q
+      left join public.vehicles v on v.id = q.vehicle_id
+      where q.batch_id = 'e868a624-5ab8-4c16-81bb-642747fb667d'
+    ),
+    agg as (
+      select user_id,
+             min(coalesce(assigned_at, vehicle_created_at)) as pilot_started_at,
+             count(distinct qr_id) as qr_count,
+             bool_or(qr_status = 'activated') as has_activated,
+             bool_or(revoked_at is not null) as has_revoked,
+             string_agg(distinct serial_no, ', ' order by serial_no) as serial_nos,
+             min(vehicle_plate) as first_plate,
+             count(distinct vehicle_id) filter (where vehicle_id is not null) as vehicle_count
+      from pilot_users
+      where user_id is not null
+      group by user_id
+    )
     select u.id, u.email, u.created_at, u.last_sign_in_at,
-      (u.last_sign_in_at > now() - interval '7 days') as returned_7d,
-      (select count(*) from public.vehicles v where v.owner_user_id = u.id) as vehicle_count,
-      (select v.plate from public.vehicles v where v.owner_user_id = u.id order by v.created_at asc limit 1) as first_plate,
+      agg.pilot_started_at,
+      case
+        when agg.pilot_started_at is null then 'bekleniyor'
+        when now() < agg.pilot_started_at + interval '7 days' then 'bekleniyor'
+        when u.last_sign_in_at is not null and u.last_sign_in_at >= agg.pilot_started_at + interval '7 days' then 'evet'
+        else 'hayir'
+      end as returned_7d,
+      agg.qr_count, agg.has_activated, agg.has_revoked, agg.serial_nos, agg.first_plate, agg.vehicle_count,
+      coalesce(agg.vehicle_count, 0) as vehicle_count2,
       (select count(*) from public.maintenance_records m where m.created_by = u.id) as record_count,
       (select max(m.created_at) from public.maintenance_records m where m.created_by = u.id) as last_record_at,
       (select count(*) from public.vehicle_documents d where d.uploaded_by = u.id) as document_count,
       (select count(*) from public.buyer_shares b where b.created_by = u.id) as buyer_share_count,
       (select count(*) from public.pilot_feedback f where f.user_id = u.id) as feedback_count,
-      (select count(*) from public.pilot_feedback f where f.user_id = u.id and f.status <> 'cozuldu') as feedback_open,
-      (select count(*) from public.qr_keys q where q.assigned_at is not null and q.revoked_at is null and q.vehicle_id is not null
-        and q.vehicle_id in (select v.id from public.vehicles v where v.owner_user_id = u.id)) as qr_active,
-      (select count(*) from public.qr_keys q where q.activated_by = u.id) as qr_activated_by,
-      (select q.serial_no from public.qr_keys q where q.activated_by = u.id order by q.assigned_at desc limit 1) as last_serial_no
-    from auth.users u
+      (select count(*) from public.pilot_feedback f where f.user_id = u.id and f.status <> 'cozuldu') as feedback_open
+    from agg
+    join auth.users u on u.id = agg.user_id
     left join public.platform_admins pa on pa.user_id = u.id
     left join public.staff_users s on s.id = u.id
     where pa.user_id is null and s.id is null
