@@ -58,6 +58,35 @@ async function handlePOST(req: NextRequest) {
     }
 
     const result = await createVehicle({ authHeader, body, client });
+
+    // Servis akışı aynen devam eder. Bireysel akışta araç oluşturulduktan sonra
+    // ürün aynı istek içinde araca bağlanır; bind başarısızsa yeni araç geri alınır.
+    if (!isServis && result.status >= 200 && result.status < 300 && result.json?.vehicle?.id) {
+      const vehicleId = result.json.vehicle.id;
+      const code = String((body && body.activation_code) || "");
+      const identifier = String((body && body.activation_serial) || "");
+
+      const { data: bindData, error: bindErr } = await client.rpc("activate_product", {
+        p_identifier: identifier,
+        p_code: code,
+        p_vehicle_id: vehicleId,
+      });
+
+      if (bindErr || !bindData || bindData.ok !== true) {
+        const { error: rollbackErr } = await client.from("vehicles").delete().eq("id", vehicleId);
+        if (rollbackErr) {
+          return NextResponse.json(
+            { error: "Ürün araca bağlanamadı ve araç kaydı geri alınamadı. Lütfen OTOİZ desteğe başvurun." },
+            { status: 500 }
+          );
+        }
+        return NextResponse.json(
+          { error: "Ürün araca bağlanamadı. Araç kaydı oluşturulmadı." },
+          { status: 403 }
+        );
+      }
+    }
+
     return NextResponse.json(result.json, { status: result.status });
   } catch (e) {
     return NextResponse.json({ error: "Beklenmeyen hata" }, { status: 500 });
