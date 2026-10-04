@@ -1,7 +1,6 @@
-// OTOİZ — Görüş Bildir. Oturumlu kullanıcının kısa görüşünü mevcut işlem
-// kaydına (audit_log, action = user_feedback) yazar. Kimlik kullanıcının kendi
-// JWT'siyle doğrulanır; yazma sunucu istemcisiyle yapılır. Kullanıcı başına
-// saatlik sınır vardır. Yeni tablo yok.
+// OTOİZ — Görüş Bildir. Oturumlu kullanıcının kısa görüşünü pilot_feedback
+// tablosuna yazar. Kimlik kullanıcının kendi JWT'siyle doğrulanır; yazma
+// sunucu istemcisiyle yapılır. Kullanıcı başına saatlik sınır vardır.
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase";
@@ -43,13 +42,12 @@ async function handlePOST(req: NextRequest) {
   }
 
   const db = createServerSupabase();
-  const { error } = await db.from("audit_log").insert({
-    tenant_id: null,
-    actor_staff_id: null,
-    action: "user_feedback",
-    target_table: "auth.users",
-    target_id: user.id,
-    detail: { actor_user_id: user.id, category: value.category, screen: value.screen, message: value.message, via: "gorus_bildir" },
+  const { error } = await db.from("pilot_feedback").insert({
+    user_id: user.id,
+    category: value.category,
+    screen: value.screen,
+    message: value.message,
+    screenshot_path: value.screenshot_path,
   });
   if (error) return NextResponse.json({ error: "Gönderilemedi. Lütfen biraz sonra tekrar deneyin." }, { status: 500 });
   return NextResponse.json({ ok: true });

@@ -15,9 +15,11 @@ import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import UrunlerTab from "./UrunlerTab";
 import { AdminMfa } from "@/components/AdminMfa";
 import { SystemHealthTab, AuditLogTab } from "./SaglikTab";
+import { PilotMerkeziTab } from "./PilotMerkeziTab";
+import { GeriBildirimTab } from "./GeriBildirimTab";
 const { vehicleCountView } = require("@/lib/vehicleCount");
 
-type Tab = "genel" | "saglik" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler" | "islem";
+type Tab = "genel" | "saglik" | "kullanicilar" | "urunler" | "qr" | "araclar" | "servisler" | "islem" | "pilot" | "geri-bildirim";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "genel", label: "Genel Bakış" },
@@ -28,6 +30,8 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "araclar", label: "Araçlar" },
   { key: "servisler", label: "Servisler" },
   { key: "islem", label: "İşlem Kaydı" },
+  { key: "pilot", label: "Pilot Kontrol Merkezi" },
+  { key: "geri-bildirim", label: "Geri Bildirimler" },
 ];
 
 const QR_COUNTS = [10, 20, 30, 100];
@@ -687,6 +691,8 @@ export default function YonetimPage() {
         {/* ================= SİSTEM SAĞLIĞI / İŞLEM KAYDI (P1) ================= */}
         {tab === "saglik" && <SystemHealthTab api={api} />}
         {tab === "islem" && <AuditLogTab api={api} />}
+        {tab === "pilot" && <PilotMerkeziTab api={api} />}
+        {tab === "geri-bildirim" && <GeriBildirimTab api={api} />}
 
         {/* ================= ARAÇLAR ================= */}
         {tab === "araclar" && (
