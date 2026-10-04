@@ -74,10 +74,16 @@ async function handlePOST(req: NextRequest) {
   // Paylaşım açık ise UI, create yanıtında bir kez gördüğü düz token'ı
   // (yalnızca /alici/<token> formatında) gönderebilir; sunucu e‑posta
   // içeriğine yalnızca bu güvenli /alici kökü altındaki linki koyar.
-  const shareUrl = String(body.share_url || "");
-  if (!/^\/alici\/[A-Za-z0-9_-]{20,120}$/.test(shareUrl)) {
+  const sharePath = String(body.share_url || "");
+  if (!/^\/alici\/[A-Za-z0-9_-]{20,120}$/.test(sharePath)) {
     return NextResponse.json({ error: "Paylaşım linki geçerli değil veya süresi dolmuş." }, { status: 400 });
   }
+
+  // E-posta tarayıcı dışından açıldığı için göreli /alici/... adresi kullanılamaz.
+  // Production origin env ile sabitlenir; env yoksa mevcut request origin'i kullanılır.
+  const appOrigin = String(process.env.OTOIZ_APP_ORIGIN || req.nextUrl.origin || "").replace(/\/$/, "");
+  const shareUrl = `${appOrigin}${sharePath}`;
+
   const payload = {
     to: email,
     subject: `${String(vehicle.brand || "")} ${String(vehicle.model || "")}`.replace(/[\r\n<>"']/g, " ").slice(0, 90) + " — OTOİZ Dijital Servis Pasaportu",
