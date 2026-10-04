@@ -11,7 +11,7 @@ const STEPS = [
   { n: 1, title: "Devir Detaylarını Gir", desc: "Devri başlatın, aracın erişimi hesabınızdan kaldırılır." },
   { n: 2, title: "Güvenli Bağlantı Oluştur", desc: "Yalnızca paylaştığınız kişi kullanabilecek, süreli bir bağlantı." },
   { n: 3, title: "Alıcı Kabul Eder", desc: "OTOİZ hesabıyla giriş yapıp bağlantıyı açtığında devir tamamlanır." },
-  { n: 4, title: "Teknik Geçmiş Devam Eder", desc: "Bakım kayıtları ve QR kodu değişmeden korunur." },
+  { n: 4, title: "Teknik Geçmiş Devam Eder", desc: "Bakım kayıtları ve QR kodu araçla birlikte korunur; kişisel bilgiler ve özel belgeler aktarılmaz." },
 ];
 
 export default function BireyselDevretPage() {
@@ -137,7 +137,7 @@ export default function BireyselDevretPage() {
           <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: colors.greenSoft, borderRadius: radius.md, padding: 14, marginBottom: 20 }}>
             <Icon name="shield-check" color={colors.greenDark} size={16} strokeWidth={2.5} />
             <p style={{ fontSize: 12.5, color: colors.textDark, margin: 0, lineHeight: 1.6 }}>
-              Kişisel bilgileriniz yeni sahibine aktarılmaz. Bağlantı tek kullanımlıktır ve 72 saat geçerlidir; bu bağlantı
+              Teknik araç geçmişi yeni sahibine aktarılır; kişisel bilgileriniz ve özel belgeleriniz aktarılmaz. Bağlantı tek kullanımlıktır ve 72 saat geçerlidir; bu bağlantı
               yalnız şimdi gösterilir, kaydedin. Karşı taraf kabul etmediyse araç listenizdeki "Bekleyen Devirler"
               bölümünden devri iptal edip aracı geri alabilirsiniz.
             </p>
@@ -179,13 +179,13 @@ export default function BireyselDevretPage() {
         <div style={{ background: colors.greenSoft, borderRadius: radius.md, padding: 14, marginBottom: 22, display: "flex", gap: 8, alignItems: "flex-start" }}>
           <Icon name="shield-check" color={colors.greenDark} size={16} strokeWidth={2.5} />
           <p style={{ fontSize: 12.5, color: colors.textDark, margin: 0, lineHeight: 1.6 }}>
-            Kişisel bilgileriniz yeni sahibine aktarılmaz. İstediğiniz zaman, kabul edilmeden önce iptal edip aracı geri alabilirsiniz.
+            Teknik araç geçmişi ve aktif QR araçla birlikte yeni sahibine geçer. Kişisel bilgileriniz ve özel belgeleriniz aktarılmaz. Devir tamamlandığında bu araca erişiminiz sona erer. Kabul edilmeden önce devri iptal edip aracı geri alabilirsiniz.
           </p>
         </div>
 
         <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: colors.textMuted, marginBottom: 20 }}>
           <input type="checkbox" checked={confirming} onChange={(e) => setConfirming(e.target.checked)} style={{ marginTop: 3 }} />
-          Bu aracın erişimini hesabımdan kaldırmak istediğimi onaylıyorum.
+          Teknik araç geçmişinin yeni sahibine geçeceğini, kişisel bilgilerimin ve özel belgelerimin aktarılmayacağını ve devir tamamlandığında araç erişimimin sona ereceğini anladım; devri başlatmayı onaylıyorum.
         </label>
 
         {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>{error}</p>}
