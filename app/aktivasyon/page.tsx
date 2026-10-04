@@ -119,7 +119,7 @@ function AktivasyonInner() {
         const res = await fetch("/api/vehicles", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.session?.access_token ?? ""}` },
-          body: JSON.stringify(nv),
+          body: JSON.stringify({ ...nv, activation_serial: identifier, activation_code: normalizeActivationCode(code) }),
         });
         const j = await res.json().catch(() => null);
         if (!res.ok) {

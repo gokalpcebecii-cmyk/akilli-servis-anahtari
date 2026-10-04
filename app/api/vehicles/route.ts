@@ -27,6 +27,36 @@ async function handlePOST(req: NextRequest) {
       { global: { headers: { Authorization: authHeader ?? "" } } }
     );
 
+    // Bireysel kullanıcıda aktivasyon doğrulaması zorunludur; servis hesapları
+    // (staff) bu kapıdan muaftır. Verification RPC'si p_vehicle_id null ile
+    // yalnız ürünü aktive edilebilirliğini + kodu doğrular.
+    const userCheck = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: authHeader ?? "" } } }
+    );
+    const { data: userData } = await userCheck.auth.getUser();
+    let isServis = false;
+    if (userData?.user) {
+      const { data: staffRow } = await userCheck.from("staff_users").select("tenant_id").eq("id", userData.user.id).maybeSingle();
+      isServis = !!(staffRow && staffRow.tenant_id);
+    }
+    if (!isServis) {
+      const code = String((body && body.activation_code) || "");
+      const identifier = String((body && body.activation_serial) || "");
+      if (!identifier || !code) {
+        return NextResponse.json({ error: "Araç oluşturmak için geçerli bir OTOİZ ürün aktivasyonu gerekir." }, { status: 403 });
+      }
+      const { data: verData, error: verErr } = await client.rpc("activate_product", {
+        p_identifier: identifier,
+        p_code: code,
+        p_vehicle_id: null,
+      });
+      if (verErr || !verData || verData.ok !== true) {
+        return NextResponse.json({ error: "Ürün aktivasyonu doğrulanamadı. Lütfen aktivasyon kodunu kontrol edin." }, { status: 403 });
+      }
+    }
+
     const result = await createVehicle({ authHeader, body, client });
     return NextResponse.json(result.json, { status: result.status });
   } catch (e) {

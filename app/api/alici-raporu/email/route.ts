@@ -85,7 +85,9 @@ async function handlePOST(req: NextRequest) {
   };
 
   const webhook = String(process.env.OTOIZ_EMAIL_WEBHOOK_URL || "").trim();
-  if (!webhook) {
+  const brevoApiKey = String(process.env.BREVO_API_KEY || "").trim();
+  const brevoSender = String(process.env.BREVO_SENDER_EMAIL || "").trim();
+  if (!webhook && !brevoApiKey) {
     // Yapılandırma YOK: sahte başarı DÖNMEZ — Türkçe anlamlı durum döner.
     // Audit log yazılır ama "mail gönderildi" anlamına gelmez.
     await db.from("audit_log").insert({
@@ -103,7 +105,18 @@ async function handlePOST(req: NextRequest) {
   }
 
   try {
-    const r = await fetch(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    const r = webhook
+      ? await fetch(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) })
+      : await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: { "api-key": brevoApiKey, "content-type": "application/json" },
+          body: JSON.stringify({
+            sender: { email: brevoSender },
+            to: [{ email }],
+            subject: payload.subject,
+            htmlContent: payload.html,
+          }),
+        });
     if (!r.ok) {
       await db.from("audit_log").insert({
         tenant_id: null,
