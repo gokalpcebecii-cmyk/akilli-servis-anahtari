@@ -67,7 +67,8 @@ function AktivasyonInner() {
   const [doneVehicle, setDoneVehicle] = useState<string | null>(null);
 
   const here = `/aktivasyon${token ? `?t=${token}` : ""}`;
-  const identifier = token || normalizeSerial(serialInput) || "";
+  const serialDigits = serialInput.replace(/\D/g, "").slice(0, 6);
+  const identifier = token || normalizeSerial(serialDigits ? `OTZ-${serialDigits}` : "") || "";
 
   useEffect(() => {
     (async () => {
@@ -189,8 +190,18 @@ function AktivasyonInner() {
           {!token && (
             <>
               <label style={labelStyle} htmlFor="akt-seri">Seri numarası</label>
-              <input id="akt-seri" value={serialInput} onChange={(e) => setSerialInput(e.target.value)} placeholder="OTZ-000123"
-                autoCapitalize="characters" autoComplete="off" style={{ ...inputStyle, marginBottom: 14 }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <span style={{ minHeight: 48, display: "flex", alignItems: "center", padding: "0 12px", borderRadius: radius.sm, background: colors.surfaceSoft, border: `1px solid ${colors.border}`, fontWeight: 800, color: colors.textDark }}>OTZ-</span>
+                <input
+                  id="akt-seri"
+                  value={serialDigits}
+                  onChange={(e) => setSerialInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="000123"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
+                />
+              </div>
             </>
           )}
           <label style={labelStyle} htmlFor="akt-kod">Aktivasyon kodu</label>
@@ -243,7 +254,14 @@ function AktivasyonInner() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle} htmlFor="nv-km">Güncel km</label>
-                  <CaretSafeInput caretChars="digits" id="nv-km" inputMode="numeric" value={nv.current_km} onChange={(e) => setNv({ ...nv, current_km: e.target.value.replace(/\D/g, "") })} style={inputStyle} />
+                  <CaretSafeInput
+                    caretChars="digits"
+                    id="nv-km"
+                    inputMode="numeric"
+                    value={nv.current_km ? Number(nv.current_km).toLocaleString("tr-TR") : ""}
+                    onChange={(e) => setNv({ ...nv, current_km: e.target.value.replace(/\D/g, "") })}
+                    style={inputStyle}
+                  />
                 </div>
               </div>
               {vehicles.length > 0 && (
@@ -264,7 +282,7 @@ function AktivasyonInner() {
     <Shell step={step}>
       <div style={{ textAlign: "center" }}>
         <div aria-hidden style={{ width: 56, height: 56, borderRadius: 28, background: colors.greenSoft, color: colors.greenDark, fontSize: 30, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>✓</div>
-        <h2 style={{ fontSize: 19, margin: "0 0 6px" }}>Tamam! Anahtarlığın etkin.</h2>
+        <h2 style={{ fontSize: 19, margin: "0 0 6px" }}>OTOİZ’e hoş geldin. Aracın artık sistemde aktif.</h2>
         <p style={{ color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>
           Artık QR'ı okutan herkes aracının servis pasaportunu görür; plaka gizli kalır.
         </p>
