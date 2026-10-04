@@ -11,6 +11,7 @@
 // Böylece başkasının e-postasıyla açılan ön kayıt adresi kilitlemez ve
 // sonradan o hesaba giriş sağlamaz. Yanıt, e-postanın kayıtlı olup
 // olmadığını açığa vurmaz.
+import { createClient } from "@supabase/supabase-js";
 import { authClient, appOriginFor } from "@/lib/authSignup";
 const { unguessablePassword } = require("@/lib/serviceSignup");
 const { confirmRedirectUrl, signupErrorMessage } = require("@/lib/emailConfirm");
@@ -27,12 +28,22 @@ async function handlePOST(req: Request) {
     const body = await req.json();
     const { full_name, phone, next } = body;
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const kvkkAcknowledged = body.kvkk_acknowledged === true;
+    const termsAccepted = body.terms_accepted === true;
+    const kvkkVersion = String(body.kvkk_version || "");
+    const termsVersion = String(body.terms_version || "");
 
     if (!email) {
       return Response.json({ error: "E-posta zorunlu." }, { status: 400 });
     }
     if (!EMAIL_RE.test(email)) {
       return Response.json({ error: "Geçerli bir e-posta adresi girin." }, { status: 400 });
+    }
+    if (!kvkkAcknowledged || kvkkVersion !== "2026-10-04") {
+      return Response.json({ error: "KVKK Aydınlatma Metni için bilgi edinme kaydı zorunludur." }, { status: 400 });
+    }
+    if (!termsAccepted || termsVersion !== "2026-10-04") {
+      return Response.json({ error: "Kullanım Koşulları kabul edilmeden hesap oluşturulamaz." }, { status: 400 });
     }
 
     // P0: kayıt kötüye kullanımına karşı IP ve e-posta başına hız sınırı.
@@ -56,6 +67,9 @@ async function handlePOST(req: Request) {
           full_name: typeof full_name === "string" ? full_name.trim().slice(0, 120) || null : null,
           phone: typeof phone === "string" ? phone.trim().slice(0, 40) || null : null,
           account_type: "individual",
+          kvkk_ack_version: kvkkVersion,
+          terms_version: termsVersion,
+          legal_acknowledged_at: new Date().toISOString(),
         },
       },
     });
@@ -68,6 +82,38 @@ async function handlePOST(req: Request) {
       }
       await logAppEvent(classifyAuthError(error), "/api/bireysel-kayit", error.status ?? null, { code: code ?? null });
       return Response.json({ error: signupErrorMessage(error) }, { status: error.status && error.status >= 500 ? 502 : error.status === 429 ? 429 : 400 });
+    }
+
+    // Yeni kullanıcı için hukuki kayıtlar, istemcinin değiştiremeyeceği
+    // servis rolüyle ve versiyon + zaman damgasıyla yazılır.
+    if (data.user?.id) {
+      const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { persistSession: false } }
+      );
+      const now = new Date().toISOString();
+      const { error: legalErr } = await admin.from("legal_acceptances").insert([
+        {
+          user_id: data.user.id,
+          document_type: "kvkk_aydinlatma",
+          document_version: kvkkVersion,
+          acknowledged_at: now,
+          accepted_at: null,
+        },
+        {
+          user_id: data.user.id,
+          document_type: "kullanim_kosullari",
+          document_version: termsVersion,
+          acknowledged_at: now,
+          accepted_at: now,
+        },
+      ]);
+      if (legalErr) {
+        await admin.auth.admin.deleteUser(data.user.id).catch(() => null);
+        console.error("[otoiz] legal_acceptances yazılamadı:", legalErr.message);
+        return Response.json({ error: "Kayıt tamamlanamadı. Lütfen tekrar deneyin." }, { status: 503 });
+      }
     }
 
     // Doğrulanmış bir e-posta için Auth e-posta göndermez ve "identities" boş
