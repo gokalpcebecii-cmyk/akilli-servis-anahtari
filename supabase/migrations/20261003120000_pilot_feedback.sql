@@ -133,5 +133,5 @@ begin
   return jsonb_build_object('rows', v_rows);
 end;
 $$;
-revoke all on function public.admin_pilot_board() from public, anon, authenticated;
-grant execute on function public.admin_pilot_board() to service_role;
+revoke all on function public.admin_pilot_board(uuid) from public, anon, authenticated;
+grant execute on function public.admin_pilot_board(uuid) to service_role;
