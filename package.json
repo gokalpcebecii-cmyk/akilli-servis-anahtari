@@ -7,7 +7,7 @@
     "build": "node scripts/verify-deploy-env.js && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test tests/logic.test.js tests/vehicleWrite.test.js tests/envCheck.test.js tests/cronAuth.test.js tests/qrUrl.test.js tests/qrResolver.test.js tests/activationCode.test.js tests/emailConfirm.test.js tests/printCenter.test.js tests/p0Security.test.js tests/iosInstall.test.js tests/seo.test.js tests/p1Scale.test.js tests/asamaE.test.js tests/asamaE1.test.js tests/sonCila.test.js tests/nihaiUx.test.js tests/hizliIslem.test.js tests/pilotFinal.test.js tests/aliciRaporu.test.js tests/pilotBlocker.test.js",
+    "test": "node --test tests/logic.test.js tests/vehicleWrite.test.js tests/envCheck.test.js tests/cronAuth.test.js tests/qrUrl.test.js tests/qrResolver.test.js tests/activationCode.test.js tests/emailConfirm.test.js tests/printCenter.test.js tests/p0Security.test.js tests/iosInstall.test.js tests/seo.test.js tests/p1Scale.test.js tests/asamaE.test.js tests/asamaE1.test.js tests/sonCila.test.js tests/nihaiUx.test.js tests/hizliIslem.test.js tests/pilotFinal.test.js tests/aliciRaporu.test.js tests/pilotBlocker.test.js tests/belgeDevri.test.js",
     "test:e2e": "playwright test"
   },
   "dependencies": {

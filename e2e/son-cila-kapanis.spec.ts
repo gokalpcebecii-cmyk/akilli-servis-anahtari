@@ -245,7 +245,7 @@ test.describe("Kapanış — sahiplik devri (pilotta açık)", () => {
     await start.click();
     await expect(page.getByRole("heading", { name: "Devir Başlatıldı" })).toBeVisible();
     await expect(page.getByText(/devir-kabul\/tok-123/).first()).toBeVisible();
-    expect(calls).toEqual([{ p_vehicle_id: VEHICLE_ID }]);
+    expect(calls).toEqual([{ p_vehicle_id: VEHICLE_ID, p_document_ids: [] }]);
   });
 
   test("devret: sunucu hatasında anlaşılır mesaj", async ({ page, baseURL }) => {

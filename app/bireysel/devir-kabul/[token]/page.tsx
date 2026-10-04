@@ -20,6 +20,8 @@ export default function DevirKabulPage() {
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState(false);
+  const [rejected, setRejected] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -53,12 +55,28 @@ export default function DevirKabulPage() {
       if (msg.includes("expired")) setError("Bu devir bağlantısının süresi dolmuş.");
       else if (msg.includes("already_accepted")) setError("Bu araç zaten devralınmış.");
       else if (msg.includes("cancelled")) setError("Bu devir iptal edilmiş.");
+      else if (msg.includes("rejected")) setError("Bu devir reddedilmiş.");
       else if (msg.includes("cannot_accept_own_transfer")) setError("Kendi başlattığınız bir devri kabul edemezsiniz.");
       else if (msg.includes("staff_account_cannot_own")) setError("Servis hesabıyla araç devralınamaz; bireysel hesabınızla giriş yapın.");
       else setError("Devir tamamlanamadı. Bağlantı geçersiz olabilir.");
       return;
     }
     setDone(data.vehicle_id);
+  }
+
+  // Alıcı devri reddeder: araç ve belgeler eski sahibe aynen döner; alıcıya
+  // hiçbir belge açılmaz.
+  async function handleReject() {
+    if (rejecting || accepting) return;
+    setRejecting(true);
+    setError("");
+    const { data, error: rpcError } = await supabase.rpc("reject_ownership_transfer", { p_token: token });
+    setRejecting(false);
+    if (rpcError || !data?.ok) {
+      setError("Devir reddedilemedi. Bağlantı geçersiz olabilir.");
+      return;
+    }
+    setRejected(true);
   }
 
   // 04A-S turu bulgusu: bu sayfa, karşı sayfalardan (devret) farklı olarak
@@ -95,6 +113,17 @@ export default function DevirKabulPage() {
           <button onClick={() => router.push(`/bireysel/araclar/${done}`)} style={{ ...primaryButtonStyle(false), width: "auto", padding: "12px 24px" }}>
             Aracımı Görüntüle
           </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (rejected) {
+    return (
+      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Devir Reddedildi</h1>
+          <p style={{ color: colors.textMuted }}>Araç önceki sahibinde kaldı. Bu bağlantı artık kullanılamaz.</p>
         </div>
       </main>
     );
@@ -179,10 +208,16 @@ export default function DevirKabulPage() {
           <>
             <p style={{ fontSize: 13, color: colors.textMuted, marginBottom: 16, textAlign: "center" }}>
               Bu aracı kabul ettiğinizde, teknik bakım geçmişi korunarak hesabınıza bağlanır.
+              {Number(preview.document_count) > 0
+                ? ` Önceki sahibin sizinle paylaşmayı seçtiği ${preview.document_count} belge, kabulden sonra aracın Belgeler bölümünde görünür.`
+                : " Önceki sahibin kişisel belgeleri aktarılmaz."}
             </p>
             {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12, textAlign: "center" }}>{error}</p>}
             <button onClick={handleAccept} disabled={accepting} style={primaryButtonStyle(accepting)}>
               {accepting ? "İşleniyor…" : "Devri Kabul Et"}
+            </button>
+            <button onClick={handleReject} disabled={rejecting || accepting} data-testid="devir-reddet" style={{ ...secondaryButtonStyle(), marginTop: 10 }}>
+              {rejecting ? "İşleniyor…" : "Devri Reddet"}
             </button>
           </>
         )}
