@@ -128,9 +128,18 @@ function AktivasyonInner() {
           return;
         }
         vehicleId = j?.vehicle?.id;
+        if (!vehicleId) {
+          setError("Araç oluşturuldu ancak yanıt doğrulanamadı.");
+          return;
+        }
         await loadVehicles();
         setAdding(false);
         setSelected(vehicleId);
+        // Yeni araç akışında /api/vehicles ürünü aynı istek içinde bağladı.
+        // İkinci kez activate_product çağırmak already_activated üretebilir.
+        setDoneVehicle(vehicleId);
+        setStep("done");
+        return;
       }
       if (!vehicleId) {
         setError("Bir araç seçin ya da yeni araç ekleyin.");
