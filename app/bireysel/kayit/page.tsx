@@ -14,11 +14,21 @@ function BireyselKayitForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [kvkkAcknowledged, setKvkkAcknowledged] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
     setError("");
+    if (!kvkkAcknowledged) {
+      setError("KVKK Aydınlatma Metni'ni okuyup bilgi edindiğinizi işaretleyin.");
+      return;
+    }
+    if (!termsAccepted) {
+      setError("Kullanım Koşulları'nı kabul etmeden hesap oluşturamazsınız.");
+      return;
+    }
     setLoading(true);
 
     // Faz 3.1: hesap e-posta doğrulanana kadar açılmaz; otomatik giriş yok.
@@ -26,7 +36,14 @@ function BireyselKayitForm() {
     const res = await fetch("/api/bireysel-kayit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, next: redirectTo }),
+      body: JSON.stringify({
+        ...form,
+        next: redirectTo,
+        kvkk_acknowledged: kvkkAcknowledged,
+        terms_accepted: termsAccepted,
+        kvkk_version: "2026-10-04",
+        terms_version: "2026-10-04",
+      }),
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
@@ -80,6 +97,34 @@ function BireyselKayitForm() {
 
         <label htmlFor="kayit-tel" style={labelStyle}>Telefon</label>
         <input id="kayit-tel" type="tel" inputMode="tel" autoComplete="tel" style={{ ...inputStyle, marginBottom: 16 }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0555 000 00 00" />
+
+        <details style={{ marginBottom: 12, fontSize: 13, lineHeight: 1.55, color: colors.textMuted }}>
+          <summary style={{ cursor: "pointer", fontWeight: 700, color: colors.textDark }}>KVKK Aydınlatma Metni</summary>
+          <div style={{ marginTop: 8 }}>
+            <p>OTOİZ hizmetinde hesap, iletişim, araç, bakım, servis ve yüklediğiniz belge bilgileri; hesabın işletilmesi, dijital servis pasaportunun sunulması, güvenlik, destek ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla işlenebilir.</p>
+            <p>Veriler yalnız hizmetin sunulması için gerekli altyapı/tedarikçi kategorileri ve kanunen yetkili mercilerle, ilgili hukuki sebepler kapsamında paylaşılabilir. Veriler amaç için gerekli süre ve yasal saklama yükümlülükleri boyunca tutulur.</p>
+            <p>KVKK kapsamındaki erişim, düzeltme, silme/yok etme ve diğer başvuru haklarınızı kullanabilirsiniz. Veri sorumlusunun tam ticari unvanı, adresi, vergi bilgileri ve resmi başvuru kanalı yayına alınmadan önce hukuki metinde tamamlanacaktır.</p>
+          </div>
+        </details>
+
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: colors.textMuted, marginBottom: 12 }}>
+          <input type="checkbox" checked={kvkkAcknowledged} onChange={(e) => setKvkkAcknowledged(e.target.checked)} style={{ marginTop: 3 }} />
+          KVKK Aydınlatma Metni'ni okudum ve bilgi edindim.
+        </label>
+
+        <details style={{ marginBottom: 12, fontSize: 13, lineHeight: 1.55, color: colors.textMuted }}>
+          <summary style={{ cursor: "pointer", fontWeight: 700, color: colors.textDark }}>Kullanım Koşulları</summary>
+          <div style={{ marginTop: 8 }}>
+            <p>Sisteme eklediğim bilgi ve belgelerin doğruluğundan ve bunları yüklemeye yetkili olduğumdan sorumlu olduğumu kabul ederim.</p>
+            <p>OTOİZ, kullanıcılar ve yetkili işletmeler tarafından sisteme girilen araç, kilometre, bakım, servis, belge ve diğer bilgilerin doğruluğunu, eksiksizliğini veya güncelliğini garanti etmez. Bu bilgilerin doğruluğundan ve sisteme yüklenmesine ilişkin yetkiden bilgiyi sisteme giren kullanıcı veya işletme sorumludur. OTOİZ, araç hakkında mekanik ekspertiz, ayıpsızlık, kilometre doğruluğu veya servis garantisi sağlamaz.</p>
+            <p>Üçüncü kişilere ait kişisel veri veya belgeler yalnız bunları yüklemeye hukuken yetkiliyseniz sisteme eklenmelidir.</p>
+          </div>
+        </details>
+
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: colors.textMuted, marginBottom: 16 }}>
+          <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} style={{ marginTop: 3 }} />
+          Kullanım Koşulları'nı okudum ve kabul ediyorum.
+        </label>
 
         {error && <p role="alert" style={alertBoxStyle}>{error}</p>}
 
