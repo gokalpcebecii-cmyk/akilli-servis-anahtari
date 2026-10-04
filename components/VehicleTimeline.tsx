@@ -76,6 +76,7 @@ export function VehicleTimeline({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
+  const [collapsed, setCollapsed] = useState(title === "Son Kayıtlar");
   const seq = useRef(0);
 
   async function fetchPage(offset: number) {
@@ -116,11 +117,19 @@ export function VehicleTimeline({
 
   return (
     <section data-testid="zaman-cizelgesi" aria-label={title} style={cardStyle}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
+      <button
+        type="button"
+        onClick={() => title === "Son Kayıtlar" && setCollapsed((v) => !v)}
+        aria-expanded={title === "Son Kayıtlar" ? !collapsed : true}
+        style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: collapsed ? 0 : 12, padding: 0, border: "none", background: "transparent", cursor: title === "Son Kayıtlar" ? "pointer" : "default", fontFamily: "inherit" }}
+      >
         <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>{title}</h2>
-        {!loading && total > 0 && <span style={{ fontSize: 13, color: colors.textFaint }}>{total} olay</span>}
-      </div>
-      {loading ? (
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {!loading && total > 0 && <span style={{ fontSize: 13, color: colors.textFaint }}>{total} olay</span>}
+          {title === "Son Kayıtlar" && <span aria-hidden style={{ color: colors.textMuted, fontSize: 18 }}>{collapsed ? "⌄" : "⌃"}</span>}
+        </span>
+      </button>
+      {collapsed && title === "Son Kayıtlar" ? null : loading ? (
         <div aria-busy="true" aria-label="Yükleniyor" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[0, 1, 2].map((i) => (
             <div key={i} className="otoiz-skeleton" style={{ height: 46, borderRadius: radius.sm }} />
