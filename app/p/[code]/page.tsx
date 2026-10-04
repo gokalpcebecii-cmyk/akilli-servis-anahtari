@@ -73,13 +73,20 @@ export default function PassportByCodePage() {
 // üstünde tek dokunuşluk kısayol çıkar. Yetkisiz/anonim ziyaretçi için
 // hiçbir şey değişmez (RPC null döner, istek bile yalnız oturum varsa gider).
 function ViewerShortcut({ code }: { code: string }) {
-  const [target, setTarget] = useState<{ href: string; label: string } | null>(null);
+  const [target, setTarget] = useState<{ href: string; label: string; ownerPrompt?: boolean } | null>(null);
   useEffect(() => {
     let alive = true;
     (async () => {
       const supabase = createBrowserSupabase();
       const { data: s } = await supabase.auth.getSession();
-      if (!s.session) return;
+      if (!s.session) {
+        setTarget({
+          href: `/bireysel/giris?next=${encodeURIComponent(`/p/${code}`)}`,
+          label: "Aracına Ulaş / Giriş Yap",
+          ownerPrompt: true,
+        });
+        return;
+      }
       const { data } = await supabase.rpc("vehicle_for_qr_viewer", { p_code: code });
       if (!alive || !data || typeof data !== "object" || Array.isArray(data) || !data.vehicle_id) return;
       if (data.role === "service") setTarget({ href: `/panel/araclar/${data.vehicle_id}`, label: "Hızlı Bakım Kaydı Gir" });
@@ -92,6 +99,11 @@ function ViewerShortcut({ code }: { code: string }) {
   if (!target) return null;
   return (
     <div style={{ position: "sticky", top: 0, zIndex: 20, background: colors.surfaceDark, padding: "10px 16px", fontFamily: font }}>
+      {target.ownerPrompt && (
+        <div style={{ maxWidth: 520, margin: "0 auto 8px", color: colors.textMuted, fontSize: 13, fontWeight: 700, textAlign: "center" }}>
+          Bu araç sizin mi?
+        </div>
+      )}
       <a
         href={target.href}
         data-testid="qr-kisayol"
