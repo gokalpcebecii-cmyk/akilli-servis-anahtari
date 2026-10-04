@@ -163,7 +163,7 @@ export default function OwnerKeychainCard({ vehicleId, onStatus, bindRequest = 0
               type="button"
               data-testid="anahtarligi-bagla"
               aria-expanded={false}
-              onClick={() => setBindOpen(true)}
+              onClick={() => { window.location.href = "/aktivasyon"; }}
               style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", padding: 0, minHeight: 44, color: colors.greenLight, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}
             >
               Anahtarlığı Bağla <span aria-hidden="true">→</span>

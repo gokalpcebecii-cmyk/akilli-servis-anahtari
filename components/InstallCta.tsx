@@ -100,8 +100,16 @@ export function InstallCta({ tone = "dark" }: { tone?: "dark" | "light" }) {
       setHidden(true);
       return;
     }
+    // PWA kaldırılıp site tarayıcıda açıldığında, INSTALLED_KEY sadece
+    // standalone değilse yeniden göstermeli — aksi halde kullanıcı
+    // yeniden kurulum yolunu göremez.
+    const installed = read(INSTALLED_KEY) === "1";
+    if (!installed || !window.matchMedia("(display-mode: standalone)").matches) {
+      if (installed) store(INSTALLED_KEY, null);
+    }
     const snoozed = Number(read(SNOOZE_KEY) || 0) > Date.now();
-    setHidden(p === "other" || read(INSTALLED_KEY) === "1" || snoozed);
+    setHasPrompt(!!deferredPrompt);
+    setHidden(p === "other" || snoozed);
   }, []);
 
   useEffect(() => {
