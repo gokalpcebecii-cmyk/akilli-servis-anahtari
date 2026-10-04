@@ -103,7 +103,7 @@ function BireyselKayitForm() {
           <div style={{ marginTop: 8 }}>
             <p>OTOİZ hizmetinde hesap, iletişim, araç, bakım, servis ve yüklediğiniz belge bilgileri; hesabın işletilmesi, dijital servis pasaportunun sunulması, güvenlik, destek ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla işlenebilir.</p>
             <p>Veriler yalnız hizmetin sunulması için gerekli altyapı/tedarikçi kategorileri ve kanunen yetkili mercilerle, ilgili hukuki sebepler kapsamında paylaşılabilir. Veriler amaç için gerekli süre ve yasal saklama yükümlülükleri boyunca tutulur.</p>
-            <p>KVKK kapsamındaki erişim, düzeltme, silme/yok etme ve diğer başvuru haklarınızı kullanabilirsiniz. Veri sorumlusunun tam ticari unvanı, adresi, vergi bilgileri ve resmi başvuru kanalı yayına alınmadan önce hukuki metinde tamamlanacaktır.</p>
+            <p>Veri sorumlusu, OTOİZ hizmetini işleten gerçek kişi Gökalp Cebeci'dir. İletişim: gokalpcebeci@gmail.com · 0546 290 44 71 · Ankara, Türkiye. KVKK kapsamındaki erişim, düzeltme, silme/yok etme ve diğer başvuru haklarınızı bu iletişim kanalı üzerinden kullanabilirsiniz.</p>
           </div>
         </details>
 
