@@ -134,22 +134,28 @@ grant execute on function public.otoiz_can_read_vehicle_document(uuid, uuid, uui
 -- değil, tam tanımı: (yükleyen veya kabul edilmiş devirde açıkça seçilen
 -- alıcı) VE (güncel sahip veya sonuçlanmamış devrin başlatanı).
 -- Ekleme/silme politikaları DEĞİŞMEZ (yalnız yükleyen + güncel sahip).
-drop policy if exists owner_select_own_documents on public.vehicle_documents;
-create policy owner_select_own_documents on public.vehicle_documents
-  for select to authenticated
+-- Politika yerinde değiştirilir (DROP yok; geri alınabilir).
+alter policy owner_select_own_documents on public.vehicle_documents
   using (public.otoiz_can_read_vehicle_document(id, vehicle_id, uploaded_by));
 
 ---------------------------------------------------------------------------
 -- 5) Devir fonksiyonları
 ---------------------------------------------------------------------------
--- initiate: seçilen belge kimlikleriyle. Eski tek parametreli sürüm
--- kaldırılır (aynı adla iki sürüm PostgREST'te belirsizlik yaratır);
+-- initiate: seçilen belge kimlikleriyle. Eski tek parametreli sürüm SİLİNMEZ,
+-- adı değiştirilip çağrıya kapatılır (aynı adla iki sürüm PostgREST'te
+-- belirsizlik yaratır; geri dönüş gerekirse eski adına çevrilebilir).
 -- p_document_ids varsayılanı boş dizi olduğu için eski çağrılar aynen
 -- çalışır ve hiçbir belge aktarılmaz.
-drop function if exists public.initiate_ownership_transfer(uuid);
-drop function if exists public.initiate_ownership_transfer(uuid, uuid[]);
+do $$ begin
+  if to_regprocedure('public.initiate_ownership_transfer(uuid)') is not null then
+    alter function public.initiate_ownership_transfer(uuid) rename to initiate_ownership_transfer_v1_retired;
+  end if;
+  if to_regprocedure('public.initiate_ownership_transfer_v1_retired(uuid)') is not null then
+    revoke all on function public.initiate_ownership_transfer_v1_retired(uuid) from public, anon, authenticated;
+  end if;
+end $$;
 
-create function public.initiate_ownership_transfer(p_vehicle_id uuid, p_document_ids uuid[] default '{}'::uuid[])
+create or replace function public.initiate_ownership_transfer(p_vehicle_id uuid, p_document_ids uuid[] default '{}'::uuid[])
  returns jsonb
  language plpgsql
  security definer
