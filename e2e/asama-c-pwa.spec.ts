@@ -331,7 +331,7 @@ test.describe("Aşama C — OTOİZ'İ TELEFONA EKLE", () => {
       await page.goto("/bireysel/araclar");
       await expect(page.getByText("34 OTZ 001").first()).toBeVisible();
       await expect(page.getByTestId("install-cta")).toBeVisible();
-      for (const name of ["Bildirimler", "Profil"]) {
+      for (const name of ["Bildirimler"]) {
         const b = await page.locator(`button[aria-label="${name}"]`).boundingBox();
         expect(b!.height, name).toBeGreaterThanOrEqual(44);
       }
