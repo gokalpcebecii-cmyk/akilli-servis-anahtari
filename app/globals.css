@@ -3440,96 +3440,148 @@ button.oz-row {
 .oz-land {
   position: relative;
   isolation: isolate;
+  overflow: hidden;
+  background: #050607;
+}
+.oz-land::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 34% at 50% 16%, rgba(34,197,94,.08), transparent 72%),
+    linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(5,6,7,.32) 46%, #050607 74%);
 }
 .oz-land-media {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
-  height: 400px;
-  z-index: -1;
-  background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.75) 0%, rgba(7, 8, 10, 0) 24%, rgba(7, 8, 10, 0) 50%, var(--oz-bg) 96%), url(/marketing/otoiz-landing-arac.webp);
+  height: 430px;
+  z-index: -3;
+  background-image:
+    linear-gradient(180deg, rgba(5,6,7,.18) 0%, rgba(5,6,7,.04) 32%, rgba(5,6,7,.12) 58%, #050607 98%),
+    url(/marketing/otoiz-landing-arac.webp);
   background-size: cover;
-  background-position: 46% 50%;
+  background-position: 50% 46%;
+  filter: saturate(.9) contrast(1.05) brightness(.88);
+  transform: scale(1.02);
 }
 .oz-land-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: calc(env(safe-area-inset-top) + 12px);
+  padding-top: calc(env(safe-area-inset-top) + 14px);
+}
+.oz-land-top .oz-iconbtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(5,6,7,.34);
+  border: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(10px);
 }
 .oz-land-copy {
-  padding-top: 236px;
+  padding-top: 248px;
 }
 .oz-land-title {
-  font-size: 34px;
-  line-height: 1.08;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 320px;
+  font-size: 35px;
+  line-height: 1.02;
+  font-weight: 780;
+  letter-spacing: -0.04em;
   margin: 0;
+  text-wrap: balance;
+  text-shadow: 0 2px 20px rgba(0,0,0,.55);
 }
 .oz-land-sub {
-  font-size: 15.5px;
-  line-height: 1.5;
-  color: #d5dae1;
+  max-width: 330px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #c7ced7;
   margin: 12px 0 0;
 }
 .oz-land-ctas {
   display: grid;
-  gap: 12px;
-  margin-top: 22px;
+  gap: 10px;
+  margin-top: 20px;
+}
+.oz-land-ctas .oz-cta {
+  min-height: 54px;
+  border-radius: 13px;
+  padding: 0 16px;
+}
+.oz-land-ctas .oz-cta.is-primary {
+  background: linear-gradient(180deg, #2fec79 0%, #20cf61 100%);
+  box-shadow: 0 8px 24px rgba(34,197,94,.18);
 }
 .oz-feats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin: 26px 0 0;
-  padding: 0;
+  gap: 4px;
+  margin: 22px 0 0;
+  padding: 0 2px;
   list-style: none;
 }
 .oz-feat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   text-align: center;
+  min-width: 0;
+}
+.oz-feat > svg {
+  width: 21px !important;
+  height: 21px !important;
 }
 .oz-feat-title {
   margin: 0;
-  font-size: 11.5px;
+  max-width: 72px;
+  font-size: 10.75px;
   font-weight: 600;
-  line-height: 1.3;
-  color: #dfe3e8;
+  line-height: 1.18;
+  color: #eef1f4;
 }
 .oz-promo {
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
-  min-height: 132px;
-  margin-top: 24px;
-  padding: 18px 150px 18px 18px;
-  border-radius: var(--oz-r-lg);
-  border: 1px solid var(--oz-line);
-  background: linear-gradient(120deg, #141a1d, #0e1315);
+  min-height: 128px;
+  margin-top: 20px;
+  padding: 18px 148px 18px 18px;
+  border-radius: 17px;
+  border: 1px solid rgba(255,255,255,.09);
+  background:
+    radial-gradient(80% 150% at 100% 50%, rgba(34,197,94,.10), transparent 65%),
+    linear-gradient(120deg, #111518 0%, #0b0e10 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
 }
 .oz-promo-text {
   margin: 0;
+  max-width: 190px;
   font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -.015em;
 }
 .oz-promo-img {
   position: absolute;
-  right: 6px;
-  top: 10px;
-  width: 140px;
-  height: 200px;
+  right: -2px;
+  top: 4px;
+  width: 148px;
+  height: 206px;
   background-image: url(/marketing/otoiz-telefon.webp);
   background-size: contain;
   background-repeat: no-repeat;
   background-position: 50% 0;
-  transform: rotate(-6deg);
+  transform: rotate(-7deg);
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.55));
 }
 
 /* Alt pencere (ortak sheet sınıflarının premium tonu). */
@@ -3558,6 +3610,9 @@ button.oz-row {
   opacity: 0.8;
 }
 
+@media (max-width: 430px) {
+  #nasil-calisir { padding-top: 28px !important; }
+}
 @media (max-width: 374px) {
   .oz-plate {
     font-size: 23px;
