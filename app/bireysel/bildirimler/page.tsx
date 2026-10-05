@@ -116,7 +116,7 @@ export default function BildirimlerPage() {
         )}
       </div>
 
-      <BottomNav active="notifications" />
+      <BottomNav active="diger" />
     </main>
   );
 }

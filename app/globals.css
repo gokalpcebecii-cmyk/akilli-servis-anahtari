@@ -29,19 +29,19 @@
 }
 
 :root {
-  --otoiz-bg: #0f1115;
-  --otoiz-bg-alt: #151922;
-  --otoiz-surface-dark: #181d27;
-  --otoiz-surface-light: #181d27;
-  --otoiz-surface-soft: #1f2531;
+  --otoiz-bg: #07080a;
+  --otoiz-bg-alt: #0c0e11;
+  --otoiz-surface-dark: #111317;
+  --otoiz-surface-light: #111317;
+  --otoiz-surface-soft: #171a1f;
   --otoiz-text-dark: #f5f7fa;
   --otoiz-text-light: #f5f7fa;
   --otoiz-text-muted: #a9b3c1;
   --otoiz-text-faint: #7f8896;
   --otoiz-green: #22c55e;
   --otoiz-green-dark: #86efac;
-  --otoiz-border: #2d3542;
-  --otoiz-on-accent: #0f1115;
+  --otoiz-border: #24282f;
+  --otoiz-on-accent: #04110a;
   color-scheme: dark;
 }
 
@@ -666,9 +666,9 @@ a:focus-visible {
    Mobilde içerik üstten akar (klavye açılınca kart yerinde kalır); ≥1024px
    solda marka paneli, sağda kart. Animasyon yok. */
 :root {
-  --otoiz-anthracite: #0f1115;
-  --otoiz-anthracite-2: #151922;
-  --otoiz-anthracite-3: #1f2531;
+  --otoiz-anthracite: #07080a;
+  --otoiz-anthracite-2: #0c0e11;
+  --otoiz-anthracite-3: #171a1f;
 }
 
 .otoiz-auth2 {
@@ -2234,5 +2234,999 @@ a {
   .otoiz-sheet-step,
   .otoiz-toast {
     animation: none;
+  }
+}
+
+/* =====================================================================
+   OTOİZ PREMIUM (2026-10-05) — dijital kokpit tasarım dili.
+   Koyu siyah/antrasit zemin, yeşil yalnız vurgu, ince çizgi, büyük radius,
+   çok hafif glow. Tüm bireysel ekranlar, landing ve giriş aynı sınıfları
+   kullanır (oz-*). Mobil öncelikli: 375/390/430; masaüstünde max-width.
+   ===================================================================== */
+:root {
+  --oz-bg: #07080a;
+  --oz-bg-2: #0c0e11;
+  --oz-card: #111317;
+  --oz-card-2: #171a1f;
+  --oz-line: rgba(255, 255, 255, 0.08);
+  --oz-line-2: rgba(255, 255, 255, 0.14);
+  --oz-text: #f5f7fa;
+  --oz-muted: #a3abb7;
+  --oz-faint: #6f7783;
+  --oz-green: #22c55e;
+  --oz-green-l: #86efac;
+  --oz-green-soft: rgba(34, 197, 94, 0.1);
+  --oz-amber: #f5c451;
+  --oz-red: #ef5350;
+  --oz-blue: #7cb4ff;
+  --oz-r-xl: 28px;
+  --oz-r-lg: 22px;
+  --oz-r-md: 16px;
+  --oz-glow: 0 0 0 1px rgba(34, 197, 94, 0.22), 0 10px 36px rgba(34, 197, 94, 0.1);
+  --oz-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.oz-app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(900px 520px at 50% -180px, rgba(34, 197, 94, 0.07), transparent 62%), var(--oz-bg);
+  color: var(--oz-text);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+}
+.oz-app.oz-has-nav {
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
+}
+.oz-wrap {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.oz-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+  padding-bottom: 14px;
+}
+.oz-iconbtn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  color: var(--oz-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+}
+.oz-iconbtn .oz-dot {
+  position: absolute;
+  top: 10px;
+  right: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--oz-green);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+}
+.oz-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.oz-enter {
+  animation: otoiz-enter 0.24s ease-out both;
+}
+
+/* ---- İmza araç kartı (hero) ---- */
+.oz-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--oz-r-xl);
+  border: 1px solid var(--oz-line);
+  background: #040506;
+  box-shadow: var(--oz-shadow);
+  isolation: isolate;
+}
+.oz-hero-img {
+  position: absolute;
+  inset: 0;
+  background-image: url(/marketing/otoiz-imza-arac.webp);
+  background-size: cover;
+  background-position: 72% 50%;
+  z-index: -2;
+  transform: scale(1.02);
+}
+.oz-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(4, 5, 6, 0.55) 0%, rgba(4, 5, 6, 0.05) 32%, rgba(4, 5, 6, 0.35) 58%, rgba(4, 5, 6, 0.94) 100%),
+    linear-gradient(90deg, rgba(4, 5, 6, 0.75) 0%, rgba(4, 5, 6, 0) 55%);
+}
+.oz-hero::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.7), transparent);
+}
+.oz-hero-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 300px;
+  padding: 18px 20px 20px;
+}
+.oz-hero.is-tall .oz-hero-body {
+  min-height: 340px;
+}
+.oz-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.oz-eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oz-muted);
+}
+.oz-plate {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.05;
+  margin: 0;
+  color: #fff;
+  white-space: nowrap;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6);
+}
+.oz-hero-sub {
+  font-size: 15px;
+  font-weight: 600;
+  color: #d5dae1;
+  margin-top: 6px;
+}
+.oz-hero-km {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.oz-hero-km small {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--oz-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.oz-glass-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(10, 12, 14, 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #e8ebef;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ---- Küçük durum kartları (3'lü) ---- */
+.oz-stat3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.oz-stat {
+  min-width: 0;
+  min-height: 92px;
+  padding: 13px 11px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+button.oz-stat {
+  cursor: pointer;
+}
+.oz-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--oz-muted);
+}
+.oz-stat-value {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--oz-text);
+  font-variant-numeric: tabular-nums;
+}
+.oz-lvl {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--oz-faint);
+}
+.oz-lvl[data-level="ok"] {
+  background: var(--oz-green);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
+}
+.oz-lvl[data-level="soon"] {
+  background: var(--oz-amber);
+  box-shadow: 0 0 8px rgba(245, 196, 81, 0.6);
+}
+.oz-lvl[data-level="late"] {
+  background: var(--oz-red);
+  box-shadow: 0 0 8px rgba(239, 83, 80, 0.6);
+}
+
+/* ---- Kart, başlık ---- */
+.oz-card {
+  border-radius: var(--oz-r-lg);
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  padding: 18px;
+  box-shadow: var(--oz-shadow);
+}
+.oz-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.oz-h2 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.oz-h1 {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.oz-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--oz-green-l);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.oz-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: var(--oz-green-soft);
+  color: var(--oz-green-l);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.oz-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 20px;
+  border-radius: 18px;
+  border: none;
+  background: var(--oz-green);
+  color: #04110a;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.22);
+}
+.oz-btn.is-ghost {
+  background: var(--oz-card-2);
+  color: var(--oz-text);
+  border: 1px solid var(--oz-line-2);
+  box-shadow: none;
+}
+.oz-btn:active,
+.oz-tile:active,
+.oz-row:active,
+.oz-choice:active {
+  opacity: 0.82;
+}
+
+/* ---- Zaman çizelgesi ---- */
+.oz-tl {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+.oz-tl::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.45), var(--oz-line) 40%, var(--oz-line));
+}
+.oz-tl-item {
+  position: relative;
+  padding: 0 0 18px 26px;
+}
+.oz-tl-item:last-child {
+  padding-bottom: 2px;
+}
+.oz-tl-dot {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--oz-bg);
+  border: 2px solid var(--oz-faint);
+}
+.oz-tl-dot[data-source="service"] {
+  border-color: var(--oz-green);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.55);
+}
+.oz-tl-dot[data-source="owner"],
+.oz-tl-dot[data-source="owner_history"] {
+  border-color: var(--oz-blue);
+}
+.oz-tl-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--oz-muted);
+  font-variant-numeric: tabular-nums;
+}
+.oz-tl-date strong {
+  color: var(--oz-text);
+  font-weight: 700;
+}
+.oz-tl-lines {
+  list-style: none;
+  margin: 6px 0 8px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--oz-text);
+}
+.oz-tl-lines li {
+  overflow-wrap: anywhere;
+}
+.oz-tl-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--oz-faint);
+}
+.oz-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid var(--oz-line-2);
+  color: var(--oz-muted);
+}
+.oz-badge[data-source="service"] {
+  color: var(--oz-green-l);
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.08);
+}
+.oz-badge[data-source="owner"],
+.oz-badge[data-source="owner_history"] {
+  color: var(--oz-blue);
+  border-color: rgba(124, 180, 255, 0.35);
+}
+.oz-badge.is-warn {
+  color: var(--oz-amber);
+  border-color: rgba(245, 196, 81, 0.5);
+}
+
+/* ---- Ana kartlar (2 sütun) ---- */
+.oz-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.oz-tile {
+  min-width: 0;
+  min-height: 128px;
+  padding: 16px;
+  border-radius: var(--oz-r-lg);
+  border: 1px solid var(--oz-line);
+  background: linear-gradient(160deg, var(--oz-card-2), var(--oz-card) 60%);
+  color: var(--oz-text);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: var(--oz-shadow);
+}
+.oz-tile:hover {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+.oz-tile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--oz-green-soft);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+}
+.oz-tile-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oz-text);
+}
+.oz-tile-sub {
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--oz-muted);
+  overflow-wrap: anywhere;
+}
+.oz-tile-sub[data-level="ok"] {
+  color: var(--oz-green-l);
+}
+.oz-tile-sub[data-level="soon"] {
+  color: var(--oz-amber);
+}
+.oz-tile-sub[data-level="late"] {
+  color: #ff8a80;
+}
+.oz-tile.is-calm {
+  grid-column: 1 / -1;
+  min-height: 64px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  background: transparent;
+  box-shadow: none;
+  padding: 12px 16px;
+}
+.oz-tile.is-calm .oz-tile-icon {
+  background: transparent;
+  border-color: var(--oz-line-2);
+}
+
+/* ---- Satır listesi (Aracım bilgileri, Diğer menüsü) ---- */
+.oz-rows {
+  display: flex;
+  flex-direction: column;
+}
+.oz-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 10px 2px;
+  border: none;
+  border-bottom: 1px solid var(--oz-line);
+  background: none;
+  color: var(--oz-text);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+.oz-rows > .oz-row:last-child {
+  border-bottom: none;
+}
+a.oz-row,
+button.oz-row {
+  cursor: pointer;
+}
+.oz-row-label {
+  flex: 1;
+  min-width: 0;
+  color: var(--oz-muted);
+  font-weight: 600;
+}
+.oz-row-value {
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Filtre çipleri ---- */
+.oz-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -16px 16px;
+  padding: 0 16px;
+}
+.oz-chips::-webkit-scrollbar {
+  display: none;
+}
+.oz-chip {
+  flex: none;
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 999px;
+  border: 1px solid var(--oz-line-2);
+  background: var(--oz-card);
+  color: var(--oz-muted);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.oz-chip[aria-pressed="true"] {
+  background: var(--oz-green);
+  border-color: var(--oz-green);
+  color: #04110a;
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.25);
+}
+
+/* ---- Belge kartı ---- */
+.oz-doc {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+}
+.oz-doc-icon {
+  width: 48px;
+  height: 56px;
+  flex: none;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--oz-card-2);
+  border: 1px solid var(--oz-line-2);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--oz-green-l);
+}
+.oz-doc-title {
+  font-size: 15px;
+  font-weight: 800;
+}
+.oz-doc-meta {
+  font-size: 12.5px;
+  color: var(--oz-muted);
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oz-doc-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ---- Dairesel gösterge ---- */
+.oz-ring {
+  position: relative;
+  margin: 6px auto 0;
+}
+.oz-ring svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+.oz-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 22px;
+}
+.oz-ring-value {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.oz-ring-caption {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--oz-muted);
+  margin-top: 6px;
+}
+
+/* ---- Seçim kartları (giriş, landing CTA) ---- */
+.oz-choice {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 104px;
+  padding: 20px 18px;
+  border-radius: 24px;
+  border: 1px solid var(--oz-line-2);
+  background: linear-gradient(160deg, rgba(23, 26, 31, 0.92), rgba(12, 14, 17, 0.92));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--oz-text);
+  text-decoration: none;
+  box-shadow: var(--oz-shadow);
+}
+.oz-choice:hover,
+.oz-choice:focus-visible {
+  border-color: rgba(34, 197, 94, 0.55);
+  box-shadow: var(--oz-glow);
+}
+.oz-choice-icon {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--oz-green-soft);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.oz-choice-title {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+}
+.oz-choice-desc {
+  display: block;
+  font-size: 13.5px;
+  color: var(--oz-muted);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+/* ---- Alt gezinme (5 bölüm) ---- */
+.oz-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: rgba(7, 8, 10, 0.9);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--oz-line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.oz-nav-inner {
+  display: flex;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.oz-nav-item {
+  flex: 1;
+  min-width: 0;
+  min-height: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  color: var(--oz-faint);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  padding: 6px 2px;
+}
+.oz-nav-item[aria-current="page"] {
+  color: var(--oz-green);
+  font-weight: 800;
+}
+.oz-nav-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 30%;
+  right: 30%;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--oz-green);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+}
+.oz-nav-desktop {
+  display: none;
+}
+
+/* ---- Landing ---- */
+.oz-landing-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.oz-landing-hero .oz-hero-img {
+  background-position: 70% 40%;
+}
+@media (max-width: 719px) {
+  .oz-landing-hero .oz-hero-img {
+    bottom: auto;
+    height: 500px;
+    background-size: 175% auto;
+    background-position: 60% 100%;
+    background-repeat: no-repeat;
+    -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+  }
+}
+.oz-landing-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(7, 8, 10, 0.78) 0%, rgba(7, 8, 10, 0.25) 30%, rgba(7, 8, 10, 0.55) 55%, var(--oz-bg) 92%),
+    linear-gradient(90deg, rgba(7, 8, 10, 0.6), rgba(7, 8, 10, 0) 70%);
+}
+.oz-landing-title {
+  font-size: 36px;
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+.oz-landing-title em {
+  font-style: normal;
+  color: var(--oz-green);
+}
+.oz-landing-sub {
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: #c9cfd7;
+  margin: 14px 0 0;
+}
+.oz-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.oz-value {
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  min-width: 0;
+}
+.oz-value-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 12px 0 4px;
+}
+.oz-value-desc {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--oz-muted);
+  margin: 0;
+}
+
+/* Alt pencere (ortak sheet sınıflarının premium tonu). */
+.otoiz-sheet-panel {
+  background: #0e1014;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+@media (max-width: 767px) {
+  .otoiz-sheet-panel {
+    border-radius: 28px 28px 0 0;
+  }
+}
+
+@media (min-width: 720px) {
+  .oz-wrap {
+    max-width: 760px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .oz-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .oz-hero-body {
+    min-height: 340px;
+    padding: 26px 28px 28px;
+  }
+  .oz-plate {
+    font-size: 40px;
+  }
+  .oz-landing-title {
+    font-size: 54px;
+  }
+  .oz-values {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .oz-wrap {
+    max-width: 1120px;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  .oz-app.oz-has-nav {
+    padding-bottom: 48px;
+  }
+  .oz-nav {
+    display: none;
+  }
+  .oz-nav-desktop {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    border: 1px solid var(--oz-line);
+    background: var(--oz-card);
+  }
+  .oz-nav-desktop .oz-nav-item {
+    flex: none;
+    flex-direction: row;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    gap: 7px;
+  }
+  .oz-nav-desktop .oz-nav-item[aria-current="page"] {
+    background: var(--oz-green);
+    color: #04110a;
+  }
+  .oz-nav-desktop .oz-nav-item[aria-current="page"]::before {
+    display: none;
+  }
+  .oz-cockpit {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .oz-cockpit-side {
+    position: sticky;
+    top: 24px;
+  }
+  .oz-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .oz-hero-body {
+    min-height: 380px;
+  }
+}
+
+@media (max-width: 380px) {
+  .oz-plate {
+    font-size: 28px;
+  }
+  .oz-stat3 {
+    gap: 8px;
+  }
+  .oz-stat {
+    padding: 12px 9px;
+  }
+  .oz-stat-value {
+    font-size: 13px;
+  }
+}
+
+/* Giriş kabuğunda imza araç atmosferi (üst alan, koyu overlay ile). */
+.oz-auth-car {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 380px;
+  pointer-events: none;
+  background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.55) 0%, rgba(7, 8, 10, 0.2) 35%, rgba(7, 8, 10, 0.85) 80%, var(--otoiz-anthracite) 100%),
+    url(/marketing/otoiz-imza-arac.webp);
+  background-size: cover;
+  background-position: 62% 45%;
+  opacity: 0.85;
+}
+@media (min-width: 1024px) {
+  .oz-auth-car {
+    right: 50%;
+    height: 100%;
+    background-image: linear-gradient(90deg, rgba(7, 8, 10, 0.4) 0%, rgba(7, 8, 10, 0.1) 40%, var(--otoiz-anthracite) 100%),
+      linear-gradient(180deg, rgba(7, 8, 10, 0.6) 0%, rgba(7, 8, 10, 0) 30%, rgba(7, 8, 10, 0.9) 100%), url(/marketing/otoiz-imza-arac.webp);
+    opacity: 0.7;
+  }
+}
+@media (min-width: 720px) {
+  .oz-landing-ctas {
+    grid-template-columns: 1fr 1fr;
   }
 }

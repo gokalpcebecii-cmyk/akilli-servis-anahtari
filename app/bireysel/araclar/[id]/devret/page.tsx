@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
-import { colors, font, radius, cardStyle, primaryButtonStyle, secondaryButtonStyle } from "@/lib/theme";
+import { colors, font } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
+import { CarHero } from "@/components/Premium";
 
 const {
   TRANSFER_DOCS_TITLE,
@@ -18,11 +19,11 @@ const {
 } = require("@/lib/documentTransfer");
 const { DOC_TYPE_LABELS } = require("@/lib/quickActions");
 
+// Premium devir dili: 3 adım (mevcut E–H devir akışı aynen çalışır).
 const STEPS = [
-  { n: 1, title: "Devir Detaylarını Gir", desc: "Devri başlatın, aracın erişimi hesabınızdan kaldırılır." },
-  { n: 2, title: "Güvenli Bağlantı Oluştur", desc: "Yalnızca paylaştığınız kişi kullanabilecek, süreli bir bağlantı." },
-  { n: 3, title: "Alıcı Kabul Eder", desc: "OTOİZ hesabıyla giriş yapıp bağlantıyı açtığında devir tamamlanır." },
-  { n: 4, title: "Teknik Geçmiş Devam Eder", desc: "Bakım kayıtları ve QR kodu araçla birlikte korunur; kişisel bilgiler aktarılmaz; belgelerden yalnız seçtikleriniz aktarılır." },
+  { n: 1, title: "Yeni sahibi davet et", desc: "Devri başlatınca yalnız paylaştığınız kişinin kullanabileceği, süreli ve tek kullanımlık bir davet bağlantısı oluşur." },
+  { n: 2, title: "Devredilecek belgeleri seç", desc: "Belgeleriniz otomatik aktarılmaz; yalnız seçtikleriniz yeni sahibe açılır." },
+  { n: 3, title: "Güvenli devir tamamlanır", desc: "Yeni sahip kabul edince bakım geçmişi ve QR araçla birlikte geçer; kişisel bilgileriniz aktarılmaz." },
 ];
 
 export default function BireyselDevretPage() {
@@ -144,40 +145,49 @@ export default function BireyselDevretPage() {
     );
   }
 
-  if (loading || !vehicle) return <main style={{ padding: 24, fontFamily: font, color: colors.textMuted }}>Yükleniyor…</main>;
+  if (loading || !vehicle) return <main className="oz-app" style={{ padding: 24, color: "#A3ABB7" }}>Yükleniyor…</main>;
+
+  const back = (
+    <header className="oz-topbar">
+      <a href="/bireysel/araclar?bolum=aracim" aria-label="Geri" className="oz-iconbtn">
+        <Icon name="chevron-left" color="#F5F7FA" size={20} />
+      </a>
+      <span className="oz-eyebrow">Güvenli Devir</span>
+      <span style={{ width: 44 }} aria-hidden="true" />
+    </header>
+  );
 
   if (result) {
     return (
-      <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
-        <div style={{ maxWidth: 440, margin: "0 auto", padding: "40px 20px" }}>
-          <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
-              <Icon name="check" color={colors.greenDark} size={24} />
+      <main className="oz-app">
+        <div className="oz-wrap" style={{ maxWidth: 520, paddingBottom: 40 }}>
+          {back}
+          <div style={{ textAlign: "center", margin: "8px 0 22px" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.45)", boxShadow: "0 0 30px rgba(34,197,94,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <Icon name="check" color="#86EFAC" size={28} strokeWidth={2.6} />
             </div>
-            <h1 style={{ fontSize: 20, marginBottom: 6, color: colors.textDark, fontWeight: 800 }}>Devir Başlatıldı</h1>
-            <p style={{ color: colors.textMuted, fontSize: 13.5, lineHeight: 1.6 }}>
-              <strong>{vehicle.plate}</strong> artık hesabınızda görünmüyor. Aşağıdaki bağlantıyı yalnızca aracı devrettiğiniz kişiyle paylaşın.
+            <h1 className="oz-h1" style={{ fontSize: 24, marginBottom: 8 }}>Devir Başlatıldı</h1>
+            <p style={{ color: "#A3ABB7", fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+              <strong style={{ color: "#F5F7FA" }}>{vehicle.plate}</strong> artık hesabınızda görünmüyor. Aşağıdaki bağlantıyı yalnızca aracı devrettiğiniz kişiyle paylaşın.
             </p>
           </div>
 
-          <div style={{ ...cardStyle, wordBreak: "break-all", fontSize: 13, fontFamily: "monospace", marginBottom: 14, background: colors.surfaceSoft }}>
-            {shareUrl}
-          </div>
+          <div className="oz-card" style={{ wordBreak: "break-all", fontSize: 13, fontFamily: "monospace", marginBottom: 14, color: "#F5F7FA" }}>{shareUrl}</div>
 
-          <button onClick={handleCopy} style={{ ...primaryButtonStyle(false), marginBottom: 14 }}>
+          <button onClick={handleCopy} className="oz-btn" style={{ marginBottom: 14 }}>
             {copied ? "Kopyalandı ✓" : "Bağlantıyı Kopyala"}
           </button>
 
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", background: colors.greenSoft, borderRadius: radius.md, padding: 14, marginBottom: 20 }}>
-            <Icon name="shield-check" color={colors.greenDark} size={16} strokeWidth={2.5} />
-            <p style={{ fontSize: 12.5, color: colors.textDark, margin: 0, lineHeight: 1.6 }}>
+          <div className="oz-card" style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 20, padding: 16 }}>
+            <span style={{ flex: "none", display: "inline-flex" }}><Icon name="shield-check" color="#86EFAC" size={18} strokeWidth={2.4} /></span>
+            <p style={{ fontSize: 13, color: "#C9CFD7", margin: 0, lineHeight: 1.6 }}>
               Teknik araç geçmişi yeni sahibine aktarılır; kişisel bilgileriniz aktarılmaz. Belgelerden yalnız seçtikleriniz ({result.document_count ?? 0}) devir kabul edildiğinde yeni sahibe açılır. Bağlantı tek kullanımlıktır ve 72 saat geçerlidir; bu bağlantı
-              yalnız şimdi gösterilir, kaydedin. Karşı taraf kabul etmediyse araç listenizdeki "Bekleyen Devirler"
+              yalnız şimdi gösterilir, kaydedin. Karşı taraf kabul etmediyse ana ekrandaki "Bekleyen Devirler"
               bölümünden devri iptal edip aracı geri alabilirsiniz.
             </p>
           </div>
 
-          <button onClick={() => router.push("/bireysel/araclar")} style={secondaryButtonStyle()}>
+          <button onClick={() => router.push("/bireysel/araclar")} className="oz-btn is-ghost">
             Araçlarıma Dön
           </button>
         </div>
@@ -186,85 +196,86 @@ export default function BireyselDevretPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
-      <div style={{ maxWidth: 460, margin: "0 auto", padding: "32px 20px" }}>
-        <div style={{ width: 56, height: 56, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-          <Icon name="handover" color={colors.greenDark} size={28} />
-        </div>
-        <h1 style={{ fontSize: 21, marginBottom: 4, color: colors.textDark, fontWeight: 800, textAlign: "center" }}>Aracı Devret / Elden Çıkar</h1>
-        <p style={{ color: colors.textMuted, fontSize: 14, marginBottom: 24, textAlign: "center" }}>
-          <strong style={{ color: colors.textDark }}>{vehicle.plate}</strong> — {vehicle.brand} {vehicle.model}
-        </p>
+    <main className="oz-app">
+      <div className="oz-wrap" style={{ maxWidth: 560, paddingBottom: "calc(env(safe-area-inset-bottom) + 40px)" }}>
+        {back}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 24 }}>
+        <CarHero label="Devredilecek araç" top={<span className="oz-eyebrow">Aracı Devret</span>}>
+          <h1 className="oz-h1" style={{ fontSize: 24 }}>Aracı Devret / Elden Çıkar</h1>
+          <div className="oz-hero-sub">
+            <strong style={{ color: "#fff" }}>{vehicle.plate}</strong> — {vehicle.brand} {vehicle.model}
+          </div>
+        </CarHero>
+
+        <ol className="oz-tl" style={{ margin: "24px 0 0" }} data-testid="devir-adimlari">
           {STEPS.map((s) => (
-            <div key={s.n} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <div style={{ width: 30, height: 30, minWidth: 30, borderRadius: "50%", background: colors.surfaceDark, color: colors.green, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13 }}>
+            <li key={s.n} className="oz-tl-item" style={{ paddingLeft: 44, paddingBottom: 22 }}>
+              <span aria-hidden="true" style={{ position: "absolute", left: -11, top: -2, width: 33, height: 33, borderRadius: "50%", background: "#07080A", border: "1.5px solid rgba(34,197,94,0.6)", color: "#86EFAC", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, boxShadow: "0 0 14px rgba(34,197,94,0.2)" }}>
                 {s.n}
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: colors.textDark }}>{s.title}</div>
-                <div style={{ fontSize: 12.5, color: colors.textMuted, lineHeight: 1.5 }}>{s.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+              </span>
+              <div style={{ fontSize: 16, fontWeight: 800 }}>{s.title}</div>
+              <div style={{ fontSize: 13.5, color: "#A3ABB7", lineHeight: 1.55, marginTop: 4 }}>{s.desc}</div>
 
-        <div style={{ background: colors.greenSoft, borderRadius: radius.md, padding: 14, marginBottom: 22, display: "flex", gap: 8, alignItems: "flex-start" }}>
-          <Icon name="shield-check" color={colors.greenDark} size={16} strokeWidth={2.5} />
-          <p style={{ fontSize: 12.5, color: colors.textDark, margin: 0, lineHeight: 1.6 }}>
-            Teknik araç geçmişi ve aktif QR araçla birlikte yeni sahibine geçer. Kişisel bilgileriniz aktarılmaz; belgelerinizden yalnız aşağıda seçtikleriniz aktarılır. Devir tamamlandığında bu araca erişiminiz sona erer. Kabul edilmeden önce devri iptal edip aracı geri alabilirsiniz.
+              {s.n === 2 && (
+                <section data-testid="devir-belgeler" className="oz-card" style={{ marginTop: 14, padding: 16 }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 800, margin: "0 0 6px" }}>{TRANSFER_DOCS_TITLE}</h2>
+                  <p style={{ fontSize: 12.5, color: "#A3ABB7", margin: "0 0 12px", lineHeight: 1.55 }}>{TRANSFER_DOCS_HINT}</p>
+                  {docs === null ? (
+                    <div className="otoiz-skeleton" style={{ height: 48, borderRadius: 14 }} />
+                  ) : docs.length === 0 ? (
+                    <p data-testid="devir-belge-yok" style={{ fontSize: 13.5, color: "#A3ABB7", margin: 0 }}>
+                      {docsError ? "Belgeler şu an yüklenemedi; devir belgesiz başlatılır." : TRANSFER_DOCS_EMPTY}
+                    </p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {docs.map((d: any) => (
+                        <label
+                          key={d.id}
+                          data-testid="devir-belge-satir"
+                          style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 12px", borderRadius: 14, background: "#171A1F", border: `1px solid ${selected.includes(d.id) ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.08)"}`, fontSize: 13.5, color: "#F5F7FA", cursor: "pointer" }}
+                        >
+                          <input
+                            type="checkbox"
+                            data-testid="devir-belge-secim"
+                            value={d.id}
+                            checked={selected.includes(d.id)}
+                            onChange={() => setSelected((cur) => toggleDocumentSelection(cur, d.id))}
+                            style={{ width: 20, height: 20, accentColor: "#22C55E" }}
+                          />
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ display: "block", fontWeight: 700 }}>{DOC_TYPE_LABELS[d.doc_type] || "Belge"}</span>
+                            <span style={{ display: "block", fontSize: 12, color: "#A3ABB7", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {[d.file_name, d.doc_date, d.note].filter(Boolean).join(" · ")}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                      <p data-testid="devir-belge-sayac" style={{ fontSize: 12.5, color: "#A3ABB7", margin: "4px 0 0" }}>
+                        {selected.length} belge seçildi
+                      </p>
+                    </div>
+                  )}
+                </section>
+              )}
+            </li>
+          ))}
+        </ol>
+
+        <div className="oz-card" style={{ display: "flex", gap: 10, alignItems: "flex-start", margin: "6px 0 18px", padding: 16 }}>
+          <span style={{ flex: "none", display: "inline-flex" }}><Icon name="shield-check" color="#86EFAC" size={18} strokeWidth={2.4} /></span>
+          <p style={{ fontSize: 13, color: "#C9CFD7", margin: 0, lineHeight: 1.6 }}>
+            Teknik araç geçmişi ve aktif QR araçla birlikte yeni sahibine geçer. Kişisel bilgileriniz aktarılmaz; belgelerinizden yalnız yukarıda seçtikleriniz aktarılır. Devir tamamlandığında bu araca erişiminiz sona erer. Kabul edilmeden önce devri iptal edip aracı geri alabilirsiniz.
           </p>
         </div>
 
-        <section data-testid="devir-belgeler" style={{ ...cardStyle, marginBottom: 22 }}>
-          <h2 style={{ fontSize: 15.5, fontWeight: 800, color: colors.textDark, margin: "0 0 6px" }}>{TRANSFER_DOCS_TITLE}</h2>
-          <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 12px", lineHeight: 1.55 }}>{TRANSFER_DOCS_HINT}</p>
-          {docs === null ? (
-            <div className="otoiz-skeleton" style={{ height: 48, borderRadius: radius.md }} />
-          ) : docs.length === 0 ? (
-            <p data-testid="devir-belge-yok" style={{ fontSize: 13.5, color: colors.textMuted, margin: 0 }}>
-              {docsError ? "Belgeler şu an yüklenemedi; devir belgesiz başlatılır." : TRANSFER_DOCS_EMPTY}
-            </p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {docs.map((d: any) => (
-                <label
-                  key={d.id}
-                  data-testid="devir-belge-satir"
-                  style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 48, padding: "8px 10px", borderRadius: radius.sm, background: colors.surfaceSoft, fontSize: 13.5, color: colors.textDark, cursor: "pointer" }}
-                >
-                  <input
-                    type="checkbox"
-                    data-testid="devir-belge-secim"
-                    value={d.id}
-                    checked={selected.includes(d.id)}
-                    onChange={() => setSelected((cur) => toggleDocumentSelection(cur, d.id))}
-                    style={{ width: 20, height: 20 }}
-                  />
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: "block", fontWeight: 700 }}>{DOC_TYPE_LABELS[d.doc_type] || "Belge"}</span>
-                    <span style={{ display: "block", fontSize: 12, color: colors.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {[d.file_name, d.doc_date, d.note].filter(Boolean).join(" · ")}
-                    </span>
-                  </span>
-                </label>
-              ))}
-              <p data-testid="devir-belge-sayac" style={{ fontSize: 12.5, color: colors.textMuted, margin: "4px 0 0" }}>
-                {selected.length} belge seçildi
-              </p>
-            </div>
-          )}
-        </section>
-
-        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: colors.textMuted, marginBottom: 20 }}>
-          <input type="checkbox" checked={confirming} onChange={(e) => setConfirming(e.target.checked)} style={{ marginTop: 3 }} />
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13.5, color: "#A3ABB7", marginBottom: 20, lineHeight: 1.5 }}>
+          <input type="checkbox" checked={confirming} onChange={(e) => setConfirming(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, accentColor: "#22C55E", flex: "none" }} />
           Teknik araç geçmişinin yeni sahibine geçeceğini, kişisel bilgilerimin aktarılmayacağını, belgelerimden yalnız seçtiklerimin aktarılacağını ve devir tamamlandığında araç erişimimin sona ereceğini anladım; devri başlatmayı onaylıyorum.
         </label>
 
-        {error && <p role="alert" style={{ color: colors.danger, fontSize: 13, marginBottom: 12 }}>{error}</p>}
+        {error && <p role="alert" style={{ color: "#EF5350", fontSize: 13.5, marginBottom: 12 }}>{error}</p>}
 
-        <button onClick={handleStart} disabled={!confirming || starting} style={primaryButtonStyle(!confirming || starting)}>
+        <button onClick={handleStart} disabled={!confirming || starting} className="oz-btn" style={{ opacity: !confirming || starting ? 0.45 : 1, cursor: !confirming || starting ? "not-allowed" : "pointer" }}>
           {starting ? "Başlatılıyor…" : "Devri Başlat"}
         </button>
       </div>

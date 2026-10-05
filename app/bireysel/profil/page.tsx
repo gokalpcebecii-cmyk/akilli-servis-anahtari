@@ -89,7 +89,7 @@ export default function ProfilPage() {
         </div>
       </div>
 
-      <BottomNav active="profile" />
+      <BottomNav active="diger" />
     </main>
   );
 }

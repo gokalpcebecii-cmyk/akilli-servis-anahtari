@@ -777,7 +777,10 @@ function DatesForm({ supabase, vehicle, onVehiclePatch, setBusy, done }: FormPro
 // ---------------------------------------------------------------------------
 // Tarihler sekmesi: eklenen belgeler (yalnız sahibine, kısa ömürlü bağlantı)
 // ---------------------------------------------------------------------------
-export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { supabase: any; vehicleId: string; reloadKey: number; onAdd: () => void }) {
+// Belge listesi + sunucuda imzalanan bağlantılar + silme. Hem araç
+// ekranındaki "Belgeler" kartı hem ana ekrandaki "Belgelerim" bölümü
+// aynı kaynağı kullanır (erişim kuralı sunucuda, değişmedi).
+export function useVehicleDocuments(supabase: any, vehicleId: string | null, reloadKey: number) {
   const [docs, setDocs] = useState<any[] | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [error, setError] = useState(false);
@@ -812,6 +815,7 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
   }
 
   useEffect(() => {
+    if (!vehicleId) return;
     let alive = true;
     (async () => {
       // Belgeler sunucu API'sinden: RLS ile yalnız kendi belgeleriniz ve
@@ -822,7 +826,7 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
       try {
         const { data: s } = await supabase.auth.getSession();
         token = s.session?.access_token ?? "";
-        const res = await fetch(`/api/belgeler?vehicle_id=${encodeURIComponent(vehicleId)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        const res = await fetch(`/api/belgeler?vehicle_id=${encodeURIComponent(vehicleId as string)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
         if (res.ok) data = ((await res.json()).documents ?? []).slice(0, 50);
       } catch {
         data = null;
@@ -854,6 +858,12 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
       alive = false;
     };
   }, [vehicleId, reloadKey]);
+
+  return { docs, urls, error, deleteTarget, setDeleteTarget, deleting, deleteError, setDeleteError, confirmDelete };
+}
+
+export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { supabase: any; vehicleId: string; reloadKey: number; onAdd: () => void }) {
+  const { docs, urls, error, deleteTarget, setDeleteTarget, deleting, deleteError, setDeleteError, confirmDelete } = useVehicleDocuments(supabase, vehicleId, reloadKey);
 
   return (
     <section data-testid="belgeler" style={{ background: colors.surface, borderRadius: radius.lg, border: `1px solid ${colors.border}`, padding: 18, color: colors.text }}>
@@ -918,29 +928,35 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
           })}
         </div>
       )}
-      {deleteTarget && (
-        <div role="dialog" aria-modal="true" aria-labelledby="belge-sil-baslik" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 80 }}>
-          <div style={{ ...cardStyle, width: "100%", maxWidth: 380, padding: 22 }}>
-            <h3 id="belge-sil-baslik" style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Belgeyi sil</h3>
-            <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>Bu belgeyi silmek istediğinizden emin misiniz?</p>
-            {deleteError && <p role="alert" style={{ color: colors.danger, fontSize: 13.5, margin: "0 0 12px" }}>{deleteError}</p>}
-            <div style={{ display: "flex", gap: 10 }}>
-              <button type="button" onClick={() => !deleting && setDeleteTarget(null)} disabled={deleting} style={{ ...secondaryButtonStyle(), flex: 1 }}>
-                İptal
-              </button>
-              <button
-                type="button"
-                data-testid="belge-sil-onay"
-                onClick={confirmDelete}
-                disabled={deleting}
-                style={{ flex: 1, minHeight: 48, borderRadius: radius.md, border: "none", background: colors.danger, color: "#fff", fontSize: 15, fontWeight: 800, fontFamily: font, cursor: deleting ? "wait" : "pointer", opacity: deleting ? 0.7 : 1 }}
-              >
-                {deleting ? "Siliniyor…" : "Belgeyi Sil"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DocumentDeleteDialog target={deleteTarget} deleting={deleting} error={deleteError} onCancel={() => !deleting && setDeleteTarget(null)} onConfirm={confirmDelete} />
     </section>
+  );
+}
+
+// Belge silme onayı (metinler değişmedi).
+export function DocumentDeleteDialog({ target, deleting, error, onCancel, onConfirm }: { target: any | null; deleting: boolean; error: string; onCancel: () => void; onConfirm: () => void }) {
+  if (!target) return null;
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="belge-sil-baslik" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 80 }}>
+      <div style={{ ...cardStyle, width: "100%", maxWidth: 380, padding: 22 }}>
+        <h3 id="belge-sil-baslik" style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Belgeyi sil</h3>
+        <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>Bu belgeyi silmek istediğinizden emin misiniz?</p>
+        {error && <p role="alert" style={{ color: colors.danger, fontSize: 13.5, margin: "0 0 12px" }}>{error}</p>}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button type="button" onClick={onCancel} disabled={deleting} style={{ ...secondaryButtonStyle(), flex: 1 }}>
+            İptal
+          </button>
+          <button
+            type="button"
+            data-testid="belge-sil-onay"
+            onClick={onConfirm}
+            disabled={deleting}
+            style={{ flex: 1, minHeight: 48, borderRadius: radius.md, border: "none", background: colors.danger, color: "#fff", fontSize: 15, fontWeight: 800, fontFamily: font, cursor: deleting ? "wait" : "pointer", opacity: deleting ? 0.7 : 1 }}
+          >
+            {deleting ? "Siliniyor…" : "Belgeyi Sil"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

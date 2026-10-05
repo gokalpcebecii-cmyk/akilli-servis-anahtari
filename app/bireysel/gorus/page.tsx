@@ -223,7 +223,7 @@ function GorusInner() {
         )}
       </div>
 
-      <BottomNav active="profile" />
+      <BottomNav active="diger" />
     </main>
   );
 }

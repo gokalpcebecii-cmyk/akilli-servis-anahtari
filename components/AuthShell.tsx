@@ -63,6 +63,7 @@ export function AuthShell({
   return (
     <main className="otoiz-auth2" data-auth-role={role} style={{ fontFamily: font }}>
       <div className="otoiz-auth2-bg" aria-hidden="true" />
+      <div className="oz-auth-car" aria-hidden="true" />
       <div className="otoiz-auth2-top">
         {backHref ? (
           <a href={backHref} className="otoiz-auth2-back">
@@ -78,7 +79,7 @@ export function AuthShell({
           <a href="/" aria-label="OTOİZ ana sayfa" className="otoiz-auth2-logo">
             <OtoizLogo variant="dark" size={210} mark="primary" className="otoiz-auth2-logo-img" />
           </a>
-          <p className="otoiz-auth2-tagline">Dijital Araç Servis Pasaportu</p>
+          <p className="otoiz-auth2-tagline">Aracınızın dijital geçmişi</p>
           <ul className="otoiz-auth2-points">
             {r.points.map((p) => (
               <li key={p}>
