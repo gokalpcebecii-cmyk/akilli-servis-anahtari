@@ -113,7 +113,7 @@ export default function LandingPage() {
             <p>OTOİZ; bakım kayıtlarını, belgeleri, yaklaşan işlemleri ve servis doğrulamalarını web, mobil ve servis panelinde aynı düzen içinde buluşturur.</p>
 
             <div className="oz-final-ecosystem-pills" aria-label="OTOİZ erişim kanalları">
-              <span><Icon name="monitor" color="#00E676" size={19} />Web</span>
+              <span><Icon name="tabs" color="#00E676" size={19} />Web</span>
               <span><Icon name="smartphone" color="#00E676" size={19} />Mobil</span>
               <span><Icon name="gauge" color="#00E676" size={19} />Servis Paneli</span>
             </div>
