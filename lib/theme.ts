@@ -1,30 +1,32 @@
-// OTOİZ Kapalı Tasarım Sistemi (pilot öncesi son cila) — tek kaynak renk/stil
-// token'ları. Ağırlıklı koyu premium yüzeyler; hex kodları sayfalarda tekrar
+// OTOİZ Kapalı Tasarım Sistemi — tek kaynak renk/stil. 2026-10-05 Premium
+// yeniden tasarım: zemin ve kart yüzeyleri daha koyu siyah/antrasit
+// (globals.css --oz-* değişkenleriyle aynı değerler).
+// Ağırlıklı koyu premium yüzeyler; hex kodları sayfalarda tekrar
 // tekrar elle yazılmaz. Eski token adları (surfaceLight, textDark …) geriye
 // dönük uyum için korunur ama artık koyu sistemin karşılığını taşır:
 //   surfaceLight = kart yüzeyi, surfaceSoft = kart içi yükselti,
 //   textDark = ana yazı, textMuted = ikincil yazı.
 
 export const colors = {
-  bg: "#0F1115", // ana arka plan
-  bgAlt: "#151922", // ikincil arka plan
-  surfaceDark: "#181D27", // kart yüzeyi (koyu başlık alanları)
-  surface: "#181D27", // kart yüzeyi
-  surfaceRaised: "#1F2531", // kart iç yükselti yüzeyi
-  surfaceLight: "#181D27", // (eski ad) kart yüzeyi
-  surfaceSoft: "#1F2531", // (eski ad) kart içi yükselti
+  bg: "#07080A", // ana arka plan (premium siyah)
+  bgAlt: "#0C0E11", // ikincil arka plan
+  surfaceDark: "#111317", // kart yüzeyi (koyu başlık alanları)
+  surface: "#111317", // kart yüzeyi
+  surfaceRaised: "#171A1F", // kart iç yükselti yüzeyi
+  surfaceLight: "#111317", // (eski ad) kart yüzeyi
+  surfaceSoft: "#171A1F", // (eski ad) kart içi yükselti
   white: "#FFFFFF", // yalnız QR görseli gibi seçili açık yüzeyler
   textDark: "#F5F7FA", // (eski ad) ana yazı
   text: "#F5F7FA", // ana yazı
   textLight: "#F5F7FA",
   textMuted: "#A9B3C1", // ikincil yazı
   textFaint: "#7F8896", // soluk yazı
-  border: "#2D3542",
+  border: "#24282F",
   green: "#22C55E", // ana vurgu / marka yeşili
   greenLight: "#86EFAC", // açık vurgu yeşili (koyu zeminde yazı/ikon)
   greenDark: "#86EFAC", // (eski ad) koyu zeminde yeşil yazı/ikon
   greenSoft: "rgba(34,197,94,0.14)",
-  onAccent: "#0F1115", // dolu yeşil/sarı üstündeki koyu metin
+  onAccent: "#04110A", // dolu yeşil/sarı üstündeki koyu metin
   danger: "#EF5350",
   dangerSoft: "rgba(239,83,80,0.14)",
   warning: "#F5C451",

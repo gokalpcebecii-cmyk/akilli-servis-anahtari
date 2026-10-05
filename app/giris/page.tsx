@@ -1,115 +1,64 @@
-import { colors, font, radius } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
-import { OtoizLogo } from "@/components/OtoizLogo";
 
-// Referansın "Mobil Deneyimi" orta telefonundaki tam ekran giriş türü seçim
-// ekranı — artık popup/modal/bottom-sheet DEĞİL, kendi route'u olan bir
-// sayfa. Auth akışına dokunmuyor: kartlar mevcut /bireysel/giris ve
-// /panel/login sayfalarına yönlendiriyor.
-export default function GirisSecimiPage() {
+// OTOİZ Premium — giriş türü seçimi: iki net seçenek. Auth akışına
+// dokunmuyor: kartlar mevcut /bireysel/giris ve /panel/login sayfalarına
+// gider. QR'dan gelen ?next= bireysel girişe aynen aktarılır (yalnız
+// site içi yol; açık yönlendirme yok — asıl kontrol giriş sayfasında).
+function safeNext(raw: unknown): string | null {
+  const v = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : null;
+  return v && v.startsWith("/") && !v.startsWith("//") ? v : null;
+}
+
+export default function GirisSecimiPage({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) {
+  const next = safeNext(searchParams?.next);
+  const bireyselHref = next ? `/bireysel/giris?next=${encodeURIComponent(next)}` : "/bireysel/giris";
+
   return (
-    <main
-      style={{
-        position: "relative", overflow: "hidden", minHeight: "100vh",
-        // Aşama C: giriş ekranlarıyla aynı antrasit zemin (bkz. AuthShell).
-        background: "var(--otoiz-anthracite)",
-        color: colors.textLight, fontFamily: font,
-        display: "flex", flexDirection: "column",
-      }}
-    >
-      <div className="otoiz-auth2-bg" aria-hidden="true" />
+    <main className="oz-app oz-landing-hero" style={{ minHeight: "100vh" }}>
+      <div className="oz-hero-img" aria-hidden="true" />
 
-      <div style={{ position: "relative", zIndex: 1, padding: "20px 20px 0" }}>
-        <a
-          href="/"
-          aria-label="Geri"
-          style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.14)", color: colors.textLight, textDecoration: "none", fontSize: 18,
-          }}
-        >
-          ←
-        </a>
-      </div>
-
-      <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "18px 20px 8px" }}>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <OtoizLogo variant="dark" size={250} mark="primary" />
-        </div>
-        <div style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginTop: 6 }}>Akıllı Servis Anahtarı</div>
-      </div>
-
-      <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "10px 24px 0" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 8px", lineHeight: 1.25 }}>Nasıl devam etmek istersiniz?</h1>
-        <p style={{ fontSize: 13.5, opacity: 0.65, margin: 0 }}>İhtiyaçlarınıza en uygun seçeneği seçin.</p>
-      </div>
-
-      <div style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "24px 20px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 355, margin: "0 auto", width: "100%" }}>
-          <a
-            href="/bireysel/giris"
-            className="otoiz-giris-card"
-            style={{
-              display: "block", textDecoration: "none",
-              background: colors.surfaceLight, borderRadius: radius.xl, padding: "24px 22px",
-              boxShadow: "0 14px 34px rgba(0,0,0,0.35)", minHeight: 44,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-              <div style={{ width: 56, height: 56, minWidth: 56, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Icon name="user" color={colors.greenDark} size={26} />
-              </div>
-              <Icon name="chevron-right" color={colors.textMuted} size={20} />
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: colors.textDark, marginBottom: 6 }}>Bireysel Kullanıcı</div>
-            <div style={{ fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>
-              Kendi aracınızı yönetin, bakım geçmişini görüntüleyin, QR anahtarlığınızla hızlıca erişin.
-            </div>
+      <div className="oz-wrap" style={{ display: "flex", flexDirection: "column", flex: 1, paddingTop: "calc(env(safe-area-inset-top) + 14px)", paddingBottom: "calc(env(safe-area-inset-bottom) + 28px)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a href="/" aria-label="Geri" className="oz-iconbtn">
+            <Icon name="chevron-left" color="#F5F7FA" size={20} />
           </a>
-
-          <a
-            href="/panel/login"
-            className="otoiz-giris-card"
-            style={{
-              display: "block", textDecoration: "none",
-              background: colors.surfaceLight, borderRadius: radius.xl, padding: "24px 22px",
-              boxShadow: "0 14px 34px rgba(0,0,0,0.35)", minHeight: 44,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-              <div style={{ width: 56, height: 56, minWidth: 56, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Icon name="tool" color={colors.greenDark} size={26} />
-              </div>
-              <Icon name="chevron-right" color={colors.textMuted} size={20} />
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: colors.textDark, marginBottom: 6 }}>Servis / Kurumsal</div>
-            <div style={{ fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>
-              Araç kaydı oluşturun, hızlı bakım girişi yapın, müşterilerinizi yönetin.
-            </div>
-          </a>
+          <span style={{ width: 44 }} aria-hidden="true" />
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 22, fontSize: 12, opacity: 0.55, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <span aria-hidden="true">ⓘ</span> Daha sonra değiştirilebilir.
-        </div>
-      </div>
+        <div style={{ flex: 1, minHeight: 120 }} />
 
-      {/* Alt dekor — referanstaki yeşil ışık/eğim alanı, yalnızca dekoratif */}
-      <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "0 20px 28px" }}>
-        <div
-          aria-hidden="true"
-          style={{
-            height: 90, margin: "0 -20px -28px", position: "relative", overflow: "hidden",
-            background: "linear-gradient(200deg, transparent 40%, rgba(34,197,94,0.18) 100%)",
-          }}
-        >
-          <div style={{ position: "absolute", inset: "-40% -10% auto auto", width: "70%", height: "180%", background: "radial-gradient(closest-side, rgba(34,197,94,0.35), transparent 70%)", filter: "blur(2px)" }} />
+        <div style={{ maxWidth: 440, width: "100%", margin: "0 auto" }}>
+          <h1 className="oz-landing-title" style={{ fontSize: 40, textAlign: "center" }}>
+            OTO<em>İZ</em>
+          </h1>
+          <p className="oz-landing-sub" style={{ textAlign: "center", margin: "8px 0 26px" }}>
+            Aracınızın dijital geçmişi
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <a href={bireyselHref} className="oz-choice" data-testid="giris-bireysel">
+              <span className="oz-choice-icon" aria-hidden="true">
+                <Icon name="user" color="#86EFAC" size={26} />
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="oz-choice-title">Bireysel Kullanıcı</span>
+                <span className="oz-choice-desc">Aracınızı, bakım geçmişinizi ve belgelerinizi yönetin.</span>
+              </span>
+              <Icon name="chevron-right" color="#A3ABB7" size={20} />
+            </a>
+
+            <a href="/panel/login" className="oz-choice" data-testid="giris-servis">
+              <span className="oz-choice-icon" aria-hidden="true">
+                <Icon name="tool" color="#86EFAC" size={26} />
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="oz-choice-title">Servis / İşletme</span>
+                <span className="oz-choice-desc">Müşteri araçlarını hızlıca yönetin ve bakım kaydı oluşturun.</span>
+              </span>
+              <Icon name="chevron-right" color="#A3ABB7" size={20} />
+            </a>
+          </div>
         </div>
-        <div style={{ position: "relative", fontSize: 11, fontWeight: 700, letterSpacing: 1, opacity: 0.7, marginTop: -50 }}>
-          DAHA İYİ BİR<br />YOLCULUK İÇİN
-        </div>
-        <div className="otoiz-accent-line" style={{ margin: "10px auto 0" }} />
       </div>
     </main>
   );
