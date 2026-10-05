@@ -31,7 +31,7 @@ async function setupDevret(page: Page, baseURL: string, list: unknown[]) {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ token: "tok-eh", expires_at: "2026-10-08T10:00:00Z", document_count: rpc[0].p_document_ids.length }) });
   });
   await page.goto(`/bireysel/araclar/${VEHICLE_ID}/devret`);
-  await page.getByRole("heading", { name: "Aracı Devret / Elden Çıkar" }).waitFor();
+  await page.getByRole("heading", { name: "Aracınızı Güvenle Devredin" }).waitFor();
   return { apiCalls, rpc };
 }
 
@@ -51,7 +51,7 @@ test.describe("E–H devir ekranı belge seçimi", () => {
     await page.getByTestId("devir-belge-secim").nth(0).check();
     await expect(page.getByTestId("devir-belge-sayac")).toHaveText("1 belge seçildi");
     await page.getByText(/devri başlatmayı onaylıyorum/).click();
-    await page.getByRole("button", { name: "Devri Başlat" }).click();
+    await page.getByRole("button", { name: "Devir İşlemini Başlat" }).click();
     await expect(page.getByRole("heading", { name: "Devir Başlatıldı" })).toBeVisible();
     expect(rpc).toEqual([{ p_vehicle_id: VEHICLE_ID, p_document_ids: [DOC_A] }]);
   });
@@ -60,7 +60,7 @@ test.describe("E–H devir ekranı belge seçimi", () => {
     const { rpc } = await setupDevret(page, baseURL!, []);
     await expect(page.getByTestId("devir-belge-yok")).toHaveText("Bu araç için aktarılabilir belge bulunmuyor.");
     await page.getByText(/devri başlatmayı onaylıyorum/).click();
-    await page.getByRole("button", { name: "Devri Başlat" }).click();
+    await page.getByRole("button", { name: "Devir İşlemini Başlat" }).click();
     await expect(page.getByRole("heading", { name: "Devir Başlatıldı" })).toBeVisible();
     expect(rpc).toEqual([{ p_vehicle_id: VEHICLE_ID, p_document_ids: [] }]);
   });
@@ -75,7 +75,7 @@ test.describe("E–H devir ekranı belge seçimi", () => {
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}/devret`);
     await page.getByTestId("devir-belge-secim").nth(0).check();
     await page.getByText(/devri başlatmayı onaylıyorum/).click();
-    await page.getByRole("button", { name: "Devri Başlat" }).click();
+    await page.getByRole("button", { name: "Devir İşlemini Başlat" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("erişiminiz yok");
     await expect(page.getByRole("heading", { name: "Devir Başlatıldı" })).toHaveCount(0);
   });

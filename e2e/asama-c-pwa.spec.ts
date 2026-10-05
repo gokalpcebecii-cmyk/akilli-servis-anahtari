@@ -10,7 +10,7 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== "desktop-chromium", "cihazlar test içinde açılıyor");
 });
 
-const ANTHRACITE = "rgb(15, 17, 21)"; // son cila: #0F1115
+const ANTHRACITE = "rgb(7, 8, 10)"; // premium (2026-10-05): #07080A
 const OWNER_ID = "c0c0c0c0-0000-4000-8000-000000000001";
 const VEHICLE_ID = "c0c0c0c0-0000-4000-8000-000000000002";
 

@@ -12,6 +12,12 @@ test("bölüm: yalnız 5 ana bölüm, bilinmeyen değer ana sayfaya düşer", ()
   assert.equal(ui.sectionFrom("BELGELER"), "belgeler");
   assert.equal(ui.sectionFrom("yonetim"), "ana");
   assert.equal(ui.sectionFrom(null), "ana");
+  assert.equal(ui.sectionFrom("yaklasan"), "yaklasan");
+  assert.equal(ui.navFor("yaklasan"), "bakim");
+  assert.equal(ui.navFor("muayene"), "ana");
+  assert.equal(ui.navFor("belgeler"), "belgeler");
+  assert.deepEqual(ui.remainingParts(-12), { value: "12 gün", caption: "geçti" });
+  assert.deepEqual(ui.remainingParts(0), { value: "Bugün", caption: "" });
 });
 
 test("tarih ve km biçimi", () => {
@@ -76,8 +82,10 @@ test("muayene görünümü: veri yoksa sabit metin", () => {
   assert.equal(ui.muayeneView({ nextIso: null }).text, "Muayene bilgisi eklenmemiş.");
   const v = ui.muayeneView({ nextIso: "2027-05-01", daysLeft: 210, level: "ok", lastIso: "2025-05-01" });
   assert.equal(v.text, "6 ay kaldı");
-  assert.equal(v.next, "01.05.2027");
-  assert.equal(v.last, "01.05.2025");
+  assert.equal(v.value, "6 ay");
+  assert.equal(v.caption, "kaldı");
+  assert.equal(v.next, "1 Mayıs 2027");
+  assert.equal(v.last, "1 Mayıs 2025");
 });
 
 test("marka: kullanıcıya görünen ekranlarda yalnız OTOİZ", () => {

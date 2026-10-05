@@ -1,114 +1,102 @@
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
-// OTOİZ Premium landing (2026-10-05 kapalı tasarım). İlk 5 saniyede ürün:
-// karanlıktan öne çıkan imza araç görseli + tek cümle + iki net giriş yolu.
-// Altında 4 değer kartı ve kısa "Nasıl Çalışır?". Yalnız bugün çalışan
-// özellikler anlatılır (desteklenmeyen iddia yok).
-const VALUES = [
-  { title: "Bakım Geçmişi", desc: "Servis ve kendi kayıtlarınız tarih ve kilometresiyle.", icon: "history" },
-  { title: "Belgeler", desc: "Fatura ve servis fişleriniz güvenle saklanır.", icon: "document" },
-  { title: "Yaklaşan Bakımlar", desc: "Sıradaki bakım ve muayene zamanını önceden görün.", icon: "calendar" },
-  { title: "Güvenli Devir", desc: "Araç satılınca teknik geçmiş araçla birlikte geçer.", icon: "shield-check" },
+// OTOİZ Premium landing (onaylı referans görsel). İlk ekranda: araç görseli,
+// tek cümle, iki net giriş yolu (Bireysel / Servis), 4 ikonlu değer ve
+// "her zaman yanınızda" kartı. Altında kısa "Nasıl Çalışır?". Yalnız bugün
+// çalışan özellikler anlatılır (desteklenmeyen iddia yok).
+const FEATURES = [
+  { title: "Bakım Geçmişi", icon: "history" },
+  { title: "Belgeler", icon: "document" },
+  { title: "Yaklaşan Bakımlar", icon: "calendar" },
+  { title: "Güvenli Devir", icon: "shield-check" },
 ];
 
+// Bireysel kullanıcının gerçek akışı (Aşama C.1'de doğrulanan 6 adım).
 const STEPS = [
-  { n: "1", title: "QR'ı okutun", desc: "Anahtarlıktaki QR kodu telefon kamerasıyla okutun." },
-  { n: "2", title: "Giriş yapın", desc: "Bireysel hesabınızla giriş yapın ya da ücretsiz kayıt olun." },
-  { n: "3", title: "Aracınızı yönetin", desc: "Bakım, belge ve tarihler tek ekranda." },
+  { n: "1", title: "QR'ı okutun", desc: "Anahtarlıktaki QR kodu telefonunuzun kamerasıyla okutun." },
+  { n: "2", title: "Giriş yapın veya kayıt olun", desc: "Bireysel hesabınızla giriş yapın ya da ücretsiz hesap açın." },
+  { n: "3", title: "E-postanızı doğrulayın", desc: "Kayıtta gönderilen doğrulama bağlantısına dokunun." },
+  { n: "4", title: "Aktivasyon kodunu girin", desc: "Ürün kartınızdaki aktivasyon kodunu yazın." },
+  { n: "5", title: "Aracınızı seçin veya ekleyin", desc: "Kayıtlı aracınızı seçin ya da yeni aracınızı ekleyin." },
+  { n: "6", title: "OTOİZ'i kullanmaya başlayın", desc: "Bakım geçmişiniz ve sıradaki bakımınız artık tek yerde." },
 ];
 
 export default function LandingPage() {
   return (
     <main className="oz-app">
-      <section className="oz-landing-hero" aria-labelledby="landing-baslik">
-        <div className="oz-hero-img" aria-hidden="true" />
+      <section className="oz-land" aria-labelledby="landing-baslik">
+        <div className="oz-land-media" aria-hidden="true" />
+        <div className="oz-wrap">
+          <div className="oz-land-top">
+            <OtoizLogo variant="dark" size={112} />
+            <a href="/giris" className="oz-iconbtn" aria-label="Giriş Yap">
+              <Icon name="menu" color="#F5F7FA" size={24} />
+            </a>
+          </div>
 
-        <div className="oz-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
-          <OtoizLogo variant="dark" size={118} />
-          <a href="/giris" className="oz-glass-btn" style={{ minHeight: 44 }}>
-            Giriş Yap
-          </a>
-        </div>
-
-        <div style={{ flex: 1, minHeight: 140 }} />
-
-        <div className="oz-wrap" style={{ paddingBottom: 28 }}>
-          <div style={{ maxWidth: 560 }}>
-            <div className="oz-eyebrow" style={{ color: "#86EFAC", marginBottom: 12 }}>OTOİZ</div>
-            <h1 id="landing-baslik" className="oz-landing-title">
-              Aracınızın geçmişi <em>kaybolmaz.</em>
+          <div className="oz-land-copy">
+            <h1 id="landing-baslik" className="oz-land-title">
+              Aracınızın geçmişi kaybolmaz.
             </h1>
-            <p className="oz-landing-sub">Bakımlar, belgeler ve araç geçmişi tek yerde.</p>
-          </div>
+            <p className="oz-land-sub">Bakımlar, belgeler ve araç geçmişi tek yerde.</p>
 
-          <div className="oz-landing-ctas" style={{ display: "grid", gap: 12, marginTop: 28, maxWidth: 760 }}>
-            <a href="/bireysel/giris" className="oz-choice" data-testid="landing-bireysel">
-              <span className="oz-choice-icon" aria-hidden="true">
-                <Icon name="user" color="#86EFAC" size={24} />
-              </span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span className="oz-choice-title">Bireysel Kullanıcı</span>
-                <span className="oz-choice-desc">Aracım, bakımlarım ve belgelerim</span>
-              </span>
-              <Icon name="chevron-right" color="#A3ABB7" size={20} />
-            </a>
-            <a href="/panel/login" className="oz-choice" data-testid="landing-servis">
-              <span className="oz-choice-icon" aria-hidden="true">
-                <Icon name="tool" color="#86EFAC" size={24} />
-              </span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span className="oz-choice-title">Servis / İşletme</span>
-                <span className="oz-choice-desc">Müşteri araçları ve bakım kaydı</span>
-              </span>
-              <Icon name="chevron-right" color="#A3ABB7" size={20} />
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section className="oz-wrap" aria-label="OTOİZ ile neler var" style={{ paddingTop: 8, paddingBottom: 40 }}>
-        <div className="oz-values">
-          {VALUES.map((v) => (
-            <div key={v.title} className="oz-value">
-              <span className="oz-tile-icon" aria-hidden="true">
-                <Icon name={v.icon} color="#86EFAC" size={20} />
-              </span>
-              <h2 className="oz-value-title">{v.title}</h2>
-              <p className="oz-value-desc">{v.desc}</p>
+            <div className="oz-land-ctas">
+              <a href="/bireysel/giris" className="oz-cta is-primary" data-testid="landing-bireysel">
+                Bireysel Kullanıcı
+                <Icon name="arrow-right" color="#04110A" size={20} strokeWidth={2.4} />
+              </a>
+              <a href="/panel/login" className="oz-cta" data-testid="landing-servis">
+                Servis / İşletme
+                <Icon name="arrow-right" color="#F5F7FA" size={20} strokeWidth={2.2} />
+              </a>
             </div>
-          ))}
+
+            <ul className="oz-feats" aria-label="OTOİZ ile neler var">
+              {FEATURES.map((f) => (
+                <li key={f.title} className="oz-feat">
+                  <Icon name={f.icon} color="#4ADE80" size={24} strokeWidth={1.9} />
+                  <h2 className="oz-feat-title">{f.title}</h2>
+                </li>
+              ))}
+            </ul>
+
+            <div className="oz-promo">
+              <p className="oz-promo-text">Aracınızın tüm geçmişi her zaman yanınızda.</p>
+              <span className="oz-promo-img" aria-hidden="true" />
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="nasil-calisir" className="oz-wrap" aria-labelledby="nasil-baslik" style={{ paddingBottom: 48, scrollMarginTop: 24 }}>
-        <h2 id="nasil-baslik" className="oz-h2" style={{ fontSize: 22, marginBottom: 16 }}>
+      <section id="nasil-calisir" className="oz-wrap" aria-labelledby="nasil-baslik" style={{ paddingTop: 36, paddingBottom: 40, scrollMarginTop: 24 }}>
+        <h2 id="nasil-baslik" className="oz-h2" style={{ fontSize: 20, marginBottom: 14 }}>
           Nasıl Çalışır?
         </h2>
-        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
+        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10, maxWidth: 620 }}>
           {STEPS.map((s) => (
-            <li key={s.n} className="oz-card" style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: 16 }}>
-              <span aria-hidden="true" style={{ width: 34, height: 34, flex: "none", borderRadius: "50%", border: "1px solid rgba(34,197,94,0.45)", color: "#86EFAC", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>
+            <li key={s.n} className="oz-card" style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: 14 }}>
+              <span className="oz-step-n" aria-hidden="true" style={{ borderColor: "rgba(34,197,94,0.6)", color: "#4ADE80" }}>
                 {s.n}
               </span>
               <span>
-                <span style={{ display: "block", fontSize: 15.5, fontWeight: 800 }}>{s.title}</span>
-                <span style={{ display: "block", fontSize: 13.5, color: "#A3ABB7", marginTop: 3, lineHeight: 1.45 }}>{s.desc}</span>
+                <h3 style={{ display: "block", fontSize: 15, fontWeight: 700, margin: 0 }}>{s.title}</h3>
+                <span style={{ display: "block", fontSize: 13, color: "#A3ABB7", marginTop: 3, lineHeight: 1.45 }}>{s.desc}</span>
               </span>
             </li>
           ))}
         </ol>
       </section>
 
-      <footer className="oz-wrap" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 24, paddingBottom: "calc(env(safe-area-inset-bottom) + 28px)", textAlign: "center" }}>
+      <footer className="oz-wrap" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 22, paddingBottom: "calc(env(safe-area-inset-bottom) + 26px)", textAlign: "center" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-          <OtoizLogo variant="dark" size={96} />
+          <OtoizLogo variant="dark" size={92} />
         </div>
-        <p style={{ fontSize: 13, color: "#6F7783", margin: "0 0 14px" }}>Aracınız için dijital servis pasaportu.</p>
+        <p style={{ fontSize: 13, color: "#6F7783", margin: "0 0 12px" }}>Aracınız için dijital servis pasaportu.</p>
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "0 18px" }}>
-          <a href="/bireysel/kayit" className="oz-link" style={{ color: "#A3ABB7" }}>Bireysel Kayıt</a>
-          <a href="/panel/kayit" className="oz-link" style={{ color: "#A3ABB7" }}>İşletme Kaydı</a>
-          <a href="/aktivasyon" className="oz-link" style={{ color: "#A3ABB7" }}>Anahtarlık Etkinleştir</a>
+          <a href="/bireysel/kayit" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>Bireysel Kayıt</a>
+          <a href="/panel/kayit" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>İşletme Kaydı</a>
+          <a href="/aktivasyon" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>Anahtarlık Etkinleştir</a>
         </div>
       </footer>
     </main>
