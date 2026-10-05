@@ -7,7 +7,7 @@
 // kaynaktan gelir; ekranda her boyutta ≈1.25 px görünür (küçük ikon
 // kalınlaşmaz, büyük ikon incelmez). `strokeWidth` eski çağrılarla uyum
 // için kabul edilir ama yok sayılır.
-export const ICON_STROKE_PX = 1.25;
+export const ICON_STROKE_PX = 1.5;
 
 export function iconStroke(size: number) {
   return Math.min(1.9, Math.max(1.1, (ICON_STROKE_PX * 24) / size));
