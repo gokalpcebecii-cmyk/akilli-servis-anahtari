@@ -37,8 +37,8 @@ test.describe("İkinci düzeltme turu — madde 3/4: kapalı özellikler URL sev
       vehicles: { single: { id: VEHICLE_ID, plate: "34 ABC 123", owner_user_id: OWNER_ID }, list: [] },
     });
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}/devret`);
-    await expect(page.getByRole("heading", { name: "Aracı Devret / Elden Çıkar" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Devri Başlat" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Aracınızı Güvenle Devredin" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Devir İşlemini Başlat" })).toBeVisible();
   });
 
   test("madde 3: /panel/qr-uretim doğrudan URL ile açılsa da 'Kullanılamıyor' gösterir", async ({ page, baseURL }) => {

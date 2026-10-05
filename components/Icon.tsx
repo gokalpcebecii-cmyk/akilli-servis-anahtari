@@ -326,6 +326,57 @@ export function Icon({
           <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
         </svg>
       );
+    case "engine":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M7 8h7l2 2h2v2h2v-1h1v6h-1v-1h-2v2h-3l-2 2H8l-1-2H5v-3H3v-3h2V9h2z" />
+          <path d="M9 5h5M11.5 5v3" />
+        </svg>
+      );
+    case "menu":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      );
+    case "trash":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+        </svg>
+      );
+    case "arrow-right":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      );
+    case "arrow-left":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M19 12H5M11 6l-6 6 6 6" />
+        </svg>
+      );
+    case "info":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5M12 8h.01" />
+        </svg>
+      );
+    case "transfer":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4" />
+        </svg>
+      );
+    case "check-circle":
+      return (
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="m8 12.5 2.5 2.5L16 9.5" />
+        </svg>
+      );
     default:
       return null;
   }

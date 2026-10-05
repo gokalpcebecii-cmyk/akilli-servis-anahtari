@@ -10,44 +10,71 @@ const { longDate, fmtKm, recordLines } = require("@/lib/premiumUi");
 
 export const LEVEL_COLOR: Record<string, string> = {
   ok: "#22C55E",
-  soon: "#F5C451",
-  late: "#EF5350",
+  soon: "#F5A524",
+  late: "#EF4444",
   none: "#6F7783",
 };
 
-// İmza araç kartı: karanlıktan öne çıkan araç görseli + koyu overlay.
-export function CarHero({
-  children,
-  top,
-  tall = false,
-  testId,
-  label,
-}: {
-  children: React.ReactNode;
-  top?: React.ReactNode;
-  tall?: boolean;
-  testId?: string;
-  label?: string;
-}) {
+// Renkli ikon karesi (referans: yeşil / mavi / amber / kırmızı tonlar).
+export function IconSquare({ icon, tone = "gray", size = "md", iconColor }: { icon: string; tone?: string; size?: "sm" | "md" | "lg"; iconColor?: string }) {
+  const solid = tone === "green" || tone === "blue" || tone === "amber";
+  const color =
+    iconColor ??
+    (solid ? (tone === "blue" ? "#FFFFFF" : "#04110A") : tone === "green-t" ? "#4ADE80" : tone === "amber-t" ? "#FBBF24" : tone === "red-t" ? "#F87171" : "#C3C9D1");
+  const px = size === "sm" ? 16 : size === "lg" ? 26 : 22;
   return (
-    <section className={`oz-hero${tall ? " is-tall" : ""}`} data-testid={testId} aria-label={label}>
-      <div className="oz-hero-img" aria-hidden="true" />
-      <div className="oz-hero-body">
-        <div className="oz-hero-top">{top}</div>
-        <div>{children}</div>
-      </div>
-    </section>
+    <span className={`oz-ico${size === "sm" ? " is-sm" : size === "lg" ? " is-lg" : ""}`} data-tone={tone} aria-hidden="true">
+      <Icon name={icon} color={color} size={px} strokeWidth={2.2} />
+    </span>
   );
 }
 
-export function StatCard({ label, value, level = "none", testId, onClick }: { label: string; value: string; level?: string; testId?: string; onClick?: () => void }) {
+// Alt ekran başlığı: geri oku + ortada başlık (+ isteğe bağlı sağ aksiyon).
+export function SubHeader({ title, onBack, backHref, action, id }: { title: string; onBack?: () => void; backHref?: string; action?: React.ReactNode; id?: string }) {
+  const arrow = <Icon name="arrow-left" color="#F5F7FA" size={22} />;
+  return (
+    <header className="oz-subhead">
+      {backHref ? (
+        <a href={backHref} className="oz-iconbtn" aria-label="Geri">
+          {arrow}
+        </a>
+      ) : (
+        <button type="button" className="oz-iconbtn" aria-label="Geri" onClick={onBack}>
+          {arrow}
+        </button>
+      )}
+      <h1 className="oz-subhead-title" id={id}>
+        {title}
+      </h1>
+      <span style={{ display: "flex", justifyContent: "flex-end" }}>{action}</span>
+    </header>
+  );
+}
+
+export function StatCard({
+  label,
+  value,
+  level = "none",
+  icon,
+  tone,
+  testId,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  level?: string;
+  icon: string;
+  tone: string;
+  testId?: string;
+  onClick?: () => void;
+}) {
   const body = (
     <>
-      <span className="oz-stat-label">
-        <span className="oz-lvl" data-level={level} aria-hidden="true" />
-        {label}
+      <IconSquare icon={icon} tone={tone} size="sm" />
+      <span className="oz-stat-label">{label}</span>
+      <span className="oz-stat-value" data-level={level}>
+        {value}
       </span>
-      <span className="oz-stat-value">{value}</span>
     </>
   );
   return onClick ? (
@@ -63,29 +90,27 @@ export function StatCard({ label, value, level = "none", testId, onClick }: { la
 
 export function Tile({
   icon,
+  tone,
   title,
   sub,
   level,
   onClick,
   href,
-  calm = false,
   testId,
 }: {
   icon: string;
+  tone: string;
   title: string;
   sub?: string;
   level?: string;
   onClick?: () => void;
   href?: string;
-  calm?: boolean;
   testId?: string;
 }) {
   const inner = (
     <>
-      <span className="oz-tile-icon" aria-hidden="true">
-        <Icon name={icon} color={calm ? "#A3ABB7" : "#86EFAC"} size={20} />
-      </span>
-      <span style={{ minWidth: 0, flex: calm ? 1 : undefined }}>
+      <IconSquare icon={icon} tone={tone} />
+      <span style={{ minWidth: 0 }}>
         <span className="oz-tile-title">{title}</span>
         {sub && (
           <span className="oz-tile-sub" data-level={level}>
@@ -93,16 +118,14 @@ export function Tile({
           </span>
         )}
       </span>
-      {calm && <Icon name="chevron-right" color="#6F7783" size={18} />}
     </>
   );
-  const cls = `oz-tile${calm ? " is-calm" : ""}`;
   return href ? (
-    <a className={cls} href={href} data-testid={testId}>
+    <a className="oz-tile" href={href} data-testid={testId}>
       {inner}
     </a>
   ) : (
-    <button type="button" className={cls} onClick={onClick} data-testid={testId}>
+    <button type="button" className="oz-tile" onClick={onClick} data-testid={testId}>
       {inner}
     </button>
   );
@@ -119,11 +142,12 @@ export function SectionHead({ title, action, id }: { title: string; action?: Rea
   );
 }
 
-export function Chips({ options, value, onChange, label }: { options: { key: string; label: string }[]; value: string; onChange: (k: string) => void; label: string }) {
+// Sekmeli filtre (referanstaki Tümü / Servis / Kullanıcı kutusu).
+export function Segmented({ options, value, onChange, label }: { options: { key: string; label: string }[]; value: string; onChange: (k: string) => void; label: string }) {
   return (
-    <div className="oz-chips" role="group" aria-label={label}>
+    <div className="oz-seg" role="group" aria-label={label}>
       {options.map((o) => (
-        <button key={o.key} type="button" className="oz-chip" aria-pressed={value === o.key} data-filter={o.key} onClick={() => onChange(o.key)}>
+        <button key={o.key} type="button" className="oz-seg-btn" aria-pressed={value === o.key} data-filter={o.key} onClick={() => onChange(o.key)}>
           {o.label}
         </button>
       ))}
@@ -131,41 +155,64 @@ export function Chips({ options, value, onChange, label }: { options: { key: str
   );
 }
 
-// Büyük dairesel gösterge. fraction 0..1 (kalan oran), renk gerçek seviyeden.
-export function RingGauge({ fraction, level, size = 232, children, testId }: { fraction: number; level: string; size?: number; children: React.ReactNode; testId?: string }) {
+// Alttan açık dairesel gösterge (300°). fraction 0..1 = dolu oran.
+// variant "warm": amber → yeşil geçiş (yaklaşan bakım), "green": yeşil tonları.
+export function Gauge({
+  fraction,
+  level,
+  variant = "green",
+  size = 220,
+  children,
+  testId,
+}: {
+  fraction: number;
+  level: string;
+  variant?: "warm" | "green";
+  size?: number;
+  children: React.ReactNode;
+  testId?: string;
+}) {
   const stroke = 14;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const color = LEVEL_COLOR[level] ?? LEVEL_COLOR.none;
+  const r = (size - stroke) / 2 - 4;
+  const cx = size / 2;
+  const cy = size / 2;
+  const SWEEP = 300;
+  const START = 210; // derece, saat 12 = 0, saat yönünde
   const f = Math.max(0, Math.min(1, fraction || 0));
+  const pt = (deg: number) => {
+    const rad = ((deg - 90) * Math.PI) / 180;
+    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+  };
+  const arc = (from: number, sweep: number) => {
+    const [x1, y1] = pt(from);
+    const [x2, y2] = pt(from + sweep);
+    return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  };
+  const gid = `oz-g-${variant}-${level}`;
+  const stops =
+    level === "late"
+      ? [["0%", "#F87171"], ["100%", "#EF4444"]]
+      : level === "none"
+        ? [["0%", "#3A4148"], ["100%", "#3A4148"]]
+        : variant === "warm"
+          ? [["0%", "#F5A524"], ["45%", "#F5C451"], ["70%", "#4ADE80"], ["100%", "#22C55E"]]
+          : level === "soon"
+            ? [["0%", "#F5A524"], ["100%", "#FBBF24"]]
+            : [["0%", "#16A34A"], ["100%", "#4ADE80"]];
   return (
-    <div className="oz-ring" style={{ width: size, height: size }} data-testid={testId} data-level={level}>
+    <div className="oz-gauge" style={{ width: size, height: size }} data-testid={testId} data-level={level}>
       <svg width={size} height={size} aria-hidden="true">
         <defs>
-          <filter id="oz-ring-glow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="4" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
+          <linearGradient id={gid} x1="0" y1="1" x2="1" y2="0">
+            {stops.map(([o, c]) => (
+              <stop key={o} offset={o} stopColor={c} />
+            ))}
+          </linearGradient>
         </defs>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={stroke} />
-        {f > 0 && (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            fill="none"
-            stroke={color}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={`${c * f} ${c}`}
-            filter="url(#oz-ring-glow)"
-          />
-        )}
+        <path d={arc(START, SWEEP)} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} strokeLinecap="round" />
+        {f > 0 && <path d={arc(START, Math.max(1, SWEEP * f))} fill="none" stroke={`url(#${gid})`} strokeWidth={stroke} strokeLinecap="round" />}
       </svg>
-      <div className="oz-ring-center">{children}</div>
+      <div className="oz-gauge-center">{children}</div>
     </div>
   );
 }
@@ -258,46 +305,68 @@ export function useTimeline(supabase: any, vehicleId: string | null, pageSize = 
   return { rows, total, hasMore, loading, error, loadMore, loadingMore };
 }
 
-// Dikey zaman çizelgesi: tarih — km, yapılan işlemler, kaynak + doğrulama rozeti.
-export function TimelineList({ rows, testId = "gecmis-liste" }: { rows: any[]; testId?: string }) {
+// Kaynak etiketi (referans dili): servis = "Servis Doğrulamalı", sahibin
+// kendi kaydı = "Kullanıcı Kaydı".
+function sourceText(source: string, fallback: string) {
+  if (source === "owner" || source === "owner_history") return "Kullanıcı Kaydı";
+  if (source === "system") return "Araç Olayı";
+  return fallback;
+}
+
+// Dikey zaman çizelgesi: tarih (sol) — km (sağ), işlemler, kaynak rozeti.
+// compact: ana ekranda işlemler tek satırda "•" ile birleşir.
+export function TimelineList({ rows, testId = "gecmis-liste", compact = false }: { rows: any[]; testId?: string; compact?: boolean }) {
   return (
     <ol className="oz-tl" data-testid={testId}>
       {rows.map((ev: any) => {
         const d = describeEvent(ev);
         const { lines, note } = ev.kind === "record" ? recordLines(ev.title) : { lines: [ev.title], note: "" };
-        const shown = lines.slice(0, 4);
+        const shown = compact ? lines : lines.slice(0, 6);
         return (
           <li key={`${ev.kind}:${ev.id}`} className="oz-tl-item" data-testid="zaman-olay" data-source={d.source}>
             <span className="oz-tl-dot" data-source={d.source} aria-hidden="true" />
-            <div className="oz-tl-date">
-              {longDate(ev.event_date)}
-              {ev.km != null && (
-                <>
-                  {" — "}
-                  <strong>{fmtKm(ev.km)}</strong>
-                </>
-              )}
+            <div className="oz-tl-top">
+              <span className="oz-tl-date">{longDate(ev.event_date)}</span>
+              {ev.km != null && <span className="oz-tl-km">{fmtKm(ev.km)}</span>}
             </div>
-            <ul className="oz-tl-lines">
-              {shown.map((l: string, i: number) => (
-                <li key={i}>{l}</li>
-              ))}
-              {lines.length > shown.length && <li style={{ color: "#A3ABB7", fontWeight: 600 }}>+{lines.length - shown.length} işlem daha</li>}
-            </ul>
+            {compact ? (
+              <div className="oz-tl-inline">{shown.join(" • ")}</div>
+            ) : (
+              <ul className="oz-tl-lines">
+                {shown.map((l: string, i: number) => (
+                  <li key={i}>{l}</li>
+                ))}
+                {lines.length > shown.length && <li style={{ color: "#A3ABB7" }}>+{lines.length - shown.length} işlem daha</li>}
+              </ul>
+            )}
             <div className="oz-tl-meta">
-              <span className="oz-badge" data-source={d.source}>
-                {d.source === "service" && <Icon name="shield-check" color="#86EFAC" size={13} />}
-                {d.sourceLabel}
-              </span>
-              {d.categoryLabel && <span className="oz-badge">{d.categoryLabel}</span>}
+              {d.source === "service" ? (
+                <span className="oz-src" data-source="service">
+                  <span className="oz-src-dot" aria-hidden="true">
+                    <Icon name="check" color="#04110A" size={11} strokeWidth={3} />
+                  </span>
+                  {d.sourceLabel}
+                </span>
+              ) : (
+                <span className="oz-pill" data-source={d.source}>
+                  <Icon name={d.source === "system" ? "qr" : "user"} color="#C3C9D1" size={12} />
+                  {sourceText(d.source, d.sourceLabel)}
+                </span>
+              )}
+              {d.source === "service" && ev.service_name && (
+                <span className="oz-pill">
+                  <Icon name="tool" color="#C3C9D1" size={12} />
+                  {ev.service_name}
+                </span>
+              )}
+              {d.categoryLabel && <span className="oz-pill" style={{ paddingLeft: 10 }}>{d.categoryLabel}</span>}
               {ev.revised && (
-                <span className="oz-badge is-warn" data-testid="duzeltildi-rozet">
+                <span className="oz-pill is-warn" data-testid="duzeltildi-rozet">
                   Düzeltilmiş kayıt
                 </span>
               )}
-              {d.source === "service" && ev.service_name && <span>{ev.service_name}</span>}
             </div>
-            {note && <div style={{ fontSize: 12.5, color: "#6F7783", marginTop: 6 }}>Not: {note}</div>}
+            {note && !compact && <div style={{ fontSize: 12.5, color: "#8B939E", marginTop: 6 }}>Not: {note}</div>}
           </li>
         );
       })}

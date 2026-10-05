@@ -233,13 +233,13 @@ test.describe("Kapanış — sahiplik devri (pilotta açık)", () => {
       await route.fulfill({ status: rpc.status, contentType: "application/json", body: JSON.stringify(rpc.body) });
     });
     await page.goto(`/bireysel/araclar/${VEHICLE_ID}/devret`);
-    await page.getByRole("heading", { name: "Aracı Devret / Elden Çıkar" }).waitFor();
+    await page.getByRole("heading", { name: "Aracınızı Güvenle Devredin" }).waitFor();
     return calls;
   }
 
   test("devret: onay kutusu olmadan başlamaz; başlatınca tek RPC ve paylaşım bağlantısı", async ({ page, baseURL }) => {
     const calls = await setupDevret(page, baseURL!, { status: 200, body: { token: "tok-123", expires_at: "2026-10-03T10:00:00Z" } });
-    const start = page.getByRole("button", { name: "Devri Başlat" });
+    const start = page.getByRole("button", { name: "Devir İşlemini Başlat" });
     await expect(start).toBeDisabled();
     await page.getByRole("checkbox").check();
     await start.click();
@@ -251,7 +251,7 @@ test.describe("Kapanış — sahiplik devri (pilotta açık)", () => {
   test("devret: sunucu hatasında anlaşılır mesaj", async ({ page, baseURL }) => {
     await setupDevret(page, baseURL!, { status: 400, body: { message: "not_owner" } });
     await page.getByRole("checkbox").check();
-    await page.getByRole("button", { name: "Devri Başlat" }).click();
+    await page.getByRole("button", { name: "Devir İşlemini Başlat" }).click();
     await expect(page.locator('p[role="alert"]')).toHaveText("Devir başlatılamadı. Lütfen tekrar deneyin.");
   });
 

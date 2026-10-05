@@ -74,7 +74,7 @@ async function noHorizontalOverflow(page: Page) {
 
 async function shot(page: Page, name: string) {
   const dir = process.env.SHOT_DIR;
-  if (dir) await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true });
+  if (dir) await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true, animations: "disabled" });
 }
 
 const WIDTHS = [375, 390, 430];
@@ -140,33 +140,43 @@ for (const w of WIDTHS) {
       await noHorizontalOverflow(page);
       await shot(page, `${w}-5-belgeler`);
 
-      // 6 Yaklaşan bakım (alt pencere, gerçek veri)
+      // 6 Yaklaşan bakımlar (tam ekran, geri oku, gerçek veri)
       await page.getByTestId("alt-gezinme").getByRole("button", { name: "Ana Sayfa" }).click();
       await page.getByTestId("kart-yaklasan").click();
+      await expect(page).toHaveURL(/bolum=yaklasan/);
       const up = page.getByTestId("yaklasan-pencere");
       await expect(up).toBeVisible();
-      await expect(up.getByText("2.350 km")).toBeVisible();
+      await expect(up.getByText("2.350 km", { exact: true })).toBeVisible();
       await expect(up.getByText("sonra bakım")).toBeVisible();
       await expect(up.getByText(/Yaklaşık \d+ ay/)).toBeVisible();
+      await expect(up.getByRole("heading", { name: "Önerilen Bakımlar" })).toBeVisible();
       await expect(up.getByText("Polen Filtresi")).toBeVisible();
+      await noHorizontalOverflow(page);
       await shot(page, `${w}-6-yaklasan`);
-      await up.getByRole("button", { name: "Kapat" }).click();
+      await page.getByRole("button", { name: "Geri" }).click();
+      await expect(page.getByTestId("aktif-plaka")).toBeVisible();
 
       // 7 Muayene
       await page.getByTestId("kart-muayene").click();
+      await expect(page).toHaveURL(/bolum=muayene/);
       const mu = page.getByTestId("muayene-pencere");
-      await expect(mu.getByText("10.05.2027")).toBeVisible();
-      await expect(mu.getByText("10.05.2025")).toBeVisible();
+      await expect(mu.getByText("10 Mayıs 2027")).toBeVisible();
+      await expect(mu.getByText("10 Mayıs 2025")).toBeVisible();
+      await expect(mu.getByTestId("muayene-rapor")).toHaveAttribute("href", "https://imzali.invalid/d3");
+      await noHorizontalOverflow(page);
       await shot(page, `${w}-7-muayene`);
-      await mu.getByRole("button", { name: "Kapat" }).click();
+      await page.getByRole("button", { name: "Geri" }).click();
 
       // 8 Aracım
       await page.getByTestId("kart-aracim").click();
       await expect(page).toHaveURL(/bolum=aracim/);
       await expect(page.getByTestId("arac-bilgileri").getByText("Audi")).toBeVisible();
-      await expect(page.getByTestId("anahtarlik-durum")).toHaveText("Aktif");
+      await expect(page.getByTestId("arac-bilgileri").getByText("142.350 km")).toBeVisible();
       await noHorizontalOverflow(page);
       await shot(page, `${w}-8-aracim`);
+      await page.getByTestId("qr-goruntule").click();
+      await expect(page.getByTestId("qr-pencere").getByTestId("anahtarlik-durum")).toHaveText("Aktif");
+      await page.getByTestId("qr-pencere").getByRole("button", { name: "Kapat" }).click();
 
       // Diğer
       await page.getByTestId("alt-gezinme").getByRole("button", { name: "Diğer" }).click();
@@ -178,8 +188,9 @@ for (const w of WIDTHS) {
     test(`9 araç devri (${w})`, async ({ page, baseURL }) => {
       await setup(page, baseURL!);
       await page.goto(`/bireysel/araclar/${VEHICLE_ID}/devret`);
-      await expect(page.getByRole("heading", { name: "Aracı Devret / Elden Çıkar" })).toBeVisible();
-      for (const t of ["Yeni sahibi davet et", "Devredilecek belgeleri seç", "Güvenli devir tamamlanır"]) await expect(page.getByText(t)).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Aracınızı Güvenle Devredin" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Devir İşlemini Başlat" })).toBeDisabled();
+      for (const t of ["Yeni sahibi davet edin", "Devredilecek belgeleri seçin", "Güvenli devri tamamlayın"]) await expect(page.getByText(t)).toBeVisible();
       await expect(page.getByTestId("devir-belge-satir")).toHaveCount(4);
       await expect(page.getByTestId("devir-belge-sayac")).toHaveText("0 belge seçildi");
       await noHorizontalOverflow(page);
@@ -209,5 +220,12 @@ test.describe("Premium masaüstü", () => {
     await shot(page, "desktop-4-bakim");
     await page.goto("/bireysel/araclar?bolum=aracim");
     await shot(page, "desktop-8-aracim");
+    for (const v of ["belgeler", "yaklasan", "muayene"]) {
+      await page.goto(`/bireysel/araclar?bolum=${v}`);
+      await noHorizontalOverflow(page);
+      await shot(page, `desktop-${v}`);
+    }
+    await page.goto(`/bireysel/araclar/${VEHICLE_ID}/devret`);
+    await shot(page, "desktop-9-devir");
   });
 });

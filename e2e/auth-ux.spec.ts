@@ -1,20 +1,15 @@
 import { test, expect } from "@playwright/test";
 
+// OTOİZ Premium (2026-10-05, onaylı referans görsel): landing ve giriş
+// seçimi yeni tasarımda. Hedef bağlantılar ve auth akışı aynı.
 test.describe("Homepage", () => {
   test("hero, CTA'lar ve marka doğru render ediliyor", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /premium.*dijital servis pasaportu/i })).toBeVisible();
-    // Not: img[alt="OTOİZ"] logo iki yerde bulunabilir (desktop üst
-    // navigasyon + mobil inline logo bloğu) — yalnızca aktif breakpoint'te
-    // GÖRÜNÜR olan eşleşiyor, ":visible" olmadan .first() DOM sırasındaki
-    // gizli kopyayı yakalayıp yanlış negatif verebilir.
+    await expect(page.getByRole("heading", { name: "Aracınızın geçmişi kaybolmaz." })).toBeVisible();
     await expect(page.locator('img[alt="OTOİZ"]:visible').first()).toBeVisible();
-    // Aynı sebeple: "Ücretsiz Başlayın" / "Giriş Yap" artık desktop üst
-    // navigasyonda VE mobil hero CTA'sında bulunuyor (yalnızca biri
-    // breakpoint'e göre görünür) — :visible filtresi olmadan strict-mode
-    // birden çok eşleşme hatası verir.
-    await expect(page.locator('button:visible', { hasText: /Ücretsiz Başlayın/i }).first()).toBeVisible();
-    await expect(page.locator('button:visible', { hasText: "Giriş Yap" }).first()).toBeVisible();
+    await expect(page.getByTestId("landing-bireysel")).toHaveAttribute("href", "/bireysel/giris");
+    await expect(page.getByTestId("landing-servis")).toHaveAttribute("href", "/panel/login");
+    await expect(page.getByRole("link", { name: "Giriş Yap" })).toHaveAttribute("href", "/giris");
   });
 
   test("sayfada yatay taşma yok (masaüstü)", async ({ page }) => {
@@ -25,42 +20,36 @@ test.describe("Homepage", () => {
 });
 
 test.describe("Giriş seçimi (tam ekran sayfa)", () => {
-  test("Giriş Yap tıklanınca /giris sayfasına yönlendirir, başlık/alt metin doğru", async ({ page }) => {
+  test("Giriş Yap tıklanınca /giris sayfasına yönlendirir, alt metin doğru", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
+    await page.getByRole("link", { name: "Giriş Yap" }).click();
     await expect(page).toHaveURL(/\/giris$/);
-    await expect(page.getByRole("heading", { name: "Nasıl devam etmek istersiniz?" })).toBeVisible();
-    await expect(page.getByText("İhtiyaçlarınıza en uygun seçeneği seçin.")).toBeVisible();
+    await expect(page.getByText("Aracınızın dijital geçmişi")).toBeVisible();
   });
 
   test("iki kart da doğru hedeflere sahip", async ({ page }) => {
     await page.goto("/giris");
-
-    await expect(page.getByText("Bireysel Kullanıcı")).toBeVisible();
-    await expect(page.getByText("Servis / Kurumsal")).toBeVisible();
-
     const bireyselCard = page.getByRole("link", { name: /Bireysel Kullanıcı/ });
     await expect(bireyselCard).toHaveAttribute("href", "/bireysel/giris");
-
-    const servisCard = page.getByRole("link", { name: /Servis \/ Kurumsal/ });
+    const servisCard = page.getByRole("link", { name: /Servis \/ İşletme/ });
     await expect(servisCard).toHaveAttribute("href", "/panel/login");
   });
 
-  test("Ücretsiz Başlayın da aynı sayfaya yönlendirir", async ({ page }) => {
+  test("landing Bireysel Kullanıcı CTA bireysel girişe gider", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: /Ücretsiz Başlayın/i }).click();
-    await expect(page).toHaveURL(/\/giris$/);
+    await page.getByTestId("landing-bireysel").click();
+    await expect(page).toHaveURL(/\/bireysel\/giris$/);
   });
 
-  test("geri oku ana sayfaya döner", async ({ page }) => {
+  test("logo ana sayfaya döner", async ({ page }) => {
     await page.goto("/giris");
-    await page.getByRole("link", { name: "Geri" }).click();
+    await page.getByRole("link", { name: "OTOİZ ana sayfa" }).click();
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test("'Daha sonra değiştirilebilir' notu görünür", async ({ page }) => {
+  test("alt not görünür", async ({ page }) => {
     await page.goto("/giris");
-    await expect(page.getByText("Daha sonra değiştirilebilir.")).toBeVisible();
+    await expect(page.getByText("Daha güvenli, daha değerli bir yarın için.")).toBeVisible();
   });
 });
 
@@ -75,9 +64,9 @@ test.describe("Mobil (390px)", () => {
 
   test("/giris tam ekran sayfası mobilde taşmadan açılır", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Giriş Yap" }).click();
+    await page.getByRole("link", { name: "Giriş Yap" }).click();
     await expect(page).toHaveURL(/\/giris$/);
-    await expect(page.getByRole("heading", { name: "Nasıl devam etmek istersiniz?" })).toBeVisible();
+    await expect(page.getByTestId("giris-bireysel")).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     expect(overflow).toBe(false);
   });

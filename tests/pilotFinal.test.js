@@ -124,7 +124,7 @@ const path = require("node:path");
 test("landing: ürünü 5 sn'de anlatan kritik başlık ve CTA'lar", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "components", "LandingPage.tsx"), "utf8");
   // 2026-10-05 premium landing: kapalı tasarım metinleri.
-  assert.match(src, /Aracınızın geçmişi <em>kaybolmaz\.<\/em>/);
+  assert.match(src, /Aracınızın geçmişi kaybolmaz\./);
   assert.match(src, /Bakımlar, belgeler ve araç geçmişi tek yerde\./);
   assert.match(src, /Bireysel Kullanıcı/);
   assert.match(src, /Servis \/ İşletme/);

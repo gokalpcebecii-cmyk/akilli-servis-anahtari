@@ -97,7 +97,7 @@ let rpcBody = null, rpcResp = null;
 page.on("request", (r) => { if (r.url().includes("/rest/v1/rpc/initiate_ownership_transfer")) rpcBody = r.postDataJSON(); });
 page.on("response", async (r) => { if (r.url().includes("/rest/v1/rpc/initiate_ownership_transfer")) { try { rpcResp = await r.json(); } catch {} } });
 await page.locator('input[type="checkbox"]:not([data-testid])').check();
-await page.getByRole("button", { name: "Devri Başlat" }).click();
+await page.getByRole("button", { name: "Devir İşlemini Başlat" }).click();
 await page.waitForFunction(() => location.pathname && document.body.innerText.includes("/bireysel/devir-kabul/"), null, { timeout: 30000 });
 check("UI RPC'ye yalnız seçilen belge kimliği gönderildi", rpcBody && Array.isArray(rpcBody.p_document_ids) && rpcBody.p_document_ids.length === 1 && rpcBody.p_document_ids[0] === DA.id && rpcBody.p_vehicle_id === V, rpcBody);
 check("UI devir oluştu, sunucu 1 belge kaydetti", rpcResp && rpcResp.document_count === 1, rpcResp?.document_count);
