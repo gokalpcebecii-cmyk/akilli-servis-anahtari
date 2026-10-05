@@ -207,8 +207,8 @@ export default function DashboardPage() {
             <li key={v.id} style={{ background: colors.surfaceLight, borderRadius: radius.md, border: `1px solid ${colors.border}` }}>
               <a href={`/panel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ fontWeight: 900, fontSize: 20, letterSpacing: 0.6 }}>{v.plate}</div>
-                  <div style={{ fontWeight: 900, fontSize: 19, color: colors.textDark }}>
+                  <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.6 }}>{v.plate}</div>
+                  <div style={{ fontWeight: 800, fontSize: 19, color: colors.textDark }}>
                     {v.current_km != null ? Number(v.current_km).toLocaleString("tr-TR") : "—"}
                     <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
                   </div>

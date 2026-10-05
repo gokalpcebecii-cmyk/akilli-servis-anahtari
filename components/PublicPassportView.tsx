@@ -138,7 +138,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
         <div style={{ ...cardStyle, boxShadow: "0 14px 34px rgba(0,0,0,0.14)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: 0.8, color: colors.textDark }}>{vehicle.plate}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: 0.8, color: colors.textDark }}>{vehicle.plate}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
                 {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
               </div>
@@ -161,7 +161,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
           <div style={{ display: "grid", gridTemplateColumns: nextService ? "1fr 1fr 1fr" : "1fr 1fr", gap: 10 }}>
             <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
               <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KM</div>
-              <div style={{ fontSize: 19, fontWeight: 900, color: colors.textDark }}>{vehicle.current_km?.toLocaleString("tr-TR") ?? "—"}</div>
+              <div style={{ fontSize: 19, fontWeight: 800, color: colors.textDark }}>{vehicle.current_km?.toLocaleString("tr-TR") ?? "—"}</div>
             </div>
             <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
               <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>SON SERVİS</div>
