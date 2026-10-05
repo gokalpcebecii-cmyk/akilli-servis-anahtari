@@ -1,11 +1,21 @@
-// OTOİZ paylaşılan ikon seti — sade, tek çizgili (stroke) otomotiv/ürün
-// ikonografisi. Dekoratif değil, işlevsel: her ikon bir kart/aksiyonu temsil
-// eder. Harici ikon kütüphanesi eklenmez (performans/bundle boyutu).
+// OTOİZ paylaşılan ikon seti — tek aile: ince, yuvarlak uçlu çizgi (line)
+// ikonlar, 24×24 ızgara. Dekoratif değil, işlevsel: her ikon bir
+// kart/aksiyonu temsil eder. Harici ikon kütüphanesi eklenmez (bundle).
+// Bazı çizimler Lucide (ISC lisansı) geometrisinden uyarlandı.
+//
+// Adım 3 (ikon sistemi): çizgi kalınlığı tek kaynaktan gelir. Ekranda her
+// boyutta ≈1.6 px görünür (küçük ikon kalınlaşmaz, büyük ikon incelmez).
+// `strokeWidth` eski çağrılarla uyum için kabul edilir ama yok sayılır.
+export const ICON_STROKE_PX = 1.6;
+
+export function iconStroke(size: number) {
+  return Math.min(2.25, Math.max(1.45, (ICON_STROKE_PX * 24) / size));
+}
+
 export function Icon({
   name,
   color = "#fff",
   size = 22,
-  strokeWidth = 2,
 }: {
   name: string;
   color?: string;
@@ -17,15 +27,16 @@ export function Icon({
     height: size,
     stroke: color,
     fill: "none",
-    strokeWidth,
+    strokeWidth: iconStroke(size),
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
+    flex: "none",
   };
   switch (name) {
     case "wrench":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M14.7 6.3a4 4 0 1 1-5.4 5.4l-6 6a1.5 1.5 0 0 0 2.1 2.1l6-6a4 4 0 0 1 5.4-5.4l-3 3-2-2 3-3Z" />
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z" />
         </svg>
       );
     case "gauge":
@@ -73,13 +84,13 @@ export function Icon({
     case "shield":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3Z" />
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1Z" />
         </svg>
       );
     case "shield-check":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3Z" />
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1Z" />
           <path d="m9 12 2 2 4-4" />
         </svg>
       );
@@ -94,17 +105,16 @@ export function Icon({
     case "tool":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M4 20l6-6" />
-          <path d="M14.7 6.3a4 4 0 1 1-5.4 5.4l-6 6a1.5 1.5 0 0 0 2.1 2.1l6-6a4 4 0 0 1 5.4-5.4l-3 3-2-2 3-3Z" />
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z" />
         </svg>
       );
     case "car":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M4 16v-4l2-5h12l2 5v4" />
-          <path d="M4 16h16" />
-          <circle cx="7.5" cy="17.5" r="1.5" />
-          <circle cx="16.5" cy="17.5" r="1.5" />
+          <path d="M5 11.5 6.6 7.2A2.5 2.5 0 0 1 8.9 5.6h6.2a2.5 2.5 0 0 1 2.3 1.6l1.6 4.3" />
+          <path d="M4 11.5h16a1.5 1.5 0 0 1 1.5 1.5v3.5A1.5 1.5 0 0 1 20 18H4a1.5 1.5 0 0 1-1.5-1.5V13A1.5 1.5 0 0 1 4 11.5Z" />
+          <path d="M5.5 18v1.5M18.5 18v1.5" />
+          <path d="M6 14.75h2M16 14.75h2" />
         </svg>
       );
     case "cart":
@@ -125,8 +135,8 @@ export function Icon({
     case "home":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M4 11 12 4l8 7" />
-          <path d="M6 10v9h12v-9" />
+          <path d="M3 10a2 2 0 0 1 .7-1.53l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+          <path d="M15 21v-7a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v7" />
         </svg>
       );
     case "user":
@@ -220,18 +230,18 @@ export function Icon({
       );
     case "more-vertical":
       return (
-        <svg viewBox="0 0 24 24" style={{ ...s, fill: color }}>
-          <circle cx="12" cy="5" r="1.6" />
-          <circle cx="12" cy="12" r="1.6" />
-          <circle cx="12" cy="19" r="1.6" />
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="12" cy="5" r="1" />
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="12" cy="19" r="1" />
         </svg>
       );
     case "more-horizontal":
       return (
-        <svg viewBox="0 0 24 24" style={{ ...s, fill: color }}>
-          <circle cx="5" cy="12" r="1.6" />
-          <circle cx="12" cy="12" r="1.6" />
-          <circle cx="19" cy="12" r="1.6" />
+        <svg viewBox="0 0 24 24" style={s}>
+          <circle cx="5" cy="12" r="1" />
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="19" cy="12" r="1" />
         </svg>
       );
     case "chevron-left":
@@ -300,17 +310,17 @@ export function Icon({
     case "document":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" />
-          <path d="M14 3v5h5" />
-          <path d="M9 13h6M9 17h4" />
+          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+          <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+          <path d="M10 9H8M16 13H8M16 17H8" />
         </svg>
       );
     case "calendar":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
-          <path d="M3.5 10h17M8 3v4M16 3v4" />
-          <path d="M8 14h2M14 14h2M8 17.5h2" />
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M8 2v4M16 2v4M3 10h18" />
+          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
         </svg>
       );
     case "plus":
@@ -367,7 +377,10 @@ export function Icon({
     case "transfer":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4" />
+          <path d="m16 3 4 4-4 4" />
+          <path d="M20 7H4" />
+          <path d="m8 21-4-4 4-4" />
+          <path d="M4 17h16" />
         </svg>
       );
     case "check-circle":

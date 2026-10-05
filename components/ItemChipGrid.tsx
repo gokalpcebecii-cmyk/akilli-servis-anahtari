@@ -93,7 +93,7 @@ function Chip({ on, label, onClick }: { on: boolean; label: string; onClick: () 
           background: on ? colors.green : "transparent",
         }}
       >
-        {on && <Icon name="check" color={colors.onAccent} size={14} strokeWidth={3} />}
+        {on && <Icon name="check" color={colors.onAccent} size={14} />}
       </span>
       <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{label}</span>
     </button>

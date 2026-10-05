@@ -10,6 +10,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { reportClientEvent } from "@/lib/clientEvent";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { Icon } from "@/components/Icon";
 import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import UrunlerTab from "./UrunlerTab";
@@ -453,8 +454,8 @@ export default function YonetimPage() {
                   <span style={badgeStyle(u.last_sign_in_at && Date.now() - new Date(u.last_sign_in_at).getTime() < 7 * 86400000 ? "success" : "neutral")}>
                     Son giriş: {ago(u.last_sign_in_at)}
                   </span>
-                  <span style={{ fontSize: 13 }}>🚗 {u.vehicles} araç</span>
-                  <span style={{ fontSize: 13 }}>🛠 {u.records_created} kayıt{u.last_record_at ? ` (son: ${fmtDate(u.last_record_at)})` : ""}</span>
+                  <span style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="car" color={colors.greenDark} size={16} />{u.vehicles} araç</span>
+                  <span style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="wrench" color={colors.greenDark} size={16} />{u.records_created} kayıt{u.last_record_at ? ` (son: ${fmtDate(u.last_record_at)})` : ""}</span>
                 </div>
               ))}
               {users.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>Kullanıcı bulunamadı.</p>}

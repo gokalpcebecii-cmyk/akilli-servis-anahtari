@@ -34,7 +34,7 @@ export function DesktopNav({ active, onSelect }: { active: NavKey; onSelect?: (k
         const on = item.key === active;
         return (
           <button key={item.key} type="button" className="oz-nav-item" aria-current={on ? "page" : undefined} onClick={() => select(item.key)}>
-            <Icon name={item.icon} color={on ? "#4ADE80" : "#A3ABB7"} size={16} strokeWidth={on ? 2.4 : 2} />
+            <Icon name={item.icon} color={on ? "#4ADE80" : "#A3ABB7"} size={18} />
             {item.label}
           </button>
         );
@@ -55,7 +55,7 @@ export function BottomNav({ active, onSelect, desktopFloating = true }: { active
             const on = item.key === active;
             return (
               <button key={item.key} type="button" className="oz-nav-item" data-nav={item.key} aria-current={on ? "page" : undefined} onClick={() => select(item.key)}>
-                <Icon name={item.icon} color={on ? "#22C55E" : "#6F7783"} size={22} strokeWidth={on ? 2.4 : 2} />
+                <Icon name={item.icon} color={on ? "#22C55E" : "#6F7783"} size={22} />
                 <span>{item.label}</span>
               </button>
             );

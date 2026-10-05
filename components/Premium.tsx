@@ -15,16 +15,23 @@ export const LEVEL_COLOR: Record<string, string> = {
   none: "#6F7783",
 };
 
-// Renkli ikon karesi (referans: yeşil / mavi / amber / kırmızı tonlar).
+// Adım 3: seviyeye göre ikon tonu — yeşil (OTOİZ) varsayılan; amber/kırmızı
+// yalnız yaklaşan/gecikmiş durumda.
+export function levelTone(level?: string | null) {
+  return level === "late" ? "red-t" : level === "soon" ? "amber-t" : "green-t";
+}
+
+// İkon karesi: tek aile, aynı görsel ağırlık (yeşil çizgi ikon; uyarıda
+// amber/kırmızı).
 export function IconSquare({ icon, tone = "gray", size = "md", iconColor }: { icon: string; tone?: string; size?: "sm" | "md" | "lg"; iconColor?: string }) {
   const solid = tone === "green" || tone === "blue" || tone === "amber";
   const color =
     iconColor ??
     (solid ? (tone === "blue" ? "#FFFFFF" : "#04110A") : tone === "green-t" ? "#4ADE80" : tone === "amber-t" ? "#FBBF24" : tone === "red-t" ? "#F87171" : "#C3C9D1");
-  const px = size === "sm" ? 16 : size === "lg" ? 26 : 22;
+  const px = size === "sm" ? 18 : size === "lg" ? 26 : 22;
   return (
     <span className={`oz-ico${size === "sm" ? " is-sm" : size === "lg" ? " is-lg" : ""}`} data-tone={tone} aria-hidden="true">
-      <Icon name={icon} color={color} size={px} strokeWidth={2.2} />
+      <Icon name={icon} color={color} size={px} />
     </span>
   );
 }
@@ -343,7 +350,7 @@ export function TimelineList({ rows, testId = "gecmis-liste", compact = false }:
               {d.source === "service" ? (
                 <span className="oz-src" data-source="service">
                   <span className="oz-src-dot" aria-hidden="true">
-                    <Icon name="check" color="#04110A" size={11} strokeWidth={3} />
+                    <Icon name="check" color="#04110A" size={11} />
                   </span>
                   {d.sourceLabel}
                 </span>

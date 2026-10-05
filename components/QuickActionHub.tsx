@@ -70,7 +70,7 @@ export function QuickActionCard({ onOpen, onHistory }: { onOpen: () => void; onH
         className="otoiz-qa-cta"
         style={{ ...primaryButtonStyle(false), minHeight: 54, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 8px 22px rgba(34,197,94,0.22)" }}
       >
-        <Icon name="plus" color={colors.onAccent} size={20} strokeWidth={2.6} />
+        <Icon name="plus" color={colors.onAccent} size={20} />
         İşlem Ekle
       </button>
       <button
@@ -97,7 +97,7 @@ export function SuccessToast({ message }: { message: string }) {
   return (
     <div role="status" aria-live="polite" data-testid="basari-bildirimi" className="otoiz-toast" style={{ fontFamily: font }}>
       <span style={{ width: 28, height: 28, borderRadius: "50%", background: colors.green, display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-        <Icon name="check" color={colors.onAccent} size={16} strokeWidth={3} />
+        <Icon name="check" color={colors.onAccent} size={16} />
       </span>
       {message}
     </div>
@@ -874,7 +874,7 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
           onClick={onAdd}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 44, padding: "0 14px", borderRadius: radius.md, border: `1px solid ${colors.border}`, background: colors.surfaceRaised, color: colors.text, fontSize: 14, fontWeight: 700, fontFamily: font, cursor: "pointer" }}
         >
-          <Icon name="plus" color={colors.greenLight} size={16} strokeWidth={2.6} />
+          <Icon name="plus" color={colors.greenLight} size={16} />
           Belge Ekle
         </button>
       </div>

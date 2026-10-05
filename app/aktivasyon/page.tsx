@@ -17,6 +17,7 @@ import { useSearchParams } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase";
 import { colors, font, inputStyle, labelStyle, primaryButtonStyle, secondaryButtonStyle, cardStyle, radius } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { Icon } from "@/components/Icon";
 import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { BrandModelPicker } from "@/components/BrandModelPicker";
 const { isQrToken } = require("@/lib/qrUrl");
@@ -281,7 +282,7 @@ function AktivasyonInner() {
   return (
     <Shell step={step}>
       <div style={{ textAlign: "center" }}>
-        <div aria-hidden style={{ width: 56, height: 56, borderRadius: 28, background: colors.greenSoft, color: colors.greenDark, fontSize: 30, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>✓</div>
+        <div aria-hidden style={{ width: 56, height: 56, borderRadius: 28, background: colors.greenSoft, color: colors.greenDark, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}><Icon name="check" color={colors.greenDark} size={28} /></div>
         <h2 style={{ fontSize: 19, margin: "0 0 6px" }}>OTOİZ’e hoş geldin. Aracın artık sistemde aktif.</h2>
         <p style={{ color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>
           Artık QR'ı okutan herkes aracının servis pasaportunu görür; plaka gizli kalır.

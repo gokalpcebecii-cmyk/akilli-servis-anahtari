@@ -19,7 +19,7 @@ import { AuthShellLoading } from "@/components/AuthShell";
 import { vehicleStatusFor } from "@/components/VehicleStatusPanel";
 import OwnerKeychainCard from "@/components/OwnerKeychainCard";
 import { QuickActionSheet, SuccessToast, useVehicleDocuments, DocumentDeleteDialog, type QuickStep } from "@/components/QuickActionHub";
-import { IconSquare, SubHeader, StatCard, Tile, SectionHead, Segmented, Gauge, BottomSheet, useTimeline, TimelineList, Skeleton } from "@/components/Premium";
+import { IconSquare, levelTone, SubHeader, StatCard, Tile, SectionHead, Segmented, Gauge, BottomSheet, useTimeline, TimelineList, Skeleton } from "@/components/Premium";
 import { PILOT_FLAGS } from "@/lib/pilotFlags";
 
 const { ITEM_LABELS } = require("@/lib/maintenanceItems");
@@ -297,7 +297,7 @@ export default function BireyselAraclarPage() {
                 <div className="oz-carimg" aria-hidden="true" />
               </section>
               <a href="/bireysel/araclar/yeni" className="oz-btn">
-                <Icon name="plus" color="#04110A" size={20} strokeWidth={2.6} />
+                <Icon name="plus" color="#04110A" size={20} />
                 Aracımı Ekle
               </a>
               <a href="/aktivasyon" className="oz-btn is-ghost">
@@ -390,14 +390,14 @@ export default function BireyselAraclarPage() {
                   )}
 
                   <div className="oz-stat3" data-testid="durum-uclu">
-                    <StatCard label="Bakım" value={maintenanceWord(ns?.level)} level={ns?.level} icon="shield-check" tone="green" testId="durum-bakim" onClick={() => go("yaklasan")} />
-                    <StatCard label="Muayene" value={muView.empty ? "Bilgi yok" : muView.text} level={muView.level} icon="shield" tone="amber" testId="durum-muayene" onClick={() => go("muayene")} />
+                    <StatCard label="Bakım" value={maintenanceWord(ns?.level)} level={ns?.level} icon="shield-check" tone={levelTone(ns?.level)} testId="durum-bakim" onClick={() => go("yaklasan")} />
+                    <StatCard label="Muayene" value={muView.empty ? "Bilgi yok" : muView.text} level={muView.level} icon="shield" tone={levelTone(muView.level)} testId="durum-muayene" onClick={() => go("muayene")} />
                     <StatCard
                       label="Son servis"
                       value={lastService ? fmtDate(lastService.event_date) : timeline.loading ? "…" : "Kayıt yok"}
                       level="none"
                       icon="wrench"
-                      tone="gray"
+                      tone="green-t"
                       testId="durum-son-servis"
                       onClick={() => go("bakim")}
                     />
@@ -425,7 +425,7 @@ export default function BireyselAraclarPage() {
                     <div className="oz-card" style={{ textAlign: "center" }}>
                       <p data-testid="zaman-bos" style={{ fontSize: 13.5, color: "#A3ABB7", margin: "0 0 12px", lineHeight: 1.5 }}>Henüz kayıt yok. İlk bakım kaydınız burada görünecek.</p>
                       <button type="button" className="oz-smallbtn" onClick={() => openQa("bakim")}>
-                        <Icon name="plus" color="#4ADE80" size={15} strokeWidth={2.6} />
+                        <Icon name="plus" color="#4ADE80" size={15} />
                         Kayıt Ekle
                       </button>
                     </div>
@@ -435,12 +435,12 @@ export default function BireyselAraclarPage() {
                 </section>
 
                 <div className="oz-ck-tiles oz-tiles" data-testid="ana-kartlar">
-                  <Tile icon="car" tone="green" title="Aracım" sub="Bilgiler ve QR" onClick={() => go("aracim")} testId="kart-aracim" />
+                  <Tile icon="car" tone="green-t" title="Aracım" sub="Bilgiler ve QR" onClick={() => go("aracim")} testId="kart-aracim" />
                   <Tile icon="wrench" tone="green-t" title="Bakım Geçmişim" sub="Tüm kayıtlar" onClick={() => go("bakim")} testId="kart-bakim" />
-                  <Tile icon="document" tone="blue" title="Belgelerim" sub={docs === null ? "…" : docCountPhrase(docs.length)} onClick={() => go("belgeler")} testId="kart-belgeler" />
-                  <Tile icon="calendar" tone="amber" title="Yaklaşan Bakımlar" sub={nsShort} level={ns?.level} onClick={() => go("yaklasan")} testId="kart-yaklasan" />
-                  <Tile icon="shield-check" tone="green-t" title="Muayene" sub={muView.empty ? "Bilgi eklenmemiş" : muView.text} level={muView.level} onClick={() => go("muayene")} testId="kart-muayene" />
-                  <Tile icon="transfer" tone="red-t" title="Aracı Devret" sub="Güvenli devir" href={`/bireysel/araclar/${active.id}/devret`} testId="kart-devret" />
+                  <Tile icon="document" tone="green-t" title="Belgelerim" sub={docs === null ? "…" : docCountPhrase(docs.length)} onClick={() => go("belgeler")} testId="kart-belgeler" />
+                  <Tile icon="calendar" tone={levelTone(ns?.level)} title="Yaklaşan Bakımlar" sub={nsShort} level={ns?.level} onClick={() => go("yaklasan")} testId="kart-yaklasan" />
+                  <Tile icon="shield-check" tone={levelTone(muView.level)} title="Muayene" sub={muView.empty ? "Bilgi eklenmemiş" : muView.text} level={muView.level} onClick={() => go("muayene")} testId="kart-muayene" />
+                  <Tile icon="transfer" tone="green-t" title="Aracı Devret" sub="Güvenli devir" href={`/bireysel/araclar/${active.id}/devret`} testId="kart-devret" />
                 </div>
 
                 <div className="oz-ck-value oz-stack">
@@ -492,7 +492,7 @@ export default function BireyselAraclarPage() {
                       Kilometreyi Güncelle
                     </button>
                     <a href={`/bireysel/araclar/${active.id}`} className="oz-row" data-testid="arac-tum-ayrintilar" style={{ borderBottom: "none", padding: "6px 2px" }}>
-                      <IconSquare icon="clipboard" tone="gray" size="sm" />
+                      <IconSquare icon="clipboard" tone="green-t" size="sm" />
                       <span style={{ flex: 1, minWidth: 0 }}>
                         <span style={{ display: "block", fontWeight: 600 }}>Tüm Ayrıntılar</span>
                         <span style={{ display: "block", fontSize: 12.5, color: "#A3ABB7" }}>Bakım planı, sigorta ve kasko tarihleri</span>
@@ -544,7 +544,7 @@ export default function BireyselAraclarPage() {
                   })()
                 )}
                 <button type="button" className="oz-btn" style={{ marginTop: 16 }} onClick={() => openQa("belge")} data-testid="belge-ekle">
-                  <Icon name="plus" color="#04110A" size={18} strokeWidth={2.6} />
+                  <Icon name="plus" color="#04110A" size={18} />
                   Belge Yükle
                 </button>
                 <DocumentDeleteDialog
@@ -565,7 +565,7 @@ export default function BireyselAraclarPage() {
                   onBack={back}
                   action={
                     <button type="button" className="oz-iconbtn" onClick={() => openQa("bakim")} data-testid="bakim-ekle" aria-label="Kayıt Ekle">
-                      <Icon name="plus" color="#4ADE80" size={22} strokeWidth={2.4} />
+                      <Icon name="plus" color="#4ADE80" size={22} />
                     </button>
                   }
                 />
@@ -771,7 +771,7 @@ function UpcomingView({ ns, vehicle, items, upcoming, today, onAdd }: { ns: any;
         </a>
       )}
       <button type="button" className="oz-btn is-ghost" style={{ marginTop: 12, minHeight: 48 }} onClick={onAdd}>
-        <Icon name="plus" color="#4ADE80" size={18} strokeWidth={2.6} />
+        <Icon name="plus" color="#4ADE80" size={18} />
         Bakım Kaydı Ekle
       </button>
       <p className="oz-note">
@@ -847,11 +847,11 @@ function MuayeneView({ view, reportUrl, hasReport, onEdit }: { view: any; report
 function DigerSection({ onLogout, onBack, vehicleId }: { onLogout: () => void; onBack: () => void; vehicleId?: string }) {
   const rows = [
     { href: "/bireysel/bildirimler", icon: "bell", label: "Bildirimler", tone: "green-t" },
-    { href: "/bireysel/profil", icon: "user", label: "Profil ve Hesap", tone: "blue" },
+    { href: "/bireysel/profil", icon: "user", label: "Profil ve Hesap", tone: "green-t" },
     { href: "/bireysel/araclar/yeni", icon: "plus-square", label: "Araç Ekle", tone: "green-t" },
     { href: "/aktivasyon", icon: "qr", label: "Anahtarlık Etkinleştir", tone: "green-t" },
-    ...(vehicleId ? [{ href: `/bireysel/araclar/${vehicleId}`, icon: "clipboard", label: "Araç Ayrıntıları", tone: "gray" }] : []),
-    { href: "/bireysel/gorus", icon: "message", label: "Görüş Bildir", tone: "amber-t" },
+    ...(vehicleId ? [{ href: `/bireysel/araclar/${vehicleId}`, icon: "clipboard", label: "Araç Ayrıntıları", tone: "green-t" }] : []),
+    { href: "/bireysel/gorus", icon: "message", label: "Görüş Bildir", tone: "green-t" },
   ];
   return (
     <section className="oz-enter" data-section="diger" aria-labelledby="diger-baslik">
