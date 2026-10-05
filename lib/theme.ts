@@ -37,6 +37,7 @@ export const colors = {
   neutralSoft: "rgba(139,149,167,0.16)",
 } as const;
 
+// Adım 2: tek yazı sistemi — self-hosted Inter (app/globals.css @font-face).
 export const font = "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
 // Ana kart 18 · küçük kart / buton / input 14.

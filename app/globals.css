@@ -3,6 +3,28 @@
    inline stille ifade edilemeyen kuralları içerir (medya sorguları,
    :hover, :focus-visible, keyframes). */
 
+/* Adım 2 (tipografi): tek font sistemi — Inter (değişken, 400–800),
+   self-hosted (public/fonts, SIL OFL 1.1). latin + latin-ext alt kümeleri
+   Türkçe karakterleri (ı, İ, ş, ğ, ç, ö, ü) kapsar. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/inter-var-latin-ext.woff2) format("woff2-variations"), url(/fonts/inter-var-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+    U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/inter-var-latin.woff2) format("woff2-variations"), url(/fonts/inter-var-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* İmza ("Aracınızın İzi Hep Sizinle.") için self-hosted el yazısı font —
    Google Fonts CDN'e runtime bağımlılığı KALDIRILDI (headless test/prod
    ortamında ağ erişimi olmadığında sessizce sans-serif'e düşüyordu).
@@ -42,6 +64,14 @@
   --otoiz-green-dark: #86efac;
   --otoiz-border: #24282f;
   --otoiz-on-accent: #04110a;
+  /* Adım 2: tek yazı sistemi. Ağırlıklar: 400 metin · 500 yardımcı bilgi ·
+     600 düğme · 700 kart başlığı · 780 ana başlık/plaka/km. */
+  --oz-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --oz-fw-body: 400;
+  --oz-fw-meta: 500;
+  --oz-fw-btn: 600;
+  --oz-fw-title: 700;
+  --oz-fw-display: 780;
   color-scheme: dark;
 }
 
@@ -53,7 +83,17 @@ body {
   margin: 0;
   background: var(--otoiz-bg);
   color: var(--otoiz-text-dark);
+  font-family: var(--oz-font);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 .otoiz-modal-backdrop a:focus-visible,
@@ -2274,7 +2314,7 @@ a {
   background: radial-gradient(800px 460px at 50% -160px, rgba(34, 197, 94, 0.08), transparent 65%), linear-gradient(180deg, #090c0b, var(--oz-bg) 420px);
   background-color: var(--oz-bg);
   color: var(--oz-text);
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--oz-font);
   overflow-x: hidden;
 }
 .oz-app.oz-has-nav {
@@ -3664,3 +3704,134 @@ button.oz-row {
     opacity: 0.7;
   }
 }
+
+/* ==================== Adım 2 — TİPOGRAFİ (2026-10-05) ====================
+   Yalnız yazı: font, boyut, ağırlık, harf aralığı, satır yüksekliği.
+   Renk, zemin, boşluk, kart ölçüsü ve yerleşim Adım 1'deki gibi kalır.
+   Ölçek: 11.5 · 12.5 · 13.5 · 15 · 17 · 22 · 26 (+ landing başlığı). */
+.oz-app {
+  font-feature-settings: "cv11", "ss03";
+  line-height: 1.45;
+}
+.oz-plate,
+.oz-vkm,
+.oz-tl-km,
+.oz-kv-value,
+.oz-gauge-value,
+.oz-stat-value,
+.oz-doc-meta {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ana başlıklar: tok ama kaba değil. */
+.oz-h1,
+.oz-land-title,
+.oz-valuecard-title,
+.oz-gauge-value {
+  font-weight: var(--oz-fw-display);
+  letter-spacing: -0.025em;
+}
+.oz-h1 { font-size: 26px; line-height: 1.15; }
+.oz-valuecard-title { font-size: 22px; line-height: 1.18; }
+
+/* Kokpit: plaka ve km en güçlü iki bilgi. */
+.oz-plate {
+  font-size: 26px; /* üst sınır 26 (nihai-ux-son); güç ağırlık ve sıkı aralıktan gelir */
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+}
+.oz-vkm {
+  font-size: 24px;
+  font-weight: var(--oz-fw-display);
+  letter-spacing: -0.02em;
+}
+.oz-vsub { font-size: 13.5px; font-weight: var(--oz-fw-meta); }
+
+/* Bölüm ve kart başlıkları: net ve güçlü. */
+.oz-h2,
+.oz-subhead-title {
+  font-size: 17px;
+  font-weight: var(--oz-fw-title);
+  letter-spacing: -0.015em;
+}
+.oz-tile-title,
+.oz-role-title,
+.oz-doc-title,
+.oz-list-title {
+  font-weight: var(--oz-fw-title);
+  letter-spacing: -0.01em;
+}
+.oz-tile-title { font-size: 15.5px; line-height: 1.25; }
+.oz-role-title { font-size: 17px; }
+.oz-doc-title { font-size: 15px; }
+.oz-list-title { font-size: 15px; }
+.oz-stat-label { font-size: 13.5px; font-weight: var(--oz-fw-title); letter-spacing: -0.005em; }
+.oz-kv-value { font-size: 17px; font-weight: var(--oz-fw-title); }
+.oz-tl-date { font-size: 15px; font-weight: var(--oz-fw-title); letter-spacing: -0.01em; }
+.oz-promo-text { font-size: 17px; font-weight: var(--oz-fw-btn); letter-spacing: -0.01em; }
+
+/* Açıklama metinleri: sakin, normal ağırlık. */
+.oz-tile-sub,
+.oz-role-desc,
+.oz-land-sub,
+.oz-tl-lines,
+.oz-tl-inline,
+.oz-note,
+.oz-missing,
+.oz-gauge-caption,
+.oz-approx,
+.oz-list-row .oz-list-name,
+.oz-steps > li {
+  font-weight: var(--oz-fw-body);
+}
+.oz-tile-sub { font-size: 12.5px; line-height: 1.35; }
+.oz-role-desc { font-size: 13.5px; line-height: 1.45; }
+.oz-tl-lines { font-size: 13.5px; line-height: 1.45; }
+.oz-steps > li { font-size: 13.5px; }
+
+/* Yardımcı bilgi (tarih, km, servis, etiket): küçük ama okunaklı. */
+.oz-tl-km,
+.oz-doc-meta,
+.oz-kv-label,
+.oz-src,
+.oz-pill,
+.oz-stat-value,
+.oz-list-row .oz-list-val {
+  font-weight: var(--oz-fw-meta);
+}
+.oz-tl-km,
+.oz-doc-meta,
+.oz-kv-label,
+.oz-list-row .oz-list-val { font-size: 12.5px; }
+.oz-stat-value { font-size: 12.5px; font-weight: var(--oz-fw-btn); }
+.oz-src { font-size: 12px; font-weight: var(--oz-fw-btn); }
+.oz-pill { font-size: 11.5px; }
+.oz-feat-title { font-size: 12px; font-weight: var(--oz-fw-btn); }
+
+/* Düğmeler: semibold. */
+.oz-btn,
+.oz-cta,
+.oz-smallbtn,
+.oz-seg-btn,
+.oz-link,
+.oz-switch,
+.oz-missing a,
+.oz-table-row > button,
+.oz-iconbtn {
+  font-weight: var(--oz-fw-btn);
+}
+.oz-btn,
+.oz-cta { font-size: 15px; letter-spacing: -0.005em; }
+.oz-smallbtn,
+.oz-seg-btn { font-size: 13.5px; }
+.oz-nav-item { font-weight: var(--oz-fw-meta); }
+.oz-nav-item[aria-current="page"] { font-weight: var(--oz-fw-btn); }
+
+@media (max-width: 374px) {
+  .oz-plate { font-size: 25px; }
+  .oz-vkm { font-size: 22px; }
+  .oz-stat-label { font-size: 12.5px; }
+  .oz-stat-value { font-size: 11.5px; }
+}
+

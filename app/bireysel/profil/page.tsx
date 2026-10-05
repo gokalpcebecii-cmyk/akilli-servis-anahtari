@@ -62,7 +62,7 @@ export default function ProfilPage() {
             hesaba tanımlayabilir. */}
         <div style={{ background: colors.surfaceLight, borderRadius: radius.lg, border: `1px solid ${colors.border}`, padding: 16, marginBottom: 14, textAlign: "center" }}>
           <div style={{ fontSize: 11.5, color: colors.textMuted, fontWeight: 700, letterSpacing: 0.4 }}>HESAP KODUNUZ</div>
-          <div data-testid="account-code" style={{ fontSize: 26, fontWeight: 900, letterSpacing: 3, color: colors.textDark, margin: "4px 0" }}>{accountCode}</div>
+          <div data-testid="account-code" style={{ fontSize: 26, fontWeight: 800, letterSpacing: 3, color: colors.textDark, margin: "4px 0" }}>{accountCode}</div>
           <div style={{ fontSize: 12, color: colors.textMuted }}>OTOİZ anahtarlığı alırken bu kodu satıcıya gösterin.</div>
         </div>
 

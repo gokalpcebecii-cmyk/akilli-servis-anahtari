@@ -249,7 +249,7 @@ export function BottomSheet({ open, title, onClose, children, testId }: { open: 
       <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="oz-sheet-title" data-testid={testId} tabIndex={-1} className="otoiz-sheet-panel">
         <div className="otoiz-sheet-grab" aria-hidden="true" />
         <div className="otoiz-sheet-head">
-          <h2 id="oz-sheet-title" data-sheet-title tabIndex={-1} style={{ flex: 1, fontSize: 19, fontWeight: 800, margin: 0, outline: "none" }}>
+          <h2 id="oz-sheet-title" data-sheet-title tabIndex={-1} style={{ flex: 1, fontSize: 19, fontWeight: 700, letterSpacing: "-0.015em", margin: 0, outline: "none" }}>
             {title}
           </h2>
           <button type="button" onClick={onClose} aria-label="Kapat" className="oz-iconbtn">

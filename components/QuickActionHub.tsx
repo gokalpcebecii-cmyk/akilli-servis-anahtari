@@ -57,7 +57,7 @@ function fmtIsoDate(iso: string | null | undefined) {
 export function QuickActionCard({ onOpen, onHistory }: { onOpen: () => void; onHistory: () => void }) {
   return (
     <section data-testid="hizli-islemler" aria-labelledby="hizli-islemler-baslik" className="otoiz-qa-card" style={{ fontFamily: font }}>
-      <h2 id="hizli-islemler-baslik" style={{ fontSize: 18, fontWeight: 800, color: colors.text, margin: 0, letterSpacing: 0.1 }}>
+      <h2 id="hizli-islemler-baslik" style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0, letterSpacing: 0.1 }}>
         Hızlı İşlemler
       </h2>
       <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "6px 0 16px", lineHeight: 1.5 }}>
@@ -192,7 +192,7 @@ export function QuickActionSheet(props: SheetProps) {
             </button>
           )}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 id="otoiz-sheet-title" data-sheet-title tabIndex={-1} style={{ fontSize: 19, fontWeight: 800, color: colors.text, margin: 0, outline: "none", lineHeight: 1.25 }}>
+            <h2 id="otoiz-sheet-title" data-sheet-title tabIndex={-1} style={{ fontSize: 19, fontWeight: 700, color: colors.text, margin: 0, outline: "none", lineHeight: 1.25 }}>
               {title}
             </h2>
             <div style={{ fontSize: 13, color: colors.textFaint, marginTop: 2, letterSpacing: 0.3 }}>
@@ -214,7 +214,7 @@ export function QuickActionSheet(props: SheetProps) {
                       <Icon name={o.icon} color={colors.greenLight} size={22} />
                     </span>
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: "block", fontSize: 16, fontWeight: 800, color: colors.text, lineHeight: 1.25 }}>{o.title}</span>
+                      <span style={{ display: "block", fontSize: 16, fontWeight: 700, color: colors.text, lineHeight: 1.25 }}>{o.title}</span>
                       <span style={{ display: "block", fontSize: 13.5, color: colors.textMuted, marginTop: 4, lineHeight: 1.45 }}>{o.desc}</span>
                     </span>
                     <span className="otoiz-qa-chev" aria-hidden="true" style={{ flex: "none" }}>
@@ -418,7 +418,7 @@ function MaintenanceForm({ supabase, vehicle, userId, maintenanceItems, onVehicl
               touch();
             }}
             aria-invalid={err?.field === "km"}
-            style={{ ...inputStyle, fontWeight: 800, fontSize: 17, borderColor: err?.field === "km" ? colors.danger : colors.border }}
+            style={{ ...inputStyle, fontWeight: 700, fontSize: 17, borderColor: err?.field === "km" ? colors.danger : colors.border }}
           />
         </Field>
       </div>
@@ -460,7 +460,7 @@ function MaintenanceForm({ supabase, vehicle, userId, maintenanceItems, onVehicl
           <Icon name="clock" color={colors.greenLight} size={20} />
           <span style={{ minWidth: 0 }}>
             <span style={{ display: "block", fontSize: 12.5, color: colors.textMuted, fontWeight: 600 }}>Sonraki bakım önerisi</span>
-            <span style={{ display: "block", fontSize: 15, fontWeight: 800, color: colors.text, marginTop: 2 }}>
+            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: colors.text, marginTop: 2 }}>
               {Number(suggestion.nextServiceKm).toLocaleString("tr-TR")} km · {fmtIsoDate(suggestion.nextServiceDate)}
             </span>
           </span>
@@ -521,7 +521,7 @@ function KmForm({ supabase, vehicle, onVehiclePatch, setBusy, done }: FormProps)
           if (e.key === "Enter") save();
         }}
         aria-invalid={!!error}
-        style={{ ...inputStyle, fontSize: 26, fontWeight: 800, textAlign: "center", minHeight: 64, letterSpacing: 0.5, borderColor: error ? colors.danger : colors.border }}
+        style={{ ...inputStyle, fontSize: 26, fontWeight: 700, textAlign: "center", minHeight: 64, letterSpacing: 0.5, borderColor: error ? colors.danger : colors.border }}
       />
       {vehicle.current_km != null && vehicle.current_km !== "" && (
         <p style={{ ...helperStyle, textAlign: "center", margin: "10px 0 0" }}>Kayıtlı: {Number(vehicle.current_km).toLocaleString("tr-TR")} km</p>
@@ -868,7 +868,7 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
   return (
     <section data-testid="belgeler" style={{ background: colors.surface, borderRadius: radius.lg, border: `1px solid ${colors.border}`, padding: 18, color: colors.text }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>Belgeler</h2>
+        <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Belgeler</h2>
         <button
           type="button"
           onClick={onAdd}
@@ -939,7 +939,7 @@ export function DocumentDeleteDialog({ target, deleting, error, onCancel, onConf
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="belge-sil-baslik" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 80 }}>
       <div style={{ ...cardStyle, width: "100%", maxWidth: 380, padding: 22 }}>
-        <h3 id="belge-sil-baslik" style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Belgeyi sil</h3>
+        <h3 id="belge-sil-baslik" style={{ fontSize: 17, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>Belgeyi sil</h3>
         <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>Bu belgeyi silmek istediğinizden emin misiniz?</p>
         {error && <p role="alert" style={{ color: colors.danger, fontSize: 13.5, margin: "0 0 12px" }}>{error}</p>}
         <div style={{ display: "flex", gap: 10 }}>
@@ -951,7 +951,7 @@ export function DocumentDeleteDialog({ target, deleting, error, onCancel, onConf
             data-testid="belge-sil-onay"
             onClick={onConfirm}
             disabled={deleting}
-            style={{ flex: 1, minHeight: 48, borderRadius: radius.md, border: "none", background: colors.danger, color: "#fff", fontSize: 15, fontWeight: 800, fontFamily: font, cursor: deleting ? "wait" : "pointer", opacity: deleting ? 0.7 : 1 }}
+            style={{ flex: 1, minHeight: 48, borderRadius: radius.md, border: "none", background: colors.danger, color: "#fff", fontSize: 15, fontWeight: 700, fontFamily: font, cursor: deleting ? "wait" : "pointer", opacity: deleting ? 0.7 : 1 }}
           >
             {deleting ? "Siliniyor…" : "Belgeyi Sil"}
           </button>

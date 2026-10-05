@@ -281,7 +281,7 @@ function AktivasyonInner() {
   return (
     <Shell step={step}>
       <div style={{ textAlign: "center" }}>
-        <div aria-hidden style={{ width: 56, height: 56, borderRadius: 28, background: colors.greenSoft, color: colors.greenDark, fontSize: 30, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>✓</div>
+        <div aria-hidden style={{ width: 56, height: 56, borderRadius: 28, background: colors.greenSoft, color: colors.greenDark, fontSize: 30, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>✓</div>
         <h2 style={{ fontSize: 19, margin: "0 0 6px" }}>OTOİZ’e hoş geldin. Aracın artık sistemde aktif.</h2>
         <p style={{ color: colors.textMuted, margin: "0 0 18px", lineHeight: 1.5 }}>
           Artık QR'ı okutan herkes aracının servis pasaportunu görür; plaka gizli kalır.
