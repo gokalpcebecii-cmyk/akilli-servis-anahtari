@@ -9,9 +9,9 @@ const { normalizeTimelineResponse, mergeTimelinePages, describeEvent } = require
 const { longDate, fmtKm, recordLines } = require("@/lib/premiumUi");
 
 export const LEVEL_COLOR: Record<string, string> = {
-  ok: "#22C55E",
-  soon: "#F5A524",
-  late: "#EF4444",
+  ok: "#00E676",
+  soon: "#FFB300",
+  late: "#FF5252",
   none: "#6F7783",
 };
 
@@ -28,7 +28,7 @@ export function IconSquare({ icon, tone = "gray", size = "md", iconColor }: { ic
   // uyarıda amber/kırmızı, nötr satırlarda açık gri.
   const color =
     iconColor ??
-    (tone === "amber" || tone === "amber-t" ? "#FBBF24" : tone === "red-t" ? "#F87171" : tone === "gray" ? "#C3C9D1" : "#4ADE80");
+    (tone === "amber" || tone === "amber-t" ? "#FBBF24" : tone === "red-t" ? "#F87171" : tone === "gray" ? "#C3C9D1" : "#00E676");
   const px = size === "sm" ? 16 : size === "lg" ? 24 : 20;
   return (
     <span className={`oz-ico${size === "sm" ? " is-sm" : size === "lg" ? " is-lg" : ""}`} data-tone={tone} aria-hidden="true">
@@ -199,14 +199,14 @@ export function Gauge({
   const gid = `oz-g-${variant}-${level}`;
   const stops =
     level === "late"
-      ? [["0%", "#F87171"], ["100%", "#EF4444"]]
+      ? [["0%", "#F87171"], ["100%", "#FF5252"]]
       : level === "none"
         ? [["0%", "#3A4148"], ["100%", "#3A4148"]]
         : variant === "warm"
-          ? [["0%", "#F5A524"], ["45%", "#F5C451"], ["70%", "#4ADE80"], ["100%", "#22C55E"]]
+          ? [["0%", "#FFB300"], ["45%", "#F5C451"], ["70%", "#00E676"], ["100%", "#00E676"]]
           : level === "soon"
-            ? [["0%", "#F5A524"], ["100%", "#FBBF24"]]
-            : [["0%", "#16A34A"], ["100%", "#4ADE80"]];
+            ? [["0%", "#FFB300"], ["100%", "#FBBF24"]]
+            : [["0%", "#16A34A"], ["100%", "#00E676"]];
   return (
     <div className="oz-gauge" style={{ width: size, height: size }} data-testid={testId} data-level={level}>
       <svg width={size} height={size} aria-hidden="true">
