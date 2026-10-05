@@ -44,19 +44,25 @@ export default function LandingPage() {
 
             <div className="oz-land-ctas">
               <a href="/bireysel/giris" className="oz-cta is-primary" data-testid="landing-bireysel">
-                Bireysel Kullanıcı
-                <Icon name="arrow-right" color="#04110A" size={20} />
+                <span className="oz-cta-main">
+                  <span className="oz-cta-leading"><Icon name="user" color="#04110A" size={22} /></span>
+                  <span>Bireysel Kullanıcı</span>
+                </span>
+                <Icon name="arrow-right" color="#04110A" size={19} />
               </a>
               <a href="/panel/login" className="oz-cta" data-testid="landing-servis">
-                Servis / İşletme
-                <Icon name="arrow-right" color="#F5F7FA" size={20} />
+                <span className="oz-cta-main">
+                  <span className="oz-cta-leading is-dark"><Icon name="wrench" color="#F5F7FA" size={21} /></span>
+                  <span>Servis / İşletme</span>
+                </span>
+                <Icon name="arrow-right" color="#F5F7FA" size={19} />
               </a>
             </div>
 
             <ul className="oz-feats" aria-label="OTOİZ ile neler var">
               {FEATURES.map((f) => (
                 <li key={f.title} className="oz-feat">
-                  <Icon name={f.icon} color="#4ADE80" size={24} />
+                  <span className="oz-feat-icon" aria-hidden="true"><Icon name={f.icon} color="#24E27A" size={20} /></span>
                   <h2 className="oz-feat-title">{f.title}</h2>
                 </li>
               ))}
