@@ -2420,25 +2420,25 @@ a {
 
 /* ---- Renkli ikon kareleri ---- */
 .oz-ico {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   flex: none;
-  border-radius: 12px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--oz-line-2);
-  background: var(--oz-card-2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
 }
 .oz-ico.is-sm {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
 }
 .oz-ico.is-lg {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
 }
 .oz-ico[data-tone="green"] {
   background: linear-gradient(150deg, #3ee583, #17a34a);
@@ -2446,8 +2446,8 @@ a {
   box-shadow: 0 6px 18px rgba(34, 197, 94, 0.28);
 }
 .oz-ico[data-tone="green-t"] {
-  background: rgba(34, 197, 94, 0.13);
-  border-color: rgba(34, 197, 94, 0.42);
+  background: rgba(34, 197, 94, 0.07);
+  border-color: rgba(34, 197, 94, 0.22);
 }
 .oz-ico[data-tone="blue"] {
   /* Adım 1 (renk sadeleştirme): mavi kaldırıldı; nötr antrasit kare. */
@@ -2461,16 +2461,16 @@ a {
   box-shadow: 0 6px 18px rgba(245, 165, 36, 0.25);
 }
 .oz-ico[data-tone="amber-t"] {
-  background: rgba(245, 165, 36, 0.14);
-  border-color: rgba(245, 165, 36, 0.45);
+  background: rgba(245, 165, 36, 0.08);
+  border-color: rgba(245, 165, 36, 0.24);
 }
 .oz-ico[data-tone="red-t"] {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.42);
+  background: rgba(239, 68, 68, 0.07);
+  border-color: rgba(239, 68, 68, 0.22);
 }
 .oz-ico[data-tone="gray"] {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--oz-line-2);
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* ---- Araç kartı (kokpit) ---- */
@@ -3418,12 +3418,12 @@ button.oz-row {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   border: none;
   background: none;
   color: var(--oz-faint);
   font: inherit;
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 500;
   cursor: pointer;
   padding: 6px 2px;
