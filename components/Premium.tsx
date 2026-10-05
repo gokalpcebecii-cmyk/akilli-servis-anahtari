@@ -28,7 +28,7 @@ export function IconSquare({ icon, tone = "gray", size = "md", iconColor }: { ic
   const color =
     iconColor ??
     (solid ? (tone === "blue" ? "#FFFFFF" : "#04110A") : tone === "green-t" ? "#4ADE80" : tone === "amber-t" ? "#FBBF24" : tone === "red-t" ? "#F87171" : "#C3C9D1");
-  const px = size === "sm" ? 18 : size === "lg" ? 26 : 22;
+  const px = size === "sm" ? 15 : size === "lg" ? 21 : 18;
   return (
     <span className={`oz-ico${size === "sm" ? " is-sm" : size === "lg" ? " is-lg" : ""}`} data-tone={tone} aria-hidden="true">
       <Icon name={icon} color={color} size={px} />
