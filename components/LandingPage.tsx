@@ -37,7 +37,8 @@ export default function LandingPage() {
 
           <div className="oz-land-copy">
             <h1 id="landing-baslik" className="oz-land-title">
-              Aracınızın geçmişi kaybolmaz.
+              <span>Aracınızın geçmişi</span>
+              <span>kaybolmaz.</span>
             </h1>
             <p className="oz-land-sub">Bakımlar, belgeler ve araç geçmişi tek yerde.</p>
 
