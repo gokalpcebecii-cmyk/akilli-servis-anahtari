@@ -31,8 +31,8 @@ export const colors = {
   dangerSoft: "rgba(239,83,80,0.14)",
   warning: "#F5C451",
   warningSoft: "rgba(245,196,81,0.14)",
-  info: "#60A5FA",
-  infoSoft: "rgba(96,165,250,0.14)",
+  info: "#C3C9D1", // nötr bilgi (Adım 1: mavi kaldırıldı)
+  infoSoft: "rgba(195,201,209,0.12)",
   gray: "#8B95A7",
   neutralSoft: "rgba(139,149,167,0.16)",
 } as const;

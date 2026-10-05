@@ -245,7 +245,7 @@ export default function BireyselAraclarPage() {
         {vehicles.map((v) => {
           const on = v.id === activeId;
           return (
-            <button key={v.id} role="option" aria-selected={on} onClick={() => selectVehicle(v.id)} className="oz-row" style={{ padding: "8px 12px", borderRadius: 12, background: on ? "#182023" : "transparent", borderBottom: "none" }}>
+            <button key={v.id} role="option" aria-selected={on} onClick={() => selectVehicle(v.id)} className="oz-row" style={{ padding: "8px 12px", borderRadius: 12, background: on ? "#171A1F" : "transparent", borderBottom: "none" }}>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: 15, fontWeight: 700, letterSpacing: 0.3 }}>{v.plate}</span>
                 <span style={{ display: "block", fontSize: 12.5, color: "#A3ABB7" }}>{[v.brand, v.model].filter(Boolean).join(" ")}</span>
@@ -378,7 +378,7 @@ export default function BireyselAraclarPage() {
                       data-level={reminders.level}
                       onClick={() => go("yaklasan")}
                       className="oz-row"
-                      style={{ minHeight: 52, padding: "8px 14px", borderRadius: 14, border: `1px solid ${reminders.level === "late" ? "rgba(239,68,68,0.4)" : "rgba(245,165,36,0.4)"}`, background: "#12171A" }}
+                      style={{ minHeight: 52, padding: "8px 14px", borderRadius: 14, border: `1px solid ${reminders.level === "late" ? "rgba(239,68,68,0.4)" : "rgba(245,165,36,0.4)"}`, background: "#111317" }}
                     >
                       <IconSquare icon="alert" tone={reminders.level === "late" ? "red-t" : "amber-t"} size="sm" />
                       <span style={{ flex: 1, minWidth: 0 }}>

@@ -2245,10 +2245,10 @@ a {
    ortalanmış içerik ve 2–3 sütun.
    ===================================================================== */
 :root {
-  --oz-bg: #080b0c;
-  --oz-bg-2: #0c1012;
-  --oz-card: #12171a;
-  --oz-card-2: #182023;
+  --oz-bg: #07080a;
+  --oz-bg-2: #0c0e11;
+  --oz-card: #111317;
+  --oz-card-2: #171a1f;
   --oz-line: rgba(255, 255, 255, 0.07);
   --oz-line-2: rgba(255, 255, 255, 0.13);
   --oz-text: #f5f7fa;
@@ -2262,8 +2262,6 @@ a {
   --oz-amber-l: #fbbf24;
   --oz-red: #ef4444;
   --oz-red-l: #f87171;
-  --oz-blue: #3b82f6;
-  --oz-blue-l: #60a5fa;
   --oz-r-xl: 24px;
   --oz-r-lg: 18px;
   --oz-r-md: 14px;
@@ -2273,7 +2271,7 @@ a {
 .oz-app {
   min-height: 100vh;
   min-height: 100dvh;
-  background: radial-gradient(800px 460px at 50% -160px, rgba(34, 197, 94, 0.08), transparent 65%), linear-gradient(180deg, #0a0f0e, var(--oz-bg) 420px);
+  background: radial-gradient(800px 460px at 50% -160px, rgba(34, 197, 94, 0.08), transparent 65%), linear-gradient(180deg, #090c0b, var(--oz-bg) 420px);
   background-color: var(--oz-bg);
   color: var(--oz-text);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -2412,9 +2410,10 @@ a {
   border-color: rgba(34, 197, 94, 0.42);
 }
 .oz-ico[data-tone="blue"] {
-  background: linear-gradient(150deg, #5b9bff, #2563eb);
-  border-color: rgba(147, 197, 253, 0.5);
-  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.28);
+  /* Adım 1 (renk sadeleştirme): mavi kaldırıldı; nötr antrasit kare. */
+  background: linear-gradient(150deg, #262b33, #171a1f);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 .oz-ico[data-tone="amber"] {
   background: linear-gradient(150deg, #fcc44a, #e48a0c);
@@ -2878,7 +2877,7 @@ button.oz-stat {
   padding: 16px 14px 14px;
   border-radius: var(--oz-r-lg);
   border: 1px solid var(--oz-line);
-  background: linear-gradient(165deg, #182023, var(--oz-card) 65%);
+  background: linear-gradient(165deg, var(--oz-card-2), var(--oz-card) 65%);
   color: var(--oz-text);
   display: flex;
   flex-direction: column;
@@ -2938,8 +2937,8 @@ button.oz-stat {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(90deg, rgba(8, 11, 12, 0.92) 0%, rgba(8, 11, 12, 0.55) 48%, rgba(8, 11, 12, 0.1) 100%),
-    linear-gradient(0deg, rgba(8, 11, 12, 0.85) 0%, rgba(8, 11, 12, 0) 60%);
+  background: linear-gradient(90deg, rgba(7, 8, 10, 0.92) 0%, rgba(7, 8, 10, 0.55) 48%, rgba(7, 8, 10, 0.1) 100%),
+    linear-gradient(0deg, rgba(7, 8, 10, 0.85) 0%, rgba(7, 8, 10, 0) 60%);
 }
 .oz-valuecard-title {
   margin: 0;
@@ -3087,7 +3086,7 @@ button.oz-row {
   text-transform: lowercase;
 }
 .oz-file-tag[data-kind="img"] {
-  background: var(--oz-blue);
+  background: #3a404a;
 }
 .oz-doc-title {
   font-size: 14.5px;
@@ -3331,13 +3330,13 @@ button.oz-row {
   text-decoration: none;
   color: var(--oz-text);
   border: 1.5px solid rgba(34, 197, 94, 0.55);
-  background: linear-gradient(160deg, rgba(34, 197, 94, 0.16), rgba(18, 23, 26, 0.9) 70%);
+  background: linear-gradient(160deg, rgba(34, 197, 94, 0.16), rgba(17, 19, 23, 0.9) 70%);
   box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.08), 0 14px 34px rgba(34, 197, 94, 0.08);
 }
 .oz-role[data-tone="blue"] {
-  border-color: rgba(96, 165, 250, 0.5);
-  background: linear-gradient(160deg, rgba(59, 130, 246, 0.2), rgba(18, 23, 26, 0.9) 70%);
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.08), 0 14px 34px rgba(59, 130, 246, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(17, 19, 23, 0.9) 70%);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
 }
 .oz-role-title {
   display: block;
@@ -3409,7 +3408,7 @@ button.oz-row {
   top: 0;
   height: 400px;
   z-index: -1;
-  background-image: linear-gradient(180deg, rgba(8, 11, 12, 0.75) 0%, rgba(8, 11, 12, 0) 24%, rgba(8, 11, 12, 0) 50%, var(--oz-bg) 96%), url(/marketing/otoiz-landing-arac.webp);
+  background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.75) 0%, rgba(7, 8, 10, 0) 24%, rgba(7, 8, 10, 0) 50%, var(--oz-bg) 96%), url(/marketing/otoiz-landing-arac.webp);
   background-size: cover;
   background-position: 46% 50%;
 }
@@ -3512,7 +3511,7 @@ button.oz-row {
   top: 0;
   height: 380px;
   pointer-events: none;
-  background-image: linear-gradient(180deg, rgba(8, 11, 12, 0.6) 0%, rgba(8, 11, 12, 0.25) 35%, rgba(8, 11, 12, 0.85) 80%, var(--otoiz-anthracite) 100%),
+  background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.6) 0%, rgba(7, 8, 10, 0.25) 35%, rgba(7, 8, 10, 0.85) 80%, var(--otoiz-anthracite) 100%),
     url(/marketing/otoiz-landing-arac.webp);
   background-size: cover;
   background-position: 55% 55%;
@@ -3643,7 +3642,7 @@ button.oz-row {
     left: 38%;
     height: 100%;
     max-height: 760px;
-    background-image: linear-gradient(90deg, var(--oz-bg) 0%, rgba(8, 11, 12, 0) 30%), linear-gradient(180deg, rgba(8, 11, 12, 0.5) 0%, rgba(8, 11, 12, 0) 25%, rgba(8, 11, 12, 0) 70%, var(--oz-bg) 100%),
+    background-image: linear-gradient(90deg, var(--oz-bg) 0%, rgba(7, 8, 10, 0) 30%), linear-gradient(180deg, rgba(7, 8, 10, 0.5) 0%, rgba(7, 8, 10, 0) 25%, rgba(7, 8, 10, 0) 70%, var(--oz-bg) 100%),
       url(/marketing/otoiz-landing-arac.webp);
   }
   .oz-land-copy {
@@ -3660,8 +3659,8 @@ button.oz-row {
   .oz-auth-car {
     right: 50%;
     height: 100%;
-    background-image: linear-gradient(90deg, rgba(8, 11, 12, 0.4) 0%, rgba(8, 11, 12, 0.1) 40%, var(--otoiz-anthracite) 100%),
-      linear-gradient(180deg, rgba(8, 11, 12, 0.6) 0%, rgba(8, 11, 12, 0) 30%, rgba(8, 11, 12, 0.9) 100%), url(/marketing/otoiz-landing-arac.webp);
+    background-image: linear-gradient(90deg, rgba(7, 8, 10, 0.4) 0%, rgba(7, 8, 10, 0.1) 40%, var(--otoiz-anthracite) 100%),
+      linear-gradient(180deg, rgba(7, 8, 10, 0.6) 0%, rgba(7, 8, 10, 0) 30%, rgba(7, 8, 10, 0.9) 100%), url(/marketing/otoiz-landing-arac.webp);
     opacity: 0.7;
   }
 }
