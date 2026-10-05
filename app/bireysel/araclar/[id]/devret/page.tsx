@@ -190,7 +190,7 @@ export default function BireyselDevretPage() {
 
         <section className="oz-card" style={{ padding: "26px 18px 22px", textAlign: "center" }} aria-labelledby="devir-baslik">
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-            <Icon name="transfer" color="#4ADE80" size={46} />
+            <Icon name="secure-transfer" color="#4ADE80" size={46} />
           </div>
           <h2 id="devir-baslik" style={{ fontSize: 19, fontWeight: 700, margin: 0 }}>Aracınızı Güvenle Devredin</h2>
           <p style={{ fontSize: 13, color: "#A3ABB7", lineHeight: 1.55, margin: "8px auto 0", maxWidth: 300 }}>

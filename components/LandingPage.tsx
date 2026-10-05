@@ -6,10 +6,10 @@ import { OtoizLogo } from "@/components/OtoizLogo";
 // "her zaman yanınızda" kartı. Altında kısa "Nasıl Çalışır?". Yalnız bugün
 // çalışan özellikler anlatılır (desteklenmeyen iddia yok).
 const FEATURES = [
-  { title: "Bakım Geçmişi", icon: "history" },
+  { title: "Bakım Geçmişi", icon: "service-history" },
   { title: "Belgeler", icon: "document" },
   { title: "Yaklaşan Bakımlar", icon: "calendar" },
-  { title: "Güvenli Devir", icon: "shield-check" },
+  { title: "Güvenli Devir", icon: "secure-transfer" },
 ];
 
 // Bireysel kullanıcının gerçek akışı (Aşama C.1'de doğrulanan 6 adım).

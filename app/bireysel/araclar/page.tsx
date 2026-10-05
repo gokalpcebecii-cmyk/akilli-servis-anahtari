@@ -436,11 +436,11 @@ export default function BireyselAraclarPage() {
 
                 <div className="oz-ck-tiles oz-tiles" data-testid="ana-kartlar">
                   <Tile icon="car" tone="green-t" title="Aracım" sub="Bilgiler ve QR" onClick={() => go("aracim")} testId="kart-aracim" />
-                  <Tile icon="wrench" tone="green-t" title="Bakım Geçmişim" sub="Tüm kayıtlar" onClick={() => go("bakim")} testId="kart-bakim" />
+                  <Tile icon="service-history" tone="green-t" title="Bakım Geçmişim" sub="Tüm kayıtlar" onClick={() => go("bakim")} testId="kart-bakim" />
                   <Tile icon="document" tone="green-t" title="Belgelerim" sub={docs === null ? "…" : docCountPhrase(docs.length)} onClick={() => go("belgeler")} testId="kart-belgeler" />
                   <Tile icon="calendar" tone={levelTone(ns?.level)} title="Yaklaşan Bakımlar" sub={nsShort} level={ns?.level} onClick={() => go("yaklasan")} testId="kart-yaklasan" />
                   <Tile icon="shield-check" tone={levelTone(muView.level)} title="Muayene" sub={muView.empty ? "Bilgi eklenmemiş" : muView.text} level={muView.level} onClick={() => go("muayene")} testId="kart-muayene" />
-                  <Tile icon="transfer" tone="green-t" title="Aracı Devret" sub="Güvenli devir" href={`/bireysel/araclar/${active.id}/devret`} testId="kart-devret" />
+                  <Tile icon="secure-transfer" tone="green-t" title="Aracı Devret" sub="Güvenli devir" href={`/bireysel/araclar/${active.id}/devret`} testId="kart-devret" />
                 </div>
 
                 <div className="oz-ck-value oz-stack">
