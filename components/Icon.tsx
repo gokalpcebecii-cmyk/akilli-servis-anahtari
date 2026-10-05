@@ -6,10 +6,10 @@
 // Adım 3 (ikon sistemi): çizgi kalınlığı tek kaynaktan gelir. Ekranda her
 // boyutta ≈1.6 px görünür (küçük ikon kalınlaşmaz, büyük ikon incelmez).
 // `strokeWidth` eski çağrılarla uyum için kabul edilir ama yok sayılır.
-export const ICON_STROKE_PX = 1.6;
+export const ICON_STROKE_PX = 1.25;
 
 export function iconStroke(size: number) {
-  return Math.min(2.25, Math.max(1.45, (ICON_STROKE_PX * 24) / size));
+  return Math.min(1.7, Math.max(1.1, (ICON_STROKE_PX * 24) / size));
 }
 
 export function Icon({
@@ -111,10 +111,10 @@ export function Icon({
     case "car":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M5 11.5 6.6 7.2A2.5 2.5 0 0 1 8.9 5.6h6.2a2.5 2.5 0 0 1 2.3 1.6l1.6 4.3" />
-          <path d="M4 11.5h16a1.5 1.5 0 0 1 1.5 1.5v3.5A1.5 1.5 0 0 1 20 18H4a1.5 1.5 0 0 1-1.5-1.5V13A1.5 1.5 0 0 1 4 11.5Z" />
-          <path d="M5.5 18v1.5M18.5 18v1.5" />
-          <path d="M6 14.75h2M16 14.75h2" />
+          <path d="M4.5 13.5 6.2 8.9A2.2 2.2 0 0 1 8.25 7.5h7.5a2.2 2.2 0 0 1 2.05 1.4l1.7 4.6" />
+          <path d="M4 13.5h16a1.4 1.4 0 0 1 1.4 1.4v2.2A1.9 1.9 0 0 1 19.5 19h-15a1.9 1.9 0 0 1-1.9-1.9v-2.2A1.4 1.4 0 0 1 4 13.5Z" />
+          <path d="M6.1 16.2h2.1M15.8 16.2h2.1" />
+          <path d="M6 19v1M18 19v1" />
         </svg>
       );
     case "cart":
@@ -135,8 +135,9 @@ export function Icon({
     case "home":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M3 10a2 2 0 0 1 .7-1.53l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
-          <path d="M15 21v-7a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v7" />
+          <path d="M4.5 11.2 12 5l7.5 6.2" />
+          <path d="M6.5 10.3V19h11v-8.7" />
+          <path d="M10 19v-5h4v5" />
         </svg>
       );
     case "user":
@@ -310,9 +311,9 @@ export function Icon({
     case "document":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-          <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-          <path d="M10 9H8M16 13H8M16 17H8" />
+          <path d="M7 3.5h7l3.5 3.5v13.5h-11V3.5Z" />
+          <path d="M14 3.5V7h3.5" />
+          <path d="M9 11h6M9 14.5h6" />
         </svg>
       );
     case "calendar":
@@ -377,10 +378,10 @@ export function Icon({
     case "transfer":
       return (
         <svg viewBox="0 0 24 24" style={s}>
-          <path d="m16 3 4 4-4 4" />
-          <path d="M20 7H4" />
-          <path d="m8 21-4-4 4-4" />
-          <path d="M4 17h16" />
+          <path d="M5 8h12.5" />
+          <path d="m15 5 3 3-3 3" />
+          <path d="M19 16H6.5" />
+          <path d="m9 13-3 3 3 3" />
         </svg>
       );
     case "check-circle":
