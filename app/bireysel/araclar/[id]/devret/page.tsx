@@ -152,7 +152,7 @@ export default function BireyselDevretPage() {
           {back}
           <div style={{ textAlign: "center", margin: "8px 0 22px" }}>
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.45)", boxShadow: "0 0 30px rgba(34,197,94,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <Icon name="check" color="#86EFAC" size={28} strokeWidth={2.6} />
+              <Icon name="check" color="#86EFAC" size={28} />
             </div>
             <h1 className="oz-h1" style={{ fontSize: 24, marginBottom: 8 }}>Devir Başlatıldı</h1>
             <p style={{ color: "#A3ABB7", fontSize: 14, lineHeight: 1.6, margin: 0 }}>
@@ -167,7 +167,7 @@ export default function BireyselDevretPage() {
           </button>
 
           <div className="oz-card" style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 20, padding: 16 }}>
-            <span style={{ flex: "none", display: "inline-flex" }}><Icon name="shield-check" color="#86EFAC" size={18} strokeWidth={2.4} /></span>
+            <span style={{ flex: "none", display: "inline-flex" }}><Icon name="shield-check" color="#86EFAC" size={18} /></span>
             <p style={{ fontSize: 13, color: "#C9CFD7", margin: 0, lineHeight: 1.6 }}>
               Teknik araç geçmişi yeni sahibine aktarılır; kişisel bilgileriniz aktarılmaz. Belgelerden yalnız seçtikleriniz ({result.document_count ?? 0}) devir kabul edildiğinde yeni sahibe açılır. Bağlantı tek kullanımlıktır ve 72 saat geçerlidir; bu bağlantı
               yalnız şimdi gösterilir, kaydedin. Karşı taraf kabul etmediyse ana ekrandaki "Bekleyen Devirler"
@@ -190,7 +190,7 @@ export default function BireyselDevretPage() {
 
         <section className="oz-card" style={{ padding: "26px 18px 22px", textAlign: "center" }} aria-labelledby="devir-baslik">
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-            <Icon name="transfer" color="#4ADE80" size={46} strokeWidth={2.2} />
+            <Icon name="transfer" color="#4ADE80" size={46} />
           </div>
           <h2 id="devir-baslik" style={{ fontSize: 19, fontWeight: 700, margin: 0 }}>Aracınızı Güvenle Devredin</h2>
           <p style={{ fontSize: 13, color: "#A3ABB7", lineHeight: 1.55, margin: "8px auto 0", maxWidth: 300 }}>
@@ -253,7 +253,7 @@ export default function BireyselDevretPage() {
         </section>
 
         <p className="oz-note" style={{ margin: "16px 2px 16px" }}>
-          <Icon name="shield-check" color="#4ADE80" size={18} strokeWidth={2.4} />
+          <Icon name="shield-check" color="#4ADE80" size={18} />
           <span>
             Teknik araç geçmişi ve aktif QR araçla birlikte yeni sahibine geçer. Kişisel bilgileriniz aktarılmaz; belgelerinizden yalnız yukarıda seçtikleriniz aktarılır. Devir tamamlandığında bu araca erişiminiz sona erer. Kabul edilmeden önce devri iptal edip aracı geri alabilirsiniz.
           </span>

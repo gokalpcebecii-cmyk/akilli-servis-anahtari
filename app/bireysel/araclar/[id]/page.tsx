@@ -640,7 +640,7 @@ export default function BireyselVehicleDetailPage() {
             data-testid="basari-ekran"
             style={{ width: 84, height: 84, borderRadius: "50%", background: colors.greenSoft, border: `1px solid ${colors.green}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 22px" }}
           >
-            <Icon name="check" color={colors.greenLight} size={40} strokeWidth={2.4} />
+            <Icon name="check" color={colors.greenLight} size={40} />
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Aracınız hazır</h1>
           <p style={{ fontSize: 15.5, color: colors.textMuted, margin: "0 0 6px", lineHeight: 1.5 }}>
@@ -663,7 +663,7 @@ export default function BireyselVehicleDetailPage() {
             ))}
             <div style={{ textAlign: "center", marginTop: 14 }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: colors.greenLight, background: colors.greenSoft, borderRadius: radius.pill, padding: "5px 14px" }}>
-                <Icon name="check" color={colors.greenLight} size={14} strokeWidth={2.6} />
+                <Icon name="check" color={colors.greenLight} size={14} />
                 Dijital servis pasaportu aktif
               </span>
             </div>

@@ -829,7 +829,7 @@ export default function VehicleDetailPage() {
             )}
             {successMessage && (
               <div role="status" className="otoiz-enter" style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", background: colors.greenSoft, border: `1px solid rgba(34,197,94,0.5)`, color: colors.greenLight, padding: "14px", borderRadius: radius.md, fontWeight: 800, fontSize: 15.5, margin: "8px 0 10px" }}>
-                <Icon name="check" color={colors.greenLight} size={20} strokeWidth={2.6} />
+                <Icon name="check" color={colors.greenLight} size={20} />
                 {successMessage.replace(/^✓\s*/, "")}
               </div>
             )}

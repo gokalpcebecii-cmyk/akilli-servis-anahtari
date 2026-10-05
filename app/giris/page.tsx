@@ -27,8 +27,8 @@ export default function GirisSecimiPage({ searchParams }: { searchParams?: Recor
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <a href={bireyselHref} className="oz-role" data-testid="giris-bireysel">
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="oz-ico is-lg" data-tone="green" aria-hidden="true">
-                <Icon name="user" color="#FFFFFF" size={26} strokeWidth={2.2} />
+              <span className="oz-ico is-lg" data-tone="green-t" aria-hidden="true">
+                <Icon name="user" color="#4ADE80" size={26} />
               </span>
               <span className="oz-role-title">Bireysel Kullanıcı</span>
               <span className="oz-role-desc">Aracınızı, bakım geçmişinizi ve belgelerinizi yönetin.</span>
@@ -38,8 +38,8 @@ export default function GirisSecimiPage({ searchParams }: { searchParams?: Recor
 
           <a href="/panel/login" className="oz-role" data-tone="blue" data-testid="giris-servis">
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="oz-ico is-lg" data-tone="blue" aria-hidden="true">
-                <Icon name="user" color="#FFFFFF" size={26} strokeWidth={2.2} />
+              <span className="oz-ico is-lg" data-tone="green-t" aria-hidden="true">
+                <Icon name="wrench" color="#4ADE80" size={26} />
               </span>
               <span className="oz-role-title">Servis / İşletme</span>
               <span className="oz-role-desc">Müşteri araçlarını hızlıca yönetin ve bakım kaydı oluşturun.</span>

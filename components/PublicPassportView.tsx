@@ -146,12 +146,12 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
             <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
               {hasVerifiedRecord ? (
                 <span style={{ display: "flex", alignItems: "center", gap: 4, ...badgeStyle("success"), whiteSpace: "nowrap" }}>
-                  <Icon name="shield-check" color={colors.greenDark} size={11} strokeWidth={2.5} />
+                  <Icon name="shield-check" color={colors.greenDark} size={11} />
                   Servis Doğrulamalı
                 </span>
               ) : (
                 <span style={{ display: "flex", alignItems: "center", gap: 4, ...badgeStyle("neutral"), whiteSpace: "nowrap" }}>
-                  <Icon name="user" color={colors.textMuted} size={11} strokeWidth={2.5} />
+                  <Icon name="user" color={colors.textMuted} size={11} />
                   Kullanıcı Kaydı
                 </span>
               )}
@@ -218,12 +218,12 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
                   </div>
                   {isVerified(r) ? (
                     <span style={{ display: "flex", alignItems: "center", gap: 4, ...badgeStyle("success"), whiteSpace: "nowrap" }}>
-                      <Icon name="shield-check" color={colors.greenDark} size={11} strokeWidth={2.5} />
+                      <Icon name="shield-check" color={colors.greenDark} size={11} />
                       Servis Doğrulamalı
                     </span>
                   ) : (
                     <span style={{ display: "flex", alignItems: "center", gap: 4, ...badgeStyle("neutral"), whiteSpace: "nowrap" }}>
-                      <Icon name="user" color={colors.textMuted} size={11} strokeWidth={2.5} />
+                      <Icon name="user" color={colors.textMuted} size={11} />
                       Kullanıcı Kaydı
                     </span>
                   )}

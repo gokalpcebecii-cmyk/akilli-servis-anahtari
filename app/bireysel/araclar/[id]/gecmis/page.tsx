@@ -199,7 +199,7 @@ export default function GecmisBaslatPage() {
                       color: state === "done" ? colors.onAccent : state === "current" ? colors.greenLight : colors.textMuted,
                     }}
                   >
-                    {state === "done" ? <Icon name="check" color={colors.onAccent} size={14} strokeWidth={3} /> : i + 1}
+                    {state === "done" ? <Icon name="check" color={colors.onAccent} size={14} /> : i + 1}
                   </span>
                   <span style={{ fontSize: 14, fontWeight: state === "current" ? 800 : 600, color: state === "todo" ? colors.textMuted : colors.text, whiteSpace: "nowrap" }}>
                     {label}
@@ -314,7 +314,7 @@ export default function GecmisBaslatPage() {
         {done && (
           <section data-testid="gecmis-kaydedildi" className="otoiz-enter" style={{ ...cardStyle, padding: "26px 20px" }}>
             <div aria-hidden="true" style={{ width: 48, height: 48, borderRadius: radius.md, background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-              <Icon name="check" color={colors.greenLight} size={24} strokeWidth={2.6} />
+              <Icon name="check" color={colors.greenLight} size={24} />
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>OTOİZ hazır</h1>
             {plan ? (
