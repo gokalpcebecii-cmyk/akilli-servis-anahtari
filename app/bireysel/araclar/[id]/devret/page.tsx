@@ -227,7 +227,7 @@ export default function BireyselDevretPage() {
                 <label
                   key={d.id}
                   data-testid="devir-belge-satir"
-                  style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 12px", borderRadius: 12, background: "#182023", border: `1px solid ${selected.includes(d.id) ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.07)"}`, fontSize: 13.5, color: "#F5F7FA", cursor: "pointer" }}
+                  style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, padding: "8px 12px", borderRadius: 12, background: "#171A1F", border: `1px solid ${selected.includes(d.id) ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.07)"}`, fontSize: 13.5, color: "#F5F7FA", cursor: "pointer" }}
                 >
                   <input
                     type="checkbox"

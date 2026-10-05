@@ -18,10 +18,10 @@ const { fmtDate } = require("@/lib/vehicleStatus");
 // mavi, bireysel geçmiş = mavi çerçeveli, sistem = gri. Düzeltilmiş kayıt ayrıca sarı kenarlıklı rozetle.
 const SOURCE_STYLE: Record<string, { fg: string; bg: string; border: string; icon: string }> = {
   service: { fg: colors.greenLight, bg: "transparent", border: colors.green, icon: "shield-check" },
-  owner: { fg: colors.info, bg: colors.infoSoft, border: "rgba(96,165,250,0.45)", icon: "user" },
+  owner: { fg: colors.info, bg: colors.infoSoft, border: "rgba(195,201,209,0.35)", icon: "user" },
   // Nihai UX: araç sahibinin geçmişe dönük girdiği kayıt — bireysel mavi,
   // dolgusuz (servis doğrulamalı gibi görünmez).
-  owner_history: { fg: colors.info, bg: "transparent", border: "rgba(96,165,250,0.45)", icon: "history" },
+  owner_history: { fg: colors.info, bg: "transparent", border: "rgba(195,201,209,0.35)", icon: "history" },
   system: { fg: colors.textMuted, bg: colors.neutralSoft, border: "transparent", icon: "car" },
 };
 
