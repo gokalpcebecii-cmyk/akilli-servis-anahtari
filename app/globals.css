@@ -4189,3 +4189,40 @@ button.oz-row {
   .oz-nav .oz-nav-item::before,
   .oz-nav .oz-nav-item::after { transition: none; }
 }
+
+/* ==================== Giriş ekranı logo ve üst alan (2026-10-06) ====================
+   Yalnız /giris seçim ekranının üst alanı: logo ölçüsü, üst/alt boşluk, kartlara
+   mesafe ve hafif ambiyans. Sayfa satır içi stil kullandığı için kapsam :has() ile
+   bu ekrana sınırlı; satır içi değerleri geçmek için !important gerekli. */
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) {
+  position: relative;
+  padding-top: calc(env(safe-area-inset-top) + 52px) !important;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"])::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 360px;
+  height: 220px;
+  margin-left: -180px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(50% 50% at 50% 46%, rgba(34, 197, 94, 0.07) 0%, rgba(34, 197, 94, 0) 100%);
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > a[href="/"] {
+  position: relative;
+  z-index: 1;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > a[href="/"] img {
+  width: 196px !important;
+  height: auto !important;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > h1 + p {
+  position: relative;
+  z-index: 1;
+  margin: 14px 0 36px !important;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > .oz-carstage {
+  margin-top: 28px !important;
+}
