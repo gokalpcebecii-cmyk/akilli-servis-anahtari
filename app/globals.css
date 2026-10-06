@@ -3975,3 +3975,35 @@ button.oz-row {
 @media (max-width: 374px) {
   .oz-stat-label { font-size: 12.5px; }
 }
+
+/* ==================== Tipografi revizyon (2026-10-06 akşam) ====================
+   1 ana başlık biraz daha güçlü · 2 kart başlığı daha net · 3 meta biraz büyük. */
+.oz-h1,
+.oz-land-title,
+.oz-valuecard-title,
+.oz-gauge-value { font-weight: 670; letter-spacing: -0.02em; }
+.oz-h2,
+.oz-subhead-title { font-weight: 650; letter-spacing: -0.015em; }
+
+.oz-tile-title { font-size: 16px; font-weight: 640; letter-spacing: -0.01em; line-height: 1.28; }
+.oz-stat-label { font-size: 13.5px; font-weight: 620; }
+.oz-tile-sub { font-size: 13px; line-height: 1.5; }
+
+.oz-stat-value,
+.oz-tl-km,
+.oz-doc-meta,
+.oz-kv-label,
+.oz-list-row .oz-list-val { font-size: 13px; line-height: 1.45; }
+.oz-src { font-size: 12.5px; }
+.oz-pill { font-size: 12px; }
+.oz-feat-title { font-size: 12.5px; line-height: 1.4; }
+.oz-vsub { font-size: 14px; line-height: 1.45; }
+.oz-role-desc,
+.oz-tl-lines,
+.oz-steps > li { font-size: 14px; line-height: 1.6; }
+
+@media (max-width: 374px) {
+  .oz-tile-title { font-size: 15px; }
+  .oz-stat-label { font-size: 12.5px; }
+  .oz-stat-value { font-size: 12px; }
+}
