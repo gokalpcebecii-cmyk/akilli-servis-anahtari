@@ -4007,3 +4007,92 @@ button.oz-row {
   .oz-stat-label { font-size: 12.5px; }
   .oz-stat-value { font-size: 12px; }
 }
+
+/* ==================== Buton görünümü (2026-10-06) ====================
+   Yalnız yüzey: zemin, ince sınır, hafif derinlik, hover/active.
+   Ölçü, konum, yazı ve işlev aynı; sınırlar inset gölgeyle çizilir (ölçü değişmez). */
+:root {
+  --oz-btn-primary: linear-gradient(180deg, #27d066 0%, #1fb357 100%);
+  --oz-btn-primary-hover: linear-gradient(180deg, #2bd86c 0%, #21bb5c 100%);
+  --oz-btn-primary-edge: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 0 0 1px rgba(6, 40, 20, 0.28);
+  --oz-btn-primary-depth: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(34, 197, 94, 0.16);
+  --oz-btn-secondary: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  --oz-btn-secondary-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.03) 100%);
+  --oz-btn-secondary-edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --oz-btn-secondary-depth: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --oz-btn-line: rgba(255, 255, 255, 0.11);
+  --oz-btn-line-hover: rgba(255, 255, 255, 0.18);
+}
+
+/* Primary: net yeşil, mat ve rafine; neon parıltı yok. */
+.oz-btn,
+.oz-cta.is-primary,
+.otoiz-install-btn {
+  background: var(--oz-btn-primary);
+  box-shadow: var(--oz-btn-primary-edge), var(--oz-btn-primary-depth);
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+.oz-btn:not(.is-ghost):not(:disabled):hover,
+.oz-cta.is-primary:hover,
+.otoiz-install-btn:not(:disabled):hover {
+  background: var(--oz-btn-primary-hover);
+  box-shadow: var(--oz-btn-primary-edge), 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 22px rgba(34, 197, 94, 0.2);
+}
+.oz-btn:not(.is-ghost):not(:disabled):active,
+.oz-cta.is-primary:active,
+.otoiz-install-btn:not(:disabled):active {
+  opacity: 1;
+  transform: translateY(1px);
+  background: linear-gradient(180deg, #1fb357 0%, #1ca650 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(6, 40, 20, 0.3), 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+/* Secondary: koyu yüzey, ince sınır. */
+.oz-btn.is-ghost,
+.oz-cta:not(.is-primary),
+.oz-smallbtn {
+  background: var(--oz-btn-secondary);
+  border-color: var(--oz-btn-line);
+  box-shadow: var(--oz-btn-secondary-edge), var(--oz-btn-secondary-depth);
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+.oz-btn.is-ghost:not(:disabled):hover,
+.oz-cta:not(.is-primary):hover,
+.oz-smallbtn:hover {
+  background: var(--oz-btn-secondary-hover);
+  border-color: var(--oz-btn-line-hover);
+}
+.oz-btn.is-ghost:not(:disabled):active,
+.oz-cta:not(.is-primary):active,
+.oz-smallbtn:active {
+  opacity: 1;
+  transform: translateY(1px);
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--oz-btn-line);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Sekme ve ikon düğmeleri: yalnız durum yüzeyi. */
+.oz-seg-btn[aria-pressed="true"] {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.09) 100%);
+  border-color: rgba(34, 197, 94, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.oz-seg-btn:not([aria-pressed="true"]):hover { background: rgba(255, 255, 255, 0.035); }
+.oz-iconbtn:active { background: rgba(255, 255, 255, 0.08); }
+.otoiz-install-later:hover { color: rgba(255, 255, 255, 0.86); }
+
+/* Klavye odağı: ince yeşil halka. */
+.oz-btn:focus-visible,
+.oz-cta:focus-visible,
+.oz-smallbtn:focus-visible,
+.oz-seg-btn:focus-visible,
+.oz-iconbtn:focus-visible,
+.otoiz-install-btn:focus-visible {
+  outline: 2px solid rgba(74, 222, 128, 0.7);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oz-btn, .oz-cta, .oz-smallbtn, .otoiz-install-btn { transition: none; }
+}
