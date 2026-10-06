@@ -3818,3 +3818,62 @@ button.oz-row {
   .oz-stat-value { font-size: 11.5px; }
 }
 
+
+/* ==================== Kart görünümü (2026-10-06) ====================
+   Yalnız yüzey: ince sınır, rafine köşe, çok hafif ve kontrollü gölge,
+   üst kenarda ince ışık çizgisi (yüzey derinliği). Ölçü, boşluk, ikon,
+   yazı ve yerleşim aynı. Neon / renkli gölge yok. */
+:root {
+  --oz-card-border: rgba(255, 255, 255, 0.075);
+  --oz-card-border-hover: rgba(255, 255, 255, 0.13);
+  --oz-card-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0) 46%), var(--oz-card);
+  --oz-card-depth: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px -14px rgba(0, 0, 0, 0.75);
+}
+.oz-card,
+.oz-stat,
+.oz-tile,
+.oz-doc,
+.oz-list,
+.oz-kv {
+  border: 1px solid var(--oz-card-border);
+  background: var(--oz-card-surface);
+  box-shadow: var(--oz-card-depth);
+}
+.oz-stat,
+.oz-tile,
+.oz-doc,
+.oz-card {
+  border-radius: 18px;
+}
+.oz-list,
+.oz-kv {
+  border-radius: 16px;
+}
+.oz-vcard {
+  border-color: var(--oz-card-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.45), 0 18px 36px -18px rgba(0, 0, 0, 0.8);
+}
+.oz-valuecard {
+  border-color: var(--oz-card-border);
+  box-shadow: var(--oz-card-depth);
+}
+.oz-role {
+  border: 1px solid var(--oz-card-border);
+  background: var(--oz-card-surface);
+  box-shadow: var(--oz-card-depth);
+}
+.oz-role:not([data-tone]) {
+  /* Seçili (Bireysel) kart: yeşil yalnız ince sınırda, parlama yok. */
+  border-color: rgba(34, 197, 94, 0.38);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.07) 0%, rgba(34, 197, 94, 0) 55%), var(--oz-card);
+}
+@media (hover: hover) {
+  button.oz-stat:hover,
+  .oz-tile:hover,
+  .oz-role:hover {
+    border-color: var(--oz-card-border-hover);
+  }
+  .oz-role:not([data-tone]):hover {
+    border-color: rgba(34, 197, 94, 0.5);
+  }
+}
