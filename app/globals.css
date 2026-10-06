@@ -4290,3 +4290,61 @@ input:where([style*="#0C0E11" i], [style*="12, 14, 17"]):-webkit-autofill {
 @media (prefers-reduced-motion: reduce) {
   :is(input, select, textarea) { transition: none; }
 }
+
+/* ==================== Modal / uyarı / toast yüzeyleri (2026-10-06) ====================
+   Yalnız yüzey: zemin, sınır, derinlik, overlay ve durum ayrımı. Ölçü, konum,
+   padding, açılma/kapanma ve animasyon aynı; ayırıcılar iç gölgeyle çizilir. */
+:root {
+  --oz-sheet-surface: linear-gradient(180deg, #171b20 0%, #111418 100%);
+  --oz-sheet-line: rgba(255, 255, 255, 0.08);
+  --oz-overlay: rgba(4, 6, 8, 0.6);
+}
+/* Overlay: ekranı boğmayan, hafif bulanık karartma. */
+.otoiz-sheet-backdrop,
+.otoiz-drawer-backdrop {
+  background: radial-gradient(120% 80% at 50% 100%, rgba(4, 6, 8, 0.68) 0%, var(--oz-overlay) 60%);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+/* Alttan açılan pencere ve çekmece: koyu antrasit yüzey, ince üst ışık. */
+.otoiz-sheet-panel {
+  background: var(--oz-sheet-surface);
+  border-color: var(--oz-sheet-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 -18px 48px rgba(0, 0, 0, 0.55);
+}
+.otoiz-sheet-grab { background: rgba(255, 255, 255, 0.16); }
+.otoiz-sheet-head { box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.05); }
+.otoiz-drawer-panel { background: var(--oz-sheet-surface); }
+.otoiz-drawer-head { border-bottom-color: rgba(255, 255, 255, 0.07); }
+@media (min-width: 768px) {
+  .otoiz-sheet-panel,
+  .otoiz-sheet-panel.is-form {
+    border-color: var(--oz-sheet-line);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 80px rgba(0, 0, 0, 0.6);
+  }
+  .otoiz-drawer-panel { border-left-color: var(--oz-sheet-line); }
+}
+/* İşlem sonrası toast (başarı): koyu yüzey, kontrollü yeşil sınır. */
+.otoiz-toast {
+  background: linear-gradient(180deg, #1b2025 0%, #14181c 100%);
+  border-color: rgba(34, 197, 94, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+/* Sayfa ve pencere içi uyarılar: durum rengi sakin zemin + ince sınır + üst ışık.
+   (Satır içi soft renklerle eşleşir; yalnız role=alert/status kutuları.) */
+:is([role="alert"], [role="status"]):where([style*="239, 83, 80, 0.14"], [style*="239,83,80,0.14"]) {
+  background: linear-gradient(180deg, rgba(239, 83, 80, 0.13) 0%, rgba(239, 83, 80, 0.08) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(239, 83, 80, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+:is([role="alert"], [role="status"]):where([style*="245, 196, 81, 0.14"], [style*="245,196,81,0.14"]) {
+  background: linear-gradient(180deg, rgba(245, 196, 81, 0.12) 0%, rgba(245, 196, 81, 0.07) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(245, 196, 81, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+:is([role="alert"], [role="status"]):where([style*="34, 197, 94, 0.14"], [style*="34,197,94,0.14"]) {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.07) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+:is([role="alert"], [role="status"]):where([style*="195, 201, 209, 0.12"], [style*="195,201,209,0.12"]) {
+  background: linear-gradient(180deg, rgba(195, 201, 209, 0.09) 0%, rgba(195, 201, 209, 0.05) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(195, 201, 209, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
