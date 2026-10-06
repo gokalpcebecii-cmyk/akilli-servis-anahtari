@@ -4226,3 +4226,67 @@ button.oz-row {
 .oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > .oz-carstage {
   margin-top: 28px !important;
 }
+
+/* ==================== Form alanları (2026-10-06) ====================
+   Yalnız mevcut koyu form alanlarının yüzeyi: zemin, sınır, odak, placeholder,
+   select/textarea, disabled/readonly, hafif iç derinlik. Ölçü/padding aynı.
+   Alanlar satır içi stil (lib/theme inputStyle, koyu zemin #0C0E11) kullandığı
+   için kapsam o zemine sınırlı (:where ile özgüllük düşük tutulur); açık yüzeyli
+   yönetim alanları etkilenmez. Hata durumundaki kırmızı sınır korunur. */
+:root {
+  --oz-field-bg: linear-gradient(180deg, #0b0d10 0%, #0f1215 100%);
+  --oz-field-bg-focus: linear-gradient(180deg, #0c0f12 0%, #111518 100%);
+  --oz-field-line: rgba(255, 255, 255, 0.09);
+  --oz-field-line-hover: rgba(255, 255, 255, 0.14);
+  --oz-field-depth: inset 0 1px 2px rgba(0, 0, 0, 0.45), inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+}
+:is(input, select, textarea):where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"])):where([style*="#0C0E11" i], [style*="12, 14, 17"]) {
+  background: var(--oz-field-bg) !important;
+  box-shadow: var(--oz-field-depth);
+  caret-color: #4ade80;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+:is(input, select, textarea):where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"])):where([style*="#0C0E11" i], [style*="12, 14, 17"]):where(:not([aria-invalid="true"], [style*="EF5350" i], [style*="239, 83, 80"])) {
+  border-color: var(--oz-field-line) !important;
+}
+@media (hover: hover) {
+  :is(input, select, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"]):where(:not(:disabled, [aria-invalid="true"], [style*="EF5350" i], [style*="239, 83, 80"])):hover {
+    border-color: var(--oz-field-line-hover) !important;
+  }
+}
+/* Odak: kontrollü OTOİZ yeşili, yumuşak halka (neon yok). */
+:is(input, select, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"]):focus {
+  background: var(--oz-field-bg-focus) !important;
+  border-color: rgba(34, 197, 94, 0.7) !important;
+  box-shadow: var(--oz-field-depth), 0 0 0 3px rgba(34, 197, 94, 0.12);
+}
+:is(input, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"])[aria-invalid="true"]:focus {
+  border-color: #ef5350 !important;
+  box-shadow: var(--oz-field-depth), 0 0 0 3px rgba(239, 83, 80, 0.14);
+}
+/* Placeholder: sakin, okunur gri. */
+:is(input, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"])::placeholder {
+  color: #6b7380;
+  opacity: 1;
+}
+textarea:where([style*="#0C0E11" i], [style*="12, 14, 17"]) {
+  line-height: 1.5;
+}
+/* Disabled / readonly: aynı yüzey, daha sakin; okunur kalır. */
+:is(input, select, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"]):is(:disabled, [readonly]) {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none;
+  color: #a3abb7;
+  -webkit-text-fill-color: #a3abb7;
+  opacity: 1;
+  cursor: not-allowed;
+}
+/* Tarayıcı otomatik doldurma sarısını koyu yüzeyde tut. */
+input:where([style*="#0C0E11" i], [style*="12, 14, 17"]):-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #0e1114 inset, var(--oz-field-depth);
+  -webkit-text-fill-color: #f5f7fa;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(input, select, textarea) { transition: none; }
+}
