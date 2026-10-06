@@ -45,8 +45,8 @@ export function BuyerReportView({ report }: { report: Report }) {
           <div style={{ marginBottom: 18 }}>
             <OtoizLogo variant="dark" size={110} />
           </div>
-          <p style={{ fontSize: 12, letterSpacing: 1.6, textTransform: "uppercase", color: colors.greenLight, fontWeight: 800, margin: "0 0 8px" }}>Otoiz Alıcı Raporu</p>
-          <h1 style={{ fontSize: 27, fontWeight: 800, color: colors.text, margin: "0 0 6px" }}>{report.vehicle.plate}</h1>
+          <p style={{ fontSize: 12, letterSpacing: 1.6, textTransform: "uppercase", color: colors.greenLight, fontWeight: 700, margin: "0 0 8px" }}>Otoiz Alıcı Raporu</p>
+          <h1 style={{ fontSize: 27, fontWeight: 700, color: colors.text, margin: "0 0 6px" }}>{report.vehicle.plate}</h1>
           <p style={{ color: colors.textMuted, margin: "0 0 14px", fontSize: 15 }}>
             {[report.vehicle.brand, report.vehicle.model].filter(Boolean).join(" ") || "Marka/model belirtilmedi"}
             {report.vehicle.year ? ` · ${report.vehicle.year}` : ""}
@@ -59,7 +59,7 @@ export function BuyerReportView({ report }: { report: Report }) {
       </header>
       <div style={{ maxWidth: 560, margin: "0 auto", padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
         <section style={{ ...cardStyle, padding: 18 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: colors.text, margin: "0 0 10px" }}>Kanıt Özeti</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: "0 0 10px" }}>Kanıt Özeti</h2>
           <p style={{ color: colors.text, margin: "0 0 14px", fontSize: 14.5, fontWeight: 700 }}>{proof}</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
@@ -74,28 +74,28 @@ export function BuyerReportView({ report }: { report: Report }) {
             ].map(([k, v]) => (
               <div key={k as string} style={{ background: colors.surfaceRaised, borderRadius: radius.sm, padding: "10px 12px" }}>
                 <div style={{ fontSize: 12, color: colors.textMuted }}>{k}</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: colors.text, marginTop: 2 }}>{v}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, marginTop: 2 }}>{v}</div>
               </div>
             ))}
           </div>
         </section>
         <section style={{ ...cardStyle, padding: 18 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: colors.text, margin: "0 0 10px" }}>Önemli Tarihler</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: "0 0 10px" }}>Önemli Tarihler</h2>
           <MuayeneDates vehicle={report.vehicle} />
         </section>
         <section style={{ ...cardStyle, padding: 18 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: colors.text, margin: "0 0 12px" }}>Bakım Geçmişi</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: "0 0 12px" }}>Bakım Geçmişi</h2>
           {report.chronology.length === 0 ? (
             <p style={{ color: colors.textMuted, fontSize: 14 }}>Henüz bakım kaydı bulunmuyor.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {report.chronology.map((r, i) => (
                 <div key={i} style={{ background: colors.surfaceRaised, borderRadius: radius.sm, padding: "12px 14px" }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 800, color: colors.text }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: colors.text }}>
                     {fmtDate(r.date)}{r.km ? ` · ${r.km.toLocaleString("tr-TR")} km` : ""}
                   </div>
                   <div style={{ fontSize: 14, color: colors.textMuted, marginTop: 4, lineHeight: 1.5 }}>{r.items || "Bakım kaydı"}</div>
-                  <div style={{ marginTop: 8, display: "inline-block", fontSize: 11.5, fontWeight: 800, letterSpacing: 0.4, padding: "3px 10px", borderRadius: radius.pill, background: r.source === "servis" ? colors.greenSoft : colors.neutralSoft, color: r.source === "servis" ? colors.greenLight : colors.textMuted }}>
+                  <div style={{ marginTop: 8, display: "inline-block", fontSize: 11.5, fontWeight: 700, letterSpacing: 0.4, padding: "3px 10px", borderRadius: radius.pill, background: r.source === "servis" ? colors.greenSoft : colors.neutralSoft, color: r.source === "servis" ? colors.greenLight : colors.textMuted }}>
                     {r.source === "servis" ? "SERVİS DOĞRULAMALI ✓" : "ARAÇ SAHİBİ KAYDI"}
                   </div>
                 </div>

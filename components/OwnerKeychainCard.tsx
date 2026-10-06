@@ -126,7 +126,7 @@ export default function OwnerKeychainCard({ vehicleId, onStatus, bindRequest = 0
   return (
     <section id="anahtarlik" style={cardStyle}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>QR Durumu</h2>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: colors.text, margin: 0 }}>QR Durumu</h2>
         <span data-testid="anahtarlik-durum" style={{ fontSize: 12, fontWeight: 700, borderRadius: radius.pill, padding: "3px 10px", background: activeCode ? colors.green : colors.neutralSoft, color: activeCode ? colors.onAccent : colors.textMuted }}>
           {activeCode ? "Aktif" : "Bağlı değil"}
         </span>
@@ -164,7 +164,7 @@ export default function OwnerKeychainCard({ vehicleId, onStatus, bindRequest = 0
               data-testid="anahtarligi-bagla"
               aria-expanded={false}
               onClick={() => { window.location.href = "/aktivasyon"; }}
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", padding: 0, minHeight: 44, color: colors.greenLight, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", padding: 0, minHeight: 44, color: colors.greenLight, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
             >
               Anahtarlığı Bağla <span aria-hidden="true">→</span>
             </button>

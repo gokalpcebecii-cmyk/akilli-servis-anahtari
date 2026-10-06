@@ -642,7 +642,7 @@ export default function BireyselVehicleDetailPage() {
           >
             <Icon name="check" color={colors.greenLight} size={40} />
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Aracınız hazır</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>Aracınız hazır</h1>
           <p style={{ fontSize: 15.5, color: colors.textMuted, margin: "0 0 6px", lineHeight: 1.5 }}>
             OTOİZ&apos;e hoş geldiniz{userFirstName ? `, ${userFirstName}` : ""}
           </p>
@@ -731,12 +731,12 @@ export default function BireyselVehicleDetailPage() {
           </div>
           {isNew ? (
             <>
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.text, margin: "10px 0 6px" }}>Aracınızı OTOİZ&apos;e ekleyelim</h1>
+              <h1 style={{ fontSize: 26, fontWeight: 700, color: colors.text, margin: "10px 0 6px" }}>Aracınızı OTOİZ&apos;e ekleyelim</h1>
               <p style={{ fontSize: 14.5, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>Plaka, marka/model, yıl ve kilometre yeterli; son bakım ve tarihleri de bu ekrandan ekleyebilirsiniz.</p>
             </>
           ) : (
             <>
-              <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: 0.8, color: colors.text, margin: "10px 0 0", lineHeight: 1.15 }}>{vehicle.plate}</h1>
+              <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: 0.8, color: colors.text, margin: "10px 0 0", lineHeight: 1.15 }}>{vehicle.plate}</h1>
               <div style={{ display: "flex", alignItems: "baseline", gap: "4px 12px", flexWrap: "wrap", marginTop: 6 }}>
                 <span style={{ fontSize: 15, fontWeight: 600, color: colors.textMuted }}>
                   {[vehicle.brand, vehicle.model].filter(Boolean).join(" ") || "Marka/model girilmedi"}
@@ -756,7 +756,7 @@ export default function BireyselVehicleDetailPage() {
           <section id="arac-formu" data-testid="arac-formu" className="otoiz-enter otoiz-detail-narrow" style={{ ...cardStyle, padding: 20 }}>
             {!isNew && (
               <>
-                <h2 style={{ fontSize: 18, fontWeight: 800, color: colors.text, margin: "0 0 4px" }}>Araç Bilgilerini Düzenle</h2>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: "0 0 4px" }}>Araç Bilgilerini Düzenle</h2>
                 <p style={{ fontSize: 14, color: colors.textMuted, margin: "0 0 18px" }}>Değiştirdiğiniz alanlar kaydettiğinizde güncellenir.</p>
               </>
             )}
@@ -800,7 +800,7 @@ export default function BireyselVehicleDetailPage() {
                 placeholder="Örn. 52430"
                 aria-describedby={fieldErrors.current_km ? "err-current_km" : "help-km"}
                 aria-invalid={!!fieldErrors.current_km}
-                style={{ ...inputStyle, fontWeight: 800, fontSize: 18, letterSpacing: 0.3 }}
+                style={{ ...inputStyle, fontWeight: 700, fontSize: 18, letterSpacing: 0.3 }}
                 value={formatKmInput(vehicle.current_km)}
                 onChange={(e) => setVehicle({ ...vehicle, current_km: sanitizeKmInput(e.target.value) })}
               />
@@ -1141,7 +1141,7 @@ export default function BireyselVehicleDetailPage() {
                   <OwnerKeychainCard vehicleId={vehicle.id} onStatus={setQrActive} bindRequest={qrBindReq} />
                   {PILOT_FLAGS.ownershipTransferSelfService && (
                     <section id="devir" style={{ ...cardStyle, padding: 16 }}>
-                      <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.text, margin: "0 0 4px" }}>Sahiplik Devri</h2>
+                      <h2 style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: "0 0 4px" }}>Sahiplik Devri</h2>
                       <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 8px", lineHeight: 1.5 }}>
                         Aracınızı sattığınızda teknik geçmişi koruyarak yeni sahibine devredin. Kişisel bilgileriniz aktarılmaz.
                       </p>
@@ -1178,7 +1178,7 @@ export default function BireyselVehicleDetailPage() {
             <div className="otoiz-detail-narrow" style={{ display: activeTab === "belgeler" ? "flex" : "none", flexDirection: "column", gap: 16 }}>
               <section id="muayene" data-testid="tarihler-belgeler" style={cardStyle}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
-                  <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>Önemli Tarihler</h2>
+                  <h2 style={{ fontSize: 17, fontWeight: 700, color: colors.text, margin: 0 }}>Önemli Tarihler</h2>
                   {!docsEditing && (
                     <button
                       type="button"
@@ -1304,7 +1304,7 @@ export default function BireyselVehicleDetailPage() {
               {/* Nihai UX: serbest not yerine "Geçmiş İşlem Ekle" — kayıt
                   "Bireysel Geçmiş Kaydı" olarak görünür. */}
               <section id="gecmis-islem-ekle" data-testid="gecmis-islem-ekle" tabIndex={-1} style={{ ...cardStyle, outline: "none" }}>
-                <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.text, margin: "0 0 4px" }}>Geçmiş İşlem Ekle</h2>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: "0 0 4px" }}>Geçmiş İşlem Ekle</h2>
                 <p data-testid="gecmis-beyan" style={{ ...helperStyle, margin: "0 0 12px" }}>Bu kayıt sizin beyanınızla eklenir ve Bireysel Geçmiş Kaydı olarak görünür.</p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
                   {(
@@ -1379,7 +1379,7 @@ function SectionHeader({ icon, title, center = false }: { icon: string; title: s
       <div style={{ width: 34, height: 34, borderRadius: 10, background: colors.surfaceRaised, border: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Icon name={icon} color={colors.greenLight} size={16} />
       </div>
-      <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>{title}</h2>
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: colors.text, margin: 0 }}>{title}</h2>
     </div>
   );
 }
@@ -1422,7 +1422,7 @@ function NextServiceFields({ vehicle, setVehicle, fieldErrors, todayIso }: { veh
           placeholder="Örn. 95.000"
           aria-describedby={fieldErrors.next_service_km ? "err-next-km" : undefined}
           aria-invalid={!!fieldErrors.next_service_km}
-          style={{ ...inputStyle, fontWeight: 800, fontSize: 18, letterSpacing: 0.3 }}
+          style={{ ...inputStyle, fontWeight: 700, fontSize: 18, letterSpacing: 0.3 }}
           value={formatKmInput(vehicle.next_service_km || "")}
           onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
         />

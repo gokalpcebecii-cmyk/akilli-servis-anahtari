@@ -422,7 +422,7 @@ a:focus-visible {
     border: none;
     border-radius: 999px;
     padding: 11px 19px;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 14px;
     cursor: pointer;
     font-family: inherit;
@@ -529,7 +529,7 @@ a:focus-visible {
     border: none;
     border-radius: 999px;
     padding: 17px 30px;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 16px;
     cursor: pointer;
     font-family: inherit;
@@ -837,14 +837,14 @@ a:focus-visible {
   background: rgba(34, 197, 94, 0.14);
   color: #86efac;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.3px;
   margin-bottom: 12px;
 }
 .otoiz-auth2-title {
   font-size: 23px;
   line-height: 1.25;
-  font-weight: 800;
+  font-weight: 700;
   margin: 0 0 6px;
   color: var(--otoiz-text-dark);
 }
@@ -882,7 +882,7 @@ a:focus-visible {
 .otoiz-auth2-link-strong {
   color: var(--otoiz-green);
   text-decoration-color: rgba(34, 197, 94, 0.5);
-  font-weight: 800;
+  font-weight: 700;
 }
 .otoiz-auth2-loading {
   position: relative;
@@ -1010,7 +1010,7 @@ a:focus-visible {
 }
 .otoiz-install-title {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
 }
 .otoiz-install-sub {
@@ -1027,7 +1027,7 @@ a:focus-visible {
   background: var(--otoiz-green);
   color: var(--otoiz-on-accent);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.4px;
   display: inline-flex;
   align-items: center;
@@ -1089,7 +1089,7 @@ a:focus-visible {
 }
 .otoiz-install-sheet-head h2 {
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 700;
   margin: 0;
 }
 .otoiz-install-close {
@@ -1125,7 +1125,7 @@ a:focus-visible {
   border-radius: 50%;
   background: var(--otoiz-anthracite);
   color: var(--otoiz-green);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 14px;
   display: inline-flex;
   align-items: center;
@@ -1211,7 +1211,7 @@ a:focus-visible {
 }
 .otoiz-iw-brand {
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.25;
 }
 .otoiz-iw-close {
@@ -1267,7 +1267,7 @@ a:focus-visible {
   border: 1.5px solid rgba(34, 197, 94, 0.55);
   color: var(--otoiz-green);
   font-size: 30px;
-  font-weight: 900;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1281,7 +1281,7 @@ a:focus-visible {
 .otoiz-iw-title {
   margin: 2px 0 0;
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
   outline: none;
 }
@@ -1338,7 +1338,7 @@ a:focus-visible {
 .otoiz-iw-hit-text {
   padding: 0 12px;
   color: var(--otoiz-green);
-  font-weight: 800;
+  font-weight: 700;
 }
 .otoiz-iw-list {
   border-radius: 12px;
@@ -1425,7 +1425,7 @@ a:focus-visible {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   color: var(--otoiz-green);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 13px;
   display: inline-flex;
   align-items: center;
@@ -1451,7 +1451,7 @@ a:focus-visible {
   background: var(--otoiz-green);
   color: var(--otoiz-on-accent);
   font-size: 16.5px;
-  font-weight: 900;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1645,7 +1645,7 @@ a:focus-visible {
 }
 .otoiz-benefit-card-title {
   font-size: 14.5px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
   margin-bottom: 4px;
   line-height: 1.3;
@@ -2371,7 +2371,7 @@ a {
   justify-content: center;
   cursor: pointer;
   font: inherit;
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: none;
 }
 .oz-iconbtn:hover {
@@ -2474,7 +2474,7 @@ a {
 }
 .oz-plate {
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.1;
   margin: 0;
@@ -2525,7 +2525,7 @@ a {
 }
 .oz-vkm {
   font-size: 21px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -2654,7 +2654,7 @@ button.oz-stat {
 }
 .oz-h1 {
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 700;
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -2967,7 +2967,7 @@ button.oz-stat {
   margin: 0;
   font-size: 22px;
   line-height: 1.2;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   max-width: 220px;
 }
@@ -3103,7 +3103,7 @@ button.oz-row {
   background: var(--oz-red);
   color: #fff;
   font-size: 8.5px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.02em;
   text-align: center;
   text-transform: lowercase;
@@ -3154,7 +3154,7 @@ button.oz-row {
 }
 .oz-gauge-value {
   font-size: 30px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
   margin-top: 8px;
@@ -3447,7 +3447,7 @@ button.oz-row {
 .oz-land-title {
   font-size: 34px;
   line-height: 1.08;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
   margin: 0;
 }
@@ -3876,4 +3876,102 @@ button.oz-row {
   .oz-role:not([data-tone]):hover {
     border-color: rgba(34, 197, 94, 0.5);
   }
+}
+
+/* ==================== Tipografi rafine (2026-10-06) ====================
+   Yalnız yazı: ağırlık, boyut, satır yüksekliği, harf aralığı.
+   Hiyerarşi ağırlık farkından değil, boyut + aralık + renk tonundan gelir.
+   Ağırlıklar: 400 açıklama · 500 meta · 560 düğme · 620 başlık · 680 ekran başlığı.
+   Kart ve düğme ölçüleri sabit; yalnız metin ölçüsü değişir. */
+:root {
+  --oz-fw-meta: 500;
+  --oz-fw-btn: 560;
+  --oz-fw-title: 620;
+  --oz-fw-display: 680;
+}
+.oz-app {
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ekran başlıkları: ince tracking, rafine ağırlık. */
+.oz-h1,
+.oz-land-title,
+.oz-valuecard-title,
+.oz-gauge-value {
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+.oz-h1 { line-height: 1.18; }
+.oz-valuecard-title { line-height: 1.2; }
+
+/* Plaka: Türk plakası gibi açık aralıklı, ölçü 26'da sabit. */
+.oz-plate {
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  line-height: 1.08;
+}
+.oz-vkm {
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}
+.oz-vsub { font-weight: 400; letter-spacing: 0.005em; }
+
+/* Bölüm ve kart başlıkları. */
+.oz-h2,
+.oz-subhead-title {
+  font-size: 16.5px;
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+}
+.oz-tile-title,
+.oz-role-title,
+.oz-doc-title,
+.oz-list-title {
+  letter-spacing: -0.008em;
+}
+.oz-tile-title { font-size: 15px; line-height: 1.3; }
+.oz-role-title { font-size: 16.5px; line-height: 1.3; }
+.oz-doc-title { font-size: 14.5px; line-height: 1.32; }
+.oz-list-title { font-size: 14.5px; line-height: 1.32; }
+.oz-stat-label { font-size: 13px; font-weight: 600; letter-spacing: 0; line-height: 1.3; }
+.oz-kv-value { font-size: 16.5px; font-weight: 600; letter-spacing: -0.01em; }
+.oz-tl-date { font-size: 14.5px; font-weight: 600; letter-spacing: -0.005em; }
+.oz-promo-text { font-size: 16.5px; font-weight: 560; letter-spacing: -0.01em; line-height: 1.35; }
+
+/* Açıklamalar: ferah satır, hafif açık aralık. */
+.oz-tile-sub { font-size: 12.5px; line-height: 1.45; letter-spacing: 0.003em; }
+.oz-role-desc,
+.oz-tl-lines,
+.oz-steps > li { line-height: 1.55; letter-spacing: 0.003em; }
+.oz-land-sub,
+.oz-note,
+.oz-missing,
+.oz-gauge-caption { line-height: 1.55; }
+
+/* Meta: küçük, net, hafif açık tracking. */
+.oz-tl-km,
+.oz-doc-meta,
+.oz-kv-label,
+.oz-list-row .oz-list-val,
+.oz-src,
+.oz-feat-title {
+  letter-spacing: 0.012em;
+}
+.oz-stat-value { font-weight: 500; letter-spacing: 0.01em; }
+.oz-src { font-weight: 500; }
+.oz-pill { font-weight: 560; letter-spacing: 0.02em; }
+.oz-feat-title { font-weight: 560; }
+
+/* Düğmeler: ölçü sabit, yazı rafine. */
+.oz-btn,
+.oz-cta { letter-spacing: 0.005em; }
+.oz-smallbtn,
+.oz-seg-btn { letter-spacing: 0.008em; }
+.oz-nav-item { letter-spacing: 0.012em; }
+
+@media (max-width: 374px) {
+  .oz-stat-label { font-size: 12.5px; }
 }

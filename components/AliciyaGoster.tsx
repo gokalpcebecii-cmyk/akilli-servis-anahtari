@@ -136,7 +136,7 @@ export function AliciyaGoster({ vehicleId }: { vehicleId: string }) {
           <Icon name="share" color={colors.greenLight} size={20} />
         </div>
         <span>
-          <span style={{ display: "block", fontSize: 16, fontWeight: 800, color: colors.text }}>Alıcıya Göster</span>
+          <span style={{ display: "block", fontSize: 16, fontWeight: 700, color: colors.text }}>Alıcıya Göster</span>
           <span style={{ display: "block", fontSize: 13, color: colors.textMuted, marginTop: 2 }}>OTOİZ Alıcı Raporu — QR, PDF ve e-posta</span>
         </span>
       </button>
@@ -146,7 +146,7 @@ export function AliciyaGoster({ vehicleId }: { vehicleId: string }) {
   return (
     <section data-testid="aliciya-goster" style={{ ...cardStyle, padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>Alıcıya Göster</h2>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: colors.text, margin: 0 }}>Alıcıya Göster</h2>
         <button type="button" onClick={() => setOpen(false)} aria-label="Kapat" style={{ background: "transparent", border: "none", color: colors.textMuted, fontSize: 20, cursor: "pointer", minWidth: 44, minHeight: 44 }}>×</button>
       </div>
       <p style={{ color: colors.textMuted, fontSize: 13.5, margin: "0 0 12px", lineHeight: 1.5 }}>Aracınızı satarken &quot;bakımlı&quot; demeyin. Geçmişini gösterin.</p>

@@ -61,7 +61,7 @@ export function Drawer({
         className="otoiz-drawer-panel"
       >
         <div className="otoiz-drawer-head">
-          <h2 id="otoiz-drawer-title" style={{ fontSize: 18, fontWeight: 800, color: colors.text, margin: 0 }}>
+          <h2 id="otoiz-drawer-title" style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>
             {title}
           </h2>
           <button

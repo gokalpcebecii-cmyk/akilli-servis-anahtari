@@ -138,7 +138,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
         <div style={{ ...cardStyle, boxShadow: "0 14px 34px rgba(0,0,0,0.14)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: 0.8, color: colors.textDark }}>{vehicle.plate}</div>
+              <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: 0.8, color: colors.textDark }}>{vehicle.plate}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>
                 {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
               </div>
@@ -161,7 +161,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
           <div style={{ display: "grid", gridTemplateColumns: nextService ? "1fr 1fr 1fr" : "1fr 1fr", gap: 10 }}>
             <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
               <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>GÜNCEL KM</div>
-              <div style={{ fontSize: 19, fontWeight: 800, color: colors.textDark }}>{vehicle.current_km?.toLocaleString("tr-TR") ?? "—"}</div>
+              <div style={{ fontSize: 19, fontWeight: 700, color: colors.textDark }}>{vehicle.current_km?.toLocaleString("tr-TR") ?? "—"}</div>
             </div>
             <div style={{ background: colors.surfaceSoft, borderRadius: radius.sm, padding: "10px 12px" }}>
               <div style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>SON SERVİS</div>
@@ -180,7 +180,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
       </div>
 
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "20px" }}>
-        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Araç Sağlık Özeti</h2>
+        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 700 }}>Araç Sağlık Özeti</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
           {[
             ...ITEM_ORDER,
@@ -201,7 +201,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
           })}
         </div>
 
-        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Bakım Geçmişi</h2>
+        <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 700 }}>Bakım Geçmişi</h2>
         {records.length === 0 ? (
           <p style={{ color: colors.textMuted, fontSize: 13 }}>Henüz kayıt bulunmuyor.</p>
         ) : (
@@ -236,7 +236,7 @@ export function PublicPassportView({ passport }: { passport: PublicPassportData 
         {/* Bireysel (servissiz) araçlarda boş "Yetkili Servis" kartı gösterilmez. */}
         {tenant?.name && (
           <>
-            <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 800 }}>Yetkili Servis</h2>
+            <h2 style={{ fontSize: 15, color: colors.textDark, marginBottom: 12, fontWeight: 700 }}>Yetkili Servis</h2>
             <div style={cardStyle}>
               <p style={{ fontSize: 14, fontWeight: 700, color: colors.textDark, margin: "0 0 4px" }}>{tenant?.name}</p>
               <p style={{ fontSize: 13, color: colors.textMuted, margin: "0 0 2px" }}>{tenant?.phone}</p>
@@ -253,7 +253,7 @@ export function PublicPassportMessage({ title, body }: { title: string; body: st
   return (
     <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
       <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-        <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>{title}</h1>
+        <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 700 }}>{title}</h1>
         <p style={{ color: colors.textMuted }}>{body}</p>
       </div>
     </main>

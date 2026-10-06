@@ -193,7 +193,7 @@ export default function GecmisBaslatPage() {
                   <span
                     aria-hidden="true"
                     style={{
-                      width: 26, height: 26, minWidth: 26, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800,
+                      width: 26, height: 26, minWidth: 26, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700,
                       border: `1.5px solid ${state === "todo" ? colors.border : colors.green}`,
                       background: state === "done" ? colors.green : "transparent",
                       color: state === "done" ? colors.onAccent : state === "current" ? colors.greenLight : colors.textMuted,
@@ -222,7 +222,7 @@ export default function GecmisBaslatPage() {
         {!done && (
           <>
             <section data-testid="gecmis-baslat" className="otoiz-enter">
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: colors.text, margin: "0 0 8px", lineHeight: 1.25 }}>Aracınızın geçmişini başlatalım</h1>
+              <h1 style={{ fontSize: 22, fontWeight: 700, color: colors.text, margin: "0 0 8px", lineHeight: 1.25 }}>Aracınızın geçmişini başlatalım</h1>
               <p style={{ fontSize: 15, color: colors.textMuted, margin: 0, lineHeight: 1.55 }}>
                 Son 12 ayda yapılan önemli bakım ve işlemleri ekleyin. OTOİZ sonraki bakım takibini bu geçmişe göre başlatsın.
               </p>
@@ -238,7 +238,7 @@ export default function GecmisBaslatPage() {
                   const editing = editorOpen && editIndex === i;
                   return (
                     <li key={i} data-testid="gecmis-ozet" style={{ ...cardStyle, padding: "14px 16px", borderColor: editing ? colors.green : colors.border }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: colors.text }}>{sum.head}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{sum.head}</div>
                       <div style={{ fontSize: 14, color: colors.textMuted, marginTop: 3, lineHeight: 1.45, overflowWrap: "anywhere" }}>{sum.items}</div>
                       <div style={{ display: "flex", gap: 16, marginTop: 6 }}>
                         <button type="button" onClick={() => editEntry(i)} disabled={saving} style={linkButton(colors.text)}>
@@ -256,7 +256,7 @@ export default function GecmisBaslatPage() {
 
             {editorOpen ? (
               <section id="gecmis-duzenleyici" data-testid="gecmis-duzenleyici" style={{ ...cardStyle, padding: 18 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.text, margin: "0 0 14px" }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: colors.text, margin: "0 0 14px" }}>
                   {editIndex != null ? "Geçmiş işlemi düzenle" : entries.length === 0 ? "Geçmiş işlem" : "Yeni geçmiş işlem"}
                 </h2>
                 <HistoryEntryFields
@@ -316,7 +316,7 @@ export default function GecmisBaslatPage() {
             <div aria-hidden="true" style={{ width: 48, height: 48, borderRadius: radius.md, background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
               <Icon name="check" color={colors.greenLight} size={24} />
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>OTOİZ hazır</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>OTOİZ hazır</h1>
             {plan ? (
               <p data-testid="gecmis-plan" style={{ fontSize: 15, color: colors.textMuted, margin: "0 0 22px", lineHeight: 1.55 }}>
                 Geçmişiniz kaydedildi. Sonraki bakım{" "}

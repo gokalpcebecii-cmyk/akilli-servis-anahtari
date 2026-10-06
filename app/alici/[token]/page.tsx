@@ -54,7 +54,7 @@ export default function AliciPage() {
     return (
       <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-          <h1 style={{ color: colors.text, fontWeight: 800, fontSize: 22, marginBottom: 10 }}>{title}</h1>
+          <h1 style={{ color: colors.text, fontWeight: 700, fontSize: 22, marginBottom: 10 }}>{title}</h1>
           <p style={{ color: colors.textMuted, lineHeight: 1.6 }}>{body}</p>
         </div>
       </main>

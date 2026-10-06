@@ -25,9 +25,9 @@ function fmt(d: string | null | undefined) {
 
 function StatusPill({ status }: { status: string | null }) {
   const st = status ? STATUS_STYLE[status] : null;
-  if (!st) return <span style={{ fontSize: 12, fontWeight: 800, color: colors.textMuted }}>ÖLÇÜLMÜYOR</span>;
+  if (!st) return <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted }}>ÖLÇÜLMÜYOR</span>;
   return (
-    <span style={{ display: "inline-block", minWidth: 74, textAlign: "center", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 800, letterSpacing: 0.4, background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
+    <span style={{ display: "inline-block", minWidth: 74, textAlign: "center", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: 0.4, background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
       {status}
     </span>
   );
@@ -71,7 +71,7 @@ export function SystemHealthTab({ api }: { api: Api }) {
       </div>
       {error && <p role="alert" style={{ color: colors.danger, fontWeight: 700 }}>{error}</p>}
       {data && st && (
-        <div data-testid="saglik-genel" style={{ background: st.bg, border: `1px solid ${st.border}`, color: st.fg, borderRadius: radius.md, padding: "12px 14px", marginBottom: 14, fontWeight: 800 }}>
+        <div data-testid="saglik-genel" style={{ background: st.bg, border: `1px solid ${st.border}`, color: st.fg, borderRadius: radius.md, padding: "12px 14px", marginBottom: 14, fontWeight: 700 }}>
           Genel durum: {overall}
           <span style={{ fontWeight: 600, fontSize: 12.5, marginLeft: 8 }}>· ölçüm {fmt(data.measured_at)}</span>
         </div>
@@ -81,10 +81,10 @@ export function SystemHealthTab({ api }: { api: Api }) {
           <div key={it.key} data-testid={`saglik-${it.key}`} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 14px", border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "10px 12px" }}>
             <StatusPill status={it.measured ? it.status : null} />
             <div style={{ flex: "1 1 220px", minWidth: 0 }}>
-              <div style={{ fontWeight: 800, fontSize: 14 }}>{it.label}</div>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{it.label}</div>
               <div style={{ fontSize: 12.5, color: colors.textMuted }}>{it.detail}</div>
             </div>
-            <div style={{ fontWeight: 800, fontSize: 16 }}>{valueText(it)}</div>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>{valueText(it)}</div>
           </div>
         ))}
       </div>

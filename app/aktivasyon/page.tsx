@@ -34,7 +34,7 @@ function Shell({ step, children }: { step: Step; children: React.ReactNode }) {
       <div style={{ background: colors.bg, padding: "18px 16px 34px" }}>
         <div style={{ maxWidth: 420, margin: "0 auto" }}>
           <OtoizLogo variant="dark" size={120} />
-          <h1 style={{ color: colors.textLight, fontSize: 21, fontWeight: 800, margin: "14px 0 4px" }}>Anahtarlığını etkinleştir</h1>
+          <h1 style={{ color: colors.textLight, fontSize: 21, fontWeight: 700, margin: "14px 0 4px" }}>Anahtarlığını etkinleştir</h1>
           <div aria-hidden style={{ display: "flex", gap: 6, marginTop: 12 }}>
             {order.map((s, i) => (
               <span key={s} style={{ flex: 1, height: 4, borderRadius: 4, background: i <= idx ? colors.green : "rgba(255,255,255,0.18)" }} />
@@ -192,7 +192,7 @@ function AktivasyonInner() {
             <>
               <label style={labelStyle} htmlFor="akt-seri">Seri numarası</label>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                <span style={{ minHeight: 48, display: "flex", alignItems: "center", padding: "0 12px", borderRadius: radius.sm, background: colors.surfaceSoft, border: `1px solid ${colors.border}`, fontWeight: 800, color: colors.textDark }}>OTZ-</span>
+                <span style={{ minHeight: 48, display: "flex", alignItems: "center", padding: "0 12px", borderRadius: radius.sm, background: colors.surfaceSoft, border: `1px solid ${colors.border}`, fontWeight: 700, color: colors.textDark }}>OTZ-</span>
                 <input
                   id="akt-seri"
                   value={serialDigits}
@@ -214,7 +214,7 @@ function AktivasyonInner() {
             autoCapitalize="characters"
             autoComplete="one-time-code"
             spellCheck={false}
-            style={{ ...inputStyle, fontSize: 20, letterSpacing: 2, fontWeight: 800, textAlign: "center", marginBottom: 8 }}
+            style={{ ...inputStyle, fontSize: 20, letterSpacing: 2, fontWeight: 700, textAlign: "center", marginBottom: 8 }}
           />
           <p style={{ fontSize: 12.5, color: colors.textMuted, margin: "0 0 14px" }}>Kod, anahtarlığın paketindeki kartta yazar.</p>
           {error && <p role="alert" style={{ color: colors.danger, fontSize: 13.5, margin: "0 0 12px" }}>{error}</p>}

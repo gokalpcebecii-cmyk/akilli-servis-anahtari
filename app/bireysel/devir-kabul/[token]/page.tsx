@@ -90,7 +90,7 @@ export default function DevirKabulPage() {
     return (
       <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bu Özellik Şu An Kullanılamıyor</h1>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 700 }}>Bu Özellik Şu An Kullanılamıyor</h1>
           <p style={{ color: colors.textMuted, marginTop: 8 }}>
             Sahiplik devri, güvenlik kabulü tamamlanana kadar pilot kapsamı dışındadır.
           </p>
@@ -108,7 +108,7 @@ export default function DevirKabulPage() {
           <div style={{ width: 52, height: 52, borderRadius: "50%", background: colors.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
             <Icon name="check" color={colors.greenDark} size={24} />
           </div>
-          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Devir Tamamlandı</h1>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 700 }}>Devir Tamamlandı</h1>
           <p style={{ color: colors.textMuted, marginBottom: 24 }}>Araç artık hesabınıza bağlı. Bakım geçmişi aynen korundu.</p>
           <button onClick={() => router.push(`/bireysel/araclar/${done}`)} style={{ ...primaryButtonStyle(false), width: "auto", padding: "12px 24px" }}>
             Aracımı Görüntüle
@@ -122,7 +122,7 @@ export default function DevirKabulPage() {
     return (
       <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Devir Reddedildi</h1>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 700 }}>Devir Reddedildi</h1>
           <p style={{ color: colors.textMuted }}>Araç önceki sahibinde kaldı. Bu bağlantı artık kullanılamaz.</p>
         </div>
       </main>
@@ -134,7 +134,7 @@ export default function DevirKabulPage() {
       <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
           <OtoizLogo variant="dark" size={150} mark="primary" />
-          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800, marginTop: 16 }}>Araç Devrini Kabul Et</h1>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 700, marginTop: 16 }}>Araç Devrini Kabul Et</h1>
           <p style={{ fontSize: 13, color: colors.textMuted, margin: "8px 0 16px" }}>
             Devir bilgilerini görmek ve aracı devralmak için OTOİZ bireysel hesabınızla giriş yapın veya hesap oluşturun.
           </p>
@@ -153,7 +153,7 @@ export default function DevirKabulPage() {
     return (
       <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Bu devri siz başlattınız</h1>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 700 }}>Bu devri siz başlattınız</h1>
           <p style={{ color: colors.textMuted }}>Bağlantıyı aracı devredeceğiniz kişiyle paylaşın. Kendi hesabınızla kabul edemezsiniz.</p>
         </div>
       </main>
@@ -164,7 +164,7 @@ export default function DevirKabulPage() {
     return (
       <main style={{ minHeight: "100vh", background: colors.bg, fontFamily: font, display: "flex", alignItems: "center" }}>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 800 }}>Geçersiz veya Süresi Dolmuş Bağlantı</h1>
+          <h1 style={{ fontSize: 20, color: colors.textDark, fontWeight: 700 }}>Geçersiz veya Süresi Dolmuş Bağlantı</h1>
           <p style={{ color: colors.textMuted }}>Bu devir bağlantısı artık geçerli değil.</p>
         </div>
       </main>
@@ -177,10 +177,10 @@ export default function DevirKabulPage() {
         <div style={{ marginBottom: 20, textAlign: "center" }}>
           <OtoizLogo variant="dark" size={150} mark="primary" />
         </div>
-        <h1 style={{ fontSize: 20, marginBottom: 8, textAlign: "center", color: colors.textDark, fontWeight: 800 }}>Araç Devrini Kabul Et</h1>
+        <h1 style={{ fontSize: 20, marginBottom: 8, textAlign: "center", color: colors.textDark, fontWeight: 700 }}>Araç Devrini Kabul Et</h1>
 
         <div style={{ ...cardStyle, textAlign: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: colors.textDark }}>{preview.plate}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: colors.textDark }}>{preview.plate}</div>
           <div style={{ fontSize: 13, color: colors.textMuted }}>{preview.brand} {preview.model}</div>
           <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>Güncel km: {preview.current_km?.toLocaleString("tr-TR")}</div>
         </div>

@@ -257,7 +257,7 @@ export default function UrunlerTab({ api, tenants }: { api: Api; tenants: any[] 
 
       {reissued && (
         <section role="alert" style={{ ...cardStyle, marginBottom: 16, border: `2px solid ${colors.warning}` }}>
-          <strong>{reissued.serial_no}</strong> için yeni aktivasyon kodu: <code style={{ fontWeight: 800, fontSize: 16 }}>{formatActivationCode(reissued.activation_code)}</code>
+          <strong>{reissued.serial_no}</strong> için yeni aktivasyon kodu: <code style={{ fontWeight: 700, fontSize: 16 }}>{formatActivationCode(reissued.activation_code)}</code>
           <div style={{ fontSize: 12.5, color: colors.textMuted, marginTop: 4 }}>Eski kod artık geçersiz. Bu kod yalnız şimdi gösterilir.</div>
           <button onClick={() => setReissued(null)} style={{ ...btn("transparent", colors.textMuted), marginTop: 6 }}>Kapat</button>
         </section>
