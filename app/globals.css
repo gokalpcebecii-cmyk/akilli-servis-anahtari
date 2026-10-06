@@ -4348,3 +4348,56 @@ input:where([style*="#0C0E11" i], [style*="12, 14, 17"]):-webkit-autofill {
   background: linear-gradient(180deg, rgba(195, 201, 209, 0.09) 0%, rgba(195, 201, 209, 0.05) 100%) !important;
   box-shadow: inset 0 0 0 1px rgba(195, 201, 209, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
+
+/* ==================== Görsel kontrol düzeltmeleri (2026-10-06) ====================
+   Yalnız görünüm; işlev, ölçü, metin aynı. */
+
+/* 1) Bölüm giriş animasyonu bittikten sonra transform bırakmaz: içindeki
+   sabit pencereler (QR Kodu) tam ekranı kaplar ve alt menünün üstünde kalır. */
+.oz-enter {
+  animation-fill-mode: backwards;
+}
+
+/* 2) Satır içi düz yeşil ana butonlar → premium primary yüzey (yalnız yüzey). */
+form:has(#bireysel-email) > button[type="submit"]:not(:disabled),
+[data-testid="islem-ekle"],
+[data-testid="arac-formu"] button:not(:disabled):where([style*="#22C55E" i], [style*="rgb(34, 197, 94)"]):where([style*="width:100%"], [style*="width: 100%"]),
+[data-testid="bakim-kaydet"]:not(:disabled),
+[data-testid="km-kaydet"]:not(:disabled) {
+  background: var(--oz-btn-primary) !important;
+  box-shadow: var(--oz-btn-primary-edge), var(--oz-btn-primary-depth) !important;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+@media (hover: hover) {
+  form:has(#bireysel-email) > button[type="submit"]:not(:disabled):hover,
+  [data-testid="islem-ekle"]:hover,
+  [data-testid="arac-formu"] button:not(:disabled):where([style*="#22C55E" i], [style*="rgb(34, 197, 94)"]):where([style*="width:100%"], [style*="width: 100%"]):hover,
+  [data-testid="bakim-kaydet"]:not(:disabled):hover,
+  [data-testid="km-kaydet"]:not(:disabled):hover {
+    background: var(--oz-btn-primary-hover) !important;
+    box-shadow: var(--oz-btn-primary-edge), 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 22px rgba(34, 197, 94, 0.2) !important;
+  }
+}
+form:has(#bireysel-email) > button[type="submit"]:not(:disabled):active,
+[data-testid="islem-ekle"]:active,
+[data-testid="arac-formu"] button:not(:disabled):where([style*="#22C55E" i], [style*="rgb(34, 197, 94)"]):where([style*="width:100%"], [style*="width: 100%"]):active,
+[data-testid="bakim-kaydet"]:not(:disabled):active,
+[data-testid="km-kaydet"]:not(:disabled):active {
+  filter: none;
+  transform: translateY(1px);
+  background: linear-gradient(180deg, #1fb357 0%, #1ca650 100%) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(6, 40, 20, 0.3), 0 1px 1px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 3) Tüm Ayrıntılar sekmeleri: aktif sekme koyu yeşil ton + ince yeşil kenar
+   (diğer filtrelerle aynı); kenar inset gölgeyle, ölçü değişmez. */
+nav[aria-label="Araç bölümleri"] > button[aria-current="page"] {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.09) 100%) !important;
+  color: #4ade80 !important;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* 4) Hızlı İşlemler ile Alıcıya Göster kartı arası 14 px. */
+:is(.otoiz-when-stacked, .otoiz-when-wide) > [data-testid="hizli-islemler"] + :is(button, [data-testid="aliciya-goster"]) {
+  margin-top: 14px;
+}
