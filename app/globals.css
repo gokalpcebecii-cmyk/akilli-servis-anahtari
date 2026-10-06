@@ -4096,3 +4096,35 @@ button.oz-row {
 @media (prefers-reduced-motion: reduce) {
   .oz-btn, .oz-cta, .oz-smallbtn, .otoiz-install-btn { transition: none; }
 }
+
+/* ==================== Üst araç kartı görseli (2026-10-06) ====================
+   Yalnız kokpit üst kartındaki araç fotoğrafı: kadraj, crop, gradyan, denge.
+   Görsel üstte plaka ve altta km alanının arkasına yumuşakça uzanır; akıştaki
+   yüksekliği aynı kalır (172 = 224 − 28 − 24). Metin katmanları fotoğrafın önünde. */
+.oz-vcard-head,
+.oz-vcard-foot {
+  position: relative;
+  z-index: 1;
+}
+.oz-carimg {
+  height: 224px;
+  margin: -28px -16px -24px;
+  background-image:
+    linear-gradient(180deg, rgba(14, 18, 20, 0.62) 0%, rgba(14, 18, 20, 0.18) 24%, rgba(14, 18, 20, 0) 40%, rgba(14, 18, 20, 0) 64%, rgba(14, 18, 20, 0.5) 88%, rgba(14, 18, 20, 0.72) 100%),
+    radial-gradient(85% 70% at 62% 58%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%),
+    url(/marketing/otoiz-arac-temiz.webp);
+  background-size: 100% 100%, 100% 100%, 100% auto;
+  background-position: 0 0, 0 0, 50% 62%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 80%, transparent 100%), linear-gradient(180deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 80%, transparent 100%), linear-gradient(180deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+  mask-composite: intersect;
+}
+.oz-plate,
+.oz-vkm { text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45); }
+@media (min-width: 720px) {
+  .oz-carimg { height: 252px; }
+}
+@media (min-width: 1024px) {
+  .oz-carimg { height: 292px; }
+}
