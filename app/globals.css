@@ -2507,9 +2507,9 @@ a {
   position: relative;
   height: 172px;
   margin: 6px -16px 0;
-  background-image: url(/marketing/otoiz-arac-kart.webp);
+  background-image: url(/marketing/otoiz-arac-temiz.webp);
   background-size: cover;
-  background-position: 50% 62%;
+  background-position: 50% 72%;
   background-repeat: no-repeat;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12%, #000 70%, transparent 97%), linear-gradient(180deg, transparent 0, #000 14%, #000 80%, transparent 100%);
   -webkit-mask-composite: source-in;
@@ -2951,9 +2951,9 @@ button.oz-stat {
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url(/marketing/otoiz-deger-kart.webp);
+  background-image: url(/marketing/otoiz-deger-temiz.webp);
   background-size: cover;
-  background-position: 70% 50%;
+  background-position: 100% 38%;
 }
 .oz-valuecard::after {
   content: "";
@@ -3279,7 +3279,7 @@ button.oz-row {
 .oz-carstage {
   height: 200px;
   margin: 0 -16px;
-  background-image: url(/marketing/otoiz-arac-kart.webp);
+  background-image: url(/marketing/otoiz-arac-temiz.webp);
   background-size: cover;
   background-position: 50% 60%;
   background-repeat: no-repeat;
@@ -3431,7 +3431,7 @@ button.oz-row {
   top: 0;
   height: 400px;
   z-index: -1;
-  background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.75) 0%, rgba(7, 8, 10, 0) 24%, rgba(7, 8, 10, 0) 50%, var(--oz-bg) 96%), url(/marketing/otoiz-landing-arac.webp);
+  background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.75) 0%, rgba(7, 8, 10, 0) 24%, rgba(7, 8, 10, 0) 50%, var(--oz-bg) 96%), url(/marketing/otoiz-landing-arac-temiz.webp);
   background-size: cover;
   background-position: 46% 50%;
 }
@@ -3535,7 +3535,7 @@ button.oz-row {
   height: 380px;
   pointer-events: none;
   background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.6) 0%, rgba(7, 8, 10, 0.25) 35%, rgba(7, 8, 10, 0.85) 80%, var(--otoiz-anthracite) 100%),
-    url(/marketing/otoiz-landing-arac.webp);
+    url(/marketing/otoiz-landing-arac-temiz.webp);
   background-size: cover;
   background-position: 55% 55%;
   opacity: 0.8;
@@ -3666,7 +3666,7 @@ button.oz-row {
     height: 100%;
     max-height: 760px;
     background-image: linear-gradient(90deg, var(--oz-bg) 0%, rgba(7, 8, 10, 0) 30%), linear-gradient(180deg, rgba(7, 8, 10, 0.5) 0%, rgba(7, 8, 10, 0) 25%, rgba(7, 8, 10, 0) 70%, var(--oz-bg) 100%),
-      url(/marketing/otoiz-landing-arac.webp);
+      url(/marketing/otoiz-landing-arac-temiz.webp);
   }
   .oz-land-copy {
     padding-top: 120px;
@@ -3683,7 +3683,7 @@ button.oz-row {
     right: 50%;
     height: 100%;
     background-image: linear-gradient(90deg, rgba(7, 8, 10, 0.4) 0%, rgba(7, 8, 10, 0.1) 40%, var(--otoiz-anthracite) 100%),
-      linear-gradient(180deg, rgba(7, 8, 10, 0.6) 0%, rgba(7, 8, 10, 0) 30%, rgba(7, 8, 10, 0.9) 100%), url(/marketing/otoiz-landing-arac.webp);
+      linear-gradient(180deg, rgba(7, 8, 10, 0.6) 0%, rgba(7, 8, 10, 0) 30%, rgba(7, 8, 10, 0.9) 100%), url(/marketing/otoiz-landing-arac-temiz.webp);
     opacity: 0.7;
   }
 }
