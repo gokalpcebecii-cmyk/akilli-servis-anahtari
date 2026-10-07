@@ -82,6 +82,14 @@ async function mockAll(page: Page, opts: { vehicles?: any[]; qr?: boolean; recor
     writes.push({ method: "UPLOAD", table: "storage", body: { path: url.pathname.split("/object/")[1], contentType: req.headers()["content-type"] } });
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ Key: "x", Id: "y" }) });
   });
+  // E–H: belge listesi ve imzalı bağlantı sunucu API'sinden gelir (RLS + sunucuda imza).
+  await page.route("**/api/belgeler?**", (r) =>
+    r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ documents: (opts.docs ?? []).map((d: any) => ({ ...d, own: d.own ?? true })) }) })
+  );
+  await page.route("**/api/belgeler/baglanti", (r) => {
+    const ids: string[] = r.request().postDataJSON()?.document_ids ?? [];
+    return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ urls: Object.fromEntries(ids.map((id) => [id, `/object/sign/vehicle-documents/${id}?token=t`])), expires_in: 900 }) });
+  });
   await page.route("**/api/bireysel/qr", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ codes: [] }) }));
   return writes;
 }
@@ -262,6 +270,21 @@ test.describe("Hızlı İşlem Alanı — mini akışlar", () => {
     await expect(list.getByTestId("belge-satir")).toContainText("200 KB");
     await expect(list.getByTestId("belge-satir").getByRole("link")).toHaveAttribute("href", /token=t/);
     await noOverflow(page);
+  });
+
+  test("E–H F1/F2: devralınan belge yeni sahibe listelenir ve açılır, ama silinemez (Sil yok)", async ({ page, baseURL }) => {
+    await asOwner(page, baseURL!);
+    await mockAll(page, { qr: true, docs: [
+      { id: "d-aktarilan", doc_type: "servis_fisi", doc_date: istToday(-30), note: null, file_name: "s.pdf", mime_type: "application/pdf", size_bytes: 1024, created_at: new Date().toISOString(), own: false },
+      { id: "d-kendi", doc_type: "fatura", doc_date: istToday(-1), note: null, storage_path: `${VID}/k.pdf`, file_name: "k.pdf", mime_type: "application/pdf", size_bytes: 1024, created_at: new Date().toISOString(), own: true },
+    ] });
+    await page.goto(`/bireysel/araclar/${VID}`);
+    await page.getByRole("navigation", { name: "Araç bölümleri" }).getByRole("button", { name: "Tarihler" }).click();
+    const rows = page.getByTestId("belgeler").getByTestId("belge-satir");
+    await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0).getByRole("link")).toHaveAttribute("href", /d-aktarilan\?token=t/);
+    await expect(rows.nth(0).getByTestId("belge-sil")).toHaveCount(0);
+    await expect(rows.nth(1).getByTestId("belge-sil")).toHaveCount(1);
   });
 
   test("Tarihleri Güncelle: üç tarih tek ekranda, yalnız tarih kolonları yazılır", async ({ page, baseURL }) => {

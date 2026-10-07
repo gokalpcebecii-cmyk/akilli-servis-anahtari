@@ -103,7 +103,12 @@ export default function SifreGuncellePage() {
       return;
     }
     if (error) {
-      setError("Şifre güncellenemedi. Bağlantının süresi dolmuş olabilir, tekrar deneyin.");
+      const msg = String((error as any).message || "").toLocaleLowerCase("tr-TR");
+      if (msg.includes("same") || msg.includes("different") || msg.includes("previous") || msg.includes("old password")) {
+        setError("Yeni şifreniz mevcut şifrenizden farklı olmalıdır.");
+      } else {
+        setError("Şifre güncellenemedi. Bu bağlantının süresi dolmuş veya daha önce kullanılmış olabilir.");
+      }
       return;
     }
     setDone(true);
@@ -126,9 +131,9 @@ export default function SifreGuncellePage() {
 
   if (invalidLink) {
     return (
-      <AuthShell role="hesap" title="Bağlantı Geçersiz veya Süresi Dolmuş" subtitle="Lütfen yeni bir şifre sıfırlama bağlantısı isteyin.">
+      <AuthShell role="hesap" title="Bağlantı Geçersiz veya Süresi Dolmuş" subtitle="Bu bağlantının süresi dolmuş veya daha önce kullanılmış. Yeni şifre bağlantısı isteyin.">
         <a href="/hesap/sifremi-unuttum" style={{ ...primaryButtonStyle(false), textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          Tekrar Dene
+          Yeni bağlantı iste
         </a>
       </AuthShell>
     );

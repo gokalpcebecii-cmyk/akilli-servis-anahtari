@@ -814,28 +814,40 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data, error: e } = await supabase
-        .from("vehicle_documents")
-        .select("id, doc_type, doc_date, note, storage_path, file_name, mime_type, size_bytes, created_at")
-        .eq("vehicle_id", vehicleId)
-        .order("created_at", { ascending: false })
-        .limit(50);
+      // Belgeler sunucu API'sinden: RLS ile yalnız kendi belgeleriniz ve
+      // kabul edilmiş devirde size açıkça aktarılanlar döner. Dosya
+      // bağlantısı da sunucuda, belge erişimi doğrulandıktan sonra imzalanır.
+      let data: any[] | null = null;
+      let token = "";
+      try {
+        const { data: s } = await supabase.auth.getSession();
+        token = s.session?.access_token ?? "";
+        const res = await fetch(`/api/belgeler?vehicle_id=${encodeURIComponent(vehicleId)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        if (res.ok) data = ((await res.json()).documents ?? []).slice(0, 50);
+      } catch {
+        data = null;
+      }
       if (!alive) return;
-      if (e) {
+      if (!data) {
         setError(true);
         setDocs([]);
         return;
       }
       setError(false);
-      setDocs(data ?? []);
-      if (data && data.length) {
-        const { data: signed } = await supabase.storage.from("vehicle-documents").createSignedUrls(data.map((d: any) => d.storage_path), 900);
-        if (!alive) return;
-        const map: Record<string, string> = {};
-        (signed ?? []).forEach((s: any) => {
-          if (s?.path && s?.signedUrl) map[s.path] = s.signedUrl;
-        });
-        setUrls(map);
+      setDocs(data);
+      if (data.length) {
+        try {
+          const res = await fetch("/api/belgeler/baglanti", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ document_ids: data.map((d: any) => d.id) }),
+          });
+          const body = res.ok ? await res.json() : { urls: {} };
+          if (!alive) return;
+          setUrls(body.urls ?? {});
+        } catch {
+          // bağlantılar üretilemezse "Aç" pasif kalır
+        }
       }
     })();
     return () => {
@@ -865,7 +877,7 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {docs.map((d) => {
-            const url = urls[d.storage_path];
+            const url = urls[d.id];
             const when = d.doc_date ? fmtIsoDate(d.doc_date) : new Date(d.created_at).toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" });
             return (
               <div
@@ -890,6 +902,7 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
                   </span>
                   <span style={{ fontSize: 13.5, fontWeight: 700, color: url ? colors.greenLight : colors.textFaint, whiteSpace: "nowrap" }}>Aç</span>
                 </a>
+                {d.own && (
                 <button
                   type="button"
                   data-testid="belge-sil"
@@ -899,6 +912,7 @@ export function VehicleDocuments({ supabase, vehicleId, reloadKey, onAdd }: { su
                 >
                   Sil
                 </button>
+                )}
               </div>
             );
           })}
