@@ -1,9 +1,7 @@
 "use client";
 
-// OTOİZ Premium — bireysel ana deneyim = DİJİTAL KOKPİT (2026-10-05, onaylı
-// referans görsel). Tek merkez: alt gezinmedeki 5 bölüm (Ana Sayfa, Aracım,
-// Belgeler, Bakım, Diğer) ile Yaklaşan Bakımlar ve Muayene ekranları aynı
-// sayfada değişir (?bolum=); alt ekranlar geri okuyla ana ekrana döner.
+// OTOİZ bireysel kokpiti. Beş ana bölüm mobilde alt çubukta, masaüstünde
+// kenar çubuğunda gösterilir; diğer ekranlar aynı sayfada (?bolum=) açılır.
 // Veri erişimi değişmedi (vehicles, maintenance_items, vehicle_timeline RPC,
 // /api/belgeler + sunucuda imzalı bağlantı); yeni yazma yolu yok — kayıt
 // ekleme mevcut "İşlem Ekle" penceresiyle (QuickActionSheet) yapılır.
@@ -267,7 +265,6 @@ export default function BireyselAraclarPage() {
       <a href="/bireysel/araclar" aria-label="OTOİZ ana ekran" onClick={(e) => { e.preventDefault(); go("ana"); }} style={{ display: "inline-flex" }}>
         <OtoizLogo variant="dark" size={104} />
       </a>
-      <DesktopNav active={navFor(section) as NavKey} onSelect={go} />
       <button type="button" className="oz-iconbtn" aria-label="Bildirimler" onClick={() => router.push("/bireysel/bildirimler")}>
         <Icon name="bell" color="#F5F7FA" size={21} />
         {pendingTransfers.length > 0 && <span className="oz-dot" />}
@@ -276,14 +273,57 @@ export default function BireyselAraclarPage() {
   );
 
   return (
-    <main className="oz-app oz-has-nav">
-      <div className={`oz-wrap${section === "ana" || section === "aracim" || !active ? "" : " is-narrow"}`}>
+    <main className="oz-app oz-has-nav oz-dashboard-page">
+      <aside className="oz-dashboard-sidebar" aria-label="Bireysel kullanıcı gezinmesi">
+        <a href="/bireysel/araclar" className="oz-dashboard-brand" aria-label="OTOİZ ana ekran" onClick={(e) => { e.preventDefault(); go("ana"); }}>
+          <OtoizLogo variant="dark" size={150} />
+          <span>BİREYSEL ARAÇ PASAPORTU</span>
+        </a>
+        <p className="oz-sidebar-label">MENÜ</p>
+        <DesktopNav
+          active={navFor(section) as NavKey}
+          onSelect={go}
+          labelOverrides={{ ana: "Genel bakış", aracim: "Aracım", belgeler: "Belgeler", bakim: "Bakım geçmişi", diger: "Diğer" }}
+        />
+        <div className="oz-sidebar-account">
+          <span>{initial}</span>
+          <div><strong>Bireysel Hesap</strong><small>{email}</small></div>
+        </div>
+      </aside>
+      <div className={`oz-wrap oz-dashboard-main${section === "ana" || section === "aracim" || !active ? "" : " is-narrow"}`}>
         {topbar}
 
         {loadError && (
           <p role="alert" className="oz-card" style={{ borderColor: "#EF4444", fontSize: 14, margin: "0 0 16px" }}>
             Araçlarınız yüklenemedi. Bağlantınızı kontrol edip sayfayı yenileyin.
           </p>
+        )}
+
+        {active && section === "ana" && (
+          <div className="oz-dashboard-heading">
+            <div>
+              <p className="oz-dashboard-breadcrumb"><span>OTOİZ</span><Icon name="chevron-right" color="#6F7783" size={14} /><span>Genel bakış</span></p>
+              <h1>Merhaba, {email?.split("@")[0]}</h1>
+              <p>Aracınızın tüm yolculuğu, tek bir güvenli yerde.</p>
+            </div>
+            <span className="oz-dashboard-avatar" aria-label={`Kullanıcı ${initial}`}>{initial}</span>
+          </div>
+        )}
+        {active && section === "ana" && pendingTransfers.length > 0 && (
+          <section className="oz-card" style={{ borderColor: "rgba(245,165,36,0.45)", marginBottom: 18 }}>
+            <SectionHead title="Bekleyen Devirler" />
+            {pendingTransfers.map((t) => (
+              <div key={t.transfer_id} style={{ marginBottom: 10 }}>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>{t.plate}</div>
+                <div style={{ fontSize: 13, color: "#A3ABB7", margin: "4px 0 12px" }}>
+                  {t.brand} {t.model} · {t.expired ? "devir bağlantısının süresi doldu; aracı geri alabilirsiniz" : "yeni sahibin kabul etmesi bekleniyor"}
+                </div>
+                <button onClick={() => handleCancelTransfer(t.transfer_id)} disabled={cancelling === t.transfer_id} className="oz-btn is-ghost" style={{ minHeight: 48 }}>
+                  {cancelling === t.transfer_id ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
+                </button>
+              </div>
+            ))}
+          </section>
         )}
 
         {!active ? (
@@ -312,37 +352,24 @@ export default function BireyselAraclarPage() {
             {section === "ana" && (
               <div className="oz-cockpit oz-enter" data-section="ana">
                 <div className="oz-ck-main oz-stack">
-                  {pendingTransfers.length > 0 && (
-                    <section className="oz-card" style={{ borderColor: "rgba(245,165,36,0.45)" }}>
-                      <SectionHead title="Bekleyen Devirler" />
-                      {pendingTransfers.map((t) => (
-                        <div key={t.transfer_id} style={{ marginBottom: 10 }}>
-                          <div style={{ fontWeight: 700, fontSize: 15 }}>{t.plate}</div>
-                          <div style={{ fontSize: 13, color: "#A3ABB7", margin: "4px 0 12px" }}>
-                            {t.brand} {t.model} · {t.expired ? "devir bağlantısının süresi doldu; aracı geri alabilirsiniz" : "yeni sahibin kabul etmesi bekleniyor"}
-                          </div>
-                          <button onClick={() => handleCancelTransfer(t.transfer_id)} disabled={cancelling === t.transfer_id} className="oz-btn is-ghost" style={{ minHeight: 48 }}>
-                            {cancelling === t.transfer_id ? "İptal ediliyor…" : "Devri İptal Et, Aracı Geri Al"}
-                          </button>
-                        </div>
-                      ))}
-                    </section>
-                  )}
-
                   <section className="oz-vcard" data-testid="arac-kimligi" aria-label="Araç kimliği">
                     <div className="oz-vcard-head">
                       <div style={{ minWidth: 0 }}>
+                        <span className="oz-vcard-eyebrow">ARAÇ PASAPORTU</span>
                         <h1 className="oz-plate" data-testid="aktif-plaka">
                           {active.plate}
                         </h1>
                         <div className="oz-vsub">{vehicleLine}</div>
                       </div>
-                      {vehicles.length > 1 && (
-                        <button type="button" className="oz-switch" data-testid="arac-degistir" aria-expanded={switcherOpen} aria-controls="arac-secici" onClick={() => setSwitcherOpen((v) => !v)}>
-                          Araç Değiştir
-                          <Icon name="chevron-down" color="#C3C9D1" size={14} />
-                        </button>
-                      )}
+                      <div className="oz-vcard-tools">
+                        <span className="oz-vcard-badge"><i aria-hidden="true" />Aktif pasaport</span>
+                        {vehicles.length > 1 && (
+                          <button type="button" className="oz-switch" data-testid="arac-degistir" aria-expanded={switcherOpen} aria-controls="arac-secici" onClick={() => setSwitcherOpen((v) => !v)}>
+                            Araç Değiştir
+                            <Icon name="chevron-down" color="#C3C9D1" size={14} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="oz-carimg" aria-hidden="true" />
                     <div className="oz-vcard-foot">
@@ -389,25 +416,28 @@ export default function BireyselAraclarPage() {
                     </button>
                   )}
 
-                  <div className="oz-stat3" data-testid="durum-uclu">
-                    <StatCard label="Bakım" value={maintenanceWord(ns?.level)} level={ns?.level} icon="shield-check" tone={levelTone(ns?.level)} testId="durum-bakim" onClick={() => go("yaklasan")} />
-                    <StatCard label="Muayene" value={muView.empty ? "Bilgi yok" : muView.text} level={muView.level} icon="shield" tone={levelTone(muView.level)} testId="durum-muayene" onClick={() => go("muayene")} />
-                    <StatCard
-                      label="Son servis"
-                      value={lastService ? fmtDate(lastService.event_date) : timeline.loading ? "…" : "Kayıt yok"}
-                      level="none"
-                      icon="wrench"
-                      tone="green-t"
-                      testId="durum-son-servis"
-                      onClick={() => go("bakim")}
-                    />
-                  </div>
+                  <section className="oz-dashboard-health" aria-label="Araç durumu">
+                    <SectionHead title="Araç durumu" />
+                    <div className="oz-stat3" data-testid="durum-uclu">
+                      <StatCard label="Bakım" value={maintenanceWord(ns?.level)} level={ns?.level} icon="shield-check" tone={levelTone(ns?.level)} testId="durum-bakim" onClick={() => go("yaklasan")} />
+                      <StatCard label="Muayene" value={muView.empty ? "Bilgi yok" : muView.text} level={muView.level} icon="shield" tone={levelTone(muView.level)} testId="durum-muayene" onClick={() => go("muayene")} />
+                      <StatCard
+                        label="Son servis"
+                        value={lastService ? fmtDate(lastService.event_date) : timeline.loading ? "…" : "Kayıt yok"}
+                        level="none"
+                        icon="wrench"
+                        tone="green-t"
+                        testId="durum-son-servis"
+                        onClick={() => go("bakim")}
+                      />
+                    </div>
+                  </section>
                 </div>
 
                 <section className="oz-ck-hist" aria-labelledby="gecmis-baslik" data-testid="aracinizin-gecmisi">
                   <SectionHead
                     id="gecmis-baslik"
-                    title="Aracınızın Geçmişi"
+                    title="Bakım geçmişi"
                     action={
                       timeline.total > 0 ? (
                         <button type="button" className="oz-link" onClick={() => go("bakim")} data-testid="tumunu-gor">

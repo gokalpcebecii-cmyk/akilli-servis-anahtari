@@ -25,8 +25,8 @@ function useSelect(onSelect?: (k: NavKey) => void) {
   return (k: NavKey) => (onSelect ? onSelect(k) : router.push(navHref(k)));
 }
 
-// Masaüstünde üst çubukta satır içi gezinme.
-export function DesktopNav({ active, onSelect }: { active: NavKey; onSelect?: (k: NavKey) => void }) {
+// Masaüstü ana bölümlerin gezinmesi.
+export function DesktopNav({ active, onSelect, labelOverrides }: { active: NavKey; onSelect?: (k: NavKey) => void; labelOverrides?: Partial<Record<NavKey, string>> }) {
   const select = useSelect(onSelect);
   return (
     <nav aria-label="Masaüstü gezinme" className="oz-nav-desktop">
@@ -35,7 +35,7 @@ export function DesktopNav({ active, onSelect }: { active: NavKey; onSelect?: (k
         return (
           <button key={item.key} type="button" className="oz-nav-item" aria-current={on ? "page" : undefined} onClick={() => select(item.key)}>
             <Icon name={item.icon} color={on ? "#4ADE80" : "#A3ABB7"} size={16} />
-            {item.label}
+            {labelOverrides?.[item.key] ?? item.label}
           </button>
         );
       })}
