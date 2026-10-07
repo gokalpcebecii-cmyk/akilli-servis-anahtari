@@ -83,8 +83,8 @@ export function GeriBildirimTab({ api }: { api: Api }) {
           {(data?.rows ?? []).map((r: any) => (
             <button key={r.id} onClick={() => openDetail(r)} style={{ display: "block", width: "100%", textAlign: "left", padding: "12px", marginBottom: 8, borderRadius: radius.md, border: `1px solid ${selected?.id === r.id ? colors.green : colors.border}`, background: colors.surfaceRaised, cursor: "pointer" }} data-testid="feedback-satir">
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                <span style={{ fontWeight: 800 }}>{feedbackLabel(r.category, FEEDBACK_CATEGORIES)}</span>
-                <span style={{ fontSize: 12, color: r.status === "cozuldu" ? colors.greenLight : r.status === "inceleniyor" ? colors.warning : colors.danger, fontWeight: 800 }}>{FEEDBACK_STATUS_LABELS[r.status]}</span>
+                <span style={{ fontWeight: 700 }}>{feedbackLabel(r.category, FEEDBACK_CATEGORIES)}</span>
+                <span style={{ fontSize: 12, color: r.status === "cozuldu" ? colors.greenLight : r.status === "inceleniyor" ? colors.warning : colors.danger, fontWeight: 700 }}>{FEEDBACK_STATUS_LABELS[r.status]}</span>
               </div>
               <div style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>{r.message.slice(0, 80)}{r.message.length > 80 ? "…" : ""}</div>
               <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>{fmt(r.created_at)}{r.screenshot_path ? " · görsel var" : ""}</div>

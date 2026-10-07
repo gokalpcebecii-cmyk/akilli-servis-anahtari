@@ -60,7 +60,7 @@ export function HistoryEntryFields({
             inputMode="numeric"
             placeholder="Örn. 72.000"
             aria-invalid={!!errFor("km")}
-            style={{ ...inputStyle, fontWeight: 800, fontSize: 17, borderColor: errFor("km") ? colors.danger : colors.border }}
+            style={{ ...inputStyle, fontWeight: 700, fontSize: 17, borderColor: errFor("km") ? colors.danger : colors.border }}
             value={formatKm(entry.km)}
             onChange={(e) => onChange({ ...entry, km: e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "") })}
           />

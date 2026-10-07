@@ -1,123 +1,72 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import { colors, font } from "@/lib/theme";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 
-// PILOT FIX 03 (bölüm E): "Ana Sayfa" ve "Araçlarım" aynı gerçek ekrana
-// (araç listesi/karşılama) gidiyordu ve iki AYRI aktif öğe olarak
-// gösteriliyordu — canlı testte bulunan bilgi mimarisi tutarsızlığı.
-// Tek karar: tek öğe, ekranın gerçek içeriğini yansıtan "Araçlarım" adıyla.
-const ITEMS = [
-  { key: "home", label: "Araçlarım", href: "/bireysel/araclar", icon: "car" },
-  { key: "notifications", label: "Bildirimler", href: "/bireysel/bildirimler", icon: "bell" },
-  { key: "profile", label: "Profil", href: "/bireysel/profil", icon: "user" },
+// OTOİZ Premium — bireysel alanın 5 ana bölümü. Ana ekran
+// (/bireysel/araclar) bölümleri aynı sayfa içinde değiştirir (onSelect);
+// diğer sayfalardan dokunulunca ana ekranın ilgili bölümüne gidilir.
+export type NavKey = "ana" | "aracim" | "belgeler" | "bakim" | "diger";
+
+export const NAV_ITEMS: { key: NavKey; label: string; icon: string }[] = [
+  { key: "ana", label: "Ana Sayfa", icon: "home" },
+  { key: "aracim", label: "Aracım", icon: "car" },
+  { key: "belgeler", label: "Belgeler", icon: "document" },
+  { key: "bakim", label: "Bakım", icon: "wrench" },
+  { key: "diger", label: "Diğer", icon: "more-horizontal" },
 ];
 
-export function BottomNav({ active }: { active: "home" | "notifications" | "profile" }) {
+export function navHref(key: NavKey) {
+  return key === "ana" ? "/bireysel/araclar" : `/bireysel/araclar?bolum=${key}`;
+}
+
+function useSelect(onSelect?: (k: NavKey) => void) {
   const router = useRouter();
+  return (k: NavKey) => (onSelect ? onSelect(k) : router.push(navHref(k)));
+}
+
+// Masaüstünde üst çubukta satır içi gezinme.
+export function DesktopNav({ active, onSelect }: { active: NavKey; onSelect?: (k: NavKey) => void }) {
+  const select = useSelect(onSelect);
+  return (
+    <nav aria-label="Masaüstü gezinme" className="oz-nav-desktop">
+      {NAV_ITEMS.map((item) => {
+        const on = item.key === active;
+        return (
+          <button key={item.key} type="button" className="oz-nav-item" aria-current={on ? "page" : undefined} onClick={() => select(item.key)}>
+            <Icon name={item.icon} color={on ? "#4ADE80" : "#A3ABB7"} size={16} />
+            {item.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Telefonda sabit alt çubuk. desktopFloating: kendi üst çubuğu olmayan
+// sayfalarda masaüstünde sağ üstte aynı gezinme gösterilir.
+export function BottomNav({ active, onSelect, desktopFloating = true }: { active: NavKey; onSelect?: (k: NavKey) => void; desktopFloating?: boolean }) {
+  const select = useSelect(onSelect);
   return (
     <>
-      <nav
-        role="navigation"
-        aria-label="Alt gezinme"
-        className="otoiz-bottom-nav"
-        style={{
-          position: "fixed",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 40,
-          background: colors.bgAlt,
-          borderTop: `1px solid ${colors.border}`,
-          display: "flex",
-          paddingBottom: "env(safe-area-inset-bottom)",
-          boxShadow: "0 -4px 20px rgba(0,0,0,0.06)",
-        }}
-      >
-        {ITEMS.map((item) => {
-          const isActive = item.key === active;
-          const tint = isActive ? colors.green : colors.textFaint;
-          return (
-            <button
-              key={item.key}
-              onClick={() => router.push(item.href)}
-              aria-current={isActive ? "page" : undefined}
-              style={{
-                flex: 1,
-                minHeight: 56,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 3,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: tint,
-                fontFamily: font,
-                padding: "8px 4px",
-              }}
-            >
-              <Icon name={item.icon} color={tint} size={21} strokeWidth={isActive ? 2.4 : 2} />
-              <span style={{ fontSize: 11.5, fontWeight: isActive ? 700 : 600, color: isActive ? colors.greenLight : colors.textMuted }}>{item.label}</span>
-            </button>
-          );
-        })}
+      <nav role="navigation" aria-label="Alt gezinme" className="oz-nav otoiz-bottom-nav" data-testid="alt-gezinme">
+        <div className="oz-nav-inner">
+          {NAV_ITEMS.map((item) => {
+            const on = item.key === active;
+            return (
+              <button key={item.key} type="button" className="oz-nav-item" data-nav={item.key} aria-current={on ? "page" : undefined} onClick={() => select(item.key)}>
+                <Icon name={item.icon} color={on ? "#22C55E" : "#6F7783"} size={20} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
-
-      {/* İkinci düzeltme turu, madde 6: .otoiz-bottom-nav ≥1024px'te
-          display:none oluyor (bkz. globals.css) ama yerine hiçbir gezinme
-          konmamıştı — masaüstünde Bildirimler/Profil'e ulaşacak hiçbir yol
-          kalmıyordu. Aynı bileşende, yalnızca masaüstünde görünen, sayfa
-          akışından bağımsız sabit bir mini-çubuk ekleniyor; DOM konumundan
-          bağımsız çalışsın diye fixed konumlandırılıyor. */}
-      <nav
-        role="navigation"
-        aria-label="Masaüstü gezinme"
-        className="otoiz-desktop-nav"
-        style={{
-          position: "fixed",
-          top: 16,
-          right: 16,
-          zIndex: 40,
-          display: "none",
-          background: colors.surface,
-          borderRadius: 999,
-          border: `1px solid ${colors.border}`,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-          padding: 4,
-          gap: 2,
-        }}
-      >
-        {ITEMS.map((item) => {
-          const isActive = item.key === active;
-          return (
-            <button
-              key={item.key}
-              onClick={() => router.push(item.href)}
-              aria-current={isActive ? "page" : undefined}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 14px",
-                borderRadius: 999,
-                border: "none",
-                cursor: "pointer",
-                background: isActive ? colors.green : "transparent",
-                color: isActive ? colors.onAccent : colors.textMuted,
-                fontFamily: font,
-                fontSize: 12.5,
-                fontWeight: isActive ? 700 : 600,
-              }}
-            >
-              <Icon name={item.icon} color={isActive ? colors.onAccent : colors.textMuted} size={16} strokeWidth={isActive ? 2.4 : 2} />
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
+      {desktopFloating && (
+        <div className="otoiz-desktop-nav" style={{ position: "fixed", top: 16, right: 16, zIndex: 40, display: "none" }}>
+          <DesktopNav active={active} onSelect={onSelect} />
+        </div>
+      )}
     </>
   );
 }

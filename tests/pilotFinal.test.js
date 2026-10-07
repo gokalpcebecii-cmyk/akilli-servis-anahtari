@@ -123,8 +123,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 test("landing: ürünü 5 sn'de anlatan kritik başlık ve CTA'lar", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "components", "LandingPage.tsx"), "utf8");
+  // 2026-10-05 premium landing: kapalı tasarım metinleri.
+  assert.match(src, /Aracınızın geçmişi kaybolmaz\./);
+  assert.match(src, /Bakımlar, belgeler ve araç geçmişi tek yerde\./);
+  assert.match(src, /Bireysel Kullanıcı/);
+  assert.match(src, /Servis \/ İşletme/);
+  for (const v of ["Bakım Geçmişi", "Belgeler", "Yaklaşan Bakımlar", "Güvenli Devir"]) assert.ok(src.includes(v), v);
   assert.match(src, /dijital servis pasaportu/i);
-  assert.match(src, /Ücretsiz Başlayın|Hemen Başla/);
   assert.match(src, /Nasıl Çalışır\?/);
 });
 

@@ -69,7 +69,7 @@ test.describe("Referans görsel sadakat seti", () => {
   test("02 Giriş seçimi", async ({ page }, ti) => {
     test.skip(ti.project.name !== "mobile-390", "yalnızca mobil");
     await page.goto("/giris");
-    await page.getByRole("heading", { name: "Nasıl devam etmek istersiniz?" }).waitFor();
+    await page.getByTestId("giris-bireysel").waitFor();
     await page.screenshot({ path: path.join(outDir, "02-giris-secimi-mobil.png"), fullPage: true });
   });
 

@@ -75,7 +75,7 @@ function YazdirInner() {
         <button
           onClick={() => window.print()}
           disabled={items.length === 0}
-          style={{ marginLeft: "auto", padding: "10px 18px", minHeight: 44, borderRadius: 8, border: "none", background: colors.green, color: colors.onAccent, fontWeight: 800, cursor: "pointer" }}
+          style={{ marginLeft: "auto", padding: "10px 18px", minHeight: 44, borderRadius: 8, border: "none", background: colors.green, color: colors.onAccent, fontWeight: 700, cursor: "pointer" }}
         >
           Yazdır
         </button>

@@ -3,6 +3,28 @@
    inline stille ifade edilemeyen kuralları içerir (medya sorguları,
    :hover, :focus-visible, keyframes). */
 
+/* Adım 2 (tipografi): tek font sistemi — Inter (değişken, 400–800),
+   self-hosted (public/fonts, SIL OFL 1.1). latin + latin-ext alt kümeleri
+   Türkçe karakterleri (ı, İ, ş, ğ, ç, ö, ü) kapsar. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/inter-var-latin-ext.woff2) format("woff2-variations"), url(/fonts/inter-var-latin-ext.woff2) format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+    U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/inter-var-latin.woff2) format("woff2-variations"), url(/fonts/inter-var-latin.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* İmza ("Aracınızın İzi Hep Sizinle.") için self-hosted el yazısı font —
    Google Fonts CDN'e runtime bağımlılığı KALDIRILDI (headless test/prod
    ortamında ağ erişimi olmadığında sessizce sans-serif'e düşüyordu).
@@ -29,19 +51,27 @@
 }
 
 :root {
-  --otoiz-bg: #0f1115;
-  --otoiz-bg-alt: #151922;
-  --otoiz-surface-dark: #181d27;
-  --otoiz-surface-light: #181d27;
-  --otoiz-surface-soft: #1f2531;
+  --otoiz-bg: #07080a;
+  --otoiz-bg-alt: #0c0e11;
+  --otoiz-surface-dark: #111317;
+  --otoiz-surface-light: #111317;
+  --otoiz-surface-soft: #171a1f;
   --otoiz-text-dark: #f5f7fa;
   --otoiz-text-light: #f5f7fa;
   --otoiz-text-muted: #a9b3c1;
   --otoiz-text-faint: #7f8896;
   --otoiz-green: #22c55e;
   --otoiz-green-dark: #86efac;
-  --otoiz-border: #2d3542;
-  --otoiz-on-accent: #0f1115;
+  --otoiz-border: #24282f;
+  --otoiz-on-accent: #04110a;
+  /* Adım 2: tek yazı sistemi. Ağırlıklar: 400 metin · 500 yardımcı bilgi ·
+     600 düğme · 700 kart başlığı · 780 ana başlık/plaka/km. */
+  --oz-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --oz-fw-body: 400;
+  --oz-fw-meta: 500;
+  --oz-fw-btn: 600;
+  --oz-fw-title: 700;
+  --oz-fw-display: 780;
   color-scheme: dark;
 }
 
@@ -53,7 +83,17 @@ body {
   margin: 0;
   background: var(--otoiz-bg);
   color: var(--otoiz-text-dark);
+  font-family: var(--oz-font);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 .otoiz-modal-backdrop a:focus-visible,
@@ -382,7 +422,7 @@ a:focus-visible {
     border: none;
     border-radius: 999px;
     padding: 11px 19px;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 14px;
     cursor: pointer;
     font-family: inherit;
@@ -489,7 +529,7 @@ a:focus-visible {
     border: none;
     border-radius: 999px;
     padding: 17px 30px;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 16px;
     cursor: pointer;
     font-family: inherit;
@@ -666,9 +706,9 @@ a:focus-visible {
    Mobilde içerik üstten akar (klavye açılınca kart yerinde kalır); ≥1024px
    solda marka paneli, sağda kart. Animasyon yok. */
 :root {
-  --otoiz-anthracite: #0f1115;
-  --otoiz-anthracite-2: #151922;
-  --otoiz-anthracite-3: #1f2531;
+  --otoiz-anthracite: #07080a;
+  --otoiz-anthracite-2: #0c0e11;
+  --otoiz-anthracite-3: #171a1f;
 }
 
 .otoiz-auth2 {
@@ -797,14 +837,14 @@ a:focus-visible {
   background: rgba(34, 197, 94, 0.14);
   color: #86efac;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.3px;
   margin-bottom: 12px;
 }
 .otoiz-auth2-title {
   font-size: 23px;
   line-height: 1.25;
-  font-weight: 800;
+  font-weight: 700;
   margin: 0 0 6px;
   color: var(--otoiz-text-dark);
 }
@@ -842,7 +882,7 @@ a:focus-visible {
 .otoiz-auth2-link-strong {
   color: var(--otoiz-green);
   text-decoration-color: rgba(34, 197, 94, 0.5);
-  font-weight: 800;
+  font-weight: 700;
 }
 .otoiz-auth2-loading {
   position: relative;
@@ -970,7 +1010,7 @@ a:focus-visible {
 }
 .otoiz-install-title {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
 }
 .otoiz-install-sub {
@@ -987,7 +1027,7 @@ a:focus-visible {
   background: var(--otoiz-green);
   color: var(--otoiz-on-accent);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.4px;
   display: inline-flex;
   align-items: center;
@@ -1049,7 +1089,7 @@ a:focus-visible {
 }
 .otoiz-install-sheet-head h2 {
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 700;
   margin: 0;
 }
 .otoiz-install-close {
@@ -1085,7 +1125,7 @@ a:focus-visible {
   border-radius: 50%;
   background: var(--otoiz-anthracite);
   color: var(--otoiz-green);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 14px;
   display: inline-flex;
   align-items: center;
@@ -1171,7 +1211,7 @@ a:focus-visible {
 }
 .otoiz-iw-brand {
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.25;
 }
 .otoiz-iw-close {
@@ -1227,7 +1267,7 @@ a:focus-visible {
   border: 1.5px solid rgba(34, 197, 94, 0.55);
   color: var(--otoiz-green);
   font-size: 30px;
-  font-weight: 900;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1241,7 +1281,7 @@ a:focus-visible {
 .otoiz-iw-title {
   margin: 2px 0 0;
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
   outline: none;
 }
@@ -1298,7 +1338,7 @@ a:focus-visible {
 .otoiz-iw-hit-text {
   padding: 0 12px;
   color: var(--otoiz-green);
-  font-weight: 800;
+  font-weight: 700;
 }
 .otoiz-iw-list {
   border-radius: 12px;
@@ -1385,7 +1425,7 @@ a:focus-visible {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   color: var(--otoiz-green);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 13px;
   display: inline-flex;
   align-items: center;
@@ -1411,7 +1451,7 @@ a:focus-visible {
   background: var(--otoiz-green);
   color: var(--otoiz-on-accent);
   font-size: 16.5px;
-  font-weight: 900;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1605,7 +1645,7 @@ a:focus-visible {
 }
 .otoiz-benefit-card-title {
   font-size: 14.5px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
   margin-bottom: 4px;
   line-height: 1.3;
@@ -2235,4 +2275,2129 @@ a {
   .otoiz-toast {
     animation: none;
   }
+}
+
+/* =====================================================================
+   OTOİZ PREMIUM (2026-10-05) — onaylı referans görsele göre dijital kokpit.
+   Koyu antrasit/yeşil-siyah zemin, yeşil vurgu, renkli ikon kareleri,
+   ince çizgi, yumuşak radius. Tüm bireysel ekranlar, landing ve giriş aynı
+   sınıfları kullanır (oz-*). Mobil öncelikli (375–430); masaüstünde
+   ortalanmış içerik ve 2–3 sütun.
+   ===================================================================== */
+:root {
+  --oz-bg: #07080a;
+  --oz-bg-2: #0c0e11;
+  --oz-card: #111317;
+  --oz-card-2: #171a1f;
+  --oz-line: rgba(255, 255, 255, 0.07);
+  --oz-line-2: rgba(255, 255, 255, 0.13);
+  --oz-text: #f5f7fa;
+  --oz-muted: #a3abb7;
+  --oz-faint: #6f7783;
+  --oz-green: #22c55e;
+  --oz-green-2: #2ee070;
+  --oz-green-l: #4ade80;
+  --oz-green-soft: rgba(34, 197, 94, 0.12);
+  --oz-amber: #f5a524;
+  --oz-amber-l: #fbbf24;
+  --oz-red: #ef4444;
+  --oz-red-l: #f87171;
+  --oz-r-xl: 24px;
+  --oz-r-lg: 18px;
+  --oz-r-md: 14px;
+  --oz-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 14px 34px rgba(0, 0, 0, 0.4);
+}
+
+.oz-app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(800px 460px at 50% -160px, rgba(34, 197, 94, 0.08), transparent 65%), linear-gradient(180deg, #090c0b, var(--oz-bg) 420px);
+  background-color: var(--oz-bg);
+  color: var(--oz-text);
+  font-family: var(--oz-font);
+  overflow-x: hidden;
+}
+.oz-app.oz-has-nav {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}
+.oz-wrap {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.oz-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.oz-enter {
+  animation: otoiz-enter 0.22s ease-out both;
+}
+.oz-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Üst çubuk (logo + zil) ve alt ekran başlığı (geri oku + başlık) ---- */
+.oz-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding-top: calc(env(safe-area-inset-top) + 10px);
+  padding-bottom: 10px;
+}
+.oz-iconbtn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: var(--oz-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+.oz-iconbtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.oz-iconbtn .oz-dot {
+  position: absolute;
+  top: 10px;
+  right: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--oz-green);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+}
+.oz-subhead {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding-top: calc(env(safe-area-inset-top) + 8px);
+  padding-bottom: 12px;
+}
+.oz-subhead-title {
+  margin: 0;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1023px) {
+  .oz-topbar.is-sub {
+    display: none;
+  }
+}
+.oz-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---- Renkli ikon kareleri ---- */
+.oz-ico {
+  /* Adım 3 revizyon: küçük ve sakin kutu; ikon asıl öğe. Dolgu/gölge yok. */
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+}
+.oz-ico.is-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+.oz-ico.is-lg {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+.oz-ico[data-tone="green"],
+.oz-ico[data-tone="green-t"] {
+  border-color: rgba(34, 197, 94, 0.18);
+  background: rgba(34, 197, 94, 0.05);
+}
+.oz-ico[data-tone="amber"],
+.oz-ico[data-tone="amber-t"] {
+  border-color: rgba(245, 165, 36, 0.24);
+  background: rgba(245, 165, 36, 0.06);
+}
+.oz-ico[data-tone="red-t"] {
+  border-color: rgba(239, 68, 68, 0.24);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+/* ---- Araç kartı (kokpit) ---- */
+.oz-vcard {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--oz-r-xl);
+  border: 1px solid var(--oz-line);
+  background: radial-gradient(120% 70% at 50% 62%, rgba(255, 255, 255, 0.05), transparent 70%), linear-gradient(180deg, #161c1f, #0e1214);
+  box-shadow: var(--oz-shadow);
+  padding: 16px 16px 14px;
+}
+.oz-vcard-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.oz-plate {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  margin: 0;
+  color: #fff;
+  white-space: nowrap;
+}
+.oz-vsub {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #c3c9d1;
+  margin-top: 4px;
+}
+.oz-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--oz-line-2);
+  background: rgba(255, 255, 255, 0.04);
+  color: #dfe3e8;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.oz-carimg {
+  position: relative;
+  height: 172px;
+  margin: 6px -16px 0;
+  background-image: url(/marketing/otoiz-arac-temiz.webp);
+  background-size: cover;
+  background-position: 50% 72%;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12%, #000 70%, transparent 97%), linear-gradient(180deg, transparent 0, #000 14%, #000 80%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0, #000 12%, #000 70%, transparent 97%), linear-gradient(180deg, transparent 0, #000 14%, #000 80%, transparent 100%);
+  mask-composite: intersect;
+}
+.oz-vcard-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+}
+.oz-vkm {
+  font-size: 21px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.oz-smallbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--oz-line-2);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e8ebef;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.oz-missing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px -16px -14px;
+  padding: 4px 16px;
+  border-top: 1px solid var(--oz-line);
+  font-size: 13px;
+  color: var(--oz-muted);
+}
+.oz-missing a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--oz-green-l);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ---- 3'lü durum kartları ---- */
+.oz-stat3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.oz-stat {
+  min-width: 0;
+  min-height: 98px;
+  padding: 12px 6px 11px;
+  border-radius: 16px;
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  text-align: center;
+  font: inherit;
+  color: inherit;
+}
+button.oz-stat {
+  cursor: pointer;
+}
+.oz-stat-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--oz-text);
+}
+.oz-stat-value {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--oz-muted);
+  font-variant-numeric: tabular-nums;
+}
+.oz-stat-value[data-level="ok"] {
+  color: var(--oz-green-l);
+}
+.oz-stat-value[data-level="soon"] {
+  color: var(--oz-amber-l);
+}
+.oz-stat-value[data-level="late"] {
+  color: var(--oz-red-l);
+}
+.oz-lvl {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--oz-faint);
+}
+.oz-lvl[data-level="ok"] {
+  background: var(--oz-green);
+}
+.oz-lvl[data-level="soon"] {
+  background: var(--oz-amber);
+}
+.oz-lvl[data-level="late"] {
+  background: var(--oz-red);
+}
+
+/* ---- Kart, başlık, bağlantı, buton ---- */
+.oz-card {
+  border-radius: var(--oz-r-lg);
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  padding: 16px;
+}
+.oz-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0 10px;
+}
+.oz-h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.oz-h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.oz-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 40px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--oz-green-l);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.oz-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(180deg, #2fe073, #1fb956);
+  color: #04110a;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.25);
+}
+.oz-btn.is-ghost {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--oz-text);
+  border: 1px solid var(--oz-line-2);
+  box-shadow: none;
+}
+.oz-btn:active,
+.oz-tile:active,
+.oz-row:active,
+.oz-role:active,
+.oz-cta:active {
+  opacity: 0.84;
+}
+.oz-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---- Sekmeli filtre (segmented) ---- */
+.oz-seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.oz-seg::-webkit-scrollbar {
+  display: none;
+}
+.oz-seg-btn {
+  flex: 1 0 auto;
+  min-height: 38px;
+  padding: 0 8px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--oz-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.oz-seg-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+.oz-seg-btn[aria-pressed="true"] {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.55);
+  color: var(--oz-green-l);
+}
+
+/* ---- Zaman çizelgesi ---- */
+.oz-tl {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+.oz-tl-item {
+  position: relative;
+  padding: 0 0 18px 26px;
+}
+.oz-tl-item::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 16px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--oz-line-2);
+}
+.oz-tl-item:last-child {
+  padding-bottom: 2px;
+}
+.oz-tl-item:last-child::before {
+  display: none;
+}
+.oz-tl-dot {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--oz-faint);
+  border: 3px solid #23292d;
+  box-sizing: border-box;
+}
+.oz-tl-dot[data-source="service"] {
+  background: var(--oz-green);
+  border-color: #134f2b;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.45);
+}
+.oz-tl-dot[data-source="owner"],
+.oz-tl-dot[data-source="owner_history"] {
+  background: var(--oz-amber);
+  border-color: #5a3d0c;
+}
+.oz-tl-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.oz-tl-date {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--oz-text);
+}
+.oz-tl-km {
+  font-size: 12.5px;
+  color: var(--oz-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.oz-tl-inline {
+  margin: 5px 0 8px;
+  font-size: 12.5px;
+  color: var(--oz-muted);
+  line-height: 1.45;
+}
+.oz-tl-lines {
+  list-style: none;
+  margin: 8px 0 10px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #e3e7ec;
+}
+.oz-tl-lines li {
+  overflow-wrap: anywhere;
+}
+.oz-tl-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.oz-src {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 22px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--oz-muted);
+  white-space: nowrap;
+}
+.oz-src[data-source="service"] {
+  color: var(--oz-green-l);
+}
+.oz-src-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--oz-green);
+  flex: none;
+}
+.oz-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 10px 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--oz-line);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #cfd4da;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.oz-pill.is-warn {
+  color: var(--oz-amber-l);
+  border-color: rgba(245, 165, 36, 0.4);
+  padding-left: 10px;
+}
+.oz-tl-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* ---- Ana kartlar (2 sütun) ---- */
+.oz-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.oz-tile {
+  min-width: 0;
+  min-height: 132px;
+  padding: 16px 14px 14px;
+  border-radius: var(--oz-r-lg);
+  border: 1px solid var(--oz-line);
+  background: linear-gradient(165deg, var(--oz-card-2), var(--oz-card) 65%);
+  color: var(--oz-text);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.oz-tile:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+.oz-tile-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--oz-text);
+}
+.oz-tile-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--oz-muted);
+  overflow-wrap: anywhere;
+}
+.oz-tile-sub[data-level="late"] {
+  color: var(--oz-red-l);
+}
+
+/* Değer kartı: "Aracınızın değeri geçmişinde gizlidir." */
+.oz-valuecard {
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+  border-radius: var(--oz-r-lg);
+  border: 1px solid var(--oz-line);
+  background: #0b0e10;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  padding: 18px;
+}
+.oz-valuecard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: url(/marketing/otoiz-deger-temiz.webp);
+  background-size: cover;
+  background-position: 100% 38%;
+}
+.oz-valuecard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(7, 8, 10, 0.92) 0%, rgba(7, 8, 10, 0.55) 48%, rgba(7, 8, 10, 0.1) 100%),
+    linear-gradient(0deg, rgba(7, 8, 10, 0.85) 0%, rgba(7, 8, 10, 0) 60%);
+}
+.oz-valuecard-title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  max-width: 220px;
+}
+.oz-valuecard-bar {
+  display: block;
+  width: 44px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--oz-green);
+  margin-top: 12px;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+}
+
+/* ---- Satır listeleri ---- */
+.oz-rows {
+  display: flex;
+  flex-direction: column;
+}
+.oz-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 10px 2px;
+  border: none;
+  border-bottom: 1px solid var(--oz-line);
+  background: none;
+  color: var(--oz-text);
+  font: inherit;
+  font-size: 14.5px;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+.oz-rows > .oz-row:last-child {
+  border-bottom: none;
+}
+a.oz-row,
+button.oz-row {
+  cursor: pointer;
+}
+.oz-row-label {
+  flex: 1;
+  min-width: 0;
+  color: var(--oz-muted);
+  font-weight: 500;
+}
+.oz-row-value {
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* Aracım bilgi tablosu (etiket | değer). */
+.oz-table {
+  border-radius: var(--oz-r-md);
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  padding: 2px 14px;
+}
+.oz-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--oz-line);
+  font-size: 13.5px;
+}
+.oz-table-row:last-child {
+  border-bottom: none;
+}
+.oz-table-row > span:first-child {
+  color: var(--oz-muted);
+}
+.oz-table-row > span:last-child,
+.oz-table-row > button {
+  color: var(--oz-text);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.oz-table-row > button {
+  justify-self: start;
+  border: none;
+  background: none;
+  padding: 0;
+  min-height: 32px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--oz-green-l);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---- Belgeler ---- */
+.oz-doc {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+}
+.oz-file {
+  position: relative;
+  width: 40px;
+  height: 48px;
+  flex: none;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #ffffff, #e5e7eb);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.oz-file::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(225deg, var(--oz-card) 50%, #c9ccd1 50%);
+  border-bottom-left-radius: 3px;
+}
+.oz-file-tag {
+  position: absolute;
+  left: 50%;
+  bottom: 9px;
+  transform: translateX(-50%);
+  min-width: 26px;
+  padding: 1px 3px;
+  border-radius: 3px;
+  background: var(--oz-red);
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-transform: lowercase;
+}
+.oz-file-tag[data-kind="img"] {
+  background: #3a404a;
+}
+.oz-doc-title {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+.oz-doc-meta {
+  font-size: 12px;
+  color: var(--oz-muted);
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.oz-doc-actions {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+.oz-doc-actions .oz-iconbtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+/* ---- Gösterge (ring) ---- */
+.oz-gauge {
+  position: relative;
+  margin: 8px auto 0;
+}
+.oz-gauge svg {
+  display: block;
+}
+.oz-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 26px;
+}
+.oz-gauge-value {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.oz-gauge-caption {
+  font-size: 15px;
+  font-weight: 500;
+  color: #d5dae1;
+  margin-top: 4px;
+}
+.oz-approx {
+  text-align: center;
+  font-size: 14px;
+  color: #d5dae1;
+  margin: 10px 0 0;
+}
+
+/* Önerilen bakımlar listesi */
+.oz-list {
+  border-radius: var(--oz-r-md);
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+  padding: 14px 14px 6px;
+}
+.oz-list-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+.oz-list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  font-size: 13.5px;
+}
+.oz-list-row .oz-list-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+}
+.oz-list-row .oz-list-val {
+  font-size: 12.5px;
+  color: var(--oz-muted);
+  white-space: nowrap;
+}
+.oz-list-row .oz-list-val[data-level="soon"] {
+  color: var(--oz-amber-l);
+}
+.oz-list-row .oz-list-val[data-level="late"] {
+  color: var(--oz-red-l);
+}
+.oz-bullet {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(34, 197, 94, 0.2);
+}
+.oz-bullet::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--oz-green);
+}
+.oz-bullet[data-level="soon"] {
+  background: rgba(245, 165, 36, 0.22);
+}
+.oz-bullet[data-level="soon"]::after {
+  background: var(--oz-amber);
+}
+.oz-bullet[data-level="late"] {
+  background: rgba(239, 68, 68, 0.22);
+}
+.oz-bullet[data-level="late"]::after {
+  background: var(--oz-red);
+}
+
+/* Muayene tarih kutusu ve bilgi notu */
+.oz-kv {
+  border-radius: var(--oz-r-md);
+  border: 1px solid var(--oz-line);
+  background: var(--oz-card);
+}
+.oz-kv > div {
+  padding: 12px 14px;
+}
+.oz-kv > div + div {
+  border-top: 1px solid var(--oz-line);
+}
+.oz-kv-label {
+  display: block;
+  font-size: 12px;
+  color: var(--oz-muted);
+}
+.oz-kv-value {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.oz-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--oz-muted);
+  margin: 14px 2px 0;
+}
+.oz-note > svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* Aracım: kartsız araç görseli */
+.oz-carstage {
+  height: 200px;
+  margin: 0 -16px;
+  background-image: url(/marketing/otoiz-arac-temiz.webp);
+  background-size: cover;
+  background-position: 50% 60%;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 70%, transparent 97%), linear-gradient(180deg, transparent 0, #000 16%, #000 78%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 70%, transparent 97%), linear-gradient(180deg, transparent 0, #000 16%, #000 78%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* Devir giriş kartı ve numaralı adımlar */
+.oz-steps {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+.oz-steps > li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.oz-step-n {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---- Landing CTA'ları, giriş rol kartları ---- */
+.oz-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid var(--oz-line-2);
+  color: var(--oz-text);
+  background: rgba(255, 255, 255, 0.03);
+}
+.oz-cta.is-primary {
+  border-color: transparent;
+  background: linear-gradient(180deg, #2fe073, #1fb956);
+  color: #04110a;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.28);
+}
+.oz-role {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 18px 16px;
+  border-radius: 18px;
+  text-decoration: none;
+  color: var(--oz-text);
+  border: 1.5px solid rgba(34, 197, 94, 0.55);
+  background: linear-gradient(160deg, rgba(34, 197, 94, 0.16), rgba(17, 19, 23, 0.9) 70%);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.08), 0 14px 34px rgba(34, 197, 94, 0.08);
+}
+.oz-role[data-tone="blue"] {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(17, 19, 23, 0.9) 70%);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+}
+.oz-role-title {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  margin-top: 14px;
+}
+.oz-role-desc {
+  display: block;
+  font-size: 13px;
+  color: #c3c9d1;
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+/* ---- Alt gezinme (5 bölüm) ---- */
+.oz-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: rgba(10, 13, 14, 0.94);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--oz-line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.oz-nav-inner {
+  display: flex;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.oz-nav-item {
+  flex: 1;
+  min-width: 0;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  color: var(--oz-faint);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 2px;
+}
+.oz-nav-item[aria-current="page"] {
+  color: var(--oz-green);
+  font-weight: 700;
+}
+.oz-nav-desktop {
+  display: none;
+}
+
+/* ---- Landing ---- */
+.oz-land {
+  position: relative;
+  isolation: isolate;
+}
+.oz-land-media {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 400px;
+  z-index: -1;
+  background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.75) 0%, rgba(7, 8, 10, 0) 24%, rgba(7, 8, 10, 0) 50%, var(--oz-bg) 96%), url(/marketing/otoiz-landing-arac-temiz.webp);
+  background-size: cover;
+  background-position: 46% 50%;
+}
+.oz-land-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+}
+.oz-land-copy {
+  padding-top: 236px;
+}
+.oz-land-title {
+  font-size: 34px;
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+.oz-land-sub {
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: #d5dae1;
+  margin: 12px 0 0;
+}
+.oz-land-ctas {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+.oz-feats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.oz-feat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.oz-feat-title {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #dfe3e8;
+}
+.oz-promo {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-height: 132px;
+  margin-top: 24px;
+  padding: 18px 150px 18px 18px;
+  border-radius: var(--oz-r-lg);
+  border: 1px solid var(--oz-line);
+  background: linear-gradient(120deg, #141a1d, #0e1315);
+}
+.oz-promo-text {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.oz-promo-img {
+  position: absolute;
+  right: 6px;
+  top: 10px;
+  width: 140px;
+  height: 200px;
+  background-image: url(/marketing/otoiz-telefon.webp);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: 50% 0;
+  transform: rotate(-6deg);
+}
+
+/* Alt pencere (ortak sheet sınıflarının premium tonu). */
+.otoiz-sheet-panel {
+  background: #0f1416;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+@media (max-width: 767px) {
+  .otoiz-sheet-panel {
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+/* Giriş kabuğunda imza araç atmosferi (üst alan, koyu overlay ile). */
+.oz-auth-car {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 380px;
+  pointer-events: none;
+  background-image: linear-gradient(180deg, rgba(7, 8, 10, 0.6) 0%, rgba(7, 8, 10, 0.25) 35%, rgba(7, 8, 10, 0.85) 80%, var(--otoiz-anthracite) 100%),
+    url(/marketing/otoiz-landing-arac-temiz.webp);
+  background-size: cover;
+  background-position: 55% 55%;
+  opacity: 0.8;
+}
+
+@media (max-width: 374px) {
+  .oz-plate {
+    font-size: 23px;
+  }
+  .oz-stat3 {
+    gap: 8px;
+  }
+  .oz-stat-value {
+    font-size: 11.5px;
+  }
+  .oz-land-title {
+    font-size: 30px;
+  }
+}
+
+@media (min-width: 720px) {
+  .oz-wrap {
+    max-width: 760px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .oz-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .oz-carimg {
+    height: 200px;
+  }
+  .oz-carstage {
+    height: 260px;
+  }
+  .oz-land-media {
+    height: 560px;
+  }
+  .oz-land-copy {
+    padding-top: 320px;
+  }
+  .oz-land-title {
+    font-size: 48px;
+  }
+  .oz-land-ctas {
+    grid-template-columns: 1fr 1fr;
+    max-width: 620px;
+  }
+  .oz-feats {
+    max-width: 620px;
+  }
+  .oz-promo {
+    max-width: 620px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .oz-wrap {
+    max-width: 1160px;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  .oz-wrap.is-narrow > :not(.oz-topbar) {
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .oz-app.oz-has-nav {
+    padding-bottom: 48px;
+  }
+  .oz-nav {
+    display: none;
+  }
+  .oz-nav-desktop {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    border: 1px solid var(--oz-line);
+    background: var(--oz-card);
+  }
+  .oz-nav-desktop .oz-nav-item {
+    flex: none;
+    flex-direction: row;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    gap: 7px;
+  }
+  .oz-nav-desktop .oz-nav-item[aria-current="page"] {
+    background: rgba(34, 197, 94, 0.14);
+    color: var(--oz-green-l);
+  }
+  .oz-cockpit {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-areas: "main hist" "tiles value";
+    gap: 24px 28px;
+    align-items: start;
+  }
+  .oz-ck-main {
+    grid-area: main;
+  }
+  .oz-ck-hist {
+    grid-area: hist;
+  }
+  .oz-ck-tiles {
+    grid-area: tiles;
+  }
+  .oz-ck-value {
+    grid-area: value;
+  }
+  .oz-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .oz-carimg {
+    height: 240px;
+  }
+  .oz-subhead {
+    padding-top: 4px;
+  }
+  .oz-land-media {
+    left: 38%;
+    height: 100%;
+    max-height: 760px;
+    background-image: linear-gradient(90deg, var(--oz-bg) 0%, rgba(7, 8, 10, 0) 30%), linear-gradient(180deg, rgba(7, 8, 10, 0.5) 0%, rgba(7, 8, 10, 0) 25%, rgba(7, 8, 10, 0) 70%, var(--oz-bg) 100%),
+      url(/marketing/otoiz-landing-arac-temiz.webp);
+  }
+  .oz-land-copy {
+    padding-top: 120px;
+    max-width: 560px;
+  }
+  .oz-land-title {
+    font-size: 56px;
+  }
+  .oz-land-ctas {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+  }
+  .oz-auth-car {
+    right: 50%;
+    height: 100%;
+    background-image: linear-gradient(90deg, rgba(7, 8, 10, 0.4) 0%, rgba(7, 8, 10, 0.1) 40%, var(--otoiz-anthracite) 100%),
+      linear-gradient(180deg, rgba(7, 8, 10, 0.6) 0%, rgba(7, 8, 10, 0) 30%, rgba(7, 8, 10, 0.9) 100%), url(/marketing/otoiz-landing-arac-temiz.webp);
+    opacity: 0.7;
+  }
+}
+
+/* ==================== Adım 2 — TİPOGRAFİ (2026-10-05) ====================
+   Yalnız yazı: font, boyut, ağırlık, harf aralığı, satır yüksekliği.
+   Renk, zemin, boşluk, kart ölçüsü ve yerleşim Adım 1'deki gibi kalır.
+   Ölçek: 11.5 · 12.5 · 13.5 · 15 · 17 · 22 · 26 (+ landing başlığı). */
+.oz-app {
+  font-feature-settings: "cv11", "ss03";
+  line-height: 1.45;
+}
+.oz-plate,
+.oz-vkm,
+.oz-tl-km,
+.oz-kv-value,
+.oz-gauge-value,
+.oz-stat-value,
+.oz-doc-meta {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ana başlıklar: tok ama kaba değil. */
+.oz-h1,
+.oz-land-title,
+.oz-valuecard-title,
+.oz-gauge-value {
+  font-weight: var(--oz-fw-display);
+  letter-spacing: -0.025em;
+}
+.oz-h1 { font-size: 26px; line-height: 1.15; }
+.oz-valuecard-title { font-size: 22px; line-height: 1.18; }
+
+/* Kokpit: plaka ve km en güçlü iki bilgi. */
+.oz-plate {
+  font-size: 26px; /* üst sınır 26 (nihai-ux-son); güç ağırlık ve sıkı aralıktan gelir */
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+}
+.oz-vkm {
+  font-size: 24px;
+  font-weight: var(--oz-fw-display);
+  letter-spacing: -0.02em;
+}
+.oz-vsub { font-size: 13.5px; font-weight: var(--oz-fw-meta); }
+
+/* Bölüm ve kart başlıkları: net ve güçlü. */
+.oz-h2,
+.oz-subhead-title {
+  font-size: 17px;
+  font-weight: var(--oz-fw-title);
+  letter-spacing: -0.015em;
+}
+.oz-tile-title,
+.oz-role-title,
+.oz-doc-title,
+.oz-list-title {
+  font-weight: var(--oz-fw-title);
+  letter-spacing: -0.01em;
+}
+.oz-tile-title { font-size: 15.5px; line-height: 1.25; }
+.oz-role-title { font-size: 17px; }
+.oz-doc-title { font-size: 15px; }
+.oz-list-title { font-size: 15px; }
+.oz-stat-label { font-size: 13.5px; font-weight: var(--oz-fw-title); letter-spacing: -0.005em; }
+.oz-kv-value { font-size: 17px; font-weight: var(--oz-fw-title); }
+.oz-tl-date { font-size: 15px; font-weight: var(--oz-fw-title); letter-spacing: -0.01em; }
+.oz-promo-text { font-size: 17px; font-weight: var(--oz-fw-btn); letter-spacing: -0.01em; }
+
+/* Açıklama metinleri: sakin, normal ağırlık. */
+.oz-tile-sub,
+.oz-role-desc,
+.oz-land-sub,
+.oz-tl-lines,
+.oz-tl-inline,
+.oz-note,
+.oz-missing,
+.oz-gauge-caption,
+.oz-approx,
+.oz-list-row .oz-list-name,
+.oz-steps > li {
+  font-weight: var(--oz-fw-body);
+}
+.oz-tile-sub { font-size: 12.5px; line-height: 1.35; }
+.oz-role-desc { font-size: 13.5px; line-height: 1.45; }
+.oz-tl-lines { font-size: 13.5px; line-height: 1.45; }
+.oz-steps > li { font-size: 13.5px; }
+
+/* Yardımcı bilgi (tarih, km, servis, etiket): küçük ama okunaklı. */
+.oz-tl-km,
+.oz-doc-meta,
+.oz-kv-label,
+.oz-src,
+.oz-pill,
+.oz-stat-value,
+.oz-list-row .oz-list-val {
+  font-weight: var(--oz-fw-meta);
+}
+.oz-tl-km,
+.oz-doc-meta,
+.oz-kv-label,
+.oz-list-row .oz-list-val { font-size: 12.5px; }
+.oz-stat-value { font-size: 12.5px; font-weight: var(--oz-fw-btn); }
+.oz-src { font-size: 12px; font-weight: var(--oz-fw-btn); }
+.oz-pill { font-size: 11.5px; }
+.oz-feat-title { font-size: 12px; font-weight: var(--oz-fw-btn); }
+
+/* Düğmeler: semibold. */
+.oz-btn,
+.oz-cta,
+.oz-smallbtn,
+.oz-seg-btn,
+.oz-link,
+.oz-switch,
+.oz-missing a,
+.oz-table-row > button,
+.oz-iconbtn {
+  font-weight: var(--oz-fw-btn);
+}
+.oz-btn,
+.oz-cta { font-size: 15px; letter-spacing: -0.005em; }
+.oz-smallbtn,
+.oz-seg-btn { font-size: 13.5px; }
+.oz-nav-item { font-weight: var(--oz-fw-meta); }
+.oz-nav-item[aria-current="page"] { font-weight: var(--oz-fw-btn); }
+
+@media (max-width: 374px) {
+  .oz-plate { font-size: 25px; }
+  .oz-vkm { font-size: 22px; }
+  .oz-stat-label { font-size: 12.5px; }
+  .oz-stat-value { font-size: 11.5px; }
+}
+
+
+/* ==================== Kart görünümü (2026-10-06) ====================
+   Yalnız yüzey: ince sınır, rafine köşe, çok hafif ve kontrollü gölge,
+   üst kenarda ince ışık çizgisi (yüzey derinliği). Ölçü, boşluk, ikon,
+   yazı ve yerleşim aynı. Neon / renkli gölge yok. */
+:root {
+  --oz-card-border: rgba(255, 255, 255, 0.075);
+  --oz-card-border-hover: rgba(255, 255, 255, 0.13);
+  --oz-card-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.028) 0%, rgba(255, 255, 255, 0) 46%), var(--oz-card);
+  --oz-card-depth: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px -14px rgba(0, 0, 0, 0.75);
+}
+.oz-card,
+.oz-stat,
+.oz-tile,
+.oz-doc,
+.oz-list,
+.oz-kv {
+  border: 1px solid var(--oz-card-border);
+  background: var(--oz-card-surface);
+  box-shadow: var(--oz-card-depth);
+}
+.oz-stat,
+.oz-tile,
+.oz-doc,
+.oz-card {
+  border-radius: 18px;
+}
+.oz-list,
+.oz-kv {
+  border-radius: 16px;
+}
+.oz-vcard {
+  border-color: var(--oz-card-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.45), 0 18px 36px -18px rgba(0, 0, 0, 0.8);
+}
+.oz-valuecard {
+  border-color: var(--oz-card-border);
+  box-shadow: var(--oz-card-depth);
+}
+.oz-role {
+  border: 1px solid var(--oz-card-border);
+  background: var(--oz-card-surface);
+  box-shadow: var(--oz-card-depth);
+}
+.oz-role:not([data-tone]) {
+  /* Seçili (Bireysel) kart: yeşil yalnız ince sınırda, parlama yok. */
+  border-color: rgba(34, 197, 94, 0.38);
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.07) 0%, rgba(34, 197, 94, 0) 55%), var(--oz-card);
+}
+@media (hover: hover) {
+  button.oz-stat:hover,
+  .oz-tile:hover,
+  .oz-role:hover {
+    border-color: var(--oz-card-border-hover);
+  }
+  .oz-role:not([data-tone]):hover {
+    border-color: rgba(34, 197, 94, 0.5);
+  }
+}
+
+/* ==================== Tipografi rafine (2026-10-06) ====================
+   Yalnız yazı: ağırlık, boyut, satır yüksekliği, harf aralığı.
+   Hiyerarşi ağırlık farkından değil, boyut + aralık + renk tonundan gelir.
+   Ağırlıklar: 400 açıklama · 500 meta · 560 düğme · 620 başlık · 680 ekran başlığı.
+   Kart ve düğme ölçüleri sabit; yalnız metin ölçüsü değişir. */
+:root {
+  --oz-fw-meta: 500;
+  --oz-fw-btn: 560;
+  --oz-fw-title: 620;
+  --oz-fw-display: 680;
+}
+.oz-app {
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ekran başlıkları: ince tracking, rafine ağırlık. */
+.oz-h1,
+.oz-land-title,
+.oz-valuecard-title,
+.oz-gauge-value {
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+.oz-h1 { line-height: 1.18; }
+.oz-valuecard-title { line-height: 1.2; }
+
+/* Plaka: Türk plakası gibi açık aralıklı, ölçü 26'da sabit. */
+.oz-plate {
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  line-height: 1.08;
+}
+.oz-vkm {
+  font-weight: 620;
+  letter-spacing: -0.015em;
+}
+.oz-vsub { font-weight: 400; letter-spacing: 0.005em; }
+
+/* Bölüm ve kart başlıkları. */
+.oz-h2,
+.oz-subhead-title {
+  font-size: 16.5px;
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+}
+.oz-tile-title,
+.oz-role-title,
+.oz-doc-title,
+.oz-list-title {
+  letter-spacing: -0.008em;
+}
+.oz-tile-title { font-size: 15px; line-height: 1.3; }
+.oz-role-title { font-size: 16.5px; line-height: 1.3; }
+.oz-doc-title { font-size: 14.5px; line-height: 1.32; }
+.oz-list-title { font-size: 14.5px; line-height: 1.32; }
+.oz-stat-label { font-size: 13px; font-weight: 600; letter-spacing: 0; line-height: 1.3; }
+.oz-kv-value { font-size: 16.5px; font-weight: 600; letter-spacing: -0.01em; }
+.oz-tl-date { font-size: 14.5px; font-weight: 600; letter-spacing: -0.005em; }
+.oz-promo-text { font-size: 16.5px; font-weight: 560; letter-spacing: -0.01em; line-height: 1.35; }
+
+/* Açıklamalar: ferah satır, hafif açık aralık. */
+.oz-tile-sub { font-size: 12.5px; line-height: 1.45; letter-spacing: 0.003em; }
+.oz-role-desc,
+.oz-tl-lines,
+.oz-steps > li { line-height: 1.55; letter-spacing: 0.003em; }
+.oz-land-sub,
+.oz-note,
+.oz-missing,
+.oz-gauge-caption { line-height: 1.55; }
+
+/* Meta: küçük, net, hafif açık tracking. */
+.oz-tl-km,
+.oz-doc-meta,
+.oz-kv-label,
+.oz-list-row .oz-list-val,
+.oz-src,
+.oz-feat-title {
+  letter-spacing: 0.012em;
+}
+.oz-stat-value { font-weight: 500; letter-spacing: 0.01em; }
+.oz-src { font-weight: 500; }
+.oz-pill { font-weight: 560; letter-spacing: 0.02em; }
+.oz-feat-title { font-weight: 560; }
+
+/* Düğmeler: ölçü sabit, yazı rafine. */
+.oz-btn,
+.oz-cta { letter-spacing: 0.005em; }
+.oz-smallbtn,
+.oz-seg-btn { letter-spacing: 0.008em; }
+.oz-nav-item { letter-spacing: 0.012em; }
+
+@media (max-width: 374px) {
+  .oz-stat-label { font-size: 12.5px; }
+}
+
+/* ==================== Tipografi revizyon (2026-10-06 akşam) ====================
+   1 ana başlık biraz daha güçlü · 2 kart başlığı daha net · 3 meta biraz büyük. */
+.oz-h1,
+.oz-land-title,
+.oz-valuecard-title,
+.oz-gauge-value { font-weight: 670; letter-spacing: -0.02em; }
+.oz-h2,
+.oz-subhead-title { font-weight: 650; letter-spacing: -0.015em; }
+
+.oz-tile-title { font-size: 16px; font-weight: 640; letter-spacing: -0.01em; line-height: 1.28; }
+.oz-stat-label { font-size: 13.5px; font-weight: 620; }
+.oz-tile-sub { font-size: 13px; line-height: 1.5; }
+
+.oz-stat-value,
+.oz-tl-km,
+.oz-doc-meta,
+.oz-kv-label,
+.oz-list-row .oz-list-val { font-size: 13px; line-height: 1.45; }
+.oz-src { font-size: 12.5px; }
+.oz-pill { font-size: 12px; }
+.oz-feat-title { font-size: 12.5px; line-height: 1.4; }
+.oz-vsub { font-size: 14px; line-height: 1.45; }
+.oz-role-desc,
+.oz-tl-lines,
+.oz-steps > li { font-size: 14px; line-height: 1.6; }
+
+@media (max-width: 374px) {
+  .oz-tile-title { font-size: 15px; }
+  .oz-stat-label { font-size: 12.5px; }
+  .oz-stat-value { font-size: 12px; }
+}
+
+/* ==================== Buton görünümü (2026-10-06) ====================
+   Yalnız yüzey: zemin, ince sınır, hafif derinlik, hover/active.
+   Ölçü, konum, yazı ve işlev aynı; sınırlar inset gölgeyle çizilir (ölçü değişmez). */
+:root {
+  --oz-btn-primary: linear-gradient(180deg, #27d066 0%, #1fb357 100%);
+  --oz-btn-primary-hover: linear-gradient(180deg, #2bd86c 0%, #21bb5c 100%);
+  --oz-btn-primary-edge: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 0 0 1px rgba(6, 40, 20, 0.28);
+  --oz-btn-primary-depth: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(34, 197, 94, 0.16);
+  --oz-btn-secondary: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.018) 100%);
+  --oz-btn-secondary-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.03) 100%);
+  --oz-btn-secondary-edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --oz-btn-secondary-depth: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --oz-btn-line: rgba(255, 255, 255, 0.11);
+  --oz-btn-line-hover: rgba(255, 255, 255, 0.18);
+}
+
+/* Primary: net yeşil, mat ve rafine; neon parıltı yok. */
+.oz-btn,
+.oz-cta.is-primary,
+.otoiz-install-btn {
+  background: var(--oz-btn-primary);
+  box-shadow: var(--oz-btn-primary-edge), var(--oz-btn-primary-depth);
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+.oz-btn:not(.is-ghost):not(:disabled):hover,
+.oz-cta.is-primary:hover,
+.otoiz-install-btn:not(:disabled):hover {
+  background: var(--oz-btn-primary-hover);
+  box-shadow: var(--oz-btn-primary-edge), 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 22px rgba(34, 197, 94, 0.2);
+}
+.oz-btn:not(.is-ghost):not(:disabled):active,
+.oz-cta.is-primary:active,
+.otoiz-install-btn:not(:disabled):active {
+  opacity: 1;
+  transform: translateY(1px);
+  background: linear-gradient(180deg, #1fb357 0%, #1ca650 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(6, 40, 20, 0.3), 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+/* Secondary: koyu yüzey, ince sınır. */
+.oz-btn.is-ghost,
+.oz-cta:not(.is-primary),
+.oz-smallbtn {
+  background: var(--oz-btn-secondary);
+  border-color: var(--oz-btn-line);
+  box-shadow: var(--oz-btn-secondary-edge), var(--oz-btn-secondary-depth);
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+.oz-btn.is-ghost:not(:disabled):hover,
+.oz-cta:not(.is-primary):hover,
+.oz-smallbtn:hover {
+  background: var(--oz-btn-secondary-hover);
+  border-color: var(--oz-btn-line-hover);
+}
+.oz-btn.is-ghost:not(:disabled):active,
+.oz-cta:not(.is-primary):active,
+.oz-smallbtn:active {
+  opacity: 1;
+  transform: translateY(1px);
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--oz-btn-line);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Sekme ve ikon düğmeleri: yalnız durum yüzeyi. */
+.oz-seg-btn[aria-pressed="true"] {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.09) 100%);
+  border-color: rgba(34, 197, 94, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.oz-seg-btn:not([aria-pressed="true"]):hover { background: rgba(255, 255, 255, 0.035); }
+.oz-iconbtn:active { background: rgba(255, 255, 255, 0.08); }
+.otoiz-install-later:hover { color: rgba(255, 255, 255, 0.86); }
+
+/* Klavye odağı: ince yeşil halka. */
+.oz-btn:focus-visible,
+.oz-cta:focus-visible,
+.oz-smallbtn:focus-visible,
+.oz-seg-btn:focus-visible,
+.oz-iconbtn:focus-visible,
+.otoiz-install-btn:focus-visible {
+  outline: 2px solid rgba(74, 222, 128, 0.7);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oz-btn, .oz-cta, .oz-smallbtn, .otoiz-install-btn { transition: none; }
+}
+
+/* ==================== Üst araç kartı görseli (2026-10-06) ====================
+   Yalnız kokpit üst kartındaki araç fotoğrafı: kadraj, crop, gradyan, denge.
+   Görsel üstte plaka ve altta km alanının arkasına yumuşakça uzanır; akıştaki
+   yüksekliği aynı kalır (172 = 224 − 28 − 24). Metin katmanları fotoğrafın önünde. */
+.oz-vcard-head,
+.oz-vcard-foot {
+  position: relative;
+  z-index: 1;
+}
+.oz-carimg {
+  height: 224px;
+  margin: -28px -16px -24px;
+  background-image:
+    linear-gradient(180deg, rgba(14, 18, 20, 0.62) 0%, rgba(14, 18, 20, 0.18) 24%, rgba(14, 18, 20, 0) 40%, rgba(14, 18, 20, 0) 64%, rgba(14, 18, 20, 0.5) 88%, rgba(14, 18, 20, 0.72) 100%),
+    radial-gradient(85% 70% at 62% 58%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%),
+    url(/marketing/otoiz-arac-temiz.webp);
+  background-size: 100% 100%, 100% 100%, 100% auto;
+  background-position: 0 0, 0 0, 50% 62%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 80%, transparent 100%), linear-gradient(180deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0, #000 10%, #000 80%, transparent 100%), linear-gradient(180deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+  mask-composite: intersect;
+}
+.oz-plate,
+.oz-vkm { text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45); }
+@media (min-width: 720px) {
+  .oz-carimg { height: 252px; }
+}
+@media (min-width: 1024px) {
+  .oz-carimg { height: 292px; }
+}
+
+/* ==================== Alt navigasyon barı (2026-10-06) ====================
+   Yalnız mobil alt barın yüzeyi: zemin, üst sınır, aktif/pasif durum, derinlik.
+   Yükseklik, ikon boyutu, yazı ve dokunma alanı aynı; göstergeler mutlak konumlu. */
+.oz-nav {
+  background: linear-gradient(180deg, rgba(19, 22, 26, 0.94) 0%, rgba(10, 12, 14, 0.97) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 -12px 32px rgba(0, 0, 0, 0.5);
+}
+.oz-nav .oz-nav-item {
+  position: relative;
+  color: #8a929e;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.18s ease;
+}
+/* Aktif: ikon arkasında sakin yeşil yüzey + üst kenarda ince çizgi. */
+.oz-nav .oz-nav-item::before,
+.oz-nav .oz-nav-item::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.oz-nav .oz-nav-item::before {
+  top: 7px;
+  width: 46px;
+  height: 28px;
+  margin-left: -23px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.11) 0%, rgba(34, 197, 94, 0.05) 100%);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.13);
+}
+.oz-nav .oz-nav-item::after {
+  top: 0;
+  width: 22px;
+  height: 2px;
+  margin-left: -11px;
+  border-radius: 0 0 2px 2px;
+  background: rgba(74, 222, 128, 0.85);
+}
+.oz-nav .oz-nav-item > * {
+  position: relative;
+  z-index: 1;
+}
+.oz-nav .oz-nav-item[aria-current="page"] {
+  color: #6fdc96;
+}
+.oz-nav .oz-nav-item[aria-current="page"]::before,
+.oz-nav .oz-nav-item[aria-current="page"]::after {
+  opacity: 1;
+}
+.oz-nav .oz-nav-item:not([aria-current="page"]):active {
+  color: #b4bbc5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .oz-nav .oz-nav-item,
+  .oz-nav .oz-nav-item::before,
+  .oz-nav .oz-nav-item::after { transition: none; }
+}
+
+/* ==================== Giriş ekranı logo ve üst alan (2026-10-06) ====================
+   Yalnız /giris seçim ekranının üst alanı: logo ölçüsü, üst/alt boşluk, kartlara
+   mesafe ve hafif ambiyans. Sayfa satır içi stil kullandığı için kapsam :has() ile
+   bu ekrana sınırlı; satır içi değerleri geçmek için !important gerekli. */
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) {
+  position: relative;
+  padding-top: calc(env(safe-area-inset-top) + 52px) !important;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"])::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 360px;
+  height: 220px;
+  margin-left: -180px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(50% 50% at 50% 46%, rgba(34, 197, 94, 0.07) 0%, rgba(34, 197, 94, 0) 100%);
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > a[href="/"] {
+  position: relative;
+  z-index: 1;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > a[href="/"] img {
+  width: 196px !important;
+  height: auto !important;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > h1 + p {
+  position: relative;
+  z-index: 1;
+  margin: 14px 0 36px !important;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > .oz-carstage {
+  margin-top: 28px !important;
+}
+
+/* ==================== Form alanları (2026-10-06) ====================
+   Yalnız mevcut koyu form alanlarının yüzeyi: zemin, sınır, odak, placeholder,
+   select/textarea, disabled/readonly, hafif iç derinlik. Ölçü/padding aynı.
+   Alanlar satır içi stil (lib/theme inputStyle, koyu zemin #0C0E11) kullandığı
+   için kapsam o zemine sınırlı (:where ile özgüllük düşük tutulur); açık yüzeyli
+   yönetim alanları etkilenmez. Hata durumundaki kırmızı sınır korunur. */
+:root {
+  --oz-field-bg: linear-gradient(180deg, #0b0d10 0%, #0f1215 100%);
+  --oz-field-bg-focus: linear-gradient(180deg, #0c0f12 0%, #111518 100%);
+  --oz-field-line: rgba(255, 255, 255, 0.09);
+  --oz-field-line-hover: rgba(255, 255, 255, 0.14);
+  --oz-field-depth: inset 0 1px 2px rgba(0, 0, 0, 0.45), inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+}
+:is(input, select, textarea):where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"])):where([style*="#0C0E11" i], [style*="12, 14, 17"]) {
+  background: var(--oz-field-bg) !important;
+  box-shadow: var(--oz-field-depth);
+  caret-color: #4ade80;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+:is(input, select, textarea):where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"])):where([style*="#0C0E11" i], [style*="12, 14, 17"]):where(:not([aria-invalid="true"], [style*="EF5350" i], [style*="239, 83, 80"])) {
+  border-color: var(--oz-field-line) !important;
+}
+@media (hover: hover) {
+  :is(input, select, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"]):where(:not(:disabled, [aria-invalid="true"], [style*="EF5350" i], [style*="239, 83, 80"])):hover {
+    border-color: var(--oz-field-line-hover) !important;
+  }
+}
+/* Odak: kontrollü OTOİZ yeşili, yumuşak halka (neon yok). */
+:is(input, select, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"]):focus {
+  background: var(--oz-field-bg-focus) !important;
+  border-color: rgba(34, 197, 94, 0.7) !important;
+  box-shadow: var(--oz-field-depth), 0 0 0 3px rgba(34, 197, 94, 0.12);
+}
+:is(input, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"])[aria-invalid="true"]:focus {
+  border-color: #ef5350 !important;
+  box-shadow: var(--oz-field-depth), 0 0 0 3px rgba(239, 83, 80, 0.14);
+}
+/* Placeholder: sakin, okunur gri. */
+:is(input, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"])::placeholder {
+  color: #6b7380;
+  opacity: 1;
+}
+textarea:where([style*="#0C0E11" i], [style*="12, 14, 17"]) {
+  line-height: 1.5;
+}
+/* Disabled / readonly: aynı yüzey, daha sakin; okunur kalır. */
+:is(input, select, textarea):where([style*="#0C0E11" i], [style*="12, 14, 17"]):is(:disabled, [readonly]) {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none;
+  color: #a3abb7;
+  -webkit-text-fill-color: #a3abb7;
+  opacity: 1;
+  cursor: not-allowed;
+}
+/* Tarayıcı otomatik doldurma sarısını koyu yüzeyde tut. */
+input:where([style*="#0C0E11" i], [style*="12, 14, 17"]):-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #0e1114 inset, var(--oz-field-depth);
+  -webkit-text-fill-color: #f5f7fa;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(input, select, textarea) { transition: none; }
+}
+
+/* ==================== Modal / uyarı / toast yüzeyleri (2026-10-06) ====================
+   Yalnız yüzey: zemin, sınır, derinlik, overlay ve durum ayrımı. Ölçü, konum,
+   padding, açılma/kapanma ve animasyon aynı; ayırıcılar iç gölgeyle çizilir. */
+:root {
+  --oz-sheet-surface: linear-gradient(180deg, #171b20 0%, #111418 100%);
+  --oz-sheet-line: rgba(255, 255, 255, 0.08);
+  --oz-overlay: rgba(4, 6, 8, 0.6);
+}
+/* Overlay: ekranı boğmayan, hafif bulanık karartma. */
+.otoiz-sheet-backdrop,
+.otoiz-drawer-backdrop {
+  background: radial-gradient(120% 80% at 50% 100%, rgba(4, 6, 8, 0.68) 0%, var(--oz-overlay) 60%);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+/* Alttan açılan pencere ve çekmece: koyu antrasit yüzey, ince üst ışık. */
+.otoiz-sheet-panel {
+  background: var(--oz-sheet-surface);
+  border-color: var(--oz-sheet-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 -18px 48px rgba(0, 0, 0, 0.55);
+}
+.otoiz-sheet-grab { background: rgba(255, 255, 255, 0.16); }
+.otoiz-sheet-head { box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.05); }
+.otoiz-drawer-panel { background: var(--oz-sheet-surface); }
+.otoiz-drawer-head { border-bottom-color: rgba(255, 255, 255, 0.07); }
+@media (min-width: 768px) {
+  .otoiz-sheet-panel,
+  .otoiz-sheet-panel.is-form {
+    border-color: var(--oz-sheet-line);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 80px rgba(0, 0, 0, 0.6);
+  }
+  .otoiz-drawer-panel { border-left-color: var(--oz-sheet-line); }
+}
+/* İşlem sonrası toast (başarı): koyu yüzey, kontrollü yeşil sınır. */
+.otoiz-toast {
+  background: linear-gradient(180deg, #1b2025 0%, #14181c 100%);
+  border-color: rgba(34, 197, 94, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+/* Sayfa ve pencere içi uyarılar: durum rengi sakin zemin + ince sınır + üst ışık.
+   (Satır içi soft renklerle eşleşir; yalnız role=alert/status kutuları.) */
+:is([role="alert"], [role="status"]):where([style*="239, 83, 80, 0.14"], [style*="239,83,80,0.14"]) {
+  background: linear-gradient(180deg, rgba(239, 83, 80, 0.13) 0%, rgba(239, 83, 80, 0.08) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(239, 83, 80, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+:is([role="alert"], [role="status"]):where([style*="245, 196, 81, 0.14"], [style*="245,196,81,0.14"]) {
+  background: linear-gradient(180deg, rgba(245, 196, 81, 0.12) 0%, rgba(245, 196, 81, 0.07) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(245, 196, 81, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+:is([role="alert"], [role="status"]):where([style*="34, 197, 94, 0.14"], [style*="34,197,94,0.14"]) {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.07) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+:is([role="alert"], [role="status"]):where([style*="195, 201, 209, 0.12"], [style*="195,201,209,0.12"]) {
+  background: linear-gradient(180deg, rgba(195, 201, 209, 0.09) 0%, rgba(195, 201, 209, 0.05) 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(195, 201, 209, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ==================== Görsel kontrol düzeltmeleri (2026-10-06) ====================
+   Yalnız görünüm; işlev, ölçü, metin aynı. */
+
+/* 1) Bölüm giriş animasyonu bittikten sonra transform bırakmaz: içindeki
+   sabit pencereler (QR Kodu) tam ekranı kaplar ve alt menünün üstünde kalır. */
+.oz-enter {
+  animation-fill-mode: backwards;
+}
+
+/* 2) Satır içi düz yeşil ana butonlar → premium primary yüzey (yalnız yüzey). */
+form:has(#bireysel-email) > button[type="submit"]:not(:disabled),
+[data-testid="islem-ekle"],
+[data-testid="arac-formu"] button:not(:disabled):where([style*="#22C55E" i], [style*="rgb(34, 197, 94)"]):where([style*="width:100%"], [style*="width: 100%"]),
+[data-testid="bakim-kaydet"]:not(:disabled),
+[data-testid="km-kaydet"]:not(:disabled) {
+  background: var(--oz-btn-primary) !important;
+  box-shadow: var(--oz-btn-primary-edge), var(--oz-btn-primary-depth) !important;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+@media (hover: hover) {
+  form:has(#bireysel-email) > button[type="submit"]:not(:disabled):hover,
+  [data-testid="islem-ekle"]:hover,
+  [data-testid="arac-formu"] button:not(:disabled):where([style*="#22C55E" i], [style*="rgb(34, 197, 94)"]):where([style*="width:100%"], [style*="width: 100%"]):hover,
+  [data-testid="bakim-kaydet"]:not(:disabled):hover,
+  [data-testid="km-kaydet"]:not(:disabled):hover {
+    background: var(--oz-btn-primary-hover) !important;
+    box-shadow: var(--oz-btn-primary-edge), 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 22px rgba(34, 197, 94, 0.2) !important;
+  }
+}
+form:has(#bireysel-email) > button[type="submit"]:not(:disabled):active,
+[data-testid="islem-ekle"]:active,
+[data-testid="arac-formu"] button:not(:disabled):where([style*="#22C55E" i], [style*="rgb(34, 197, 94)"]):where([style*="width:100%"], [style*="width: 100%"]):active,
+[data-testid="bakim-kaydet"]:not(:disabled):active,
+[data-testid="km-kaydet"]:not(:disabled):active {
+  filter: none;
+  transform: translateY(1px);
+  background: linear-gradient(180deg, #1fb357 0%, #1ca650 100%) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(6, 40, 20, 0.3), 0 1px 1px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 3) Tüm Ayrıntılar sekmeleri: aktif sekme koyu yeşil ton + ince yeşil kenar
+   (diğer filtrelerle aynı); kenar inset gölgeyle, ölçü değişmez. */
+nav[aria-label="Araç bölümleri"] > button[aria-current="page"] {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.09) 100%) !important;
+  color: #4ade80 !important;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* 4) Hızlı İşlemler ile Alıcıya Göster kartı arası 14 px. */
+:is(.otoiz-when-stacked, .otoiz-when-wide) > [data-testid="hizli-islemler"] + :is(button, [data-testid="aliciya-goster"]) {
+  margin-top: 14px;
 }

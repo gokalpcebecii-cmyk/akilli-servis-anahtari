@@ -170,7 +170,7 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
         value={km ? Number(km).toLocaleString("tr-TR") : ""}
         onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => setKm(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, ""))}
-        style={{ ...inputStyle, fontSize: 20, fontWeight: 800, textAlign: "center", marginBottom: 16 }}
+        style={{ ...inputStyle, fontSize: 20, fontWeight: 700, textAlign: "center", marginBottom: 16 }}
       />
 
       <div style={{ ...labelStyle, marginBottom: 8 }}>Yapılan İşlemler</div>
@@ -225,7 +225,7 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
               value={customKm ? Number(customKm).toLocaleString("tr-TR") : ""}
               onChange={(e) => setCustomKm(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, ""))}
               placeholder="Örn. 95.000"
-              style={{ ...inputStyle, fontWeight: 800 }}
+              style={{ ...inputStyle, fontWeight: 700 }}
             />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -250,7 +250,7 @@ export default function OwnerQuickVisit({ vehicle, userId, items, defaultInterva
   if (bare) return <div id="hizli-bakim">{body}</div>;
   return (
     <section id="hizli-bakim" style={cardStyle}>
-      <h2 style={{ fontSize: 15, fontWeight: 800, color: colors.textDark, margin: "0 0 12px" }}>Hızlı Bakım Kaydı</h2>
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: colors.textDark, margin: "0 0 12px" }}>Hızlı Bakım Kaydı</h2>
       {body}
     </section>
   );

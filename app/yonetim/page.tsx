@@ -10,6 +10,7 @@ import { createBrowserSupabase } from "@/lib/supabase";
 import { reportClientEvent } from "@/lib/clientEvent";
 import { colors, font, radius, inputStyle, labelStyle, primaryButtonStyle, cardStyle, badgeStyle } from "@/lib/theme";
 import { OtoizLogo } from "@/components/OtoizLogo";
+import { Icon } from "@/components/Icon";
 import { CaretSafeInput } from "@/components/CaretSafeInput";
 import { AuthShell, AuthShellLoading } from "@/components/AuthShell";
 import UrunlerTab from "./UrunlerTab";
@@ -331,7 +332,7 @@ export default function YonetimPage() {
   const statCard = (label: string, value: any, sub?: string) => (
     <div style={{ ...cardStyle, padding: 14, flex: "1 1 150px", minWidth: 140 }}>
       <div style={{ fontSize: 12, color: colors.textMuted, fontWeight: 600 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: colors.textDark, marginTop: 2 }}>{value ?? "—"}</div>
+      <div style={{ fontSize: 26, fontWeight: 700, color: colors.textDark, marginTop: 2 }}>{value ?? "—"}</div>
       {sub && <div style={{ fontSize: 11.5, color: colors.textMuted, marginTop: 2 }}>{sub}</div>}
     </div>
   );
@@ -347,7 +348,7 @@ export default function YonetimPage() {
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <OtoizLogo variant="dark" size={110} />
-            <span style={{ color: colors.green, fontWeight: 800, fontSize: 13, letterSpacing: 0.6 }}>YÖNETİM</span>
+            <span style={{ color: colors.green, fontWeight: 700, fontSize: 13, letterSpacing: 0.6 }}>YÖNETİM</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12.5 }}>{adminEmail}</span>
@@ -393,7 +394,7 @@ export default function YonetimPage() {
             {tenants.some((t) => t.approval_status === "pending") && (
               <button
                 onClick={() => setTab("servisler")}
-                style={{ display: "block", width: "100%", textAlign: "left", background: colors.warningSoft, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 14px", marginBottom: 14, fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: "inherit", minHeight: 44 }}
+                style={{ display: "block", width: "100%", textAlign: "left", background: colors.warningSoft, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 14px", marginBottom: 14, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit", minHeight: 44 }}
               >
                 {tenants.filter((t) => t.approval_status === "pending").length} servis onay bekliyor → Servisler
               </button>
@@ -453,8 +454,8 @@ export default function YonetimPage() {
                   <span style={badgeStyle(u.last_sign_in_at && Date.now() - new Date(u.last_sign_in_at).getTime() < 7 * 86400000 ? "success" : "neutral")}>
                     Son giriş: {ago(u.last_sign_in_at)}
                   </span>
-                  <span style={{ fontSize: 13 }}>🚗 {u.vehicles} araç</span>
-                  <span style={{ fontSize: 13 }}>🛠 {u.records_created} kayıt{u.last_record_at ? ` (son: ${fmtDate(u.last_record_at)})` : ""}</span>
+                  <span style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="car" color={colors.greenDark} size={16} />{u.vehicles} araç</span>
+                  <span style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="wrench" color={colors.greenDark} size={16} />{u.records_created} kayıt{u.last_record_at ? ` (son: ${fmtDate(u.last_record_at)})` : ""}</span>
                 </div>
               ))}
               {users.length === 0 && <p style={{ color: colors.textMuted, fontSize: 13.5 }}>Kullanıcı bulunamadı.</p>}
@@ -541,7 +542,7 @@ export default function YonetimPage() {
                 <input autoCorrect="off" spellCheck={false} autoCapitalize="none" type="text" pattern="[^@\s]+@[^@\s]+\.[^@\s]+" title="Geçerli bir e-posta adresi girin" inputMode="email" placeholder="Müşterinin OTOİZ e-postası" aria-label="Müşteri e-postası" value={userEmailInput}
                   onChange={(e) => setUserEmailInput(e.target.value)} style={{ ...inputStyle, maxWidth: 300 }} />
                 <CaretSafeInput placeholder="Hesap kodu" autoCapitalize="characters" autoCorrect="off" spellCheck={false} aria-label="Müşteri hesap kodu" value={userAccountCode}
-                  onChange={(e) => setUserAccountCode(e.target.value.toUpperCase())} style={{ ...inputStyle, width: 140, letterSpacing: 1.5, fontWeight: 800 }} />
+                  onChange={(e) => setUserAccountCode(e.target.value.toUpperCase())} style={{ ...inputStyle, width: 140, letterSpacing: 1.5, fontWeight: 700 }} />
                 <input type="number" inputMode="numeric" min={1} max={20} placeholder="Adet" aria-label="Adet" value={userCount}
                   onChange={(e) => setUserCount(e.target.value ? Number(e.target.value) : "")} style={{ ...inputStyle, width: 90 }} />
                 <button

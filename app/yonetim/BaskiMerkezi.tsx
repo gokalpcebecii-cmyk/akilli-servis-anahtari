@@ -168,7 +168,7 @@ export function VerificationPanel({ v, label, busy }: { v: any; label?: string; 
       <div
         data-testid="batch-ready"
         style={{
-          marginTop: 12, padding: "12px 14px", borderRadius: radius.sm, textAlign: "center", fontWeight: 900, fontSize: 17, letterSpacing: 0.5,
+          marginTop: 12, padding: "12px 14px", borderRadius: radius.sm, textAlign: "center", fontWeight: 700, fontSize: 17, letterSpacing: 0.5,
           background: ready ? colors.greenSoft : colors.dangerSoft, color: ready ? colors.greenDark : colors.danger, fontFamily: font,
         }}
       >

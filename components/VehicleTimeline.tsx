@@ -18,10 +18,10 @@ const { fmtDate } = require("@/lib/vehicleStatus");
 // mavi, bireysel geçmiş = mavi çerçeveli, sistem = gri. Düzeltilmiş kayıt ayrıca sarı kenarlıklı rozetle.
 const SOURCE_STYLE: Record<string, { fg: string; bg: string; border: string; icon: string }> = {
   service: { fg: colors.greenLight, bg: "transparent", border: colors.green, icon: "shield-check" },
-  owner: { fg: colors.info, bg: colors.infoSoft, border: "rgba(96,165,250,0.45)", icon: "user" },
+  owner: { fg: colors.info, bg: colors.infoSoft, border: "rgba(195,201,209,0.35)", icon: "user" },
   // Nihai UX: araç sahibinin geçmişe dönük girdiği kayıt — bireysel mavi,
   // dolgusuz (servis doğrulamalı gibi görünmez).
-  owner_history: { fg: colors.info, bg: "transparent", border: "rgba(96,165,250,0.45)", icon: "history" },
+  owner_history: { fg: colors.info, bg: "transparent", border: "rgba(195,201,209,0.35)", icon: "history" },
   system: { fg: colors.textMuted, bg: colors.neutralSoft, border: "transparent", icon: "car" },
 };
 
@@ -123,7 +123,7 @@ export function VehicleTimeline({
         aria-expanded={title === "Son Kayıtlar" ? !collapsed : true}
         style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: collapsed ? 0 : 12, padding: 0, border: "none", background: "transparent", cursor: title === "Son Kayıtlar" ? "pointer" : "default", fontFamily: "inherit" }}
       >
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: colors.text, margin: 0 }}>{title}</h2>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: colors.text, margin: 0 }}>{title}</h2>
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {!loading && total > 0 && <span style={{ fontSize: 13, color: colors.textFaint }}>{total} olay</span>}
           {title === "Son Kayıtlar" && <span aria-hidden style={{ color: colors.textMuted, fontSize: 18 }}>{collapsed ? "⌄" : "⌃"}</span>}

@@ -490,7 +490,7 @@ export default function VehicleDetailPage() {
               </button>
             )}
           </div>
-          <h1 style={{ fontSize: isNew ? 26 : 20, fontWeight: 800, margin: "10px 0 0", color: colors.text }}>
+          <h1 style={{ fontSize: isNew ? 26 : 20, fontWeight: 700, margin: "10px 0 0", color: colors.text }}>
             {isNew ? "Yeni Araç" : "Hızlı Bakım Kaydı"}
           </h1>
           {isNew && <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "6px 0 0" }}>Plaka, marka ve kilometreyi girin; aracı oluşturun.</p>}
@@ -545,7 +545,7 @@ export default function VehicleDetailPage() {
                    
                     placeholder="Örn. 52430"
                     aria-invalid={!!fieldErrors.current_km}
-                    style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3, marginBottom: fieldErrors.current_km ? 4 : 14, borderColor: fieldErrors.current_km ? colors.danger : colors.border }}
+                    style={{ ...inputStyle, fontWeight: 700, fontSize: 17, letterSpacing: 0.3, marginBottom: fieldErrors.current_km ? 4 : 14, borderColor: fieldErrors.current_km ? colors.danger : colors.border }}
                     value={formatKmInput(vehicle.current_km)}
                     onChange={(e) => setVehicle({ ...vehicle, current_km: sanitizeKmInput(e.target.value) })}
                   />
@@ -620,7 +620,7 @@ export default function VehicleDetailPage() {
                         inputMode="numeric"
                        
                         placeholder="Opsiyonel"
-                        style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
+                        style={{ ...inputStyle, fontWeight: 700, fontSize: 17, letterSpacing: 0.3 }}
                         value={formatKmInput(vehicle.next_service_km || "")}
                         onChange={(e) => setVehicle({ ...vehicle, next_service_km: sanitizeKmInput(e.target.value) })}
                       />
@@ -657,7 +657,7 @@ export default function VehicleDetailPage() {
                 bakım → Bakımı Kaydet. Normal bakımda klavye yalnız km için açılır. */}
             <StepLabel n={1} text="Araç" />
             <div data-testid="servis-arac" style={{ display: "flex", alignItems: "baseline", gap: "4px 12px", flexWrap: "wrap", background: colors.surfaceRaised, border: `1px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 14px", marginBottom: 18 }}>
-              <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: 0.8, color: colors.text }}>{vehicle.plate}</span>
+              <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: 0.8, color: colors.text }}>{vehicle.plate}</span>
               <span style={{ fontSize: 14.5, fontWeight: 600, color: colors.textMuted }}>
                 {vehicle.brand} {vehicle.model}{vehicle.year ? ` · ${vehicle.year}` : ""}
               </span>
@@ -682,7 +682,7 @@ export default function VehicleDetailPage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") e.currentTarget.blur();
               }}
-              style={{ ...inputStyle, fontSize: 24, fontWeight: 800, padding: 14, textAlign: "center", marginBottom: 18 }}
+              style={{ ...inputStyle, fontSize: 24, fontWeight: 700, padding: 14, textAlign: "center", marginBottom: 18 }}
               value={formatKmInput(quickKm)}
               onChange={(e) => setQuickKm(sanitizeKmInput(e.target.value))}
               placeholder="Km"
@@ -749,7 +749,7 @@ export default function VehicleDetailPage() {
                   <CaretSafeInput caretChars="digits"
                     type="text"
                     inputMode="numeric"
-                    style={{ ...inputStyle, fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}
+                    style={{ ...inputStyle, fontWeight: 700, fontSize: 17, letterSpacing: 0.3 }}
                     value={formatKmInput(nextServiceKm)}
                     onChange={(e) => setNextServiceKm(sanitizeKmInput(e.target.value))}
                     placeholder="Örn. 95.000"
@@ -828,8 +828,8 @@ export default function VehicleDetailPage() {
               </div>
             )}
             {successMessage && (
-              <div role="status" className="otoiz-enter" style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", background: colors.greenSoft, border: `1px solid rgba(34,197,94,0.5)`, color: colors.greenLight, padding: "14px", borderRadius: radius.md, fontWeight: 800, fontSize: 15.5, margin: "8px 0 10px" }}>
-                <Icon name="check" color={colors.greenLight} size={20} strokeWidth={2.6} />
+              <div role="status" className="otoiz-enter" style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", background: colors.greenSoft, border: `1px solid rgba(34,197,94,0.5)`, color: colors.greenLight, padding: "14px", borderRadius: radius.md, fontWeight: 700, fontSize: 15.5, margin: "8px 0 10px" }}>
+                <Icon name="check" color={colors.greenLight} size={20} />
                 {successMessage.replace(/^✓\s*/, "")}
               </div>
             )}
@@ -865,7 +865,7 @@ export default function VehicleDetailPage() {
 
         {!isNew && (
           <section className="otoiz-servis-area-qr" style={{ ...cardStyle, textAlign: "center" }}>
-            <h2 style={{ fontSize: 17, color: colors.text, fontWeight: 800, margin: "0 0 14px" }}>Araç QR Kodu</h2>
+            <h2 style={{ fontSize: 17, color: colors.text, fontWeight: 700, margin: "0 0 14px" }}>Araç QR Kodu</h2>
             {qrCode ? (
               <>
                 {/* PILOT FIX 03 (bölüm F): büyük taranabilir QR varsayılan
@@ -936,10 +936,10 @@ export default function VehicleDetailPage() {
 function StepLabel({ n, text, optional = false }: { n: number; text: string; optional?: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-      <span aria-hidden="true" style={{ width: 26, height: 26, borderRadius: "50%", border: `1.5px solid ${colors.border}`, color: colors.textMuted, fontSize: 13, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      <span aria-hidden="true" style={{ width: 26, height: 26, borderRadius: "50%", border: `1.5px solid ${colors.border}`, color: colors.textMuted, fontSize: 13, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
         {n}
       </span>
-      <span style={{ fontSize: 15.5, fontWeight: 800, color: colors.text }}>{text}</span>
+      <span style={{ fontSize: 15.5, fontWeight: 700, color: colors.text }}>{text}</span>
       {optional && <span style={{ fontSize: 13, color: colors.textFaint }}>(isteğe bağlı)</span>}
     </div>
   );

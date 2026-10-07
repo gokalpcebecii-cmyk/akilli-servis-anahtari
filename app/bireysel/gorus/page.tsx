@@ -98,7 +98,7 @@ function GorusInner() {
             <Icon name="chevron-left" color={colors.textMuted} size={18} />
             Araçlarım
           </a>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: colors.text, margin: "10px 0 6px" }}>Görüş Bildir</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: colors.text, margin: "10px 0 6px" }}>Görüş Bildir</h1>
           <p style={{ fontSize: 14.5, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>Öneri, sorun ya da sorunuzu yazın. OTOİZ ekibi okur.</p>
         </div>
       </header>
@@ -109,9 +109,9 @@ function GorusInner() {
         ) : sent ? (
           <section data-testid="gorus-basarili" role="status" className="otoiz-enter" style={{ ...cardStyle, padding: "28px 20px", textAlign: "center" }}>
             <div style={{ width: 56, height: 56, borderRadius: "50%", background: colors.greenSoft, border: `1px solid rgba(34,197,94,0.5)`, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-              <Icon name="check" color={colors.greenLight} size={26} strokeWidth={2.6} />
+              <Icon name="check" color={colors.greenLight} size={26} />
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: colors.text, margin: "0 0 8px" }}>Görüşünüz bize ulaştı</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: colors.text, margin: "0 0 8px" }}>Görüşünüz bize ulaştı</h2>
             <p style={{ fontSize: 14.5, color: colors.textMuted, margin: "0 0 20px", lineHeight: 1.5 }}>Teşekkür ederiz. Yazdıklarınızı okuyup değerlendireceğiz.</p>
             <a href="/bireysel/araclar" style={{ ...primaryButtonStyle(false), display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
               Araçlarıma Dön
@@ -223,7 +223,7 @@ function GorusInner() {
         )}
       </div>
 
-      <BottomNav active="profile" />
+      <BottomNav active="diger" />
     </main>
   );
 }

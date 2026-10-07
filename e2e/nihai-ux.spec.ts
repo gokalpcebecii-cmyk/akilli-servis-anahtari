@@ -84,8 +84,11 @@ async function noOverflow(page: Page) {
   expect(o, "yatay taşma").toBeLessThanOrEqual(0);
 }
 
+// OTOİZ Premium (2026-10-05, onaylı referans görsel): ana ekran = dijital
+// kokpit. Sıra: araç kartı → hatırlatma satırı → 3 durum kartı → Aracınızın
+// Geçmişi → ana kartlar. QR durumu Aracım > QR Kodu'nda.
 test.describe("Nihai UX — bireysel ana ekran", () => {
-  test("sıra: araç kimliği → kritik özet → 4 durum kartı → yaklaşan + son kayıtlar → QR kartı", async ({ page, baseURL }) => {
+  test("sıra: araç kartı → hatırlatma → 3 durum kartı → geçmiş → ana kartlar; QR Aracım'da", async ({ page, baseURL }) => {
     await asOwner(page, baseURL!);
     await mockAll(page, { qr: false });
     await page.goto("/bireysel/araclar");
@@ -94,47 +97,43 @@ test.describe("Nihai UX — bireysel ana ekran", () => {
     await expect(page.getByTestId("aktif-km")).toHaveText("84.200 km");
     await expect(page.getByTestId("kritik-ozet")).toContainText("2 hatırlatma var");
     await expect(page.getByTestId("kritik-ozet")).toContainText("Trafik sigortası 3 gün geçti · Kasko 18 gün sonra");
-    await expect(page.getByTestId("durum-dortlu").locator("[data-testid^=dortlu-]")).toHaveCount(4);
-    // QR yok: tek kompakt aksiyon kartı, tekrar eden QR açıklaması yok
-    await expect(page.getByTestId("qr-durumu")).toContainText("OTOİZ anahtarlığı henüz bağlı değil");
-    await expect(page.getByRole("link", { name: "Anahtarlığı Etkinleştir" })).toHaveAttribute("href", "/aktivasyon");
-    await expect(page.getByText("QR anahtarlığınızı etkinleştirin")).toHaveCount(0);
-    await expect(page.getByText("QR okutulduğunda")).toHaveCount(0);
+    await expect(page.getByTestId("durum-uclu").locator("[data-testid^=durum-]")).toHaveCount(3);
     const y = async (id: string) => (await page.getByTestId(id).boundingBox())!.y;
     expect(await y("arac-kimligi")).toBeLessThan(await y("kritik-ozet"));
-    expect(await y("kritik-ozet")).toBeLessThan(await y("durum-dortlu"));
-    expect(await y("durum-dortlu")).toBeLessThan(await y("yaklasan-islemler"));
-    expect(await y("yaklasan-islemler")).toBeLessThan(await y("qr-durumu"));
+    expect(await y("kritik-ozet")).toBeLessThan(await y("durum-uclu"));
+    if ((page.viewportSize()?.width ?? 0) < 1024) {
+      expect(await y("durum-uclu")).toBeLessThan(await y("aracinizin-gecmisi"));
+      expect(await y("aracinizin-gecmisi")).toBeLessThan(await y("ana-kartlar"));
+    }
+    await page.getByTestId("kart-aracim").click();
+    await page.getByTestId("qr-goruntule").click();
+    await expect(page.getByTestId("qr-pencere").getByTestId("anahtarlik-durum")).toHaveText("Bağlı değil");
     await noOverflow(page);
   });
 
-  test("masaüstü: 4 kart tek satır, yaklaşan + son kayıtlar iki sütun, sayfa ~1240px; mobil 2x2 ve alt alta", async ({ page, baseURL }, info) => {
+  test("masaüstü: araç kartı ve geçmiş iki sütun, kartlar 3'lü; mobil alt alta ve 2'li", async ({ page, baseURL }, info) => {
     await asOwner(page, baseURL!);
     await mockAll(page, { qr: true });
     await page.goto("/bireysel/araclar");
     await page.getByTestId("kritik-ozet").waitFor();
-    const boxes = await Promise.all(["bakim", "muayene", "kasko", "trafik"].map((k) => page.getByTestId(`dortlu-${k}`).boundingBox()));
-    const yak = (await page.getByTestId("yaklasan-islemler").boundingBox())!;
-    const son = (await page.getByTestId("zaman-cizelgesi").boundingBox())!;
+    const car = (await page.getByTestId("arac-kimligi").boundingBox())!;
+    const hist = (await page.getByTestId("aracinizin-gecmisi").boundingBox())!;
+    const tiles = await Promise.all(["kart-aracim", "kart-bakim", "kart-belgeler"].map((k) => page.getByTestId(k).boundingBox()));
     if (info.project.name === "desktop-chromium") {
-      expect(new Set(boxes.map((b) => Math.round(b!.y))).size).toBe(1);
-      expect(Math.abs(yak.y - son.y)).toBeLessThan(2);
-      const w = (await page.getByTestId("kritik-ozet").boundingBox())!.width;
-      expect(w).toBeGreaterThan(1100);
-      expect(w).toBeLessThanOrEqual(1240);
+      expect(hist.x).toBeGreaterThan(car.x + car.width);
+      expect(new Set(tiles.map((b) => Math.round(b!.y))).size).toBe(1);
     } else {
-      expect(Math.round(boxes[0]!.y)).toBe(Math.round(boxes[1]!.y));
-      expect(boxes[2]!.y).toBeGreaterThan(boxes[0]!.y);
-      expect(son.y).toBeGreaterThan(yak.y + yak.height - 1);
+      expect(hist.y).toBeGreaterThan(car.y + car.height);
+      expect(Math.round(tiles[0]!.y)).toBe(Math.round(tiles[1]!.y));
+      expect(tiles[2]!.y).toBeGreaterThan(tiles[0]!.y);
     }
-    await expect(page.getByTestId("qr-aktif")).toBeVisible();
   });
 
   test("Araç Değiştir: küçük aksiyon, seçilen araç aktif olur", async ({ page, baseURL }) => {
     await asOwner(page, baseURL!);
     await mockAll(page, { qr: true });
     await page.goto("/bireysel/araclar");
-    await page.getByTestId("kritik-ozet").waitFor();
+    await page.getByTestId("aktif-plaka").waitFor();
     await expect(page.getByTestId("arac-secici")).toHaveCount(0);
     await page.getByTestId("arac-degistir").click();
     await page.getByRole("option", { name: /06 NUX 002/ }).click();

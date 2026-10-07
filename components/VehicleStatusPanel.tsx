@@ -46,7 +46,7 @@ export function NextServiceHero({ status }: { status: any }) {
             <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.6, color: colors.textMuted }}>SONRAKİ BAKIM</span>
             <StatusPill level={status.level} />
           </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: colors.text, marginTop: 8, lineHeight: 1.25 }}>{status.headline}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: colors.text, marginTop: 8, lineHeight: 1.25 }}>{status.headline}</div>
           {status.detail && <div style={{ fontSize: 14, fontWeight: 700, color: t.fg, marginTop: 4 }}>{status.detail}</div>}
           {status.target && <div style={{ fontSize: 12.5, color: colors.textMuted, marginTop: 4 }}>Hedef: {status.target}</div>}
         </div>
@@ -88,7 +88,7 @@ export function VehicleStatusPanel({
   const yak = card("yaklasan");
   const det = card("detailing");
   const docCount = [vehicle?.muayene_tarihi, vehicle?.kasko_bitis, vehicle?.trafik_sigortasi_bitis].filter(Boolean).length;
-  const sub: React.CSSProperties = { fontSize: 15, fontWeight: 800, color: colors.text, margin: "0 0 12px" };
+  const sub: React.CSSProperties = { fontSize: 15, fontWeight: 700, color: colors.text, margin: "0 0 12px" };
   return (
     <div data-testid="arac-durumu" aria-label="Araç durumu" style={{ display: "flex", flexDirection: "column", gap: compact ? 12 : 16 }}>
       <NextServiceHero status={nextService} />

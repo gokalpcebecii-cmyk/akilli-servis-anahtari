@@ -59,7 +59,7 @@ export default function BildirimlerPage() {
   return (
     <main className="otoiz-has-bottom-nav" style={{ minHeight: "100vh", background: colors.bg, fontFamily: font }}>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px" }}>
-        <h1 style={{ fontSize: 21, fontWeight: 800, color: colors.textDark, margin: "0 0 18px" }}>Bildirimler</h1>
+        <h1 style={{ fontSize: 21, fontWeight: 700, color: colors.textDark, margin: "0 0 18px" }}>Bildirimler</h1>
 
         {isEmpty && (
           <div style={{ background: colors.surfaceLight, borderRadius: radius.lg, padding: "40px 20px", textAlign: "center", border: `1px solid ${colors.border}` }}>
@@ -116,7 +116,7 @@ export default function BildirimlerPage() {
         )}
       </div>
 
-      <BottomNav active="notifications" />
+      <BottomNav active="diger" />
     </main>
   );
 }

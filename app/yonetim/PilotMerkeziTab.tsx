@@ -52,7 +52,7 @@ export function PilotMerkeziTab({ api }: { api: Api }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
             {Object.entries(OZET_LABELS).map(([k, label]) => (
               <div key={k} style={{ background: colors.surfaceRaised, borderRadius: radius.md, padding: "12px 14px", border: `1px solid ${colors.border}` }}>
-                <div style={{ fontSize: 24, fontWeight: 800, color: k === "acikSorun" && data.ozet[k] > 0 ? colors.danger : colors.text }}>{data.ozet[k]}</div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: k === "acikSorun" && data.ozet[k] > 0 ? colors.danger : colors.text }}>{data.ozet[k]}</div>
                 <div style={{ fontSize: 12.5, color: colors.textMuted, marginTop: 2 }}>{label}</div>
               </div>
             ))}

@@ -160,7 +160,7 @@ export default function DashboardPage() {
               : "İşletmeniz OTOİZ onayı bekliyor. Onaylandıktan sonra araç ekleyebilir, bakım kaydı girebilir ve size ayrılan QR anahtarlıkları eşleştirebilirsiniz."}
           </div>
         )}
-        <h1 style={{ fontSize: 20, margin: "0 0 14px", color: colors.textDark, fontWeight: 800 }}>Plaka Ara</h1>
+        <h1 style={{ fontSize: 20, margin: "0 0 14px", color: colors.textDark, fontWeight: 700 }}>Plaka Ara</h1>
 
         <input
           placeholder="Plaka ile ara..."
@@ -207,8 +207,8 @@ export default function DashboardPage() {
             <li key={v.id} style={{ background: colors.surfaceLight, borderRadius: radius.md, border: `1px solid ${colors.border}` }}>
               <a href={`/panel/araclar/${v.id}`} style={{ display: "block", textDecoration: "none", color: colors.textDark, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ fontWeight: 900, fontSize: 20, letterSpacing: 0.6 }}>{v.plate}</div>
-                  <div style={{ fontWeight: 900, fontSize: 19, color: colors.textDark }}>
+                  <div style={{ fontWeight: 700, fontSize: 20, letterSpacing: 0.6 }}>{v.plate}</div>
+                  <div style={{ fontWeight: 700, fontSize: 19, color: colors.textDark }}>
                     {v.current_km != null ? Number(v.current_km).toLocaleString("tr-TR") : "—"}
                     <span style={{ fontSize: 12, fontWeight: 700, color: colors.textMuted, marginLeft: 4 }}>km</span>
                   </div>
@@ -224,7 +224,7 @@ export default function DashboardPage() {
                       <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: "50%", background: tone.dot, flex: "0 0 9px" }} />
                       <span>
                         Sonraki bakım:{" "}
-                        <strong style={{ color: tone.fg, fontWeight: 800 }}>
+                        <strong style={{ color: tone.fg, fontWeight: 700 }}>
                           {describeMaintenancePlan({ nextServiceKm: v.next_service_km, nextServiceDate: v.next_service_date }).label}
                         </strong>
                         {st.level !== "none" && st.level !== "ok" ? ` · ${LEVELS[st.level].label}` : ""}

@@ -21,7 +21,7 @@ export default function NotFound() {
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
           <OtoizLogo variant="dark" size={190} mark="primary" />
         </div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: colors.textLight, margin: "0 0 10px" }}>Sayfa Bulunamadı</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: colors.textLight, margin: "0 0 10px" }}>Sayfa Bulunamadı</h1>
         <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, lineHeight: 1.6, margin: "0 0 28px" }}>
           Aradığınız sayfa taşınmış, kaldırılmış olabilir ya da hiç var olmadı. Ana sayfaya dönebilir ya
           da hesabınıza giriş yapabilirsiniz.

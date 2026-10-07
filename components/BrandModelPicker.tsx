@@ -196,7 +196,7 @@ function PickerSheet({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 12px 10px 18px" }}>
-          <strong style={{ fontSize: 18, fontWeight: 800, color: colors.text }}>{title}</strong>
+          <strong style={{ fontSize: 18, fontWeight: 700, color: colors.text }}>{title}</strong>
           <button type="button" onClick={onClose} style={{ ...switchStyle, fontSize: 15, minHeight: 44, padding: "0 8px" }}>
             Kapat
           </button>

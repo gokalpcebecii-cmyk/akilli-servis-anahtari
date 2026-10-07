@@ -35,11 +35,12 @@ test("görüş: etiketler ve hız sınırı", () => {
   assert.deepEqual(LIMITS.feedbackUserHour, { windowSeconds: 3600, max: 5 });
 });
 
-test("kapalı tasarım: token'lar talimattaki hex kodlarla aynı", () => {
+test("kapalı tasarım: token'lar talimattaki hex kodlarla aynı (2026-10-05 premium zemin; Adım 1: mavi yok)", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "lib", "theme.ts"), "utf8");
-  for (const hex of ["#0F1115", "#151922", "#181D27", "#1F2531", "#2D3542", "#F5F7FA", "#A9B3C1", "#7F8896", "#22C55E", "#86EFAC", "#F5C451", "#EF5350", "#60A5FA", "#8B95A7"]) {
+  for (const hex of ["#07080A", "#0C0E11", "#111317", "#171A1F", "#24282F", "#F5F7FA", "#A9B3C1", "#7F8896", "#22C55E", "#86EFAC", "#F5C451", "#EF5350", "#C3C9D1", "#8B95A7"]) {
     assert.ok(src.includes(hex), hex + " eksik");
   }
+  assert.ok(!/#60A5FA|#3B82F6|#2563EB/i.test(src), "mavi tema kaldırıldı");
   assert.match(src, /minHeight: 52/);
   assert.match(src, /lg: 18/);
   assert.match(src, /md: 14/);

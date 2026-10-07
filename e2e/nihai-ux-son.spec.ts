@@ -251,17 +251,15 @@ test.describe("Nihai UX son düzenleme — onboarding özet kartları", () => {
 });
 
 test.describe("Nihai UX son düzenleme — ana ekran ve giriş", () => {
-  test("ana ekran: kompakt başlık, Araç Değiştir ikincil (çerçevesiz), yapı korunur", async ({ page, baseURL }) => {
+  test("ana ekran: dijital kokpit yapısı (referans tasarım)", async ({ page, baseURL }) => {
     await asOwner(page, baseURL!);
     await mockAll(page, { qr: true });
     await page.goto("/bireysel/araclar");
     await page.getByTestId("kritik-ozet").waitFor();
-    const btn = page.getByTestId("arac-degistir");
-    await expect(btn).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-    await expect(btn).toHaveCSS("border-top-width", "0px");
+    await expect(page.getByTestId("arac-degistir")).toBeVisible();
     const fs = await page.getByTestId("aktif-plaka").evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(fs).toBeLessThanOrEqual(24);
-    for (const id of ["kritik-ozet", "durum-dortlu", "yaklasan-islemler", "zaman-cizelgesi", "qr-durumu"]) await expect(page.getByTestId(id)).toBeVisible();
+    expect(fs).toBeLessThanOrEqual(26);
+    for (const id of ["kritik-ozet", "durum-uclu", "aracinizin-gecmisi", "ana-kartlar"]) await expect(page.getByTestId(id)).toBeVisible();
   });
 
   test("giriş (masaüstü): marka alanı login kartıyla dikey ortalı", async ({ page }, info) => {
@@ -276,7 +274,7 @@ test.describe("Nihai UX son düzenleme — ana ekran ve giriş", () => {
 });
 
 test.describe("Son mikro UX — ana ekran hatırlatma bandı", () => {
-  test("'X hatırlatma var'; dokununca Yaklaşan İşlemler'e gider", async ({ page, baseURL }, info) => {
+  test("'X hatırlatma var'; dokununca Yaklaşan Bakımlar'a gider", async ({ page, baseURL }) => {
     await asOwner(page, baseURL!);
     await mockAll(page, { qr: true });
     await page.goto("/bireysel/araclar");
@@ -287,9 +285,8 @@ test.describe("Son mikro UX — ana ekran hatırlatma bandı", () => {
     await expect(page.getByText("dikkatinizi bekliyor")).toHaveCount(0);
     await expect(band).toHaveAttribute("data-level", "late");
     await band.click();
-    await expect(page.getByTestId("yaklasan-islemler")).toBeInViewport({ ratio: 0.5 });
-    // Telefonda sayfa bölüme kayar (masaüstünde bölüm zaten görünür).
-    if (info.project.name !== "desktop-chromium") await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+    await expect(page).toHaveURL(/bolum=yaklasan/);
+    await expect(page.getByTestId("yaklasan-islemler")).toBeVisible();
   });
 
   test("tek kayıt: '1 hatırlatma var'", async ({ page, baseURL }) => {
@@ -306,10 +303,10 @@ test.describe("Son mikro UX — ana ekran hatırlatma bandı", () => {
     await asOwner(page, baseURL!);
     await mockAll(page, { qr: true, vehicles: [{ ...V1, trafik_sigortasi_bitis: istToday(200), kasko_bitis: istToday(200) }] });
     await page.goto("/bireysel/araclar");
-    await page.getByTestId("durum-dortlu").waitFor();
+    await page.getByTestId("durum-uclu").waitFor();
     await expect(page.getByTestId("kritik-ozet")).toHaveCount(0);
     await expect(page.getByText("hatırlatma var")).toHaveCount(0);
-    await expect(page.getByTestId("yaklasan-islemler")).toBeVisible();
+    await expect(page.getByTestId("kart-yaklasan")).toBeVisible();
   });
 });
 
@@ -326,7 +323,7 @@ test.describe("Son mikro UX 02 — eksik bilgi satırı hatırlatma bandından b
       await asOwner(page, baseURL!);
       await mockAll(page, { qr: true, vehicles: [c.v] });
       await page.goto("/bireysel/araclar");
-      await page.getByTestId("durum-dortlu").waitFor();
+      await page.getByTestId("durum-uclu").waitFor();
       const row = page.getByTestId("eksik-bilgi");
       const band = page.getByTestId("kritik-ozet");
       await expect(row).toHaveCount(c.missing ? 1 : 0);
@@ -356,7 +353,7 @@ test.describe("Son mikro UX 02 — eksik bilgi satırı hatırlatma bandından b
     await asOwner(page, baseURL!);
     await mockAll(page, { qr: true, vehicles: [{ ...V1, model: "", muayene_tarihi: istToday(200), trafik_sigortasi_bitis: istToday(200), kasko_bitis: istToday(200) }] });
     await page.goto("/bireysel/araclar");
-    await page.getByTestId("durum-dortlu").waitFor();
+    await page.getByTestId("durum-uclu").waitFor();
     await expect(page.getByTestId("eksik-bilgi")).toHaveCount(1);
     await expect(page.getByTestId("kritik-ozet")).toHaveCount(0);
   });
