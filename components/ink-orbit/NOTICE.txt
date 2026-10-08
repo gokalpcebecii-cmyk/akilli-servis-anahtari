@@ -1,0 +1,9 @@
+Ink Orbit — Animated Features Bento with Live Diagrams
+Author: Kedhareswer Naidu
+Source: https://github.com/Kedhareswer/21stdev-my-components/blob/main/components/ink-orbit-features/ink-orbit-features.tsx
+Listing: https://21st.dev/@kedhareswer/components/ink-orbit-features
+
+21st.dev labels this component MIT. The authoring repository has no LICENSE file.
+Its README says the components are free to view, copy, and adapt unless a folder says otherwise, and that attribution is appreciated. This folder does not say otherwise.
+
+Adapted here: the full bento — top flow panel (connected nodes, curved connectors, traveling packets, hub chip, stacked sheets, corner brackets), the integrations diagram (orthogonal connectors, one-at-a-time highlight, packet), and the insights line chart (area, draw, scrub, end glow). Demo brand name, fake people, report numbers, finance labels, and forecast percentages are replaced with OTOİZ copy. The chart is marked Temsili because it is not user data.

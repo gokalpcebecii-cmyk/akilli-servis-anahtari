@@ -1,8 +1,7 @@
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
-// OTOİZ Premium — giriş türü seçimi (onaylı referans görsel): logo, iki
-// renkli rol kartı, altta araç görseli. Auth akışına dokunmuyor: kartlar
+// Giriş türü seçimi: logo ve iki rol kartı. Auth akışına dokunmuyor: kartlar
 // mevcut /bireysel/giris ve /panel/login sayfalarına gider. QR'dan gelen
 // ?next= bireysel girişe aynen aktarılır (yalnız site içi yol; açık
 // yönlendirme yok — asıl kontrol giriş sayfasında).
@@ -48,8 +47,7 @@ export default function GirisSecimiPage({ searchParams }: { searchParams?: Recor
           </a>
         </div>
 
-        <div className="oz-carstage" aria-hidden="true" style={{ marginTop: 22, height: 170 }} />
-        <div className="oz-card" style={{ textAlign: "center", padding: "14px 18px", fontSize: 14, color: "#D5DAE1", lineHeight: 1.45 }}>
+        <div className="oz-card" style={{ textAlign: "center", marginTop: 22, padding: "14px 18px", fontSize: 14, color: "#D5DAE1", lineHeight: 1.45 }}>
           Daha güvenli, daha değerli bir yarın için.
         </div>
       </div>

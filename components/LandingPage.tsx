@@ -1,103 +1,165 @@
-import { Icon } from "@/components/Icon";
-import { OtoizLogo } from "@/components/OtoizLogo";
+"use client";
 
-// OTOİZ Premium landing (onaylı referans görsel). İlk ekranda: araç görseli,
-// tek cümle, iki net giriş yolu (Bireysel / Servis), 4 ikonlu değer ve
-// "her zaman yanınızda" kartı. Altında kısa "Nasıl Çalışır?". Yalnız bugün
-// çalışan özellikler anlatılır (desteklenmeyen iddia yok).
-const FEATURES = [
-  { title: "Bakım Geçmişi", icon: "service-history" },
-  { title: "Belgeler", icon: "document" },
-  { title: "Yaklaşan Bakımlar", icon: "calendar" },
-  { title: "Güvenli Devir", icon: "secure-transfer" },
+import { useState } from "react";
+import { OtoizLogo } from "@/components/OtoizLogo";
+import InkOrbitEcosystem from "@/components/ink-orbit/InkOrbitEcosystem";
+
+// Düzen, video ve giriş animasyonları AKOR şablonundan (Mohammad Shehadeh / Hirael, MIT).
+// Bildirim: public/media/templates/akor/NOTICE.txt
+// Metinler ve bağlantılar OTOİZ'in çalışan ürününe aittir. Sora yerine Inter kullanılır;
+// şablonun latin alt kümesi Türkçe karakterleri kapsamaz.
+
+const NAV = [
+  { label: "Ana Sayfa", href: "/" },
+  { label: "Nasıl Çalışır?", href: "#nasil-calisir" },
+  { label: "Bireysel / Servis", href: "/giris" },
 ];
 
-// Bireysel kullanıcının gerçek akışı (Aşama C.1'de doğrulanan 6 adım).
+const FEATURES = [
+  { title: "Bakım Geçmişi", icon: "/media/templates/akor/service-1.webp" },
+  { title: "Belgeler", icon: "/media/templates/akor/service-2.webp" },
+  { title: "Yaklaşan Bakımlar", icon: "/media/templates/akor/service-3.webp" },
+  { title: "Güvenli Devir", icon: "/media/templates/akor/service-4.webp" },
+];
+
 const STEPS = [
-  { n: "1", title: "QR'ı okutun", desc: "Anahtarlıktaki QR kodu telefonunuzun kamerasıyla okutun." },
-  { n: "2", title: "Giriş yapın veya kayıt olun", desc: "Bireysel hesabınızla giriş yapın ya da ücretsiz hesap açın." },
-  { n: "3", title: "E-postanızı doğrulayın", desc: "Kayıtta gönderilen doğrulama bağlantısına dokunun." },
-  { n: "4", title: "Aktivasyon kodunu girin", desc: "Ürün kartınızdaki aktivasyon kodunu yazın." },
-  { n: "5", title: "Aracınızı seçin veya ekleyin", desc: "Kayıtlı aracınızı seçin ya da yeni aracınızı ekleyin." },
-  { n: "6", title: "OTOİZ'i kullanmaya başlayın", desc: "Bakım geçmişiniz ve sıradaki bakımınız artık tek yerde." },
+  { n: "1", title: "OTOİZ Kartınızı Alın", desc: "Aracınızın dijital servis pasaportunu başlatmak için OTOİZ kartınızı edinin." },
+  { n: "2", title: "QR Kodu Okutun", desc: "Kart üzerindeki QR kodu telefonunuzun kamerasıyla tarayın." },
+  { n: "3", title: "Hesabınızı Oluşturun", desc: "Kaydolun veya giriş yapın. E-postanızı doğrulayın ve kartınızın aktivasyon kodunu girin." },
+  { n: "4", title: "Aracınızı Eşleştirin", desc: "Mevcut aracınızı seçin veya yeni araç ekleyerek kartınızı aracınıza bağlayın." },
+  { n: "5", title: "Bakım ve Belgelerinizi Yönetin", desc: "Servis kayıtlarını, bakım geçmişini, belgelerinizi ve yaklaşan bakım bilgilerini takip edin." },
+  { n: "6", title: "Güvenle Devredin", desc: "Aracınızı sattığınızda güvenli devir sürecini başlatın ve aktarılacak belgeleri seçin." },
+];
+
+const FOOTER_LINKS = [
+  { label: "Bireysel Kayıt", href: "/bireysel/kayit" },
+  { label: "İşletme Kaydı", href: "/panel/kayit" },
+  { label: "Anahtarlık Etkinleştir", href: "/aktivasyon" },
 ];
 
 export default function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [heroFailed, setHeroFailed] = useState(false);
+
   return (
-    <main className="oz-app">
-      <section className="oz-land" aria-labelledby="landing-baslik">
-        <div className="oz-land-media" aria-hidden="true" />
-        <div className="oz-wrap">
-          <div className="oz-land-top">
-            <OtoizLogo variant="dark" size={112} />
-            <a href="/giris" className="oz-iconbtn" aria-label="Giriş Yap">
-              <Icon name="menu" color="#F5F7FA" size={24} />
+    <main className="akor">
+      <header className="akor-nav" data-slot="navbar">
+        <div className="akor-nav-bar">
+          <a href="/" className="akor-brand" aria-label="OTOİZ ana sayfa">
+            <OtoizLogo variant="dark" mark="primary" size={112} />
+          </a>
+          <nav className="akor-nav-links" aria-label="Ana gezinme">
+            {NAV.map((link) => (
+              <a key={link.href} href={link.href} aria-current={link.href === "/" ? "page" : undefined}>
+                {link.label}
+              </a>
+            ))}
+          </nav>
+          <a href="/giris" className="akor-btn akor-btn-secondary">Giriş Yap</a>
+          <button
+            type="button"
+            className="akor-menu"
+            aria-label={menuOpen ? "Menüyü kapat" : "Menüyü aç"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span aria-hidden="true">{menuOpen ? "×" : "☰"}</span>
+          </button>
+        </div>
+        {menuOpen ? (
+          <div className="akor-menu-panel">
+            {NAV.map((link) => (
+              <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>
+                {link.label}
+              </a>
+            ))}
+          </div>
+        ) : null}
+      </header>
+
+      <section id="home" className="akor-hero" data-slot="hero" aria-labelledby="landing-baslik">
+        {heroFailed ? (
+          <div className="akor-hero-fallback" aria-hidden="true" />
+        ) : (
+          <video
+            className="akor-hero-video"
+            src="/media/templates/akor/hero.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            aria-hidden="true"
+            tabIndex={-1}
+            onError={() => setHeroFailed(true)}
+          />
+        )}
+        <div className="akor-hero-copy">
+          <h1 id="landing-baslik" className="rise akor-d1">Aracınızın geçmişi kaybolmaz.</h1>
+          <p className="rise akor-d2">Bakımlar, belgeler ve araç geçmişi tek yerde.</p>
+          <div className="akor-hero-actions fade-up akor-d3">
+            <a href="/bireysel/giris" className="akor-btn akor-btn-primary" data-testid="landing-bireysel">
+              Bireysel Kullanıcı
+            </a>
+            <a href="/panel/login" className="akor-textlink" data-testid="landing-servis">
+              Servis / İşletme
             </a>
           </div>
+        </div>
+      </section>
 
-          <div className="oz-land-copy">
-            <h1 id="landing-baslik" className="oz-land-title">
-              Aracınızın geçmişi kaybolmaz.
-            </h1>
-            <p className="oz-land-sub">Bakımlar, belgeler ve araç geçmişi tek yerde.</p>
+      <section id="hizmetler" className="akor-features" data-slot="services" aria-label="OTOİZ ile neler var">
+        <p className="akor-features-line">Aracınızın tüm geçmişi her zaman yanınızda.</p>
+        <div className="akor-feature-grid">
+          {FEATURES.map((feature, index) => (
+            <article key={feature.title} className="akor-feature">
+              <img src={feature.icon} alt="" width={48} height={48} />
+              <p className="akor-num">{String(index + 1).padStart(2, "0")}</p>
+              <h3>{feature.title}</h3>
+            </article>
+          ))}
+        </div>
+      </section>
 
-            <div className="oz-land-ctas">
-              <a href="/bireysel/giris" className="oz-cta is-primary" data-testid="landing-bireysel">
-                Bireysel Kullanıcı
-                <Icon name="arrow-right" color="#04110A" size={20} />
-              </a>
-              <a href="/panel/login" className="oz-cta" data-testid="landing-servis">
-                Servis / İşletme
-                <Icon name="arrow-right" color="#F5F7FA" size={20} />
-              </a>
-            </div>
+      <InkOrbitEcosystem />
 
-            <ul className="oz-feats" aria-label="OTOİZ ile neler var">
-              {FEATURES.map((f) => (
-                <li key={f.title} className="oz-feat">
-                  <Icon name={f.icon} color="#4ADE80" size={24} />
-                  <h2 className="oz-feat-title">{f.title}</h2>
-                </li>
-              ))}
-            </ul>
-
-            <div className="oz-promo">
-              <p className="oz-promo-text">Aracınızın tüm geçmişi her zaman yanınızda.</p>
-              <span className="oz-promo-img" aria-hidden="true" />
-            </div>
+      <section id="nasil-calisir" className="akor-about" data-slot="about" aria-labelledby="nasil-baslik">
+        <div className="akor-label">
+          <p>Her şey tek yerde</p>
+          <div aria-hidden="true" />
+        </div>
+        <div className="akor-about-copy">
+          <h2 id="nasil-baslik">Nasıl Çalışır?</h2>
+          <p className="akor-about-lead">OTOİZ kartınızı etkinleştirin, aracınızı bağlayın ve dijital servis pasaportunuzu kullanmaya başlayın.</p>
+          <ol>
+            {STEPS.map((step) => (
+              <li key={step.n}>
+                <span aria-hidden="true">{step.n}</span>
+                <span>
+                  <h3>{step.title}</h3>
+                  <span>{step.desc}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <div className="akor-close">
+            <p>OTOİZ — Aracınızın Geçmişi ve Geleceği.</p>
+            <a className="akor-btn akor-btn-primary" href="/bireysel/kayit">Ücretsiz Başlayın</a>
           </div>
         </div>
       </section>
 
-      <section id="nasil-calisir" className="oz-wrap" aria-labelledby="nasil-baslik" style={{ paddingTop: 36, paddingBottom: 40, scrollMarginTop: 24 }}>
-        <h2 id="nasil-baslik" className="oz-h2" style={{ fontSize: 20, marginBottom: 14 }}>
-          Nasıl Çalışır?
-        </h2>
-        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10, maxWidth: 620 }}>
-          {STEPS.map((s) => (
-            <li key={s.n} className="oz-card" style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: 14 }}>
-              <span className="oz-step-n" aria-hidden="true" style={{ borderColor: "rgba(34,197,94,0.6)", color: "#4ADE80" }}>
-                {s.n}
-              </span>
-              <span>
-                <h3 style={{ display: "block", fontSize: 15, fontWeight: 700, margin: 0 }}>{s.title}</h3>
-                <span style={{ display: "block", fontSize: 13, color: "#A3ABB7", marginTop: 3, lineHeight: 1.45 }}>{s.desc}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <footer className="oz-wrap" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 22, paddingBottom: "calc(env(safe-area-inset-bottom) + 26px)", textAlign: "center" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-          <OtoizLogo variant="dark" size={92} />
+      <footer className="akor-footer" data-slot="footer">
+        <div className="akor-footer-row">
+          <a href="/" className="akor-brand" aria-label="OTOİZ ana sayfa">
+            <OtoizLogo variant="dark" mark="compact" size={92} />
+          </a>
+          <nav className="akor-footer-links" aria-label="Alt bağlantılar">
+            {FOOTER_LINKS.map((link) => (
+              <a key={link.href} href={link.href}>{link.label}</a>
+            ))}
+          </nav>
         </div>
-        <p style={{ fontSize: 13, color: "#6F7783", margin: "0 0 12px" }}>Aracınız için dijital servis pasaportu.</p>
-        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "0 18px" }}>
-          <a href="/bireysel/kayit" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>Bireysel Kayıt</a>
-          <a href="/panel/kayit" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>İşletme Kaydı</a>
-          <a href="/aktivasyon" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>Anahtarlık Etkinleştir</a>
-        </div>
+        <p>Aracınız için dijital servis pasaportu.</p>
       </footer>
     </main>
   );
