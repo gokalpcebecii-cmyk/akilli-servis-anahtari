@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./pilot-ui-v2.css";
 import SessionWatch from "@/components/SessionWatch";
 import { SITE_URL } from "@/lib/seo";
 

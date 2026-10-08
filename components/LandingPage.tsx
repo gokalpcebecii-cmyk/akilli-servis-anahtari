@@ -1,10 +1,6 @@
 import { Icon } from "@/components/Icon";
 import { OtoizLogo } from "@/components/OtoizLogo";
 
-// OTOİZ Premium landing (onaylı referans görsel). İlk ekranda: araç görseli,
-// tek cümle, iki net giriş yolu (Bireysel / Servis), 4 ikonlu değer ve
-// "her zaman yanınızda" kartı. Altında kısa "Nasıl Çalışır?". Yalnız bugün
-// çalışan özellikler anlatılır (desteklenmeyen iddia yok).
 const FEATURES = [
   { title: "Bakım Geçmişi", icon: "service-history" },
   { title: "Belgeler", icon: "document" },
@@ -12,91 +8,95 @@ const FEATURES = [
   { title: "Güvenli Devir", icon: "secure-transfer" },
 ];
 
-// Bireysel kullanıcının gerçek akışı (Aşama C.1'de doğrulanan 6 adım).
 const STEPS = [
-  { n: "1", title: "QR'ı okutun", desc: "Anahtarlıktaki QR kodu telefonunuzun kamerasıyla okutun." },
-  { n: "2", title: "Giriş yapın veya kayıt olun", desc: "Bireysel hesabınızla giriş yapın ya da ücretsiz hesap açın." },
-  { n: "3", title: "E-postanızı doğrulayın", desc: "Kayıtta gönderilen doğrulama bağlantısına dokunun." },
-  { n: "4", title: "Aktivasyon kodunu girin", desc: "Ürün kartınızdaki aktivasyon kodunu yazın." },
-  { n: "5", title: "Aracınızı seçin veya ekleyin", desc: "Kayıtlı aracınızı seçin ya da yeni aracınızı ekleyin." },
-  { n: "6", title: "OTOİZ'i kullanmaya başlayın", desc: "Bakım geçmişiniz ve sıradaki bakımınız artık tek yerde." },
+  { n: "01", title: "QR kodu okutun", desc: "OTOİZ kartınızdaki QR koduyla araç pasaportunu açın." },
+  { n: "02", title: "Hesabınıza giriş yapın", desc: "Hesabınızla giriş yapın veya bireysel hesabınızı oluşturun." },
+  { n: "03", title: "Aracınızı etkinleştirin", desc: "Kartınızdaki tek kullanımlık aktivasyon kodunu girin." },
+  { n: "04", title: "Geçmişiniz yanınızda olsun", desc: "Bakım kayıtlarını, belgeleri ve yaklaşan işlemleri tek yerde takip edin." },
 ];
 
 export default function LandingPage() {
   return (
-    <main className="oz-app">
-      <section className="oz-land" aria-labelledby="landing-baslik">
-        <div className="oz-land-media" aria-hidden="true" />
-        <div className="oz-wrap">
-          <div className="oz-land-top">
-            <OtoizLogo variant="dark" size={112} />
-            <a href="/giris" className="oz-iconbtn" aria-label="Giriş Yap">
-              <Icon name="menu" color="#F5F7FA" size={24} />
+    <main className="oz-app oz-landing-v2">
+      <section className="oz-lv2-hero" aria-labelledby="landing-baslik">
+        <div className="oz-lv2-photo" aria-hidden="true" />
+        <div className="oz-lv2-container">
+          <header className="oz-lv2-header">
+            <a href="/" className="oz-lv2-brand" aria-label="OTOİZ ana sayfa">
+              <OtoizLogo variant="dark" size={138} />
             </a>
+            <nav className="oz-lv2-nav" aria-label="Ana gezinme">
+              <a href="#nasil-calisir">Nasıl çalışır?</a>
+              <a href="#otoiz-ozellikleri">Özellikler</a>
+            </nav>
+            <div className="oz-lv2-header-actions">
+              <a href="/giris" className="oz-lv2-login">Giriş yap</a>
+              <a href="/bireysel/kayit" className="oz-lv2-start">Bireysel kayıt <Icon name="arrow-right" color="#101310" size={17} /></a>
+            </div>
+          </header>
+
+          <div className="oz-lv2-hero-copy">
+            <p className="oz-lv2-eyebrow"><span /> DİJİTAL ARAÇ SERVİS PASAPORTU</p>
+            <h1 id="landing-baslik">Aracınızın geçmişi kaybolmaz.</h1>
+            <p className="oz-lv2-lead">Bakımlar, belgeler ve araç geçmişi tek yerde.</p>
+            <div className="oz-lv2-cta-row">
+              <a href="/bireysel/giris" className="oz-lv2-cta-primary" data-testid="landing-bireysel">
+                Bireysel Kullanıcı <Icon name="arrow-right" color="#101310" size={19} />
+              </a>
+              <a href="/panel/login" className="oz-lv2-cta-secondary" data-testid="landing-servis">
+                Servis / İşletme <Icon name="arrow-right" color="#E4E7E9" size={18} />
+              </a>
+            </div>
+            <p className="oz-lv2-note">Araç bakım ve sahiplik geçmişinizi düzenli biçimde saklayın.</p>
           </div>
 
-          <div className="oz-land-copy">
-            <h1 id="landing-baslik" className="oz-land-title">
-              Aracınızın geçmişi kaybolmaz.
-            </h1>
-            <p className="oz-land-sub">Bakımlar, belgeler ve araç geçmişi tek yerde.</p>
-
-            <div className="oz-land-ctas">
-              <a href="/bireysel/giris" className="oz-cta is-primary" data-testid="landing-bireysel">
-                Bireysel Kullanıcı
-                <Icon name="arrow-right" color="#04110A" size={20} />
-              </a>
-              <a href="/panel/login" className="oz-cta" data-testid="landing-servis">
-                Servis / İşletme
-                <Icon name="arrow-right" color="#F5F7FA" size={20} />
-              </a>
-            </div>
-
-            <ul className="oz-feats" aria-label="OTOİZ ile neler var">
-              {FEATURES.map((f) => (
-                <li key={f.title} className="oz-feat">
-                  <Icon name={f.icon} color="#4ADE80" size={24} />
-                  <h2 className="oz-feat-title">{f.title}</h2>
-                </li>
-              ))}
-            </ul>
-
-            <div className="oz-promo">
-              <p className="oz-promo-text">Aracınızın tüm geçmişi her zaman yanınızda.</p>
-              <span className="oz-promo-img" aria-hidden="true" />
-            </div>
+          <div className="oz-lv2-image-caption" aria-hidden="true">
+            <span className="oz-lv2-caption-rule" />
+            <span>Her kayıt, aracınızın hikâyesine eklenir.</span>
           </div>
         </div>
       </section>
 
-      <section id="nasil-calisir" className="oz-wrap" aria-labelledby="nasil-baslik" style={{ paddingTop: 36, paddingBottom: 40, scrollMarginTop: 24 }}>
-        <h2 id="nasil-baslik" className="oz-h2" style={{ fontSize: 20, marginBottom: 14 }}>
-          Nasıl Çalışır?
-        </h2>
-        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10, maxWidth: 620 }}>
-          {STEPS.map((s) => (
-            <li key={s.n} className="oz-card" style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: 14 }}>
-              <span className="oz-step-n" aria-hidden="true" style={{ borderColor: "rgba(34,197,94,0.6)", color: "#4ADE80" }}>
-                {s.n}
-              </span>
-              <span>
-                <h3 style={{ display: "block", fontSize: 15, fontWeight: 700, margin: 0 }}>{s.title}</h3>
-                <span style={{ display: "block", fontSize: 13, color: "#A3ABB7", marginTop: 3, lineHeight: 1.45 }}>{s.desc}</span>
-              </span>
-            </li>
+      <section id="otoiz-ozellikleri" className="oz-lv2-features" aria-label="OTOİZ özellikleri">
+        <div className="oz-lv2-container oz-lv2-feature-grid">
+          {FEATURES.map((feature, index) => (
+            <article className="oz-lv2-feature" key={feature.title}>
+              <span className="oz-lv2-feature-index">0{index + 1}</span>
+              <Icon name={feature.icon} color="#C7CDD1" size={21} />
+              <h2>{feature.title}</h2>
+            </article>
           ))}
-        </ol>
+        </div>
       </section>
 
-      <footer className="oz-wrap" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 22, paddingBottom: "calc(env(safe-area-inset-bottom) + 26px)", textAlign: "center" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-          <OtoizLogo variant="dark" size={92} />
+      <section id="nasil-calisir" className="oz-lv2-how" aria-labelledby="nasil-baslik">
+        <div className="oz-lv2-container">
+          <div className="oz-lv2-section-heading">
+            <p className="oz-lv2-eyebrow"><span /> BASİT VE DÜZENLİ</p>
+            <h2 id="nasil-baslik">Nasıl Çalışır?</h2>
+            <p>Araç pasaportunu kullanmaya birkaç adımda başlayın.</p>
+          </div>
+          <ol className="oz-lv2-steps">
+            {STEPS.map((step) => (
+              <li key={step.n}>
+                <span className="oz-lv2-step-number">{step.n}</span>
+                <div><h3>{step.title}</h3><p>{step.desc}</p></div>
+                <Icon name="arrow-right" color="#788189" size={18} />
+              </li>
+            ))}
+          </ol>
         </div>
-        <p style={{ fontSize: 13, color: "#6F7783", margin: "0 0 12px" }}>Aracınız için dijital servis pasaportu.</p>
-        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "0 18px" }}>
-          <a href="/bireysel/kayit" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>Bireysel Kayıt</a>
-          <a href="/panel/kayit" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>İşletme Kaydı</a>
-          <a href="/aktivasyon" className="oz-link" style={{ color: "#A3ABB7", fontSize: 13 }}>Anahtarlık Etkinleştir</a>
+      </section>
+
+      <footer className="oz-lv2-footer">
+        <div className="oz-lv2-container oz-lv2-footer-inner">
+          <OtoizLogo variant="dark" size={100} />
+          <p>Aracınız için dijital servis pasaportu.</p>
+          <nav aria-label="Alt gezinme">
+            <a href="/bireysel/kayit">Bireysel kayıt</a>
+            <a href="/panel/kayit">İşletme kaydı</a>
+            <a href="/aktivasyon">Anahtarlık etkinleştir</a>
+          </nav>
         </div>
       </footer>
     </main>

@@ -276,14 +276,37 @@ export default function BireyselAraclarPage() {
   );
 
   return (
-    <main className="oz-app oz-has-nav">
-      <div className={`oz-wrap${section === "ana" || section === "aracim" || !active ? "" : " is-narrow"}`}>
+    <main className="oz-app oz-has-nav oz-dashboard-page">
+      <aside className="oz-dashboard-sidebar" aria-label="Bireysel kullanıcı gezinmesi">
+        <a href="/bireysel/araclar" className="oz-dashboard-brand" aria-label="OTOİZ ana ekran" onClick={(e) => { e.preventDefault(); go("ana"); }}>
+          <OtoizLogo variant="dark" size={138} />
+          <span>DİJİTAL ARAÇ PASAPORTU</span>
+        </a>
+        <p className="oz-sidebar-label">MENÜ</p>
+        <DesktopNav active={navFor(section) as NavKey} onSelect={go} />
+        <div className="oz-sidebar-account">
+          <span>{initial}</span>
+          <div><strong>Bireysel hesap</strong><small>{email}</small></div>
+        </div>
+      </aside>
+      <div className={`oz-wrap oz-dashboard-main${section === "ana" || section === "aracim" || !active ? "" : " is-narrow"}`}>
         {topbar}
 
         {loadError && (
           <p role="alert" className="oz-card" style={{ borderColor: "#EF4444", fontSize: 14, margin: "0 0 16px" }}>
             Araçlarınız yüklenemedi. Bağlantınızı kontrol edip sayfayı yenileyin.
           </p>
+        )}
+
+        {active && section === "ana" && (
+          <div className="oz-dashboard-heading">
+            <div>
+              <p className="oz-dashboard-breadcrumb"><span>OTOİZ</span><Icon name="chevron-right" color="#737D85" size={14} /><span>Genel bakış</span></p>
+              <h1>Merhaba, {email?.split("@")[0]}</h1>
+              <p>Aracınızın geçmişi ve sıradaki işlemler tek yerde.</p>
+            </div>
+            <span className="oz-dashboard-avatar" aria-label={`Kullanıcı ${initial}`}>{initial}</span>
+          </div>
         )}
 
         {!active ? (
@@ -310,8 +333,8 @@ export default function BireyselAraclarPage() {
         ) : (
           <>
             {section === "ana" && (
-              <div className="oz-cockpit oz-enter" data-section="ana">
-                <div className="oz-ck-main oz-stack">
+              <div className="oz-cockpit oz-dashboard-grid oz-enter" data-section="ana">
+                <div className="oz-ck-main oz-stack oz-dashboard-summary">
                   {pendingTransfers.length > 0 && (
                     <section className="oz-card" style={{ borderColor: "rgba(245,165,36,0.45)" }}>
                       <SectionHead title="Bekleyen Devirler" />
@@ -389,20 +412,38 @@ export default function BireyselAraclarPage() {
                     </button>
                   )}
 
-                  <div className="oz-stat3" data-testid="durum-uclu">
-                    <StatCard label="Bakım" value={maintenanceWord(ns?.level)} level={ns?.level} icon="shield-check" tone={levelTone(ns?.level)} testId="durum-bakim" onClick={() => go("yaklasan")} />
-                    <StatCard label="Muayene" value={muView.empty ? "Bilgi yok" : muView.text} level={muView.level} icon="shield" tone={levelTone(muView.level)} testId="durum-muayene" onClick={() => go("muayene")} />
-                    <StatCard
-                      label="Son servis"
-                      value={lastService ? fmtDate(lastService.event_date) : timeline.loading ? "…" : "Kayıt yok"}
-                      level="none"
-                      icon="wrench"
-                      tone="green-t"
-                      testId="durum-son-servis"
-                      onClick={() => go("bakim")}
-                    />
-                  </div>
+                  <section className="oz-dashboard-health" aria-label="Araç durumu">
+                    <SectionHead title="Araç durumu" />
+                    <div className="oz-stat3" data-testid="durum-uclu">
+                      <StatCard label="Bakım" value={maintenanceWord(ns?.level)} level={ns?.level} icon="shield-check" tone={levelTone(ns?.level)} testId="durum-bakim" onClick={() => go("yaklasan")} />
+                      <StatCard label="Muayene" value={muView.empty ? "Bilgi yok" : muView.text} level={muView.level} icon="shield" tone={levelTone(muView.level)} testId="durum-muayene" onClick={() => go("muayene")} />
+                      <StatCard
+                        label="Son servis"
+                        value={lastService ? fmtDate(lastService.event_date) : timeline.loading ? "…" : "Kayıt yok"}
+                        level="none"
+                        icon="wrench"
+                        tone="green-t"
+                        testId="durum-son-servis"
+                        onClick={() => go("bakim")}
+                      />
+                    </div>
+                  </section>
                 </div>
+
+                <section className="oz-dashboard-maintenance" aria-label="Yaklaşan bakım">
+                  <SectionHead title="Yaklaşan bakım" action={<button type="button" className="oz-link" onClick={() => go("yaklasan")}>Tümünü gör <Icon name="chevron-right" color="#BFC6CB" size={15} /></button>} />
+                  <div className="oz-maintenance-summary" data-level={ns?.level || "none"}>
+                    <IconSquare icon="calendar" tone={levelTone(ns?.level)} size="md" />
+                    <div>
+                      <span className="oz-maintenance-label">SONRAKİ BAKIM</span>
+                      <strong>{nsShort}</strong>
+                      <p>{ns?.level && ns.level !== "none" ? maintenanceWord(ns.level) : "Bakım planı belirlenmedi"}</p>
+                    </div>
+                  </div>
+                  <button type="button" className="oz-dashboard-action-link" onClick={() => openQa("bakim")}>
+                    <Icon name="plus" color="#DDE2E5" size={17} /> Bakım kaydı ekle
+                  </button>
+                </section>
 
                 <section className="oz-ck-hist" aria-labelledby="gecmis-baslik" data-testid="aracinizin-gecmisi">
                   <SectionHead
@@ -434,14 +475,26 @@ export default function BireyselAraclarPage() {
                   )}
                 </section>
 
-                <div className="oz-ck-tiles oz-tiles" data-testid="ana-kartlar">
-                  <Tile icon="car" tone="green-t" title="Aracım" sub="Bilgiler ve QR" onClick={() => go("aracim")} testId="kart-aracim" />
-                  <Tile icon="service-history" tone="green-t" title="Bakım Geçmişim" sub="Tüm kayıtlar" onClick={() => go("bakim")} testId="kart-bakim" />
-                  <Tile icon="document" tone="green-t" title="Belgelerim" sub={docs === null ? "…" : docCountPhrase(docs.length)} onClick={() => go("belgeler")} testId="kart-belgeler" />
-                  <Tile icon="calendar" tone={levelTone(ns?.level)} title="Yaklaşan Bakımlar" sub={nsShort} level={ns?.level} onClick={() => go("yaklasan")} testId="kart-yaklasan" />
-                  <Tile icon="shield-check" tone={levelTone(muView.level)} title="Muayene" sub={muView.empty ? "Bilgi eklenmemiş" : muView.text} level={muView.level} onClick={() => go("muayene")} testId="kart-muayene" />
-                  <Tile icon="secure-transfer" tone="green-t" title="Aracı Devret" sub="Güvenli devir" href={`/bireysel/araclar/${active.id}/devret`} testId="kart-devret" />
-                </div>
+                <section className="oz-dashboard-actions" aria-label="Hızlı işlemler">
+                  <SectionHead title="Hızlı işlemler" />
+                  <div className="oz-dashboard-quick-buttons">
+                    <button type="button" onClick={() => openQa("bakim")}><Icon name="wrench" color="#DDE2E5" size={18} /> Bakım kaydı</button>
+                    <button type="button" onClick={() => openQa("belge")}><Icon name="document" color="#DDE2E5" size={18} /> Belge yükle</button>
+                  </div>
+                  <div className="oz-ck-tiles oz-tiles" data-testid="ana-kartlar">
+                    <Tile icon="car" tone="green-t" title="Aracım" sub="Bilgiler ve QR" onClick={() => go("aracim")} testId="kart-aracim" />
+                    <Tile icon="service-history" tone="green-t" title="Bakım Geçmişim" sub="Tüm kayıtlar" onClick={() => go("bakim")} testId="kart-bakim" />
+                    <Tile icon="calendar" tone={levelTone(ns?.level)} title="Yaklaşan Bakımlar" sub={nsShort} level={ns?.level} onClick={() => go("yaklasan")} testId="kart-yaklasan" />
+                    <Tile icon="shield-check" tone={levelTone(muView.level)} title="Muayene" sub={muView.empty ? "Bilgi eklenmemiş" : muView.text} level={muView.level} onClick={() => go("muayene")} testId="kart-muayene" />
+                    <Tile icon="secure-transfer" tone="green-t" title="Aracı Devret" sub="Güvenli devir" href={`/bireysel/araclar/${active.id}/devret`} testId="kart-devret" />
+                  </div>
+                </section>
+
+                <button type="button" className="oz-dashboard-documents" onClick={() => go("belgeler")} data-testid="kart-belgeler">
+                  <IconSquare icon="document" tone="gray" size="md" />
+                  <span><strong>Belgelerim</strong><small>{docs === null ? "Belgeler yükleniyor" : docs.length === 0 ? "Henüz belge eklenmedi" : docCountPhrase(docs.length)}</small></span>
+                  <Icon name="chevron-right" color="#A4ADB3" size={18} />
+                </button>
 
                 <div className="oz-ck-value oz-stack">
                   <section className="oz-valuecard" aria-label="OTOİZ">
