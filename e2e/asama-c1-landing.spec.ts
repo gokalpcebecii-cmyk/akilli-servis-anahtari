@@ -41,12 +41,12 @@ test.describe("Aşama C.1 landing", () => {
     await page.goto("/");
     const titles = await page.locator("#nasil-calisir h3").allInnerTexts();
     expect(titles).toEqual([
-      "QR'ı okutun",
-      "Giriş yapın veya kayıt olun",
-      "E-postanızı doğrulayın",
-      "Aktivasyon kodunu girin",
-      "Aracınızı seçin veya ekleyin",
-      "OTOİZ'i kullanmaya başlayın",
+      "OTOİZ Kartınızı Alın",
+      "QR Kodu Okutun",
+      "Hesabınızı Oluşturun",
+      "Aracınızı Eşleştirin",
+      "Bakım ve Belgelerinizi Yönetin",
+      "Güvenle Devredin",
     ]);
   });
 
@@ -61,7 +61,7 @@ test.describe("Aşama C.1 landing", () => {
   test("4 değer ikonu görünür", async ({ page }) => {
     await page.goto("/");
     for (const t of ["Bakım Geçmişi", "Belgeler", "Yaklaşan Bakımlar", "Güvenli Devir"]) {
-      await expect(page.getByRole("heading", { name: t, exact: true })).toBeVisible();
+      await expect(page.locator("#hizmetler").getByRole("heading", { name: t, exact: true })).toBeVisible();
     }
   });
 
