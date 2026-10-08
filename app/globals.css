@@ -4191,40 +4191,40 @@ button.oz-row {
 }
 
 /* ==================== Giriş ekranı logo ve üst alan (2026-10-06) ====================
-   Yalnız /giris seçim ekranının üst alanı: logo ölçüsü, üst/alt boşluk, kartlara
-   mesafe ve hafif ambiyans. Sayfa satır içi stil kullandığı için kapsam :has() ile
+   Yalnız /giris seçim ekranı: sade antrasit zemin, logo ölçüsü ve kart yüzeyi.
+   Sayfa satır içi stil kullandığı için kapsam :has() ile
    bu ekrana sınırlı; satır içi değerleri geçmek için !important gerekli. */
+.oz-app:has([data-testid="giris-bireysel"]) {
+  background: hsl(0 0% 10%);
+  background-color: hsl(0 0% 10%);
+}
 .oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) {
   position: relative;
   padding-top: calc(env(safe-area-inset-top) + 52px) !important;
-}
-.oz-app > .oz-wrap:has([data-testid="giris-bireysel"])::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 360px;
-  height: 220px;
-  margin-left: -180px;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(50% 50% at 50% 46%, rgba(34, 197, 94, 0.07) 0%, rgba(34, 197, 94, 0) 100%);
-}
-.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > a[href="/"] {
-  position: relative;
-  z-index: 1;
 }
 .oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > a[href="/"] img {
   width: 196px !important;
   height: auto !important;
 }
 .oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > h1 + p {
-  position: relative;
-  z-index: 1;
   margin: 14px 0 36px !important;
 }
-.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) > .oz-carstage {
-  margin-top: 28px !important;
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) .oz-role {
+  border: 1px solid hsl(0 0% 100% / 0.08);
+  border-radius: 6px;
+  background: hsl(0 0% 13%);
+  box-shadow: none;
+}
+.oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) .oz-card {
+  border: 1px solid hsl(0 0% 100% / 0.08);
+  border-radius: 6px;
+  background: hsl(0 0% 13%);
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .oz-app > .oz-wrap:has([data-testid="giris-bireysel"]) .oz-role:hover {
+    border-color: hsl(0 0% 100% / 0.16);
+  }
 }
 
 /* ==================== Form alanları (2026-10-06) ====================
@@ -4402,431 +4402,391 @@ nav[aria-label="Araç bölümleri"] > button[aria-current="page"] {
   margin-top: 14px;
 }
 
-.oz-landing-page {
-  background: #07090b;
+/* AKOR şablonu (Mohammad Shehadeh / Hirael, MIT). Animasyon adları özgün:
+   akor-rise, akor-fade-up. Birincil renk OTOİZ yeşili #22c55e. */
+.akor {
+  --akor-bg: hsl(0 0% 10%);
+  --akor-fg: hsl(0 0% 96%);
+  --akor-primary: #22c55e;
+  --akor-primary-fg: #04110a;
+  --akor-secondary: hsl(0 0% 18%);
+  --akor-muted: hsl(0 0% 60%);
+  --akor-line: hsl(0 0% 60% / 0.2);
+  --akor-hero: hsl(0 0% 8%);
+  --akor-ink: hsl(0 0% 0%);
+  background: var(--akor-bg);
+  color: var(--akor-fg);
+  font-family: var(--oz-font);
+  min-height: 100svh;
 }
-.oz-landing-page .oz-land {
-  min-height: 680px;
-  overflow: hidden;
+.akor ::selection {
+  background: hsl(142 71% 45% / 0.35);
 }
-.oz-landing-page .oz-land-media {
-  inset: 0;
-  height: 100%;
-  max-height: none;
-  background-image:
-    linear-gradient(90deg, #07090b 0%, rgba(7, 9, 11, 0.96) 25%, rgba(7, 9, 11, 0.67) 46%, rgba(7, 9, 11, 0.18) 76%, rgba(7, 9, 11, 0.18) 100%),
-    linear-gradient(180deg, rgba(7, 9, 11, 0.24) 0%, rgba(7, 9, 11, 0.08) 62%, #07090b 100%),
-    url(/marketing/otoiz-landing-arac-temiz.webp);
-  background-size: cover;
-  background-position: center, center, 66% 48%;
+.akor .fade-up,
+.akor .rise {
+  animation-name: akor-fade-up;
+  animation-duration: 0.6s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
 }
-.oz-landing-page .oz-land-wrap {
-  position: relative;
-  z-index: 1;
-  max-width: 1440px;
-  padding-left: clamp(24px, 5vw, 76px);
-  padding-right: clamp(24px, 5vw, 76px);
+.akor .rise {
+  animation-name: akor-rise;
 }
-.oz-landing-page .oz-land-top {
-  min-height: 92px;
-  padding-top: 20px;
-  gap: 28px;
+.akor .akor-d1 { animation-delay: 0.2s; }
+.akor .akor-d2 { animation-delay: 0.45s; }
+.akor .akor-d3 { animation-delay: 0.65s; }
+@keyframes akor-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.oz-land-brand {
-  display: inline-flex;
-  align-items: center;
-  flex: none;
+@keyframes akor-rise {
+  from { transform: translateY(16px); }
+  to { transform: translateY(0); }
 }
-.oz-land-nav,
-.oz-land-actions {
+@media (prefers-reduced-motion: reduce) {
+  .akor .fade-up,
+  .akor .rise { animation: none; }
+}
+
+.akor-nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  padding: 20px 32px;
+  background: hsl(0 0% 8% / 0.78);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.akor-nav-bar {
   display: flex;
   align-items: center;
-}
-.oz-land-nav {
-  gap: clamp(16px, 2.4vw, 38px);
-  margin-left: auto;
-}
-.oz-land-nav a,
-.oz-land-login {
-  color: rgba(245, 247, 250, 0.88);
-  font-size: 13.5px;
-  font-weight: 550;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.oz-land-nav a {
-  position: relative;
-  padding: 10px 0;
-}
-.oz-land-nav a[aria-current="page"]::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 2px;
-  height: 2px;
-  border-radius: 2px;
-  background: #22c55e;
-}
-.oz-land-actions {
-  gap: 12px;
-  flex: none;
-}
-.oz-land-login {
-  padding: 10px 17px;
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  border-radius: 999px;
-}
-.oz-land-start {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 20px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #2fe073, #1fb956);
-  color: #04110a;
-  font-size: 13px;
-  font-weight: 750;
-  text-decoration: none;
-  white-space: nowrap;
-  box-shadow: 0 8px 26px rgba(34, 197, 94, 0.18);
-}
-.oz-land-stage {
-  display: grid;
-  grid-template-columns: minmax(410px, 0.96fr) minmax(420px, 1.04fr);
-  align-items: center;
-  min-height: 490px;
-  padding: 36px 0 18px;
-}
-.oz-landing-page .oz-land-copy {
-  position: relative;
-  z-index: 2;
-  max-width: 490px;
-  padding-top: 0;
-}
-.oz-land-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  color: #a7e7bd;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-}
-.oz-land-eyebrow i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #4ade80;
-  box-shadow: 0 0 12px rgba(74, 222, 128, 0.7);
-}
-.oz-landing-page .oz-land-title {
-  max-width: 520px;
-  margin-top: 18px;
-  font-size: clamp(42px, 4.5vw, 64px);
-  line-height: 1.02;
-  font-weight: 780;
-  letter-spacing: -0.045em;
-}
-.oz-landing-page .oz-land-title span {
-  color: #4ade80;
-}
-.oz-landing-page .oz-land-sub {
-  max-width: 410px;
-  margin-top: 18px;
-  color: #d2d7dd;
-  font-size: 15px;
-  line-height: 1.55;
-}
-.oz-landing-page .oz-land-ctas {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 11px;
-  max-width: 294px;
-  margin-top: 24px;
-}
-.oz-landing-page .oz-cta {
-  min-height: 46px;
-  border-radius: 999px;
-  padding: 0 17px;
-  font-size: 13px;
-}
-.oz-landing-page .oz-cta.is-primary {
-  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.22);
-}
-.oz-land-visual {
-  position: relative;
-  min-width: 0;
-  min-height: 440px;
-}
-.oz-land-device {
-  position: absolute;
-  right: clamp(45px, 15%, 190px);
-  bottom: 0;
-  width: clamp(168px, 18vw, 218px);
-  height: clamp(360px, 40vw, 450px);
-  padding: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  border-radius: 32px;
-  background: linear-gradient(145deg, #35383b, #050607 28%, #0e1012 72%, #26292c);
-  box-shadow: 0 24px 74px rgba(0, 0, 0, 0.75), inset 0 0 0 2px rgba(0, 0, 0, 0.92);
-  transform: rotate(2deg);
-}
-.oz-land-device::before {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  top: 9px;
-  left: 50%;
-  width: 64px;
-  height: 17px;
-  border-radius: 0 0 12px 12px;
-  background: #050607;
-  transform: translateX(-50%);
-}
-.oz-land-device-screen {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-  padding: 14px 11px 12px;
-  border-radius: 25px;
-  background: linear-gradient(180deg, #10181a 0%, #0a0e10 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-.oz-device-status {
-  display: flex;
   justify-content: space-between;
-  color: #dce2e5;
-  font-size: 8px;
-  font-weight: 700;
-  padding: 2px 5px 11px;
+  gap: 24px;
 }
-.oz-device-brand {
-  display: flex;
-  justify-content: center;
-  padding: 4px 0 13px;
+.akor-brand {
+  display: inline-flex;
+  flex: none;
+  text-decoration: none;
 }
-.oz-device-brand img {
-  width: 76px !important;
+.akor-brand img {
+  width: 112px !important;
   height: auto !important;
 }
-.oz-device-greeting {
-  display: grid;
-  gap: 5px;
-  margin: 0 1px 12px;
-}
-.oz-device-greeting span,
-.oz-vcard-eyebrow {
-  color: #7e8990;
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-}
-.oz-device-greeting strong {
-  color: #f5f7fa;
-  font-size: 12px;
-  line-height: 1.2;
-}
-.oz-device-vehicle {
-  display: flex;
+.akor-nav-links {
+  display: none;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 11px;
-  background: #171d20;
+  gap: 32px;
 }
-.oz-device-car {
-  width: 48px;
-  height: 36px;
-  flex: none;
-  border-radius: 7px;
-  background: url(/marketing/otoiz-arac-temiz.webp) 52% 68% / cover;
+.akor-nav-links a,
+.akor-footer-links a,
+.akor-menu-panel a {
+  color: var(--akor-muted);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.oz-device-vehicle > span:nth-child(2) {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  flex: 1;
+.akor-nav-links a:hover,
+.akor-footer-links a:hover,
+.akor-menu-panel a:hover {
+  color: var(--akor-fg);
 }
-.oz-device-vehicle strong {
-  color: #fff;
-  font-size: 9px;
-}
-.oz-device-vehicle small {
-  color: #9da7ad;
-  font-size: 7px;
-}
-.oz-device-list {
-  display: grid;
-  margin-top: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 11px;
-  background: #121719;
-}
-.oz-device-row {
-  display: flex;
+.akor-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 43px;
-  padding: 0 8px;
-  color: #e5e9eb;
-  font-size: 8px;
-  font-weight: 600;
-}
-.oz-device-row + .oz-device-row {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-.oz-device-row span {
-  flex: 1;
-}
-.oz-device-nav {
-  display: flex;
-  justify-content: space-around;
-  padding-top: 12px;
-  color: #4ade80;
-  font-size: 12px;
-}
-.oz-land-float {
-  position: absolute;
-  right: 0;
-  top: 45%;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  width: 190px;
-  padding: 14px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 13px;
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(239, 243, 240, 0.96));
-  color: #14191b;
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
-}
-.oz-land-float-icon {
-  display: grid;
-  place-items: center;
-  width: 35px;
-  height: 35px;
-  flex: none;
-  border-radius: 11px;
-  background: rgba(34, 197, 94, 0.12);
-}
-.oz-land-float > span:last-child {
-  display: grid;
-  gap: 4px;
-}
-.oz-land-float strong {
-  font-size: 10px;
-  line-height: 1.25;
-}
-.oz-land-float small {
-  color: #647078;
-  font-size: 8px;
-  line-height: 1.3;
-}
-.oz-landing-page .oz-feats {
-  max-width: 1020px;
-  margin: 2px 0 0;
-  padding: 16px 0 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  gap: 0;
-}
-.oz-landing-page .oz-feat {
-  flex-direction: row;
   justify-content: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 14px;
-}
-.oz-landing-page .oz-feat + .oz-feat {
-  border-left: 1px solid rgba(255, 255, 255, 0.14);
-}
-.oz-landing-page .oz-feat-title {
-  font-size: 12px;
-  text-align: left;
-}
-.oz-landing-page .oz-promo {
-  max-width: 1020px;
-  min-height: auto;
-  margin: 15px 0 0;
-  padding: 0;
-  border: 0;
-  background: none;
-}
-.oz-landing-page .oz-promo-text {
-  color: #9ca8ad;
-  font-size: 12px;
+  height: 44px;
+  padding: 0 24px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.oz-land-how {
-  max-width: 1150px;
-  padding-top: 72px;
-  padding-bottom: 72px;
-  scroll-margin-top: 24px;
+.akor-btn:active { transform: scale(0.97); }
+.akor-btn-primary {
+  background: var(--akor-primary);
+  color: var(--akor-primary-fg);
 }
-.oz-how-heading {
-  margin-bottom: 22px;
+.akor-btn-primary:hover { background: hsl(142 71% 40%); }
+.akor-btn-secondary {
+  background: var(--akor-secondary);
+  color: var(--akor-fg);
 }
-.oz-how-heading .oz-h2 {
-  margin-top: 10px;
-  font-size: 30px;
+.akor-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 0;
+  border-radius: 6px;
+  background: var(--akor-secondary);
+  color: var(--akor-fg);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
 }
-.oz-land-steps {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+.akor-menu-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 8px;
+  border: 1px solid hsl(0 0% 20%);
+  border-radius: 8px;
+  background: var(--akor-bg);
+}
+.akor-menu-panel a {
+  padding: 12px 16px;
+  border-radius: 6px;
+}
+.akor-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--akor-hero);
+}
+.akor-hero-video,
+.akor-hero-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.akor-hero-fallback {
+  background: linear-gradient(135deg, hsl(0 0% 18%), var(--akor-hero) 45%, var(--akor-bg));
+}
+.akor-hero-copy {
+  position: relative;
+  z-index: 1;
+  padding: 128px 32px 80px;
+}
+.akor-hero h1 {
   margin: 0;
+  max-width: 9.2em;
+  color: var(--akor-fg);
+  font-size: 3rem;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+.akor-hero p {
+  max-width: 36rem;
+  margin: 24px 0 40px;
+  color: var(--akor-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.akor-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 32px;
+}
+.akor-textlink {
+  border-bottom: 1px solid var(--akor-primary);
+  padding-bottom: 4px;
+  color: var(--akor-fg);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.akor-textlink:hover { color: var(--akor-primary); }
+.akor-textlink:active { transform: scale(0.97); }
+.akor-features {
+  background: var(--akor-bg);
+  color: var(--akor-fg);
+  padding: 8px 32px 72px;
+}
+.akor-features-line {
+  margin: 0 0 16px;
+  color: var(--akor-muted);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+.akor-feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.akor-feature {
+  min-width: 0;
+  padding: 16px 14px 14px;
+  border: 1px solid hsl(0 0% 100% / 0.08);
+  border-radius: 6px;
+  background: hsl(0 0% 13%);
+}
+.akor-feature img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: hsl(0 0% 96%);
+}
+.akor-feature .akor-num {
+  margin: 12px 0 0;
+  color: hsl(0 0% 100% / 0.4);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.akor-feature h3 {
+  margin: 4px 0 0;
+  color: var(--akor-fg);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+.akor-label p {
+  margin: 0 0 32px;
+  color: hsl(0 0% 40%);
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+.akor-label div {
+  height: 1px;
+  margin-bottom: 64px;
+  background: var(--akor-line);
+}
+.akor-about {
+  background: var(--akor-ink);
+  padding: 48px 32px 96px;
+}
+.akor-about-copy h2 {
+  margin: 0;
+  color: var(--akor-fg);
+  font-size: 1.875rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.akor-about-lead {
+  margin: 16px 0 0;
+  max-width: 40rem;
+  color: var(--akor-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.akor-close {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  margin-top: 40px;
+}
+.akor-close p {
+  margin: 0;
+  color: var(--akor-fg);
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.akor-about-copy ol {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin: 48px 0 0;
   padding: 0;
   list-style: none;
 }
-.oz-land-step {
+.akor-about-copy li {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 16px;
-  background: linear-gradient(150deg, rgba(25, 28, 32, 0.92), rgba(14, 16, 19, 0.96));
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid hsl(0 0% 100% / 0.12);
 }
-.oz-land-step h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-}
-.oz-land-step > span:last-child > span {
-  display: block;
-  margin-top: 5px;
-  color: #9da5ad;
+.akor-about-copy li > span:first-child {
+  flex: none;
+  width: 1.5rem;
+  color: var(--akor-muted);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.akor-about-copy h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+.akor-about-copy li > span:last-child > span {
+  display: block;
+  margin-top: 4px;
+  color: var(--akor-muted);
+  font-size: 14px;
   line-height: 1.5;
 }
-.oz-land-footer {
-  max-width: none;
-  padding: 26px 20px calc(env(safe-area-inset-bottom) + 28px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  text-align: center;
+.akor-footer {
+  border-top: 1px solid hsl(0 0% 20%);
+  background: var(--akor-ink);
+  padding: 40px 32px;
 }
-.oz-land-footer-brand {
+.akor-footer-row {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 32px;
 }
-.oz-land-footer > p {
-  margin: 10px 0 14px;
-  color: #777f88;
-  font-size: 12px;
-}
-.oz-land-footer-links {
+.akor-footer-links {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 0 20px;
+  gap: 12px 32px;
 }
-.oz-land-footer-links .oz-link {
-  color: #a3abb7;
+.akor-footer-links a { font-size: 12px; }
+.akor-footer > p {
+  margin: 40px 0 0;
+  color: hsl(0 0% 60% / 0.6);
   font-size: 12px;
+}
+
+@media (min-width: 640px) {
+  .akor-hero h1 { font-size: 3.75rem; }
+  .akor-about-copy h2 { font-size: 2.25rem; }
+}
+@media (min-width: 768px) {
+  .akor-nav-links { display: flex; }
+  .akor-menu,
+  .akor-menu-panel { display: none; }
+  .akor-feature-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .akor-footer-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .akor-about-copy ol { grid-template-columns: 1fr 1fr; column-gap: 40px; }
+}
+@media (min-width: 1024px) {
+  .akor-nav { padding: 20px 64px; }
+  .akor-hero h1 { font-size: 5.5rem; }
+  .akor-hero p { font-size: 18px; }
+  .akor-hero-copy { padding: 128px 64px 112px; }
+  .akor-features,
+  .akor-about,
+  .akor-footer { padding-left: 64px; padding-right: 64px; }
+  .akor-features { padding-top: 12px; padding-bottom: 96px; }
+  .akor-about { padding-top: 64px; padding-bottom: 128px; }
+  .akor-about-copy ol { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 380px) {
+  .akor-nav { padding: 16px; }
+  .akor-hero-copy,
+  .akor-features,
+  .akor-about,
+  .akor-footer { padding-left: 16px; padding-right: 16px; }
+  .akor-brand img { width: 84px !important; }
+  .akor-btn { padding: 0 14px; }
+  .akor-hero-actions { gap: 16px 20px; }
 }
 
 .oz-dashboard-page {
@@ -4972,170 +4932,11 @@ nav[aria-label="Araç bölümleri"] > button[aria-current="page"] {
   }
 }
 @media (max-width: 767px) {
-  .oz-landing-page .oz-land {
-    min-height: 0;
-  }
-  .oz-landing-page .oz-land-media {
-    height: 660px;
-    background-image:
-      linear-gradient(180deg, rgba(7, 9, 11, 0.52) 0%, rgba(7, 9, 11, 0.72) 35%, #07090b 91%),
-      url(/marketing/otoiz-landing-arac-temiz.webp);
-    background-size: cover;
-    background-position: center, 58% 0;
-  }
-  .oz-landing-page .oz-land-wrap {
-    padding-left: 22px;
-    padding-right: 22px;
-  }
-  .oz-landing-page .oz-land-top {
-    min-height: 72px;
-    padding-top: 12px;
-    gap: 12px;
-  }
-  .oz-land-brand img {
-    width: 114px !important;
-    height: auto !important;
-  }
-  .oz-land-nav {
-    display: none;
-  }
-  .oz-land-actions {
-    gap: 8px;
-  }
-  .oz-land-login {
-    padding: 8px 11px;
-    font-size: 11px;
-  }
-  .oz-land-start {
-    min-height: 38px;
-    gap: 5px;
-    padding: 0 11px;
-    font-size: 10px;
-  }
-  .oz-landing-page .oz-land-stage {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    min-height: 0;
-    padding: 94px 0 0;
-  }
-  .oz-landing-page .oz-land-copy {
-    max-width: 520px;
-  }
-  .oz-landing-page .oz-land-title {
-    max-width: 390px;
-    margin-top: 15px;
-    font-size: clamp(40px, 11vw, 52px);
-  }
-  .oz-landing-page .oz-land-sub {
-    margin-top: 13px;
-    font-size: 14px;
-  }
-  .oz-landing-page .oz-land-ctas {
-    grid-template-columns: 1fr 1fr;
-    max-width: 100%;
-    gap: 9px;
-    margin-top: 18px;
-  }
-  .oz-landing-page .oz-cta {
-    min-height: 46px;
-    padding: 0 11px;
-    font-size: 11px;
-  }
-  .oz-landing-page .oz-cta svg {
-    width: 16px;
-    flex: none;
-  }
-  .oz-land-visual {
-    min-height: 365px;
-    margin: 12px -10px 0;
-  }
-  .oz-land-device {
-    right: 50%;
-    width: 174px;
-    height: 358px;
-    transform: translateX(50%) rotate(2deg);
-  }
-  .oz-land-float {
-    right: 0;
-    top: 38%;
-    width: 144px;
-    padding: 10px;
-    gap: 8px;
-  }
-  .oz-land-float-icon {
-    width: 29px;
-    height: 29px;
-  }
-  .oz-land-float strong {
-    font-size: 8px;
-  }
-  .oz-land-float small {
-    font-size: 7px;
-  }
-  .oz-landing-page .oz-feats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 3px;
-    padding: 10px 0;
-  }
-  .oz-landing-page .oz-feat {
-    justify-content: flex-start;
-    min-height: 44px;
-    padding: 0 7px;
-  }
-  .oz-landing-page .oz-feat:nth-child(3) {
-    border-left: 0;
-  }
-  .oz-landing-page .oz-feat-title {
-    font-size: 10.5px;
-  }
-  .oz-landing-page .oz-feat svg {
-    width: 20px;
-    flex: none;
-  }
-  .oz-landing-page .oz-promo {
-    margin-top: 12px;
-  }
-  .oz-land-how {
-    padding: 54px 22px;
-  }
-  .oz-how-heading .oz-h2 {
-    font-size: 25px;
-  }
-  .oz-land-steps {
-    grid-template-columns: 1fr;
-    gap: 9px;
-  }
-  .oz-land-step {
-    padding: 14px;
-  }
-  .oz-land-footer-links {
-    gap: 4px 16px;
-  }
   .oz-dashboard-heading {
     margin-top: 8px;
   }
   .oz-dashboard-heading h1 {
     font-size: 23px;
-  }
-}
-@media (min-width: 768px) and (max-width: 1023px) {
-  .oz-landing-page .oz-land-wrap {
-    padding-left: 32px;
-    padding-right: 32px;
-  }
-  .oz-landing-page .oz-land-stage {
-    grid-template-columns: minmax(280px, 0.9fr) minmax(310px, 1fr);
-    min-height: 430px;
-  }
-  .oz-landing-page .oz-land-title {
-    font-size: clamp(40px, 5vw, 54px);
-  }
-  .oz-land-device {
-    right: 13%;
-  }
-  .oz-land-float {
-    width: 160px;
   }
 }
 @media (min-width: 1024px) {
